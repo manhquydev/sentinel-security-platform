@@ -63,14 +63,48 @@ JAVA_DOTTED = re.compile(r"^\s*(?:package|import)\s+(?:static\s+)?[\w.]+\s*;")
 # `sha256:` and friends introduce a digest. A digest authenticates nothing on its own.
 HASH_CONTEXT = re.compile(r"(?i)(?:sha256|sha1|md5|digest|checksum)\s*[:=]\s*[0-9a-f]{16,}")
 
-# A Maven/Gradle coordinate is group:artifact:version.
-DEP_COORDINATE = re.compile(r"^\s*[\w.\-]+:[\w.\-]+:[\d][\w.\-]*\s*$")
+# A Maven/Gradle coordinate is group:artifact:version. The negative lookahead keeps the
+# credential keywords out of the first segment: `password:hunter2:2024` has the shape of
+# a coordinate and is not one, and clearing it would report a correct redaction as a
+# false positive.
+DEP_COORDINATE = re.compile(
+    r"^\s*(?!(?:token|secret|password|api[_-]?key|authorization|cookie)\b)"
+    r"[\w.\-]+:[\w.\-]+:[\d][\w.\-]*\s*$",
+    re.IGNORECASE,
+)
 
 ORACLES = {
     "java-dotted-identifier": JAVA_DOTTED,
     "hash-context": HASH_CONTEXT,
     "dependency-coordinate": DEP_COORDINATE,
 }
+
+# The detectors, applied here against the ORIGINAL document rather than read back out of
+# redact()'s findings.
+#
+# redact() runs its detectors in five sequential passes, each over the previous pass's
+# output, and records each match's offset against the text that pass was given. Once the
+# PEM pass collapses a key block to a one-line placeholder — or an assignment pass
+# collapses a quoted value that spanned newlines — every later pass's line numbers are
+# shifted relative to the original. Reading them back and indexing the original document
+# with them attributes a finding to whatever line has drifted into that position, which
+# means an oracle can inspect an unrelated line: a real false positive gets missed, or an
+# imaginary one manufactured.
+#
+# Measuring against the original avoids the shift entirely and yields the matched SPAN,
+# which is what an oracle has to judge. Patterns are reused rather than restated so the
+# measurement cannot drift from the guardrail it measures.
+# Resolved on each call rather than captured at import, so a test can substitute a
+# pattern and watch the measurement react. A harness whose behaviour cannot be perturbed
+# cannot be shown to detect anything.
+def detectors() -> tuple[tuple[str, "re.Pattern[str]"], ...]:
+    return (
+        ("pem-private-key", egress_redaction._PEM_BLOCK),
+        ("assignment", egress_redaction._ASSIGNMENT),
+        ("credential-prefix", egress_redaction._CREDENTIAL_PREFIX),
+        ("jwt", egress_redaction._JWT),
+        ("uuid", egress_redaction._UUID),
+    )
 
 # Payloads that are this system's legitimate cargo. Mangling one is a defect regardless
 # of what any rate says.
@@ -122,36 +156,48 @@ def iter_corpus(root: pathlib.Path) -> list[tuple[str, str, str]]:
     return docs
 
 
-def redacted_lines(original: str, findings: list[dict]) -> list[tuple[int, str, str]]:
-    """Locate each redaction on its original line.
-
-    This deliberately does not diff the before and after text. Redaction is not a
-    line-preserving substitution: the PEM detector matches across newlines and collapses
-    a whole key block to a single placeholder, so zipping the two line lists misaligns
-    everything after the first such block and attributes findings to the wrong lines. The
-    redactor already records the offset of each match, so the line number is available
-    exactly rather than by inference.
-    """
-    lines = original.splitlines()
+def locate_matches(original: str) -> list[dict]:
+    """Every span each detector would act on, positioned in the ORIGINAL document."""
     out = []
-    for finding in findings:
-        if finding.get("redacted") is False:
-            continue
-        number = finding.get("line", 0)
-        if 1 <= number <= len(lines):
-            out.append((number, lines[number - 1], finding["class"]))
+    for detector, pattern in detectors():
+        for match in pattern.finditer(original):
+            start = match.start()
+            line_number = original.count("\n", 0, start) + 1
+            line_start = original.rfind("\n", 0, start) + 1
+            line_end = original.find("\n", start)
+            line = original[line_start : line_end if line_end != -1 else len(original)]
+            out.append(
+                {
+                    "detector": detector,
+                    "line_number": line_number,
+                    "line": line,
+                    # Span offsets relative to the line, so an oracle can ask whether it
+                    # covers the matched text rather than merely sharing a line with it.
+                    "span": (start - line_start, min(match.end(), line_end if line_end != -1 else len(original)) - line_start),
+                }
+            )
     return out
 
 
-def classify(line: str, corpus: str) -> str | None:
-    """Return the oracle proving this line could not have held a credential, or None."""
-    for name, pattern in ORACLES.items():
-        if pattern.search(line):
-            return name
+def classify(line: str, span: tuple[int, int], corpus: str) -> str | None:
+    """Return the oracle proving this SPAN could not have held a credential, or None.
+
+    The span matters, not the line. An oracle that only has to share a line with the
+    match will clear a correct redaction whenever the two coexist — `import org.foo.Bar;
+    // password=hunter2` is a dotted identifier AND a real credential, and judging it by
+    the line alone reports the correct redaction as a false positive. Inflated
+    false-positive counts are not a harmless error: the natural response is to narrow the
+    detector, which is how a real leak ships.
+    """
     if corpus == "attack-surface-baseline":
         # The exporter refuses forbidden fields, path tokens and high-entropy segments,
-        # and its suite proves each of those controls fails when it should.
+        # and its own suite proves each of those controls fails when it should, so this
+        # artifact is secret-free by construction rather than by inspection.
         return "proven-secret-free-artifact"
+    for name, pattern in ORACLES.items():
+        for match in pattern.finditer(line):
+            if match.start() <= span[0] and span[1] <= match.end():
+                return name
     return None
 
 
@@ -161,35 +207,42 @@ def measure(root: pathlib.Path) -> dict:
     per_corpus: dict[str, dict] = {}
     false_positives: list[dict] = []
 
+    flagged_only: dict[str, int] = {}
+
     for corpus, doc_id, text in docs:
-        stats = per_corpus.setdefault(corpus, {"documents": 0, "documents_altered": 0, "lines_altered": 0})
+        stats = per_corpus.setdefault(
+            corpus, {"documents": 0, "documents_altered": 0, "redactions_located": 0}
+        )
         stats["documents"] += 1
 
         redacted, findings = egress_redaction.redact(text)
         for finding in findings:
-            if finding.get("redacted") is not False:
-                per_detector[finding["class"]] = per_detector.get(finding["class"], 0) + 1
+            # High-entropy content is flagged for an operator without being rewritten.
+            # It is counted separately rather than dropped: how often that heuristic
+            # fires on real content is the evidence behind the decision not to redact it.
+            bucket = per_detector if finding.get("redacted") is not False else flagged_only
+            bucket[finding["class"]] = bucket.get(finding["class"], 0) + 1
 
         if redacted == text:
             continue
         stats["documents_altered"] += 1
 
-        for number, line, detector in redacted_lines(text, findings):
-            stats["lines_altered"] += 1
-            oracle = classify(line, corpus)
+        for match in locate_matches(text):
+            stats["redactions_located"] += 1
+            oracle = classify(match["line"], match["span"], corpus)
             if oracle:
                 false_positives.append(
                     {
                         "corpus": corpus,
                         "document": doc_id,
-                        "line": number,
-                        "detector": detector,
+                        "line": match["line_number"],
+                        "detector": match["detector"],
                         "oracle": oracle,
-                        # No text. A false-positive case is fully identified by where it
-                        # is and which oracle proves it wrong, and the artifact is
-                        # committed to a public repository — quoting the line the
-                        # redactor acted on would risk publishing the thing it removed.
-                        # Re-run the harness locally to see context.
+                        # No text. A case is fully identified by where it is and which
+                        # oracle proves it wrong, and this artifact is committed to a
+                        # public repository — quoting the line the redactor acted on
+                        # would risk publishing the thing it removed. Re-run the harness
+                        # locally to see context.
                     }
                 )
 
@@ -204,6 +257,7 @@ def measure(root: pathlib.Path) -> dict:
         "corpus": per_corpus,
         "documents_total": len(docs),
         "redactions_by_detector": dict(sorted(per_detector.items())),
+        "flagged_not_redacted": dict(sorted(flagged_only.items())),
         "unambiguous_false_positives": {
             "count": len(false_positives),
             "by_oracle": {
@@ -250,8 +304,9 @@ def main() -> int:
     print(f"documents scanned          : {result['documents_total']}")
     for corpus, stats in sorted(result["corpus"].items()):
         print(f"  {corpus:26} {stats['documents_altered']}/{stats['documents']} altered, "
-              f"{stats['lines_altered']} lines")
+              f"{stats['redactions_located']} redactions")
     print(f"redactions by detector     : {result['redactions_by_detector']}")
+    print(f"flagged, not redacted      : {result['flagged_not_redacted']}")
     print(f"unambiguous false positives: {fp['count']} {fp['by_oracle'] or ''}")
     print(f"attack payloads mangled    : {len(mangled)} {mangled or ''}")
 

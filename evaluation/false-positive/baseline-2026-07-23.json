@@ -7,26 +7,29 @@
     "attack-surface-baseline": {
       "documents": 1,
       "documents_altered": 0,
-      "lines_altered": 0
+      "redactions_located": 0
     },
     "sanitized-scanner-report": {
       "documents": 3,
       "documents_altered": 0,
-      "lines_altered": 0
+      "redactions_located": 0
     },
     "webgoat-java": {
       "documents": 371,
       "documents_altered": 35,
-      "lines_altered": 82
+      "redactions_located": 82
     }
   },
   "documents_total": 375,
+  "flagged_not_redacted": {
+    "unclassified-high-entropy": 16
+  },
   "interpretation": {
     "not_a_gate": "Recorded as a baseline. A threshold set before the distribution is known is a guess.",
     "what_this_does_not_measure": "It is not a recall figure. A redaction inside vulnerable-by-design source may be correct, because that source really does contain hardcoded credentials; those alterations are counted in the rate and deliberately not judged here.",
     "what_this_measures": "How the egress guardrail behaves on the content this gateway actually carries. Unambiguous false positives are decided by structure, not by opinion: the contexts listed cannot hold a credential."
   },
-  "measured_at": "2026-07-23T15:37:04+00:00",
+  "measured_at": "2026-07-23T15:46:44+00:00",
   "redactions_by_detector": {
     "authorization": 2,
     "cookie": 8,
