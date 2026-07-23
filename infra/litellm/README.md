@@ -133,14 +133,35 @@ which a container cannot reach.
 guardrail redacts before anything reaches a callback, so what Langfuse stores for a
 request is post-redaction.
 
-**Model responses are not redacted.** The guardrail runs at `pre_call` only, so a
-completion is stored verbatim — including any header, cookie or token the model quotes
-back out of target-derived content it was asked to analyse, and including upstream error
-bodies. This is a known gap, stated rather than implied: an output-side hook is not
-built. The stored trace shows it directly — a redacted assignment reads
-`password=[redacted:password]`, with the spotlight marker applied around the assignment
-but not inside it. Had spotlighting run first the text would read `password▁=`, the
-redactor's pattern would not have matched, and the credential would be in ClickHouse.
+**Model responses are now redacted too.** A second guardrail entry,
+`sentinel-response`, runs the same class at `mode: post_call` and applies
+`egress_redaction.redact()` to the response before any callback — including Langfuse —
+sees it. This closes the gap `pre_call` alone left open: a completion could quote a
+header, cookie or token back out of target-derived content it was asked to analyse, or
+carry a raw upstream error body, and both reached the trace store verbatim. Coverage is
+chat completions (`choices[].message.content` and
+`choices[].message.tool_calls[].function.arguments`) and the Responses API
+(`output[]` items of type `message`, via `content[].text`, and `function_call`, via
+`arguments`).
+
+**Streaming is not covered, and that is stated rather than papered over.** LiteLLM
+never invokes the `post_call` hook on the streaming path — a streamed response reaches
+the caller chunk by chunk through a separate iterator hook this guardrail does not
+implement — so a caller that sets `stream: true` bypasses response redaction entirely.
+`sast-sol`, `sast-terra` and `sast-gpt55` pin `stream: false` in their `litellm_params`
+and cannot be made to stream; `cheap-sast` and `judge` do not pin it, so a caller on
+either alias can request a stream and reach the trace store unredacted. Closing that
+means redacting a live chunk stream in place — a materially different problem, since a
+chunk already delivered to the caller cannot be un-sent — and is left as open work
+rather than half-solved here.
+
+A failure inside the response-redaction pass itself does not fail the call: by the time
+it runs the model has already answered, so the hook logs the failure
+(`redaction_failed=true` in the audit trail) and returns the response unredacted rather
+than turning a completed answer into an error. The audit trail marks response-side
+redactions with `side=response` (request-side entries carry `side=request`), and, like
+the request-side trail, never records the value it redacted — only its class, length
+and position.
 
 This reverses the boundary the benchmark-era documentation described. The trade-off is
 stated rather than mitigated: every trace's safety now rests on redaction being complete,

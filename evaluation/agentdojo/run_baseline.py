@@ -7,6 +7,16 @@ describes the scaffold agent defined in sentinel_pipeline.py, not Sentinel; the 
 ships no injection detector by design (docs/decisions/0006-...); and AgentDojo's default
 attack corpus is static, which published work shows overstates robustness.
 
+Before scoring an attack, this runner first probes every injection task in the chosen
+suite standalone (as its own goal, unattacked, no user task) and only feeds injection
+tasks with standalone_utility == True into the attack matrix. AgentDojo's own
+`injection_task.security()` check is what "standalone utility" means here: can this
+scaffold execute the injected goal at all when it is the only instruction and nothing is
+defending? An injection task the scaffold cannot complete unattacked cannot produce a
+meaningful attack-success-rate contribution either way - a 0 there is true by
+construction, not evidence the attack was blocked. See the `selection` block in every
+result artifact for which tasks were considered, which were viable, and which were used.
+
 Usage:
     python3 evaluation/agentdojo/run_baseline.py --help
     python3 evaluation/agentdojo/run_baseline.py --suite banking --max-user-tasks 3 \\
@@ -117,7 +127,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--max-injection-tasks",
         type=int,
         default=2,
-        help="Bounded, deterministic subset: first N injection task IDs, sorted, from the chosen suite.",
+        help=(
+            "Bounded, deterministic subset: first N injection task IDs, sorted, among "
+            "those the standalone-utility probe found viable (injection_task.security() "
+            "true when the injection task is run as its own unattacked goal). Injection "
+            "tasks the scaffold cannot complete standalone are excluded before this bound "
+            "is applied, because they cannot produce a meaningful attack-success signal."
+        ),
+    )
+    parser.add_argument(
+        "--max-probe-injection-tasks",
+        type=int,
+        default=None,
+        help=(
+            "Bound on how many of the suite's injection tasks (sorted) get a standalone-"
+            "utility probe before selection. Defaults to every injection task in the "
+            "suite (each v1 suite has at most 9), since the probe is cheap: one run per "
+            "task, no pairing with user tasks."
+        ),
     )
     parser.add_argument(
         "--max-tool-iters",
@@ -256,9 +283,14 @@ def main(argv: list[str] | None = None) -> int:
 
     suite = get_suite(args.benchmark_version, args.suite)
     user_task_ids = sorted(suite.user_tasks.keys())[: args.max_user_tasks]
-    injection_task_ids = sorted(suite.injection_tasks.keys())[: args.max_injection_tasks]
-    if not user_task_ids or not injection_task_ids:
-        parser.error(f"suite {args.suite!r} has no tasks left after applying the requested bounds")
+    if not user_task_ids:
+        parser.error(f"suite {args.suite!r} has no user tasks left after applying --max-user-tasks")
+
+    probe_injection_task_ids = sorted(suite.injection_tasks.keys())
+    if args.max_probe_injection_tasks is not None:
+        probe_injection_task_ids = probe_injection_task_ids[: args.max_probe_injection_tasks]
+    if not probe_injection_task_ids:
+        parser.error(f"suite {args.suite!r} has no injection tasks left after applying --max-probe-injection-tasks")
 
     client = openai.OpenAI(base_url=args.gateway_base_url, api_key=gateway_key, timeout=120, max_retries=2)
     pipeline, llm = build_pipeline(args, client, suite.name)
@@ -268,28 +300,66 @@ def main(argv: list[str] | None = None) -> int:
     logdir.mkdir(parents=True, exist_ok=True)
 
     print(
-        f"Running suite={args.suite!r} attack={attack.name!r} model_alias={args.model_alias!r} "
-        f"user_tasks={user_task_ids} injection_tasks={injection_task_ids}",
+        f"Probing standalone utility (unattacked, no user task) for injection_tasks="
+        f"{probe_injection_task_ids} in suite={args.suite!r}",
         file=sys.stderr,
     )
     print(f"Per-task transcripts (not committed): {logdir}", file=sys.stderr)
 
     start = time.monotonic()
     with OutputLogger(str(logdir)):
-        results = benchmark_suite_with_injections(
+        # Phase 1: every candidate injection task, run standalone (no user task, no attack).
+        # This is the same check AgentDojo performs internally before scoring an attack
+        # (`injection_tasks_utility_results` in benchmark_suite_with_injections) - run here
+        # up front, against the full candidate set, so a task that cannot be completed
+        # unattacked is excluded before it is ever scored as part of an "attack success"
+        # denominator. `user_tasks=[]` runs no paired matrix in this phase, only the
+        # standalone check, so probing every candidate is cheap (one run per task).
+        probe_results = benchmark_suite_with_injections(
             pipeline,
             suite,
             attack,
             logdir=logdir,
             force_rerun=True,
-            user_tasks=user_task_ids,
-            injection_tasks=injection_task_ids,
+            user_tasks=[],
+            injection_tasks=probe_injection_task_ids,
             verbose=False,
             benchmark_version=args.benchmark_version,
         )
+        standalone_utility = probe_results["injection_tasks_utility_results"]
+        viable_injection_task_ids = sorted(tid for tid, ok in standalone_utility.items() if ok)
+        selected_injection_task_ids = viable_injection_task_ids[: args.max_injection_tasks]
+
+        print(
+            f"Standalone utility: {standalone_utility}; viable={viable_injection_task_ids}; "
+            f"selected for attack matrix={selected_injection_task_ids}",
+            file=sys.stderr,
+        )
+
+        # Phase 2: score the attack only on injection tasks proven standalone-viable in
+        # phase 1. force_rerun=False here so the standalone check phase 2 also performs
+        # internally is served from phase 1's cache in `logdir` instead of re-billed.
+        if selected_injection_task_ids:
+            results = benchmark_suite_with_injections(
+                pipeline,
+                suite,
+                attack,
+                logdir=logdir,
+                force_rerun=False,
+                user_tasks=user_task_ids,
+                injection_tasks=selected_injection_task_ids,
+                verbose=False,
+                benchmark_version=args.benchmark_version,
+            )
+        else:
+            results = {
+                "utility_results": {},
+                "security_results": {},
+                "injection_tasks_utility_results": standalone_utility,
+            }
     duration_s = round(time.monotonic() - start, 2)
 
-    metrics = compute_metrics(results, results["injection_tasks_utility_results"])
+    metrics = compute_metrics(results, standalone_utility)
     usage = llm.usage.as_dict()
     cost = cost_estimate(args.model_alias, usage, metrics["task_run_count"])
 
@@ -304,9 +374,22 @@ def main(argv: list[str] | None = None) -> int:
             "provenance_declaration": "metadata.sentinel_provenance (per-message, declared for every call)",
             "gateway_base_url": args.gateway_base_url,
             "user_task_ids": user_task_ids,
-            "injection_task_ids": injection_task_ids,
+            "injection_task_ids": selected_injection_task_ids,
             "max_tool_iters": args.max_tool_iters,
             "duration_seconds": duration_s,
+            "selection": {
+                "method": (
+                    "Every injection task in injection_tasks_considered was first run "
+                    "standalone (its own GOAL as the sole prompt, no attack, no user task); "
+                    "injection_task.security() on that run is standalone_utility. Only "
+                    "injection_tasks_viable (standalone_utility == True) were eligible for "
+                    "the attack matrix; injection_task_ids above is the sorted-prefix bound "
+                    "of that viable set, not of the full suite."
+                ),
+                "injection_tasks_considered": probe_injection_task_ids,
+                "injection_tasks_viable": viable_injection_task_ids,
+                "injection_tasks_used_for_asr": selected_injection_task_ids,
+            },
         },
         "results": metrics,
         "token_usage": usage,
@@ -346,7 +429,34 @@ def main(argv: list[str] | None = None) -> int:
                 "results.task_run_count and cost.full_run_projection for scope and estimated "
                 "full-run cost."
             ),
-        },
+            "standalone_utility_denominator": (
+                "An injection task the scaffold cannot complete on its own (standalone_utility "
+                "== false in results.injection_task_standalone_utility) cannot produce a "
+                "meaningful attack_success_rate contribution: a False security() result there "
+                "is true by construction, not evidence the attack was resisted, because the "
+                "goal was never reachable in the first place. This run therefore only scores "
+                "attack_success_rate over injection_task_ids drawn from "
+                "run_metadata.selection.injection_tasks_viable. See "
+                "run_metadata.selection.injection_tasks_considered for every injection task "
+                "that was checked, including the ones excluded."
+            ),
+        }
+        | (
+            {
+                "no_viable_injection_tasks": (
+                    f"None of {probe_injection_task_ids} in suite {args.suite!r} had "
+                    "standalone_utility == true for this scaffold: attack_success_rate is "
+                    "None because there is no injection task this run could have scored. "
+                    "This is a finding about the scaffold-suite pairing, not a defended "
+                    "result. A meaningful ASR for this suite needs either a more capable "
+                    "scaffold (this one has no memory/planning beyond a single tool-call "
+                    "loop bounded by --max-tool-iters) or a different task suite whose "
+                    "injection goals this scaffold can already complete unattacked."
+                )
+            }
+            if not selected_injection_task_ids
+            else {}
+        ),
     }
 
     output_path = (

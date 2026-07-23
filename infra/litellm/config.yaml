@@ -96,6 +96,30 @@ guardrails:
       default_on: true
       require_provenance: true
 
+  # Same class, a second entry, run at the opposite hook. A model's response was never
+  # redacted: pre_call only ever sees the outbound request, so a completion that quoted a
+  # header/cookie/token out of target-derived content, or an upstream error that arrived
+  # as a raw provider error body, reached the trace store verbatim. This entry runs
+  # `SentinelGuardrail.async_post_call_success_hook`, which applies the same
+  # `egress_redaction.redact()` to the response instead.
+  #
+  # A separate entry rather than a `mode: [pre_call, post_call]` list on `sentinel` above:
+  # the two hooks have no ordering dependency on each other (unlike redaction-then-
+  # spotlighting within pre_call, which does), so nothing is bought by coupling them, and
+  # a distinct guardrail_name makes each hook's audit trail and failure mode independently
+  # legible in the log and in this file.
+  #
+  # It does not require provenance - that flag governs whether an outbound request may be
+  # sent undeclared, which has no response-side equivalent - and a failure in the response
+  # pass logs and passes the response through rather than failing an already-answered
+  # call; see `async_post_call_success_hook`'s docstring for why that is the right default
+  # here and not just the convenient one.
+  - guardrail_name: sentinel-response
+    litellm_params:
+      guardrail: sentinel_guardrail.SentinelGuardrail
+      mode: post_call
+      default_on: true
+
   # There is no exemption entry, and the reason is a fact about the proxy rather than a
   # preference. LiteLLM will not let a caller switch off a `default_on` guardrail from the
   # request body — its own guardrail code says the restriction exists "to prevent callers

@@ -19,12 +19,16 @@ proxy import.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
+import logging
 import pathlib
 import sys
+import types
 
 import pytest
+import yaml
 
 GUARDRAILS = pathlib.Path(__file__).resolve().parents[1] / "infra" / "litellm" / "guardrails"
 sys.path.insert(0, str(GUARDRAILS))
@@ -38,6 +42,17 @@ except ImportError:  # pragma: no cover - only while the module is being written
 
 requires_redaction = pytest.mark.skipif(
     egress_redaction is None, reason="egress_redaction module not present"
+)
+
+try:  # the adapter's own litellm import is guarded (see its top-of-file try/except) so
+    # this succeeds even in this litellm-free suite; kept defensive for the same reason
+    # the egress_redaction import above is.
+    import sentinel_guardrail  # noqa: E402
+except ImportError:  # pragma: no cover - only if that guard regresses
+    sentinel_guardrail = None
+
+requires_sentinel_guardrail = pytest.mark.skipif(
+    sentinel_guardrail is None, reason="sentinel_guardrail module not present"
 )
 
 
@@ -462,6 +477,278 @@ def test_whole_scanner_finding_survives_redaction_intact():
     assert "' OR 1=1--" in redacted
     assert "sqli-error-based" in redacted
     assert "/rest/products/search" in redacted
+
+
+# --- control: a model's response must not leak a credential into the trace store --
+# This is the gap this suite exists to close. The pre_call hook redacts what this host
+# sends outward and says nothing about what comes back - a model asked to analyse
+# target-derived content can quote a credential out of it, and an upstream error can
+# arrive as a raw provider error body carrying one. Both reached Langfuse verbatim.
+
+CREDENTIAL_IN_ANSWER = "sk-abc123def456ghi789jkl012mno345pq"
+
+
+def chat_response(content=None, tool_call_arguments=None):
+    """A stand-in for litellm's `ModelResponse`, built with attribute access rather
+    than a dict - that is the shape the running proxy actually hands the hook, and the
+    walk under test must not assume dict-only access."""
+    message = types.SimpleNamespace(content=content, tool_calls=None)
+    if tool_call_arguments is not None:
+        function = types.SimpleNamespace(name="f", arguments=tool_call_arguments)
+        message.tool_calls = [types.SimpleNamespace(function=function)]
+    choice = types.SimpleNamespace(message=message)
+    return types.SimpleNamespace(choices=[choice])
+
+
+def responses_api_response(*, message_text=None, function_call_arguments=None):
+    """A stand-in for litellm's Responses API result: `output` is a list of items,
+    a `message` item nesting text in `content[].text`, a `function_call` item
+    carrying its own `arguments` directly."""
+    output = []
+    if message_text is not None:
+        part = types.SimpleNamespace(type="output_text", text=message_text)
+        output.append(types.SimpleNamespace(type="message", content=[part]))
+    if function_call_arguments is not None:
+        output.append(types.SimpleNamespace(type="function_call", arguments=function_call_arguments))
+    return types.SimpleNamespace(output=output)
+
+
+@requires_sentinel_guardrail
+def test_chat_completion_message_content_is_redacted():
+    response = chat_response(content=f"The header carried {CREDENTIAL_IN_ANSWER}.")
+    redacted, findings = sentinel_guardrail.redact_response(response)
+    assert CREDENTIAL_IN_ANSWER not in redacted.choices[0].message.content
+    assert any(f["location"] == "choices[0].message.content" for f in findings)
+
+
+@requires_sentinel_guardrail
+def test_chat_completion_tool_call_arguments_are_redacted():
+    """Tool arguments are the quieter half here too, same as on the request side:
+    `content` is often null on a tool-calling turn, so a walk that only reads
+    `content` would miss a credential the model echoed into a function call."""
+    response = chat_response(tool_call_arguments=f'{{"token": "{CREDENTIAL_IN_ANSWER}"}}')
+    redacted, findings = sentinel_guardrail.redact_response(response)
+    arguments = redacted.choices[0].message.tool_calls[0].function.arguments
+    assert CREDENTIAL_IN_ANSWER not in arguments
+    assert any(
+        f["location"] == "choices[0].message.tool_calls[0].function.arguments" for f in findings
+    )
+
+
+@requires_sentinel_guardrail
+def test_responses_api_message_text_is_redacted():
+    response = responses_api_response(message_text=f"Found cookie={CREDENTIAL_IN_ANSWER}")
+    redacted, findings = sentinel_guardrail.redact_response(response)
+    assert CREDENTIAL_IN_ANSWER not in redacted.output[0].content[0].text
+    assert any(f["location"] == "output[0].content[0].text" for f in findings)
+
+
+@requires_sentinel_guardrail
+def test_responses_api_function_call_arguments_are_redacted():
+    response = responses_api_response(
+        function_call_arguments=f'{{"api_key": "{CREDENTIAL_IN_ANSWER}"}}'
+    )
+    redacted, findings = sentinel_guardrail.redact_response(response)
+    assert CREDENTIAL_IN_ANSWER not in redacted.output[0].arguments
+    assert any(f["location"] == "output[0].arguments" for f in findings)
+
+
+@requires_sentinel_guardrail
+def test_dict_shaped_response_is_also_redacted():
+    """Not every caller of this function will be handed a pydantic object - a raw
+    dict must be walked the same way, not silently skipped."""
+    response = {"choices": [{"message": {"content": f"token={CREDENTIAL_IN_ANSWER}"}}]}
+    redacted, findings = sentinel_guardrail.redact_response(response)
+    assert CREDENTIAL_IN_ANSWER not in redacted["choices"][0]["message"]["content"]
+    assert findings
+
+
+@requires_sentinel_guardrail
+def test_legitimate_answer_survives_response_redaction_byte_identical():
+    """The round-trip assertion, applied to the response side: a legitimate answer
+    quoting scanner evidence back to the caller must not be mangled - checking absence
+    of a planted secret cannot observe a redactor that corrupts what it passes through."""
+    response = chat_response(content=f"Evidence: {SCANNER_FINDING}")
+    redacted, _ = sentinel_guardrail.redact_response(response)
+    content = redacted.choices[0].message.content
+    assert "' OR 1=1--" in content
+    assert "sqli-error-based" in content
+    assert "/rest/products/search" in content
+
+
+@requires_sentinel_guardrail
+def test_response_audit_entry_never_carries_the_secret_value():
+    response = chat_response(content=f"key is {CREDENTIAL_IN_ANSWER}")
+    _, findings = sentinel_guardrail.redact_response(response)
+    blob = json.dumps(findings)
+    assert CREDENTIAL_IN_ANSWER not in blob
+
+
+# --- control: a completed answer must reach the caller even if response redaction fails
+
+
+class _DummyUserKey:
+    key_alias = "test-caller"
+
+
+def _run(coro):
+    return asyncio.run(coro)
+
+
+@requires_sentinel_guardrail
+def test_post_call_hook_redacts_and_returns_the_response():
+    guardrail = sentinel_guardrail.SentinelGuardrail()
+    response = chat_response(content=f"leaked: {CREDENTIAL_IN_ANSWER}")
+    result = _run(
+        guardrail.async_post_call_success_hook(
+            data={}, user_api_key_dict=_DummyUserKey(), response=response
+        )
+    )
+    assert CREDENTIAL_IN_ANSWER not in result.choices[0].message.content
+
+
+@requires_sentinel_guardrail
+def test_post_call_hook_does_not_raise_when_redaction_fails(monkeypatch):
+    """The failure this test exists to prevent: a bug in the response-side redactor
+    turning an already-answered call into an error response returned to the caller.
+    See `async_post_call_success_hook`'s docstring for why passing through unredacted
+    is the chosen trade-off rather than failing the call."""
+
+    def _boom(response):
+        raise RuntimeError("simulated redaction bug")
+
+    monkeypatch.setattr(sentinel_guardrail, "redact_response", _boom)
+    guardrail = sentinel_guardrail.SentinelGuardrail()
+    response = chat_response(content="ordinary answer, nothing to redact")
+    result = _run(
+        guardrail.async_post_call_success_hook(
+            data={}, user_api_key_dict=_DummyUserKey(), response=response
+        )
+    )
+    assert result is response, "a redaction failure must return the original response, not raise"
+
+
+@requires_sentinel_guardrail
+def test_post_call_hook_audit_trail_is_labelled_side_response_and_carries_no_value():
+    """Requirement: response-side redactions must be distinguishable from request-side
+    ones in the audit trail, and the trail must never carry the value it redacted."""
+
+    class _Capture(logging.Handler):
+        def __init__(self):
+            super().__init__()
+            self.messages: list[str] = []
+
+        def emit(self, record):
+            self.messages.append(record.getMessage())
+
+    handler = _Capture()
+    sentinel_guardrail.audit_logger.addHandler(handler)
+    try:
+        guardrail = sentinel_guardrail.SentinelGuardrail()
+        response = chat_response(content=f"leaked: {CREDENTIAL_IN_ANSWER}")
+        _run(
+            guardrail.async_post_call_success_hook(
+                data={}, user_api_key_dict=_DummyUserKey(), response=response
+            )
+        )
+    finally:
+        sentinel_guardrail.audit_logger.removeHandler(handler)
+
+    assert any("side=response" in message for message in handler.messages), (
+        "response-side redactions must be labelled distinguishably from request-side ones"
+    )
+    assert not any(CREDENTIAL_IN_ANSWER in message for message in handler.messages), (
+        "the audit trail must never contain the value it redacted"
+    )
+
+
+@requires_sentinel_guardrail
+def test_pre_call_audit_trail_is_labelled_side_request():
+    """The request-side half of the same distinguishability requirement."""
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    assert "side=request" in source
+    assert "side=response" in source
+
+
+def test_adapter_reuses_egress_redaction_for_the_response_too():
+    """One redactor, reused for both directions - not a second implementation grown
+    for responses. `egress_redaction` is the only file allowed to know what a
+    credential looks like."""
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    assert "egress_redaction.redact(" in source
+    assert "import re" not in source, (
+        "a regex import here would mean a second, undocumented redactor exists "
+        "alongside egress_redaction's"
+    )
+
+
+def test_post_call_hook_has_no_raise_path():
+    """The failure this guards: an exception from response redaction reaching the
+    caller as an error for a call the model already answered successfully."""
+    import ast
+
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    hook = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "async_post_call_success_hook"
+    )
+    raises = [n for n in ast.walk(hook) if isinstance(n, ast.Raise)]
+    assert not raises, "the response-redaction hook must never raise past the caller"
+
+    tries = [n for n in ast.walk(hook) if isinstance(n, ast.Try)]
+    assert tries, "the hook has no try/except guarding the redaction call"
+    assert any(
+        handler.type is None or getattr(handler.type, "id", "") == "Exception"
+        for t in tries
+        for handler in t.handlers
+    ), "the except clause must be broad enough to catch an unexpected response shape"
+
+
+def test_config_declares_a_post_call_response_redaction_guardrail():
+    cfg_path = pathlib.Path(__file__).resolve().parents[1] / "infra" / "litellm" / "config.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+    guards = {g["guardrail_name"]: g.get("litellm_params", {}) for g in cfg.get("guardrails", [])}
+
+    response_guard = guards.get("sentinel-response")
+    assert response_guard is not None, "no output-side guardrail entry was added"
+    assert response_guard.get("guardrail") == "sentinel_guardrail.SentinelGuardrail", (
+        "the output-side entry must reuse the same adapter class, not a new one"
+    )
+    assert response_guard.get("mode") == "post_call"
+    assert response_guard.get("default_on") is True, (
+        "an opt-in-only response guardrail would leave responses unredacted by default"
+    )
+    # The request-side entry must still be there and unchanged - this adds coverage,
+    # it does not replace it.
+    assert guards["sentinel"]["mode"] == "pre_call"
+
+
+def test_class_docstring_no_longer_claims_a_working_legacy_client_exemption():
+    """The docstring taught a `sentinel-legacy-client` named-guardrail exemption that
+    was proven unreachable: LiteLLM refuses to let a caller disable a `default_on`
+    guardrail from the request body. See config.yaml's own comment on the same fact."""
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    assert "is exempted by\n    giving it its own guardrail entry with the flag off" not in source, (
+        "the docstring still teaches the disproven exemption as though it works"
+    )
+    assert "sentinel-legacy-client" in source, (
+        "the corrected docstring should still name what was removed, for the reader "
+        "who goes looking for it"
+    )
+    assert "never worked" in source
+
+
+def test_readme_no_longer_claims_responses_are_unredacted():
+    readme_path = pathlib.Path(__file__).resolve().parents[1] / "infra" / "litellm" / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+    assert "Model responses are not redacted." not in readme
+    assert "post_call" in readme, "the corrected paragraph should name the hook that now runs"
+    assert "stream" in readme.lower(), (
+        "the streaming gap must stay stated explicitly, not silently dropped now that "
+        "the non-streaming gap is closed"
+    )
 
 
 # --- the request shapes that bypassed the guardrail entirely ---------------------

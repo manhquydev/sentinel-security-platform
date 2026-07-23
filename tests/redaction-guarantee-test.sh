@@ -143,6 +143,72 @@ if [ -n "$s" ]; then
   present "Semgrep line number preserved" "$s" "42"
 fi
 
+sect "Semgrep run-semgrep.sh — finding identity independent of run mode"
+# DefectDojo hashes Semgrep findings on file_path + line + vuln_id_from_tool
+# (path/check_id here). Semgrep computes both from where the config/target
+# happen to sit on disk, so a docker mount ("/rules","/src") and a local
+# checkout ("scanners/rulesets","<host tree>") produce two different
+# identities for the same source — a later run-mode switch would silently
+# auto-mitigate every existing finding as "remediated" and recreate it.
+# run-semgrep.sh neutralises this (cwd pinned to the ruleset's own directory,
+# config referenced by basename, path stripped of its target-argument
+# prefix). No docker image is available to exercise the docker branch
+# directly, so "mode B" below issues the *same command shape* the docker
+# branch issues (cwd == mounted ruleset dir, config by basename, absolute
+# target) against a differently-named directory pair, run outside the
+# wrapper with the local binary — proving the identity-producing mechanism
+# itself, not just one invocation of it, is mount-name-independent.
+RUN_SEMGREP="$REPO_ROOT/scanners/run-semgrep.sh"
+RULESET="$REPO_ROOT/scanners/rulesets/owasp-local.yml"
+SEMGREP_BIN_FOR_TEST="${SEMGREP_BIN:-$(command -v semgrep 2>/dev/null || true)}"
+if [ -z "$SEMGREP_BIN_FOR_TEST" ]; then
+  if [ "${REQUIRE_SEMGREP:-0}" = "1" ]; then
+    bad "semgrep identity check required (REQUIRE_SEMGREP=1) but no semgrep binary found"
+  else
+    printf '  \033[33mSKIP\033[0m semgrep identity check: no local semgrep binary (set SEMGREP_BIN or REQUIRE_SEMGREP=1)\n'
+  fi
+else
+  IDW="$WORK/semgrep-identity"
+  mkdir -p "$IDW/mode-a-src" "$IDW/mode-b-src"
+  cat >"$IDW/mode-a-src/Foo.java" <<'JAVA'
+package demo;
+public class Foo { public Foo() { new java.util.Random(); } }
+JAVA
+  cp "$IDW/mode-a-src/Foo.java" "$IDW/mode-b-src/Foo.java"
+
+  # Mode A: the wrapper's real local-binary branch.
+  a_raw="$IDW/mode-a-raw.json"
+  SEMGREP_BIN="$SEMGREP_BIN_FOR_TEST" TARGET_SRC="$IDW/mode-a-src" SEMGREP_RULESET="$RULESET" \
+    "$RUN_SEMGREP" "$a_raw" >/dev/null 2>&1
+  a_check_id="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["results"][0]["check_id"] if d["results"] else "")' "$a_raw" 2>/dev/null)"
+  a_path="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["results"][0]["path"] if d["results"] else "")' "$a_raw" 2>/dev/null)"
+
+  if [ -z "$a_check_id" ] || [ -z "$a_path" ]; then
+    bad "wrapper local-binary run produced a finding to compare"
+  else
+    [ "$a_check_id" = "java-insecure-random" ] && ok "local-binary check_id is bare (java-insecure-random)" \
+      || bad "local-binary check_id carries a prefix ($a_check_id)"
+    case "$a_path" in
+      /*) bad "local-binary path is host-absolute, leaks the scan host ($a_path)" ;;
+      *)  ok "local-binary path is target-relative, no host path leaked ($a_path)" ;;
+    esac
+
+    # Mode B: the docker branch's command shape (cwd == mounted ruleset dir,
+    # config by basename, absolute target), against a directory pair with
+    # different basenames than mode A's — same mechanism, different names.
+    b_raw="$IDW/mode-b-raw.json"
+    ( cd "$(dirname "$RULESET")" && "$SEMGREP_BIN_FOR_TEST" scan --json --error --disable-version-check --metrics=off \
+        --config "$(basename "$RULESET")" "$IDW/mode-b-src" ) >"$b_raw" 2>/dev/null
+    b_check_id="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["results"][0]["check_id"] if d["results"] else "")' "$b_raw" 2>/dev/null)"
+    b_path_suffix="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["results"][0]["path"] if d["results"] else "")' "$b_raw" 2>/dev/null | sed 's#.*/mode-b-src/##')"
+
+    [ "$b_check_id" = "$a_check_id" ] && ok "check_id matches across mount-name-independent invocations ($b_check_id)" \
+      || bad "check_id diverges by invocation geometry (mode A=$a_check_id mode B=$b_check_id)"
+    [ "$b_path_suffix" = "$a_path" ] && ok "target-relative path matches across invocations ($a_path)" \
+      || bad "target-relative path diverges (mode A=$a_path mode B=$b_path_suffix)"
+  fi
+fi
+
 sect "Trivy JSON — secret match AND misconfig code redacted, target/component preserved"
 t="$(run trivy trivy-planted-secret.json)" || bad "trivy redactor ran"
 if [ -n "$t" ]; then

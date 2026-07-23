@@ -46,6 +46,42 @@ because that number is easy to misread.
   fail-closed provenance check and skip it. See the `gateway_hygiene_always_on` caveat
   field in every result artifact.
 - **Not the full AgentDojo benchmark.** See "Scope and cost" below.
+- **Not meaningful for an injection task the scaffold can't complete unattacked.**
+  AgentDojo's own `injection_task.security()` check is what a "successful attack" means,
+  and it is impossible to pass on an injection task the scaffold cannot even complete when
+  that goal is the *only* instruction and nothing is defending. A 0% attack-success rate on
+  such a task is true by construction, not evidence the attack was resisted - it says
+  nothing about the attack, only that the goal was unreachable for this scaffold either
+  way. See "How the scaffold's tasks are selected" below; every result artifact now records
+  `run_metadata.selection` and `results.injection_task_standalone_utility` so a reader can
+  check this before trusting `attack_success_rate`.
+
+## How the scaffold's tasks are selected
+
+Every run first probes standalone utility for every injection task in the chosen suite:
+each injection task's own `GOAL` is sent as the sole prompt, with no attack and no paired
+user task, and `injection_task.security()` on that run is `standalone_utility` - exactly
+the check AgentDojo performs internally before scoring an attack
+(`injection_tasks_utility_results` in `agentdojo.benchmark.benchmark_suite_with_injections`).
+Only injection tasks with `standalone_utility == true` are eligible to be scored in the
+attack matrix; `--max-injection-tasks` bounds a sorted prefix of *that viable set*, not of
+the raw suite. This means the same flags can select different injection tasks across
+suites or scaffold changes - the run's `run_metadata.selection` field always records which
+tasks were considered, which were viable, and which were actually used, so this is
+auditable from the artifact alone.
+
+Probing is cheap (one run per candidate injection task, no pairing), and the attack-matrix
+phase reuses the probe's cached standalone-utility runs (`force_rerun=False` for the
+selected tasks' repeat standalone check that `benchmark_suite_with_injections` performs
+internally) instead of re-billing them.
+
+If no injection task in a suite has `standalone_utility == true` for this scaffold, the
+run still completes and writes an artifact, but `results.attack_success_rate` is `null`
+and `caveats.no_viable_injection_tasks` states why: there is no meaningful ASR to report
+for that suite with this scaffold. Making a suite meaningful in that case needs either a
+more capable scaffold (this one has no memory or planning beyond a single tool-call loop
+bounded by `--max-tool-iters`) or a different suite whose injection goals this scaffold can
+already complete unattacked - not a different sample of the same unreachable goals.
 
 ## How the scaffold satisfies the gateway's provenance requirement
 
@@ -104,20 +140,30 @@ python3 evaluation/agentdojo/run_baseline.py --suite banking --max-user-tasks 3 
 `run_baseline.py` reads the gateway key from the environment variable named by
 `--gateway-key-env` (default `LITELLM_MASTER_KEY`) and never logs or writes its value.
 
-The run is deterministic in its inputs: task selection is `sorted(suite.user_tasks)[:N]`
-and `sorted(suite.injection_tasks)[:N]`, for the AgentDojo v1 suite and attack pinned by
-`--suite`/`--benchmark-version`/attack name, so the same flags select the same tasks on
-every run (model output itself is not deterministic - temperature is fixed at 0.0, but
-the gateway's backing tier does not guarantee bit-identical replies).
+The run's *inputs* are deterministic: user-task selection is `sorted(suite.user_tasks)[:N]`,
+and injection-task selection is `sorted(viable_injection_tasks)[:N]` where
+`viable_injection_tasks` is whichever tasks the standalone-utility probe (see "How the
+scaffold's tasks are selected") finds viable in that run, for the AgentDojo v1 suite and
+attack pinned by `--suite`/`--benchmark-version`/attack name. Because viability itself comes
+from a live model call, it is stable in practice (temperature 0.0, and standalone utility on
+these tasks does not depend on adversarial phrasing) but not contractually guaranteed
+bit-for-bit across runs the way the sorted-prefix selection is - the gateway's backing tier
+does not guarantee bit-identical replies. Always read `run_metadata.selection` in the
+artifact actually produced rather than assuming which injection tasks a given flag
+combination selected.
 
 ## The committed result
 
-`results/20260723T155908Z-banking-sast-sol.json` is one real run:
+`results/20260723T164236Z-banking-sast-sol.json` is the current real run:
 
 - **Suite**: `banking` (AgentDojo v1's smallest suite: 16 user tasks, 9 injection tasks)
-- **Subset**: first 3 user tasks x first 2 injection tasks, sorted by ID = 6 task runs,
-  plus 2 standalone injection-task utility checks AgentDojo runs automatically = 16
-  gateway calls total
+- **Selection**: all 9 injection tasks probed standalone; 3 viable
+  (`injection_task_4`, `injection_task_5`, `injection_task_7`; see
+  `results.injection_task_standalone_utility` for all 9 and
+  `run_metadata.selection` for the considered/viable/used breakdown)
+- **Subset**: first 3 user tasks x first 2 *viable* injection tasks
+  (`injection_task_4`, `injection_task_5`), sorted by ID = 6 task runs, plus 9 standalone
+  injection-task utility probes = 31 gateway calls total
 - **Attack**: `important_instructions_generic_model` - AgentDojo's default
   `important_instructions` static jailbreak template, addressed to a generic model
   phrase instead of a resolved model name (see the docstring on
@@ -125,35 +171,55 @@ the gateway's backing tier does not guarantee bit-identical replies).
   model-name lookup expects a literal provider model ID, and this scaffold is reached
   through a gateway alias instead)
 - **Model alias**: `sast-sol`
-- **Result**: `attack_success_rate: 0.0` (0/6), `utility_under_attack: 0.667` (4/6)
-- **Token usage**: 14,337 prompt + 1,154 completion = 15,491 tokens across 16 calls
-- **Observed cost**: $0.1063, using the `sast-sol` list-price mapping documented in
+- **Result**: `attack_success_rate: 0.0` (0/6), `utility_under_attack: 0.667` (4/6) - unlike
+  the superseded run below, both injection tasks scored here have
+  `standalone_utility: true`, so this 0.0 means the attack failed to redirect behavior the
+  scaffold could otherwise perform, not that the goal was unreachable
+- **Token usage**: 26,436 prompt + 2,199 completion = 28,635 tokens across 31 calls
+- **Observed cost**: $0.1982, using the `sast-sol` list-price mapping documented in
   `infra/litellm/config.yaml` (the only alias in this gateway with a config-verified price
   match; see `cost.price_basis` in the artifact)
 
 A zero-ASR result from 6 task runs is a small-sample data point, not a strong claim either
-way - the point of this artifact is that the harness runs correctly end to end and is
-re-runnable, not that six tasks characterize the scaffold's robustness.
+way - the point of this artifact is that the harness runs correctly end to end on a
+non-vacuous denominator and is re-runnable, not that six tasks characterize the scaffold's
+robustness.
 
 Every field described above, plus the full caveat set, is in the artifact itself under
-`run_metadata`, `results`, `token_usage`, `cost`, and `caveats` - it is self-describing;
-this README summarizes it, not the other way around.
+`run_metadata` (including `run_metadata.selection`), `results`, `token_usage`, `cost`, and
+`caveats` - it is self-describing; this README summarizes it, not the other way around.
+
+### Superseded: `results/20260723T155908Z-banking-sast-sol.json`
+
+The first committed run selected `injection_task_0` and `injection_task_1` (the raw
+sorted-prefix of the suite, with no standalone-utility check) and reported
+`attack_success_rate: 0.0`. Both of those injection tasks have `standalone_utility: false`
+for this scaffold: it cannot complete either injected goal even when it is the only
+instruction and nothing is defending. That 0.0 is true by construction and does not show
+the attack was resisted - the field was already recorded in that artifact's own
+`results.injection_task_standalone_utility`, but no caveat called it out, so the empty
+denominator was easy to miss. That file is kept, unmodified except for an added
+`superseded` field stating this, as a factual record of what was actually run - not as a
+citable ASR baseline. Cite `results/20260723T164236Z-banking-sast-sol.json` instead.
 
 ## Scope and cost - read before running a larger subset
 
-This repository's cost-control requirement is mandatory. The committed run is 6 task
-combinations (16 gateway calls, 15,491 tokens, $0.11). The artifact's
-`cost.full_run_projection` field extrapolates this run's average tokens-per-task-run
-linearly across **every AgentDojo v1 suite's full task matrix, for this same one attack and
-one model alias**:
+This repository's cost-control requirement is mandatory. The committed run is 6 scored
+task combinations plus 9 standalone-utility probes (31 gateway calls, 28,635 tokens,
+$0.20). The artifact's `cost.full_run_projection` field extrapolates this run's average
+tokens-per-task-run linearly across **every AgentDojo v1 suite's full task matrix, for this
+same one attack and one model alias** (this is the unfiltered AgentDojo default matrix -
+running every injection task, not only standalone-viable ones - since that is what
+AgentDojo's own published methodology actually runs; it is a cost upper bound this
+repository's filtered, viable-only runs stay well under):
 
 | Suite | Task runs (full) | Projected cost |
 |---|---|---|
-| banking | 153 | ~$2.71 |
-| slack | 110 | ~$1.95 |
-| travel | 147 | ~$2.60 |
-| workspace | 246 | ~$4.36 |
-| **all four v1 suites, one attack, one model** | **656** | **~$11.62** |
+| banking | 153 | ~$5.05 |
+| slack | 110 | ~$3.63 |
+| travel | 147 | ~$4.85 |
+| workspace | 246 | ~$8.12 |
+| **all four v1 suites, one attack, one model** | **656** | **~$21.66** |
 
 This is a **lower bound**, not an estimate of AgentDojo's full published methodology:
 the AgentDojo paper evaluates multiple attacks (`important_instructions`, `direct`,
