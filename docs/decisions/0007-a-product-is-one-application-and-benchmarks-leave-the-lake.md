@@ -55,18 +55,30 @@ Concretely:
 
 ## Alternatives Considered
 
-1. **Keep one Product and rename it.** Cheapest, and it was tempting because it changes no
-   scan. Rejected on a correctness finding rather than on tidiness: **deduplication is
-   product-wide**, measured live during Week-1 (221 findings imported into a second engagement
-   returned flagged `duplicate: 221` against the baseline engagement). `DEDUPE_ALGO_ENDPOINT_FIELDS`
-   is not overridden in `infra/defectdojo/docker-compose.yml`, so DefectDojo's default
-   `["host","path"]` applies — **port is not part of the hash**. Every current Nuclei finding
-   carries host `127.0.0.1`. A second loopback-hosted target would therefore collide with Juice
-   Shop on any shared path: the eight security-header matchers on `/` hash identically once
-   host, path, title, cwe, severity and component match. One application's findings would be
-   silently filed as duplicates of another's. Semgrep and Trivy are unaffected because their
-   hashes include `file_path`; the exposure is specific to the DAST arm, which is exactly the
-   arm a second target would add.
+1. **Keep one Product and rename it.** Cheapest, and it changes no scan. Rejected — but
+   the reason recorded here at first was wrong, and the correction matters more than the
+   original claim.
+
+   **What was claimed:** endpoint hashing uses `["host","path"]` and ignores port, so two
+   loopback targets in one Product would collide on any shared path and silently file one
+   application's DAST findings as duplicates of another's.
+
+   **What is actually true**, measured against this running build on 2026-07-23 after an
+   adversarial review challenged it: the lake contains **zero `Endpoint` rows**, so no
+   Nuclei finding "carries host 127.0.0.1" as asserted. And `DEDUPE_ALGO_ENDPOINT_FIELDS`
+   is consulted only when comparing candidates that already matched by hash — it cannot
+   widen a match the hash excluded. The port-blind collision described above does not
+   operate here.
+
+   **The decision stands, on the reasons that survive.** Deduplication *is* product-wide,
+   which was measured during Week-1: 221 findings imported into a second engagement came
+   back flagged duplicate against the first. On top of that, a Product named for one
+   application while holding another's findings is a false statement to every reader and
+   every report, and a Product is the unit DefectDojo scopes authorisation and blast
+   radius by. Those are sufficient. The port mechanism was not, and citing it would have
+   sent the next person designing a second DAST target around a constraint that is not
+   there.
+
 2. **Unify everything on WebGoat.** Follows the supervisor's direction most literally.
    Rejected as currently unachievable rather than wrong: the SAST half lands immediately, but
    Trivy and Nuclei need a WebGoat runtime, and no WebGoat image is present locally while the
@@ -82,8 +94,9 @@ Concretely:
 
 Positive:
 
-- Cross-target dedup collision on the DAST arm is prevented before a second target exists,
-  rather than diagnosed after findings start disappearing.
+- Product-wide deduplication can no longer act across two applications, because they no
+  longer share a Product. (The specific port-blind endpoint mechanism first cited for this
+  was disproven — see Alternatives 1.)
 - The supervisor's direction is honoured on the arm where it is achievable today, without
   pretending the blocked arm is done.
 - The lake stops making a claim its contents do not support. A reader of
@@ -108,10 +121,11 @@ Tradeoffs:
   split, the per-Product baseline, `verify-lake.sh`, the systemd unit, and the disposition of
   the 221 existing rows. That plan must run **before** the systemd timer is installed, since
   the first firing fails the drift check as things stand.
-- Consider overriding `DEDUPE_ALGO_ENDPOINT_FIELDS` to include port, which would make loopback
-  targets distinguishable within a Product. Not adopted here because separate Products is the
-  more honest model and does not depend on a global dedup setting, but it is the natural
-  defence in depth.
+- The suggested `DEDUPE_ALGO_ENDPOINT_FIELDS` port override is **withdrawn**: that setting
+  only filters candidates that already matched by hash, so it would change nothing. The real
+  open question it was reaching for is different and worth its own look — the 21 Nuclei
+  findings carry no `Endpoint` rows at all, so their locators are not participating in
+  deduplication the way the compose file's comments assume.
 - The long-term question the architecture proposal already records — whether the staging
   target should eventually be a real VinSOC replica rather than any public vulnerable app —
   stays open and is unaffected by this decision.

@@ -192,6 +192,24 @@ during this phase.
   still-present test 70 — both inert (nothing scheduled points at them until the timers are
   installed in step 5), not silently corrupting anything.
 
+## Status update — migration executed 2026-07-23
+
+The sections below were written before the live migration and describe a lake that no
+longer exists. They are kept for the reasoning, not for the state. What is true now:
+
+- `juice-shop-harness` holds 4 Trivy + 21 Nuclei; `webgoat` holds 11 Semgrep; 36 total,
+  none mitigated or duplicated.
+- Test 70 (221 OWASP Benchmark rows) was deleted by an admin after a backup, and the 25
+  Juice Shop findings were verified byte-identical to that backup down to their hash codes.
+- The authorisation open question was resolved as option (a): the service account is
+  authorised on exactly `{juice-shop-harness, webgoat}` and is still neither staff nor
+  superuser.
+- `verify-lake.sh` passes; `tests/verify-lake-test.sh` is 9 assertions, not 8.
+- **The timers are still not installable without further work.** Both units were missing
+  the scanner binary variables their wrappers require and would have failed on first
+  firing; that is fixed, but `verify-lake.sh` is blind to a Product it was not told about,
+  which a review demonstrated by hiding an entire Product from it.
+
 ## Progress
 
 - [x] `infra/defectdojo/lake-baseline.json` restructured to `products[]`; committed content

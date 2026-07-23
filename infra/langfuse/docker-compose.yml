@@ -188,7 +188,7 @@ services:
     depends_on: *langfuse-depends-on
     environment: *langfuse-common-env
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3030/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://$$(hostname -i):3030/api/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -199,6 +199,10 @@ services:
     # healthcheck above runs inside the container - and the web UI on 3000 is
     # the only intended operator surface.
 
+  # The app binds the container's own address, not loopback, so a 127.0.0.1 probe can
+  # never succeed — both these services sat "unhealthy" for hours while serving traffic
+  # correctly. That is not cosmetic: `docker compose up --wait` never returns, and any
+  # future depends_on: service_healthy on them deadlocks.
   langfuse-web:
     image: langfuse/langfuse:3.224.1@sha256:576132f792276d07380f46a6958877a38a51d20a94e42fa9b3cb096d76db1d9c
     container_name: sentinel-langfuse-web
@@ -238,7 +242,7 @@ services:
       # tracing view of every scanned target's traffic.
       - "127.0.0.1:3001:3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://$$(hostname -i):3000/api/public/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

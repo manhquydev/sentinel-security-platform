@@ -35,6 +35,9 @@ Environment=SEMGREP_RULESET=%h/Downloads/vinsoc/scanners/rulesets/owasp-local.ym
 Environment=SCANNERS=semgrep
 Environment=PRODUCT_NAME=webgoat
 Environment=ENGAGEMENT_NAME=week1-baseline
+# Semgrep runs from the local install, the fallback decision 0005 records, because
+# SEMGREP_IMAGE has never been populated.
+Environment=SEMGREP_BIN=%h/.local/bin/semgrep
 # import-report.sh reads infra/.env for the service-account credential when
 # DD_API_TOKEN is unset; the unit inherits the repo's own .env via WorkingDirectory.
 # The service account must be authorized on the webgoat Product before this

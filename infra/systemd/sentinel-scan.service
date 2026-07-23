@@ -56,6 +56,10 @@ Environment="SCANNERS=trivy nuclei"
 # writes to it, not implied by a file this unit merely happens to also source.
 Environment=PRODUCT_NAME=juice-shop-harness
 Environment=ENGAGEMENT_NAME=week1-baseline
+# Nuclei binary currently lives OUTSIDE this repository. That is a real fragility, not a
+# preference: the unit breaks if that tree moves. It stands in for a digest-pinned image
+# that has not been obtainable here (see decision 0005 on registry throughput).
+Environment=NUCLEI_BIN=/home/manhquy/project/VinSoc/.tools/nuclei
 # import-report.sh reads infra/.env for the service-account credential when
 # DD_API_TOKEN is unset; the unit inherits the repo's own .env via WorkingDirectory.
 
