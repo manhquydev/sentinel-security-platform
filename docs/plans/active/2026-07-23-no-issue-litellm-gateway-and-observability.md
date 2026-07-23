@@ -345,10 +345,45 @@ precedent.
 
 ## Progress
 
+Sequencing changed on 2026-07-23: Phase 3 ran first. The interface contract is the only
+item in this plan that blocks another stream, §4 requires contracts frozen before code, and
+it needs no service running — whereas Phase 1 is a refactor that adds no capability. An
+earlier draft placed the relocation first out of habit rather than argument.
+
+Phase 3 — the contract and the hygiene — **complete 2026-07-23**
+
+- [x] `provenance-label.schema.json` frozen as the D ↔ E contract, with the declaration
+      pinned to `metadata.sentinel_provenance` — the channel LiteLLM keeps proxy-side rather
+      than forwarding upstream. A top-level key would have depended on `drop_params` to avoid
+      reaching the provider, which is too fragile to rest a boundary on.
+- [x] `provenance.py`: fail-closed validation with exact coverage, and spotlighting that
+      delimits whitespace-significant content rather than datamarking it, so scanner output
+      and source survive byte-for-byte. No injection detector, per decision 0006.
+- [x] `egress_redaction.py`: credentials matched on structure — known prefixes, assignment
+      syntax, PEM framing, JWT layout — never on entropy. A bare 64-hex run is flagged for an
+      operator without being rewritten, because in this workload it is a file hash inside a
+      real finding.
+- [x] `sentinel_guardrail.py`: the LiteLLM adapter, holding no policy of its own. Provenance
+      runs before redaction; the audit summary goes to the proxy log, never back to the
+      caller, so the guardrail cannot serve as an oracle for what a caller smuggled past it.
+- [x] `docs/product/guardrail-hook-contract.md` published, then corrected against the code —
+      it had claimed audit logging that did not yet exist and had left the declaration's
+      location unspecified.
+- [x] **Adversarial review found a real defect the implementation's own tests missed**: three
+      dotted segments of ten-plus characters is a JWT *and* a Java package path, so the
+      length-only pattern rewrote `organization.applications.configuration` into a redaction
+      placeholder — silently corrupting the Java source the SAST arm sends through. Anchoring
+      the header segment on `eyJ` removes the collision. Regression tests added for Java
+      packages, Semgrep check_ids and Maven coordinates.
+- [x] `tests/test_gateway_guardrails.py` — **34 assertions**, runnable without litellm
+      installed. Six mutations each turned the suite red at the assertion that owns them:
+      accepting a missing declaration, skipping spotlighting, not redacting, leaking the value
+      into the audit entry, and reverting the JWT anchor. Restoration returned green each time.
+- [x] No regression: `tests/` 45, `benchmark/` 95, workflow-safety 17, wrapper-status 15,
+      target-allowlist 9, `bash -n` and `git diff --check` clean.
+
 - [ ] Phase 1: shared gateway at `infra/litellm/`, structural parity asserted, one live call.
 - [ ] Phase 2: pricing resolved; spend real-with-source or absent-with-reason.
-- [ ] Phase 3: hook signature and provenance schema frozen; spotlighting and egress redaction,
-      six negative controls observed red first.
 - [ ] Phase 4: Langfuse standing, metadata traces, then bodies after the stored-trace control.
 - [ ] Phase 5: static ASR baseline, test suites, gateway README.
 
