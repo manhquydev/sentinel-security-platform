@@ -454,8 +454,31 @@ Phase 2 — spend — **corrected 2026-07-23; the first conclusion was wrong**
       rationale had claimed an absence the system does not have.
 - [ ] Reconciling the recorded figure against an actual invoice stays open — see Open
       questions.
-- [ ] Phase 4: Langfuse standing, metadata traces, then bodies after the stored-trace control.
-- [ ] Phase 5: static ASR baseline, test suites, gateway README.
+Phase 4 — tracing — **complete 2026-07-23**
+
+- [x] Langfuse v3 at `infra/langfuse/`: six containers, every image digest-pinned, only the
+      web UI publishes a port and it binds loopback. Published on 3001 because 3000 was
+      already held on this host.
+- [x] Project and key pair provisioned by **headless initialization** rather than a browser
+      signup. The agent's first version required clicking through the UI, which makes the
+      stack irreproducible and leaves the credential wherever the person who created it
+      happened to put it.
+- [x] Bodies enabled only after redaction was proven, and the stored trace shows the
+      ordering directly: `password=[redacted:password]` with the datamark applied around
+      the assignment but not inside it. Spotlighting first would have produced
+      `password▁=`, which the redactor's pattern does not match.
+- [x] Seven properties verified against the live stored trace: planted secret absent,
+      redaction placeholder present, attack payload preserved, preamble prepended,
+      untrusted span marked, operator message untouched, redaction before spotlighting.
+- [x] **A name collision the network join introduced.** Both stacks have a service called
+      `postgres`; from a container on both networks the name resolved to two addresses, the
+      proxy authenticated against the tracing database where its role does not exist, and
+      startup died on a credentials error that named nothing about the cause. The store is
+      addressed by container name now, with two assertions holding it there.
+- [x] The two checks that pinned message logging off were rewritten, not flipped: body
+      logging and the guardrail are one decision, so logging without the guardrail fails.
+
+- [ ] Phase 5: static ASR baseline, remaining gateway documentation.
 
 ## Decisions
 
