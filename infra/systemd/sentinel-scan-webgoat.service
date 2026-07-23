@@ -1,0 +1,53 @@
+# The WebGoat half of the sole baseline writer. Scans and imports into the
+# webgoat Product only — one Product, one application, per
+# docs/decisions/0007. Juice Shop's DAST/image-scan pass is the separate
+# sentinel-scan.{service,timer} pair.
+#
+# SAST only: WebGoat has no digest-pinned local runtime the way Juice Shop
+# does (docs/decisions/0007's disclosed asymmetry), so there is no Trivy image
+# or Nuclei target for it yet. Runs on the developer host so it can read the
+# WebGoat source tree directly.
+#
+# Install: same steps as sentinel-scan.service's header. Do not enable this
+# timer until the migration steps in
+# docs/plans/active/2026-07-23-no-issue-lake-product-split.md have run —
+# before that, the webgoat Product does not exist yet and this unit's own
+# ExecStartPost fails closed on it.
+
+[Unit]
+Description=Sentinel WebGoat SAST scan into the DefectDojo lake
+# No After=docker.service / network-online.target: see sentinel-scan.service —
+# same --user-unit constraint applies here.
+
+[Service]
+Type=oneshot
+
+# REQUIRED — set this to the real path on this host.
+WorkingDirectory=%h/Downloads/vinsoc
+# TARGET_SRC MUST be the Java source the ruleset matches — the owasp-local.yml
+# ruleset is Java-only and scanning a non-Java tree produces zero findings and
+# trips the scanned>0 guard. The count this produces here is WebGoat's own
+# baseline and is NOT the 221 that infra/defectdojo/lake-baseline.json used to
+# record — that number was measured against the OWASP Benchmark corpus, which
+# never belonged to a staging-application Product (docs/decisions/0007).
+Environment=TARGET_SRC=%h/Downloads/vinsoc/benchmark/targets/webgoat-src
+Environment=SEMGREP_RULESET=%h/Downloads/vinsoc/scanners/rulesets/owasp-local.yml
+Environment=SCANNERS=semgrep
+Environment=PRODUCT_NAME=webgoat
+Environment=ENGAGEMENT_NAME=week1-baseline
+# Semgrep runs from the local install, the fallback decision 0005 records, because
+# SEMGREP_IMAGE has never been populated.
+Environment=SEMGREP_BIN=%h/.local/bin/semgrep
+# import-report.sh reads infra/.env for the service-account credential when
+# DD_API_TOKEN is unset; the unit inherits the repo's own .env via WorkingDirectory.
+# The service account must be authorized on the webgoat Product before this
+# unit's first firing — see the migration plan's Approach section.
+
+ExecStart=/usr/bin/env bash scripts/scan-and-import.sh
+# Verify the WHOLE lake after every scan — see sentinel-scan.service for why
+# this is deliberately not scoped to this unit's own Product.
+ExecStartPost=/usr/bin/env bash scripts/verify-lake.sh
+
+# The scan pipeline is not trusted with more than it needs.
+NoNewPrivileges=true
+PrivateTmp=true

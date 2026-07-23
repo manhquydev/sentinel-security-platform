@@ -24,7 +24,13 @@ pin="$(ALLOWLIST="$ALLOWLIST" "$HERE/target-allowlist.sh" validate "$TARGET_URL"
   || { echo "run-zap: target rejected by allowlist" >&2; exit 1; }
 
 mkdir -p "$(dirname "$out")"
-workdir="$(mktemp -d)"; trap 'rm -rf "$workdir"' EXIT
+workdir="$(mktemp -d)"
+
+# Status sidecar on every exit (see run-semgrep.sh); the workdir cleanup rides the
+# same trap. CONTACT stays false until the post-scan re-probe confirms the target.
+STATUS="error"; CONTACT="false"; DETAIL="run did not complete"
+cleanup() { local rc=$?; "$HERE/write-status.sh" zap "$out" "$STATUS" "$CONTACT" "$rc" "$DETAIL" 2>/dev/null || true; rm -rf "$workdir"; }
+trap cleanup EXIT
 # zap runs as uid 1000 inside the container; grant that group write, not world
 # write (a 777 mktemp is a local TOCTOU / symlink-plant window before the cp).
 chmod 770 "$workdir"; chgrp 1000 "$workdir" 2>/dev/null || chmod 777 "$workdir"
@@ -42,10 +48,19 @@ docker run --rm --network host \
 rc=$?
 set -e
 
-if [ -s "$workdir/report.xml" ]; then
-  cp "$workdir/report.xml" "$out"
-  echo "run-zap: wrote $out (zap exit $rc, pinned $pin)" >&2
-else
+if [ ! -s "$workdir/report.xml" ]; then
   echo "run-zap: NO report produced (zap exit $rc) — treat as scanner error" >&2
   exit 5
 fi
+cp "$workdir/report.xml" "$out"
+
+# Proof of contact, checked AFTER the scan, same reasoning as run-nuclei.sh: a ZAP
+# baseline against a target that answered TCP but 403/500s everything yields a
+# valid, alert-free report and a success exit. Re-probe to confirm the target was
+# actually up before treating an empty report as a clean one.
+if ! ALLOWLIST="$ALLOWLIST" "$HERE/target-allowlist.sh" ready "$TARGET_URL" >/dev/null 2>&1; then
+  echo "run-zap: $TARGET_URL did not answer after the scan — report is not proof of a clean target" >&2
+  exit 7
+fi
+STATUS="ok"; CONTACT="true"; DETAIL="target answered post-scan, pinned $pin"
+echo "run-zap: wrote $out (zap exit $rc, pinned $pin)" >&2

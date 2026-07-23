@@ -11,10 +11,21 @@
 # link-local, cloud-metadata, RFC1918, or ULA is REJECTED unless it is
 # explicitly permitted in ALLOWLIST. Public IPs pass. If a host resolves to
 # MULTIPLE IPs and ANY one is rejected, the whole target is rejected (a
-# rebind/round-robin cannot smuggle one bad answer through). The single validated
-# IP is emitted so a caller CAN force the scanner onto it (nuclei -resolvers,
-# ZAP --add-host) to defeat a rebind between validation and scan; wiring that
-# per-scanner is a follow-up and is a no-op for a literal-IP target.
+# rebind/round-robin cannot smuggle one bad answer through).
+#
+# PRECONDITION, not a TODO. The validated IP is emitted so that a caller can pin
+# the scanner to it, which matters only when the target is a HOSTNAME: validation
+# resolves once and the scanner would resolve again, and those two answers can
+# differ. This harness targets the literal `127.0.0.1:13000`, so there is no
+# second resolution and nothing to rebind — forcing here would be a no-op, and it
+# is deliberately not implemented. If a hostname target is ever introduced, the
+# caller MUST pin the scanner to this IP before that change ships.
+#
+# Do not reach for nuclei's `-resolvers` to do it: that flag supplies a list of
+# DNS *servers*, not a hostname→IP mapping, and nuclei has no host-override flag
+# at all. The mechanisms that actually pin are a container-local /etc/hosts entry
+# (`docker run --add-host`, which requires dropping `--network host`) or
+# constraining the scanner's network namespace to the pinned address.
 #
 # ALLOWLIST: space-separated entries, each `IP`, `IP:PORT`, or `CIDR`.
 #   Port is enforced only when the matching entry specifies one.

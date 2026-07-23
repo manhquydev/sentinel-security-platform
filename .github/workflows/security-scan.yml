@@ -1,0 +1,58 @@
+# SAST/SCA on every push — a capstone-visible CI/CD security gate.
+#
+# This workflow deliberately NEVER touches the DefectDojo lake. The lake binds
+# loopback on the developer host and is fed by a systemd timer there (see
+# infra/systemd/); a GitHub-hosted runner cannot reach it, and a self-hosted
+# runner on a public repo would need root-equivalent docker access. So this runs
+# the source scanners, redacts their reports, and uploads them as artifacts — and
+# holds no secrets at all, which is the strongest guarantee that a fork or a
+# malicious change cannot exfiltrate anything.
+name: security-scan
+
+on:
+  # No pull_request / pull_request_target: this is a public repo, and a
+  # secret-bearing or self-hosted-runner workflow reachable from a fork is the
+  # classic supply-chain foothold. Even though this workflow carries no secrets,
+  # keeping fork triggers off is defence in depth and is enforced by
+  # tests/workflow-safety-test.sh so a future edit cannot quietly add one.
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read   # read the code, nothing else — no packages, no id-token, no writes
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false   # do not leave a GITHUB_TOKEN in .git/config
+
+      # Semgrep is deliberately NOT run here. The mirrored, checksummed ruleset
+      # (scanners/rulesets/owasp-local.yml) targets Java — it exists to scan the
+      # WebGoat source that the local scan uses, which is gitignored and not in a
+      # public checkout. This repository's own source is Bash/Python/YAML, for
+      # which no mirrored ruleset is shipped, so running the Java ruleset here
+      # would scan zero files and prove nothing. Trivy's secret and
+      # misconfiguration scanners are language-agnostic and scan this repo for
+      # real. The full four-scanner pipeline runs on the developer host via the
+      # systemd timer; see scripts/README.md.
+      - name: Trivy (secret + misconfiguration, digest-pinned)
+        run: |
+          TARGET_SRC="$GITHUB_WORKSPACE" \
+          TRIVY_IMAGE="aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f" \
+          TRIVY_SCANNERS="secret,misconfig" \
+            ./scanners/run-trivy.sh "$GITHUB_WORKSPACE/trivy.raw.json"
+          ./scanners/redact-report.sh trivy "$GITHUB_WORKSPACE/trivy.raw.json" "$GITHUB_WORKSPACE/trivy.san.json"
+
+      - name: Upload redacted report
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
+        with:
+          name: sast-reports
+          # ONLY the redacted report. The raw report carries the matched source,
+          # including any literal secret, and is never uploaded from a public repo.
+          path: trivy.san.json
+          if-no-files-found: error

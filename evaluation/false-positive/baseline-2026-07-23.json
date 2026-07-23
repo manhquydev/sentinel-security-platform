@@ -1,0 +1,48 @@
+{
+  "attack_payload_preservation": {
+    "checked": 10,
+    "mangled": []
+  },
+  "corpus": {
+    "attack-surface-baseline": {
+      "documents": 1,
+      "documents_altered": 0,
+      "redactions_located": 0
+    },
+    "sanitized-scanner-report": {
+      "documents": 3,
+      "documents_altered": 0,
+      "redactions_located": 0
+    },
+    "webgoat-java": {
+      "documents": 371,
+      "documents_altered": 37,
+      "redactions_located": 84
+    }
+  },
+  "documents_total": 375,
+  "flagged_not_redacted": {
+    "unclassified-high-entropy": 16
+  },
+  "interpretation": {
+    "not_a_gate": "Recorded as a baseline. A threshold set before the distribution is known is a guess.",
+    "what_this_does_not_measure": "It is not a recall figure. A redaction inside vulnerable-by-design source may be correct, because that source really does contain hardcoded credentials; those alterations are counted in the rate and deliberately not judged here.",
+    "what_this_measures": "How the egress guardrail behaves on the content this gateway actually carries. Unambiguous false positives are decided by structure, not by opinion: the contexts listed cannot hold a credential."
+  },
+  "measured_at": "2026-07-23T16:23:18+00:00",
+  "redactions_by_detector": {
+    "authorization": 2,
+    "cookie": 8,
+    "jwt": 8,
+    "password": 23,
+    "pem-private-key": 2,
+    "secret": 4,
+    "token": 37
+  },
+  "unambiguous_false_positives": {
+    "by_oracle": {},
+    "cases": [],
+    "cases_truncated": 0,
+    "count": 0
+  }
+}

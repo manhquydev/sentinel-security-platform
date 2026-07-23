@@ -1,0 +1,212 @@
+{
+  "components": [
+    {
+      "confidence": "high",
+      "evidence_source": "trivy-digest",
+      "name": "bkimminich/juice-shop",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "rationale": "The component identity is bound to the manifest digest; no mutable tag is accepted.",
+      "source_ref": "image@sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a",
+      "source_sha256": "e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a",
+      "version": "20.1.1"
+    }
+  ],
+  "coverage": {
+    "limitations": [
+      "No authenticated or state-changing requests were executed.",
+      "OCI source revision is declared provenance, not a build attestation.",
+      "Semgrep/SAST and live scanner output are excluded from this baseline."
+    ],
+    "mode": "anonymous-locator-only"
+  },
+  "endpoints": [
+    {
+      "auth_class": "public",
+      "confidence": "observed",
+      "evidence_source": "sanitized-nuclei",
+      "finding_refs": [
+        "nuclei:security-txt"
+      ],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:03:03+07:00",
+      "parameters": [],
+      "path": "/.well-known/security.txt",
+      "rationale": "Sanitized Nuclei locator only; contact details and raw response content are intentionally omitted.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:nuclei-sanitized:/.well-known/security.txt",
+      "source_sha256": "9f3a55e5fa27e6c53d68f5241b462ca80e00e2629459f9277cb9a0a267c9dc6f",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "public",
+      "confidence": "observed",
+      "evidence_source": "pinned-openapi",
+      "finding_refs": [
+        "nuclei:swagger-api"
+      ],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:03:00+07:00",
+      "parameters": [],
+      "path": "/api-docs/swagger.json",
+      "rationale": "Sanitized Nuclei locator identifies the public Swagger document; no request or response is retained.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:openapi:/api-docs/swagger.json",
+      "source_sha256": "0ad11b988997c9f7b8e45c7cea5fbaf6f3a62b733d8ac89363be5f449281563a",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "public",
+      "confidence": "observed",
+      "evidence_source": "sanitized-nuclei",
+      "finding_refs": [
+        "nuclei:metrics"
+      ],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:03:00+07:00",
+      "parameters": [],
+      "path": "/metrics",
+      "rationale": "Sanitized Nuclei locator only; no metric values are retained.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:nuclei-sanitized:/metrics",
+      "source_sha256": "131e6b319ba32a7c1bdb4f25fe860710715a2facdcbbf42a05a14d8bc92b5dcc",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "administrative",
+      "confidence": "high",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [],
+      "path": "/rest/admin/application-version",
+      "rationale": "The harness healthcheck uses this version endpoint; the runtime preflight reads it without retaining the body.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/admin.ts",
+      "source_sha256": "92b18ce4065f3fbc0596007eabd74c84a97ff1f247393762b8031b9f3b38902a",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "hypothesis",
+      "confidence": "hypothesis",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "integer"
+        }
+      ],
+      "path": "/rest/basket/:id",
+      "rationale": "Version-pinned basket route reference; the named path parameter is a placeholder, not a session or basket identifier.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/basket.ts",
+      "source_sha256": "5af2c73bdcd237a7047ae9028f316f14bbf6889902bdcac001710690337ce26a",
+      "state_change": "hypothesis"
+    },
+    {
+      "auth_class": "hypothesis",
+      "confidence": "hypothesis",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "POST",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "integer"
+        },
+        {
+          "name": "productId",
+          "type": "integer"
+        },
+        {
+          "name": "quantity",
+          "type": "integer"
+        }
+      ],
+      "path": "/rest/basket/:id/products",
+      "rationale": "Version-pinned basket route reference indicates a basket mutation boundary; no mutation was executed.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/basket.ts",
+      "source_sha256": "5af2c73bdcd237a7047ae9028f316f14bbf6889902bdcac001710690337ce26a",
+      "state_change": "state-changing"
+    },
+    {
+      "auth_class": "public",
+      "confidence": "hypothesis",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [
+        {
+          "name": "q",
+          "type": "string"
+        }
+      ],
+      "path": "/rest/products/search",
+      "rationale": "Version-pinned product route reference; query parameter names are intentionally not populated with values.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/products.ts",
+      "source_sha256": "0dd280c98b5a124051aff796270c17e43ccf72361b84b52ab61ec0a9901d0057",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "hypothesis",
+      "confidence": "hypothesis",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "POST",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "password",
+          "type": "string"
+        }
+      ],
+      "path": "/rest/user/login",
+      "rationale": "Version-pinned route reference indicates an authentication boundary; no credentials or request were used.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/user.ts",
+      "source_sha256": "14d0b4d8fca9ac8c82b29e55d4ae711f5b42ad86a093fbbb4860bfb22ede391b",
+      "state_change": "hypothesis"
+    },
+    {
+      "auth_class": "authenticated",
+      "confidence": "hypothesis",
+      "evidence_source": "pinned-source",
+      "finding_refs": [],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:00:00+07:00",
+      "parameters": [],
+      "path": "/rest/user/whoami",
+      "rationale": "Version-pinned route reference indicates an authenticated identity boundary; no session or request was used.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:source:routes/user.ts",
+      "source_sha256": "14d0b4d8fca9ac8c82b29e55d4ae711f5b42ad86a093fbbb4860bfb22ede391b",
+      "state_change": "read-only"
+    },
+    {
+      "auth_class": "public",
+      "confidence": "observed",
+      "evidence_source": "sanitized-nuclei",
+      "finding_refs": [
+        "nuclei:robots-txt-endpoint"
+      ],
+      "method": "GET",
+      "observed_at": "2026-07-23T12:02:49+07:00",
+      "parameters": [],
+      "path": "/robots.txt",
+      "rationale": "Sanitized Nuclei locator only; it is supporting evidence and not an authoritative route inventory.",
+      "source_ref": "juice-shop@df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92:nuclei-sanitized:/robots.txt",
+      "source_sha256": "91b7c89030fe7b6ed803df57a845fd9a86f7a3f4b3c86c0b77e34425637c66af",
+      "state_change": "read-only"
+    }
+  ],
+  "schema_version": "0.1",
+  "target": {
+    "image_digest": "sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a",
+    "name": "juice-shop",
+    "source_commit": "df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92",
+    "source_revision_label": "df1b6bb",
+    "version": "20.1.1"
+  }
+}

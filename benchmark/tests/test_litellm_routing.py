@@ -1,8 +1,15 @@
-"""Config-only tests for benchmark/litellm-config.yaml. No API key or network needed."""
+"""Config-only tests for the shared gateway config. No API key or network needed.
+
+The config moved to infra/litellm/ when the gateway stopped being a benchmark
+component; the benchmark is now one client of it. These assertions follow the file
+rather than keeping a second copy under benchmark/, which would drift.
+"""
 import pathlib
 import yaml
 
-CONFIG_PATH = pathlib.Path(__file__).resolve().parents[1] / "litellm-config.yaml"
+CONFIG_PATH = (
+    pathlib.Path(__file__).resolve().parents[2] / "infra" / "litellm" / "config.yaml"
+)
 
 
 def load_config():
@@ -56,8 +63,12 @@ def test_budget_enforcement_is_fail_closed_where_it_applies():
 
 
 def test_database_url_never_hardcoded():
+    """The invariant is that the DSN arrives from the environment, not which variable
+    carries it. Pinning the variable name made this fail when the gateway moved to its
+    own bundled store and adopted LiteLLM's own DATABASE_URL convention, even though
+    nothing about the property under test had changed."""
     config = load_config()
-    assert config["general_settings"]["database_url"] == "os.environ/LITELLM_DATABASE_URL"
+    assert config["general_settings"]["database_url"].startswith("os.environ/")
 
 
 def test_drop_params_enabled_for_provider_param_incompatibility():
@@ -67,9 +78,17 @@ def test_drop_params_enabled_for_provider_param_incompatibility():
     assert config["litellm_settings"]["drop_params"] is True
 
 
-def test_message_body_logging_is_disabled():
+def test_bodies_reach_the_trace_only_behind_the_redaction_guardrail():
+    """Bodies are logged to the tracing callback, which is only defensible because the
+    guardrail redacts secrets before anything reaches a callback. The two settings are
+    one decision: if body logging is on, the guardrail must be on and required. Asserting
+    the flag alone would let someone disable the guardrail and keep the logging."""
     config = load_config()
-    assert config["litellm_settings"]["turn_off_message_logging"] is True
+    assert config["litellm_settings"]["turn_off_message_logging"] is False
+    guardrails = {g["guardrail_name"]: g["litellm_params"] for g in config["guardrails"]}
+    default = guardrails["sentinel"]
+    assert default["default_on"] is True
+    assert default["require_provenance"] is True
 
 
 def test_virtual_key_info_is_redacted_from_logs():

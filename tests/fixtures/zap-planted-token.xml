@@ -5,8 +5,11 @@
   LOCATORS (host, port, path, param, method) that it MUST preserve so P1
   endpoint-dedup keeps hashing the same finding to the same hash_code.
 -->
-<OWASPZAPReport version="2.15.0" generated="Thu, 23 Jul 2026 09:40:00">
+<OWASPZAPReport version="2.15.0" generated="Thu, 23 Jul 2026 09:40:00" note="PLANTED_ZAP_ROOTATTR_vw1234">
   <site name="http://127.0.0.1:13000" host="127.0.0.1" port="13000" ssl="false">
+    <!-- Leak vector: a secret-bearing element OUTSIDE alertitem. A redactor that
+         only prunes children of alertitem passes this through untouched. -->
+    <sessiontoken>PLANTED_ZAP_OUTSIDE_xy5678</sessiontoken>
     <alerts>
       <alertitem>
         <pluginid>40018</pluginid>
@@ -16,11 +19,17 @@
         <riskcode>3</riskcode>
         <confidence>2</confidence>
         <riskdesc>High (Medium)</riskdesc>
+        <desc>SQL injection may be possible.</desc>
+        <solution>Use parameterised queries.</solution>
+        <reference>https://owasp.org/www-community/attacks/SQL_Injection</reference>
         <cweid>89</cweid>
         <wascid>19</wascid>
         <instances>
-          <instance>
-            <uri>http://127.0.0.1:13000/rest/products/search</uri>
+          <instance evidenceattr="PLANTED_ZAP_INSTATTR_za9012">
+            <!-- Leak vector: credentials in the uri query string. The DefectDojo
+                 parser discards query+fragment when building the endpoint, so
+                 stripping them here costs nothing and closes the vector. -->
+            <uri>http://127.0.0.1:13000/rest/products/search?session=PLANTED_ZAP_URIQUERY_bc3456&amp;q=apple</uri>
             <method>GET</method>
             <param>q</param>
             <attack>')) UNION SELECT * FROM Users--</attack>

@@ -5,6 +5,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BENCHMARK_DIR="$REPO_ROOT/benchmark"
+GATEWAY_CFG="$REPO_ROOT/infra/litellm/config.yaml"
 fail=0
 
 check() {
@@ -22,13 +23,24 @@ check "docker available" command -v docker
 check "git available" command -v git
 check "python3 available" command -v python3
 
-check "ROUTER_API_KEY set" test -n "${ROUTER_API_KEY:-}"
-check "ROUTER_API_BASE set" test -n "${ROUTER_API_BASE:-}"
-check "LITELLM_MASTER_KEY set" test -n "${LITELLM_MASTER_KEY:-}"
+# The gateway's variables moved to infra/.env when the proxy became shared
+# infrastructure. Accept either an exported value or a non-empty entry in that file, and
+# never source it: exporting a secrets file into every child process is the pattern the
+# importer was repaired to stop doing.
+ENV_FILE="$REPO_ROOT/infra/.env"
+have_var() {
+  local name="$1"
+  [ -n "${!name:-}" ] && return 0
+  [ -f "$ENV_FILE" ] && grep -Eq "^${name}=.+" "$ENV_FILE"
+}
+
+check "ROUTER_API_KEY set (env or infra/.env)" have_var ROUTER_API_KEY
+check "ROUTER_API_BASE set (env or infra/.env)" have_var ROUTER_API_BASE
+check "LITELLM_MASTER_KEY set (env or infra/.env)" have_var LITELLM_MASTER_KEY
 
 # DEEPSEEK_API_KEY is only needed to re-score or reproduce the frozen V0 comparison
 # arm. New runs go to the router, so its absence is a note rather than a failure.
-if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+if ! have_var DEEPSEEK_API_KEY; then
   echo "[note] DEEPSEEK_API_KEY unset — fine for router runs; required only to reproduce the frozen DeepSeek arm"
 else
   echo "[ok]   DEEPSEEK_API_KEY set (frozen comparison arm reproducible)"
@@ -37,7 +49,12 @@ fi
 check ".gitignore has runs/" grep -qxF "runs/" "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark db patterns" grep -q 'benchmark/\*\*/\*\.db' "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark/results/" grep -qxF "benchmark/results/" "$REPO_ROOT/.gitignore"
-check "litellm-config.yaml disables message/body logging" grep -q "turn_off_message_logging: true" "$BENCHMARK_DIR/litellm-config.yaml"
+# Body logging and the guardrail are one decision, so they are checked together. Bodies
+# reach the trace store only because secrets are redacted before any callback sees them;
+# logging without the guardrail would be a silent downgrade.
+check "gateway logs bodies to the trace store" grep -q "turn_off_message_logging: false" "$GATEWAY_CFG"
+check "gateway guardrail is loaded, guarding that logging" grep -q "guardrail: sentinel_guardrail.SentinelGuardrail" "$GATEWAY_CFG"
+check "gateway guardrail requires provenance by default" grep -q "require_provenance: true" "$GATEWAY_CFG"
 
 # The vendored Metis is patched in this tree (usage-file uniqueness). A re-provision
 # or a manual `git checkout` inside benchmark/tools/arm-metis silently reverts it and

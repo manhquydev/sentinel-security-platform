@@ -1,0 +1,116 @@
+# Sentinel shared LLM gateway (LiteLLM proxy) and its key store.
+#
+# The database IS bundled here, and the reason is worth recording because the first
+# version of this file did the opposite for a reason that turned out to be false.
+#
+# `LITELLM_DATABASE_URL` inherited from the benchmark era pointed at localhost:5433,
+# which belongs to `cmc-e2e-pg` — an unrelated project's end-to-end TEST database, bound
+# to 0.0.0.0. Checked on 2026-07-23: the role `litellm` does not exist there and neither
+# does the database. Whatever virtual keys the frozen benchmark runs used were provisioned
+# into a disposable test database that has since been reset, so there was nothing to
+# preserve and the earlier "do not bundle, it holds the keys" rationale was asserted from
+# the presence of a config value rather than from checking it.
+#
+# A gateway that holds the router credential and mints every virtual key should not keep
+# its key store in another project's throwaway container, on an interface open to the
+# network. It owns its store, on loopback, pinned by digest.
+#
+# Bring-up (shared secrets file, see infra/.env.example):
+#   docker compose --env-file ../.env -f infra/litellm/docker-compose.yml up -d
+#
+# The proxy calls outward to the router and to DeepSeek; it needs no other local service,
+# so it stays off dd-net and juice-net.
+---
+services:
+  postgres:
+    image: postgres:18.4-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    container_name: sentinel-litellm-db
+    restart: unless-stopped
+    environment:
+      # Discrete vars, never a DSN: a DSN carries the password inside a URL that shows up
+      # in tracebacks and in "docker inspect".
+      POSTGRES_DB: litellm
+      POSTGRES_USER: "${LITELLM_DB_USER:?LITELLM_DB_USER must be set - see infra/.env.example}"
+      POSTGRES_PASSWORD: "${LITELLM_DB_PASSWORD:?LITELLM_DB_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      # Single mount at /var/lib/postgresql, which is the layout postgres 18+ asks for:
+      # it stores data under a major-version subdirectory so a later `pg_upgrade --link`
+      # does not cross a mount boundary. Mounting at .../data instead makes the image
+      # refuse to start, reporting an "unused mount/volume".
+      #
+      # This differs from infra/defectdojo-db, which pins PGDATA to the pre-18 path. That
+      # stack carries existing data and inherits its layout from upstream DefectDojo's
+      # compose; this store is new, so it takes the forward-compatible shape instead.
+      - litellm-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [litellm-net]
+    # No ports. The key store is reachable only by the proxy, over the compose network.
+
+  litellm:
+    image: ghcr.io/berriai/litellm@sha256:467a55498422295f9d3534ad6154dc8075733a10cb41edc85e9ed60be41d3f2c
+    container_name: sentinel-litellm
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set - see infra/.env.example}"
+      # Assembled here from the discrete parts rather than carried as a secret of its own,
+      # so the password exists in exactly one variable.
+      #
+      # Addressed by CONTAINER name, not by the service name `postgres`. This proxy joins
+      # the tracing stack's network as well, and that stack also has a service called
+      # `postgres`; from a container on both networks the name resolves to two addresses
+      # and Docker's DNS offers both. The proxy reached the tracing database, where the
+      # `litellm` role does not exist, and startup failed on an authentication error that
+      # said nothing about the collision. Container names are unique across networks.
+      DATABASE_URL: "postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@sentinel-litellm-db:5432/litellm"
+      ROUTER_API_BASE: "${ROUTER_API_BASE:?ROUTER_API_BASE must be set}"
+      ROUTER_API_KEY: "${ROUTER_API_KEY:?ROUTER_API_KEY must be set}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      JUDGE_MODEL: "${JUDGE_MODEL:-}"
+      JUDGE_API_KEY: "${JUDGE_API_KEY:-}"
+      EMBED_MODEL: "${EMBED_MODEL:-}"
+      EMBED_API_KEY: "${EMBED_API_KEY:-}"
+      EMBED_API_BASE: "${EMBED_API_BASE:-}"
+      # Tracing. Langfuse publishes only a loopback port, which a container cannot reach,
+      # so the proxy joins that stack's network and addresses it by service name.
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY:-}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY:-}"
+      LANGFUSE_HOST: "${LANGFUSE_HOST:-http://langfuse-web:3000}"
+      # The guardrail modules import each other by name, so their directory has to be on
+      # the path as a directory rather than the files being scattered into /app.
+      PYTHONPATH: "/app/guardrails"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./guardrails:/app/guardrails:ro
+    ports:
+      # Loopback only. The gateway holds the router credential and every virtual key;
+      # nothing about it should be reachable from the network.
+      - "127.0.0.1:4000:4000"
+    healthcheck:
+      # /health/liveliness answers without touching an upstream provider, so a dead
+      # router does not make the container look unhealthy and get restarted in a loop.
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks: [litellm-net, langfuse-net]
+
+volumes:
+  litellm-db:
+
+networks:
+  litellm-net:
+  # Owned by infra/langfuse. Declared external so this stack can send traces without
+  # taking a hard dependency on it: if the tracing stack is down, the proxy still starts
+  # and still serves calls — the callback simply fails and is swallowed.
+  langfuse-net:
+    external: true
+    name: langfuse_langfuse-net

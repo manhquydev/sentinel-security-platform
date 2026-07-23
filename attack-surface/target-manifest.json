@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1",
+  "target": {
+    "name": "juice-shop",
+    "container": "juice-shop",
+    "origin": "http://127.0.0.1:13000",
+    "image": "bkimminich/juice-shop@sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a",
+    "image_digest": "sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a",
+    "version": "20.1.1",
+    "oci_source_revision": "df1b6bb",
+    "source_commit": "df1b6bbd8bce6c4b6cf6b73625a0ddac946d2e92",
+    "source_url": "https://github.com/juice-shop/juice-shop",
+    "runtime_version_path": "/rest/admin/application-version",
+    "runtime_port": 13000,
+    "container_port": 3000
+  }
+}

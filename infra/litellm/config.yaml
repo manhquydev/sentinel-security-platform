@@ -1,0 +1,170 @@
+# Sentinel shared LLM gateway.
+#
+# Moved here from benchmark/ when the gateway stopped being a benchmark component and
+# became the dependency root every stream calls through. The benchmark is now one client
+# among several. Nothing about the model list changed in the move; the comments below are
+# the measured history that produced it and are kept because re-deriving them costs runs.
+
+model_list:
+  # cheap-sast: the FROZEN DeepSeek comparison arm (V0 baseline, runs 1-2). Kept so that
+  # arm stays re-scoreable; no new run uses it. Do not rename or remove — the frozen
+  # scorecard is only reproducible through this alias.
+  - model_name: cheap-sast
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # Router tiers under test, on the clawcmc agent router.
+  #
+  # The router defaults to streaming: without an explicit stream:false it answers
+  # text/event-stream, which Metis cannot parse. Pinned at the deployment level so no
+  # client can forget it.
+  #
+  # Model family matters here, not just the model. Metis calls /v1/responses
+  # (use_responses_api is hardcoded True in openai_compatible.py:72), and only the
+  # cx/* family implements it — it returns a real {"object":"response"} with populated
+  # usage. Probed and rejected on 2026-07-22, see runs/spike-router-endpoint.md:
+  #   ag/gemini-3.5-flash-{low,extra-low}: answer /v1/responses with a chat.completion
+  #     object and empty usage -> LiteLLM cannot parse it -> HTTP 500 on every call.
+  #   glm/glm-5.2: HTTP 429 on 5/5 probes.
+  #
+  # NO model_info PRICING IS SET, and what that does NOT achieve is worth stating.
+  #
+  # Measured on the running gateway 2026-07-23: LiteLLM's own cost map contains
+  # `gpt-5.6-sol` at $5/$30 per 1M tokens and matches it after stripping the `cx/`
+  # prefix, so a real call recorded spend of exactly $0.001025 for 103 in / 17 out.
+  # Spend is therefore NOT absent — it is the backing tier's public list price, which
+  # is not what this router charges.
+  #
+  # Overriding model_info would replace one unverified number with another, so the
+  # honest move is to leave the computation alone and label what the number means.
+  # README.md carries that label. Reconciling it against an actual invoice is open work.
+  - model_name: sast-sol
+    litellm_params:
+      model: openai/cx/gpt-5.6-sol
+      api_base: os.environ/ROUTER_API_BASE
+      api_key: os.environ/ROUTER_API_KEY
+      stream: false
+
+  - model_name: sast-terra
+    litellm_params:
+      model: openai/cx/gpt-5.6-terra
+      api_base: os.environ/ROUTER_API_BASE
+      api_key: os.environ/ROUTER_API_KEY
+      stream: false
+
+  - model_name: sast-gpt55
+    litellm_params:
+      model: openai/cx/gpt-5.5
+      api_base: os.environ/ROUTER_API_BASE
+      api_key: os.environ/ROUTER_API_KEY
+      stream: false
+
+  # judge: stronger model for V2 "cheap-model+judge" variant. Placeholder until V2 phase picks a model.
+  - model_name: judge
+    litellm_params:
+      model: os.environ/JUDGE_MODEL
+      api_key: os.environ/JUDGE_API_KEY
+
+  # embed: Metis indexing requires embeddings; DeepSeek has none, so this must point at a separate provider.
+  # EMBED_MODEL includes the "openai/" LiteLLM-provider prefix so the literal suffix is
+  # forwarded as-is to the provider at EMBED_API_BASE.
+  #
+  # UNUSABLE against the router: it exposes no embedding model, so indexing stays off for
+  # the migration (that is the indexing_caveat on every scorecard). The EMBED_* vars were
+  # also used as ad-hoc router credentials during the spike, which is a misnomer — router
+  # credentials are ROUTER_API_KEY / ROUTER_API_BASE. Leave this alias pointed at a real
+  # embeddings provider or leave it unset.
+  - model_name: embed
+    litellm_params:
+      model: os.environ/EMBED_MODEL
+      api_key: os.environ/EMBED_API_KEY
+      api_base: os.environ/EMBED_API_BASE
+
+guardrails:
+  # The default. Secrets are stripped from every outbound prompt, and a caller that does
+  # not declare provenance is refused rather than silently trusted.
+  #
+  # Both halves live in one guardrail because their order is a safety property: redaction
+  # runs first, since spotlighting rewrites the whitespace the assignment detector keys
+  # on and a credential written `token = value` would otherwise survive. Splitting them
+  # into two entries would make that order depend on how this file happens to be written.
+  - guardrail_name: sentinel
+    litellm_params:
+      guardrail: sentinel_guardrail.SentinelGuardrail
+      mode: pre_call
+      default_on: true
+      require_provenance: true
+
+  # Same class, a second entry, run at the opposite hook. A model's response was never
+  # redacted: pre_call only ever sees the outbound request, so a completion that quoted a
+  # header/cookie/token out of target-derived content, or an upstream error that arrived
+  # as a raw provider error body, reached the trace store verbatim. This entry runs
+  # `SentinelGuardrail.async_post_call_success_hook`, which applies the same
+  # `egress_redaction.redact()` to the response instead.
+  #
+  # A separate entry rather than a `mode: [pre_call, post_call]` list on `sentinel` above:
+  # the two hooks have no ordering dependency on each other (unlike redaction-then-
+  # spotlighting within pre_call, which does), so nothing is bought by coupling them, and
+  # a distinct guardrail_name makes each hook's audit trail and failure mode independently
+  # legible in the log and in this file.
+  #
+  # It does not require provenance - that flag governs whether an outbound request may be
+  # sent undeclared, which has no response-side equivalent - and a failure in the response
+  # pass logs and passes the response through rather than failing an already-answered
+  # call; see `async_post_call_success_hook`'s docstring for why that is the right default
+  # here and not just the convenient one.
+  - guardrail_name: sentinel-response
+    litellm_params:
+      guardrail: sentinel_guardrail.SentinelGuardrail
+      mode: post_call
+      default_on: true
+
+  # There is no exemption entry, and the reason is a fact about the proxy rather than a
+  # preference. LiteLLM will not let a caller switch off a `default_on` guardrail from the
+  # request body — its own guardrail code says the restriction exists "to prevent callers
+  # from disabling guardrails". Probed against this deployment: passing the guardrail name
+  # in `guardrails`, setting `{"sentinel": false}`, and putting either under `metadata` are
+  # all refused.
+  #
+  # An earlier version declared a `sentinel-legacy-client` entry as a named exemption for a
+  # vendored scanner assumed unable to send a declaration. It never worked; it only read as
+  # though it did. The assumption was also wrong — a third-party benchmark harness was
+  # taught to declare provenance in this repository, and the vendored scanner is already
+  # patched here for an unrelated reason, so the same is available to it.
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # Required for /key/generate (virtual keys) to persist. The store is bundled with this
+  # stack and reachable only over the compose network — it has no published port at all.
+  # The URL is assembled in docker-compose.yml from discrete parts so the password lives
+  # in exactly one variable rather than inside a DSN that turns up in tracebacks.
+  database_url: os.environ/DATABASE_URL
+  # Reject budgeted requests outright if spend can't be verified against the DB, instead of allowing through.
+  fail_closed_budget_enforcement: true
+
+litellm_settings:
+  # Fail an upstream call rather than hold the client open indefinitely. Without this,
+  # a router-side hang blocks the caller with no bound: sol run 1 lost 49.6 minutes to
+  # exactly that, with every worker stuck in a read that never returned. A healthy call
+  # on these tiers completes in ~12s (38s at the observed maximum), so 120s is far
+  # outside normal operation while leaving ample headroom for a slow-but-live request.
+  request_timeout: 120
+  # Bodies DO reach the tracing callback, and the ordering that makes that defensible is
+  # not optional: the guardrail redacts secrets before the request leaves this process,
+  # and only redacted content is handed to any callback. A trace without bodies cannot
+  # show what an agent actually sent a target, which is the thing worth tracing here.
+  #
+  # This reverses the earlier boundary, deliberately and with the trade-off understood:
+  # every trace's safety now rests on redaction being complete, and no redactor is
+  # provably complete. The store is loopback-only and never leaves this host.
+  turn_off_message_logging: false
+  # Tracing is best-effort. A Langfuse outage must never fail an LLM call — the guardrail
+  # is the control, the trace is the record.
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  # Never let a virtual key's own value leak into logs/callbacks.
+  redact_user_api_key_info: true
+  # DeepSeek doesn't support OpenAI's strict json_schema response_format (only json_object);
+  # drop unsupported params instead of erroring (discovered via Step-0 spike, 2026-07-21).
+  drop_params: true
