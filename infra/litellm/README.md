@@ -104,6 +104,37 @@ replacing it. For reference the other tiers list at Terra $2.50 / $15.00 per 1M 
 Token volume remains the only directly measured quantity. Reconciling the recorded figure
 against an actual invoice is open work — see the plan's open questions.
 
+## Tracing
+
+Traces go to the self-hosted Langfuse stack in [`../langfuse`](../langfuse/README.md).
+The proxy joins that stack's network because Langfuse publishes only a loopback port,
+which a container cannot reach.
+
+**Bodies are in the traces**, and the ordering is what makes that defensible: the
+guardrail redacts before anything reaches a callback, so what Langfuse stores is
+post-redaction. The stored trace shows it directly — a redacted assignment reads
+`password=[redacted:password]`, with the spotlight marker applied around the assignment
+but not inside it. Had spotlighting run first the text would read `password▁=`, the
+redactor's pattern would not have matched, and the credential would be in ClickHouse.
+
+This reverses the boundary the benchmark-era documentation described. The trade-off is
+stated rather than mitigated: every trace's safety now rests on redaction being complete,
+and no redactor is provably complete. What bounds the risk is that the store never leaves
+this host and that the false-positive measurement in
+[`../../evaluation/false-positive`](../../evaluation/false-positive/) exercises the
+redactor against the real corpus rather than against fixtures.
+
+Tracing is **best-effort**. A Langfuse outage must not fail an LLM call: the guardrail is
+the control, the trace is the record. The tracing network is declared external here so the
+proxy starts and serves calls whether or not that stack is up.
+
+Two addressing hazards worth knowing, both already tripped:
+
+- Both stacks have a service named `postgres`. From a container on both networks the name
+  resolves to two addresses, so the key store is addressed by its **container name**.
+- The UI is published on **3001**, not Langfuse's default 3000, which is already bound on
+  this host.
+
 ## Topology
 
 The proxy calls outward only, so it joins neither `dd-net` nor `juice-net`. Nothing on
