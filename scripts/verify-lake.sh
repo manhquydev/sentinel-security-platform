@@ -93,6 +93,26 @@ fi
 [ -n "$TOKEN" ] || { echo "verify-lake: authentication failed" >&2; exit 3; }
 
 api() { curl -sS -H "Authorization: Token $TOKEN" "$@"; }
+
+# --locator-scheme: report how the lake spells the locators of one scan type, so a
+# caller can refuse an import that would re-key every finding it touches. Read-only
+# like everything else here, and it prints one word rather than joining the pass/fail
+# report — it answers a question, it does not assert anything.
+if [ "${1:-}" = "--locator-scheme" ]; then
+  scan_type="${REPORT_SCAN_TYPE:?REPORT_SCAN_TYPE required}"
+  api "$DD_URL/api/v2/findings/?limit=100&active=true&test__test_type__name=$(printf '%s' "$scan_type" | sed 's/ /%20/g')" \
+    | python3 -c '
+import json, sys
+try:
+    rows = json.load(sys.stdin).get("results") or []
+except Exception:
+    print("unknown"); raise SystemExit(0)
+paths = [r.get("file_path") or "" for r in rows]
+paths = [p for p in paths if p]
+print("absolute" if any(p.startswith("/") for p in paths)
+      else "relative" if paths else "empty")'
+  exit 0
+fi
 urlq() { python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))' "$1"; }
 
 # Baseline accessors. Each takes the product's index in the baseline's

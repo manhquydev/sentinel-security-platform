@@ -178,5 +178,21 @@ if gate "$WORK/junk.json" 221; then bad "accepted unparseable response"; else ok
   && ok "unparseable status -> do NOT close" \
   || bad "unparseable status did not fail closed"
 
+sect "a re-keying import may not close findings"
+# DefectDojo identifies a Semgrep finding by file_path + line + vuln_id_from_tool. A
+# scanner that starts spelling paths differently re-keys everything it reports, and a
+# close-enabled import then records a remediation for each old finding. The active count
+# does not move, so the exact-match drift check is structurally blind to it.
+for case in "relative absolute true" "absolute absolute false" "relative relative false" "empty absolute false"; do
+  set -- $case
+  got="$("$CORE" rekey "$1" "$2" 2>/dev/null)"
+  [ "$got" = "$3" ] \
+    && ok "incoming=$1 lake=$2 -> suppress closing: $3" \
+    || bad "incoming=$1 lake=$2 expected $3, got '$got'"
+done
+grep -q -- '--locator-scheme' "$REPO_ROOT/scripts/verify-lake.sh" \
+  && ok "the lake's own locator scheme is readable, read-only" \
+  || bad "no way to read the lake's locator scheme"
+
 printf '\n== summary ==\n  %d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

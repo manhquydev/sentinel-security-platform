@@ -127,6 +127,18 @@ print("true" if ok else "false")
 PY
 }
 
+# Whether an import would re-key the findings it touches.
+#
+# DefectDojo identifies a Semgrep finding by file_path + line + vuln_id_from_tool. A
+# scanner that starts spelling paths differently re-keys everything it reports, and a
+# close-enabled import then records a remediation for each old one. The active count does
+# not move, so the exact-match drift check is structurally blind to it. Exposed as a
+# subcommand for the same reason `gate` and `decide` are: the guards that can corrupt the
+# lake have to be testable without a live instance.
+rekey_suppresses_close() { # <incoming scheme> <lake scheme> -> prints true|false
+  if [ "$1" = "relative" ] && [ "$2" = "absolute" ]; then echo true; else echo false; fi
+}
+
 case "${1:-run}" in
   gate)
     gate_response "${2:?response json required}" "${3:?reported count required}"
@@ -134,6 +146,10 @@ case "${1:-run}" in
     ;;
   decide)
     close_decision "${2:?status json required}"
+    exit 0
+    ;;
+  rekey)
+    rekey_suppresses_close "${2:?incoming scheme required}" "${3:?lake scheme required}"
     exit 0
     ;;
   run) ;;
@@ -222,6 +238,42 @@ for tool in $SCANNERS; do
   fi
 
   close="$(close_decision "$status_file")"
+
+  # Refuse to close when this report locates findings differently from the ones
+  # already in the lake.
+  #
+  # DefectDojo identifies a Semgrep finding by file_path + line + vuln_id_from_tool.
+  # Change how the scanner spells a path — an absolute host path versus a
+  # repository-relative one — and every hash changes. The import then closes the
+  # whole previous set as "remediated" and creates the same number of new findings.
+  # Nothing was fixed, the active count is unchanged, and an exact-match drift check
+  # sees a healthy lake. A count-based check cannot catch it by construction, so the
+  # guard sits on the one decision that turns re-keyed findings into false history.
+  #
+  # Not hypothetical: this scanner's two run modes produced exactly that divergence
+  # until the wrapper was made mode-independent, and findings imported before that
+  # are still in the lake.
+  if [ "$close" = "true" ]; then
+    incoming_scheme="$(python3 - "$san" <<'SCHEME'
+import json, sys
+try:
+    doc = json.load(open(sys.argv[1]))
+except Exception:
+    print("unknown"); raise SystemExit(0)
+paths = [r.get("path") or r.get("file_path") or "" for r in (doc.get("results") or [])]
+print("absolute" if any(p.startswith("/") for p in paths)
+      else "relative" if paths else "empty")
+SCHEME
+)"
+    lake_scheme="$(REPORT_SCAN_TYPE="$scan_type" "$HERE/verify-lake.sh" --locator-scheme 2>/dev/null || echo unknown)"
+    if [ "$(rekey_suppresses_close "$incoming_scheme" "$lake_scheme")" = "true" ]; then
+      echo "scan-and-import: $tool locates findings differently from those already in the lake" >&2
+      echo "  (incoming=$incoming_scheme lake=$lake_scheme). Importing WITHOUT closing, so no" >&2
+      echo "  remediation that did not happen is recorded. The existing findings need a" >&2
+      echo "  one-time reconciliation — see scanners/README.md." >&2
+      close=false
+    fi
+  fi
   resp="$OUT_DIR/$tool.import.json"
   if ! CLOSE_OLD_FINDINGS="$close" "$SCANNERS_DIR/import-report.sh" "$scan_type" "$san" "$scan_type" >"$resp"; then
     echo "scan-and-import: $tool import failed" >&2
