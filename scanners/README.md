@@ -8,11 +8,38 @@ scanner is a Docker image pinned by `@sha256` in `image-pins.env`.
 
 ```
 scanner wrapper → RAW report → redact-report.sh → SANITIZED report → import-report.sh → DefectDojo (reimport, dedup)
+                       │
+                       └→ <RAW>.status.json  (status sidecar; see below)
 ```
+
+`scripts/scan-and-import.sh` drives this whole loop for every configured scanner,
+serialised by a `flock` so two runs cannot close each other's findings.
 
 Redaction is mandatory and runs on the native path (these imports bypass the P5
 adapter). It removes secret VALUES but preserves the endpoint/file LOCATORS that
 P1 endpoint-dedup hashes on — see `redact-report.sh`.
+
+## Status sidecar
+
+Every wrapper writes `<report>.status.json` atomically beside its report:
+
+```json
+{ "tool": "...", "status": "ok|error", "exit": <int>,
+  "reported": <raw finding count, 0 valid, -1 = unparseable>,
+  "contact_proven": true|false, "detail": "..." }
+```
+
+The orchestrator keys on this, **not** on the wrapper exit code, because the four
+wrappers overload their exit-code namespace (the same integer means "target
+rejected" in one and "scanner error" in another). `write-status.sh` owns the schema
+and the raw-report counting so the wrappers cannot drift. The sidecar is written on
+error paths too, which is what lets the orchestrator tell "ran and failed" (skip
+import, alert) from "never ran".
+
+`contact_proven` gates whether an import may close absent findings: an empty report
+mitigates a whole baseline as "remediated" only if the scan is known to have reached
+its target, so the orchestrator sends `close_old_findings=true` only when the sidecar
+proves contact AND the report is non-empty AND status is ok.
 
 ## Scanners
 
@@ -37,6 +64,29 @@ The single pinned IP is emitted so scanners can be forced onto it (anti-DNS-rebi
 `ready <url>` additionally waits for the target to serve HTTP.
 
 Juice Shop is loopback, so it must be explicitly allowed: `ALLOWLIST="127.0.0.1:13000"`.
+
+### Redirect and egress containment (DAST)
+
+The DAST wrappers constrain where the scanner can go beyond the seed URL:
+
+- **Nuclei** runs with `-dr` (redirects forcibly disabled — a template cannot opt in
+  with `redirects: true` and walk off the target) and `-ni` (no interactsh: OAST
+  templates otherwise call ProjectDiscovery's public servers with target-derived data,
+  egress the allowlist never sees; the templates are dropped instead).
+- **ZAP** (`zap-baseline.py`) exposes no host/port scope flag for its spider, so its
+  redirect/spider scope cannot be constrained at the wrapper. ZAP has not run live this
+  cycle (no image); when it does, its egress needs to be constrained at the network
+  layer, not by a flag.
+
+**Known residual — `--network host`.** The Dockerised DAST scanners use `--network host`
+to reach `127.0.0.1:13000`, which also places them where they can reach DefectDojo on
+`127.0.0.1:8080` and Postgres on `127.0.0.1:55433`. The port is enforced only at
+validation time on the seed URL, so a **same-host, different-port** redirect
+(`:13000 → :8080`) is *not* a cross-host redirect and the allowlist does not catch it.
+Closing this means dropping `--network host` and pinning the scanner into a namespace
+whose only route is the validated `IP:PORT` — a larger change than this cycle took on.
+For a deliberately vulnerable target with an open-redirect challenge, treat this as a
+real gap, not a theoretical one.
 
 ## Harness
 

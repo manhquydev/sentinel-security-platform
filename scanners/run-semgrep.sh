@@ -13,6 +13,16 @@ out="${1:?output json path required}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 [ -f "$HERE/image-pins.env" ] && . "$HERE/image-pins.env"
 
+# Emit the status sidecar on EVERY exit once a scan is plausible, so an
+# orchestrator can tell "ran and failed" from "never ran". STATUS/CONTACT/DETAIL
+# are updated as the run progresses; the trap publishes whatever they hold when
+# the wrapper leaves, including on an early error exit. The out directory is
+# created first so the trap can always write beside the report.
+mkdir -p "$(dirname "$out")"
+STATUS="error"; CONTACT="false"; DETAIL="run did not complete"
+emit_status() { local rc=$?; "$HERE/write-status.sh" semgrep "$out" "$STATUS" "$CONTACT" "$rc" "$DETAIL" 2>/dev/null || true; }
+trap emit_status EXIT
+
 # Two run modes. Production = digest-pinned docker image. SEMGREP_BIN = a local
 # semgrep binary (fallback when the container registry is unreachable — the pin
 # guarantee then rests on the pip lock/venv, documented in README, not @sha256).
@@ -94,4 +104,7 @@ if [ "$errcount" -gt 0 ]; then
   exit 8
 fi
 
+# paths.scanned>0 with an empty errors array is positive proof semgrep read the
+# tree, so contact is established and the run is trustworthy.
+STATUS="ok"; CONTACT="true"; DETAIL="scanned $scanned files, 0 errors"
 echo "run-semgrep: wrote $out (exit $rc, scanned $scanned files, 0 errors)" >&2

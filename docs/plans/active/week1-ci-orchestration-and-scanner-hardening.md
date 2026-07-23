@@ -347,18 +347,30 @@ Phase 2 — safe import path — **complete 2026-07-23**
       zero-file Semgrep scan, empty Trivy target, dead Nuclei target all fail closed, and
       none of them blocks a healthy run.
 
-Phase 3 — the core
+Phase 3 — the core — **complete 2026-07-23**
 
-- [ ] RED: dedup reimport must pass the gate; zero-finding report must not close findings.
-      Both written, both observed failing.
-- [ ] `scripts/scan-and-import.sh`; both RED tests pass.
-- [ ] Gate branches correctly on a first import (`delta` null, `after` only) and a reimport.
-- [ ] Wrappers emit structured status; the core keys on status, not collided exit codes.
-- [ ] `flock` serialisation; a second concurrent run exits with a distinct code.
-- [ ] Redirect containment for Nuclei and ZAP; a same-host different-port redirect fails the
-      scan. Nuclei `-ni` set.
-- [ ] Local end-to-end: findings land, a finding-bearing exit does not abort, an unknown
-      status fails closed.
+- [x] RED: `tests/core-gate-test.sh` — dedup reimport must pass the gate, zero-finding report
+      must not close, plus first-import/racing-dedup/mismatch/malformed cases. Observed 4/9
+      failing before the core existed, 13/13 after.
+- [x] `scripts/scan-and-import.sh`, with `gate` and `decide` exposed as subcommands so the
+      two lake-corrupting guards are testable without a live instance.
+- [x] Gate reads the reimport response's statistics and branches on a null `delta`: a first
+      import into a new test gates on `after`, every reimport on the summed delta. Verified
+      live — the delta path was measured returning `untouched.total=221` against reported 221.
+- [x] Wrappers emit the structured status sidecar via a shared `scanners/write-status.sh`
+      (atomic write, raw-report counting in one place); the core keys on `status`/`reported`,
+      never on the collided exit codes. `tests/wrapper-status-test.sh` 15/15, hermetic against
+      committed fixtures rather than the overwritable `scanners/out/` corpus.
+- [x] `flock` serialisation; a second run while the lock is held exits 75. Verified.
+- [x] Redirect/egress containment for Nuclei: `-dr` forcibly disables redirects (verified
+      against the real binary's flags), `-ni` drops OAST callbacks. ZAP's spider scope is not
+      flag-constrainable and it has not run live; both facts, and the `--network host`
+      same-host-port residual, are documented in `scanners/README.md`.
+- [x] Local end-to-end through the core, all three behaviours proven against the live
+      instance: a finding-bearing scan lands and is granted close (`gate: 4 == 4`, lake steady
+      at 246); a clean zero-finding scan lands without closing the baseline (`gate: 0 == 0`,
+      `close=false`); a scanner error (Maven 429) is caught via `status=error reported=-1`,
+      the import skipped and alerted, the lake untouched.
 
 Phase 4 — prove it
 
