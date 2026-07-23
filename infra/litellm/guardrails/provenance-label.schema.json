@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/manhquydev/sentinel-security-platform/infra/litellm/guardrails/provenance-label.schema.json",
+  "title": "Sentinel provenance label",
+  "description": "The D <-> E interface contract. A caller declares, for every message it sends, whether that message is operator-authored or derived from a target the system does not control. Stream E (the gateway) validates the declaration, marks untrusted spans and records the audit trail; Stream D enforces policy on the same labels at the agent layer. Absence of a declaration is not a neutral default - it fails closed.",
+  "type": "object",
+  "required": ["schema_version", "spans"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "description": "Contract version. Changing it is an interface change and costs both streams.",
+      "const": "1.0"
+    },
+    "spans": {
+      "description": "One entry per message in the request. Coverage must be complete: an undeclared message is a rejected request, because a downstream enforcer that cannot tell trusted from untrusted will assume trusted.",
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/span"}
+    }
+  },
+  "$defs": {
+    "span": {
+      "type": "object",
+      "required": ["message_index", "trust"],
+      "additionalProperties": false,
+      "properties": {
+        "message_index": {
+          "description": "Zero-based index into the request's messages array.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "trust": {
+          "description": "operator: authored by the system or its operators. target-derived: obtained from a scanned target, a scanner report, a fetched page, or any other source outside the system's control. When in doubt the honest answer is target-derived.",
+          "enum": ["operator", "target-derived"]
+        },
+        "source": {
+          "description": "How the content was obtained, for audit and for later enforcement policy. Required when trust is target-derived.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "target": {
+          "description": "Identity of the target the content came from - an image digest, a pinned source revision, or an origin. Required when trust is target-derived so that a later enforcer can scope its policy per target.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "collected_at": {
+          "description": "RFC 3339 timestamp of when the content was obtained, not when the request was sent. Stale untrusted content is a different risk from fresh untrusted content.",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"trust": {"const": "target-derived"}}, "required": ["trust"]},
+          "then": {"required": ["message_index", "trust", "source", "target"]}
+        }
+      ]
+    }
+  }
+}
