@@ -11,6 +11,10 @@
 [Unit]
 Description=Schedule the Sentinel Juice Shop scan into the DefectDojo lake
 
+# These are --user units. Without lingering, the user manager exits at logout and the
+# timer never fires unattended; Persistent=true only catches up at the next login, which
+# on an operator's laptop can be a long time. Enable it once:
+#   loginctl enable-linger $USER
 [Timer]
 OnCalendar=daily
 RandomizedDelaySec=1h

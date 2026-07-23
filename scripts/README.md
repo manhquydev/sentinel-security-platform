@@ -51,11 +51,13 @@ TRIVY_IMAGE="aquasec/trivy@sha256:…" TRIVY_SCANNERS="secret,misconfig" \
 bash scripts/verify-lake.sh
 ```
 
-## Two adapters, one writer
+## Two adapters, one writer per application
 
-The lake has exactly one writer, and it is not CI.
+The lake has one writer per application, and it is not CI.
 
-- **`../infra/systemd/sentinel-scan.{service,timer}`** — the sole baseline writer. A
+- **`../infra/systemd/sentinel-scan.{service,timer}`** — Juice Shop's writer: Trivy and
+  Nuclei, the DAST and image arms. **`sentinel-scan-webgoat.{service,timer}`** is the
+  second pair, running Semgrep against the WebGoat source into its own Product. A
   *user* systemd unit on the developer host, so it runs under the account that already
   holds the docker group and the DefectDojo credentials rather than granting root a new
   capability. It runs `scan-and-import.sh` then `verify-lake.sh`, on the timer's cadence.
@@ -70,6 +72,13 @@ The lake has exactly one writer, and it is not CI.
   SHA-pinned-actions, least-privilege, and no-lake-contact properties so a later edit
   cannot quietly weaken them.
 
-There is no single-writer/ephemeral-engagement machinery because there is no second
-writer to serialise against. The `flock` in `scan-and-import.sh` still guards against two
-timer firings overlapping.
+There are now two writers, one per application, and they cannot corrupt each other's
+Product: distinct `PRODUCT_NAME`, disjoint scan types, disjoint output filenames. They do
+share the `flock` in `scan-and-import.sh`, which is `flock -n` — the loser **aborts with
+exit 75 rather than waiting**, the oneshot unit enters `failed`, and `Persistent=true`
+does not retry a failed run. With both timers on a daily schedule plus a randomised delay,
+a collision is a recurring probability, not a theoretical one, and its cost is a skipped
+day for one Product.
+
+Neither unit declares `OnFailure=`, so a failed scheduled run is silent unless someone
+runs `systemctl --user status`.
