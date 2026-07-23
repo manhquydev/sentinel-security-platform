@@ -4,7 +4,7 @@ Date: 2026-07-23
 
 ## Status
 
-Active
+Complete
 
 ## Outcome
 
@@ -302,3 +302,11 @@ Move to `docs/plans/completed/` once Approach steps 1–5 have run and
   Risks; needs a decision from whoever runs the migration, not assumed here.
 - `scripts/README.md`'s single-writer language (lines 58, 73) is now stale but out of this
   phase's file ownership. Someone should update it alongside or shortly after the migration.
+
+## Close-out (2026-07-24)
+
+The live migration has since run: the lake is two Products and `scripts/verify-lake.sh`
+reports **12 passed / 0 failed** against the live instance — `juice-shop-harness`
+(Trivy 4, Nuclei 21) and `webgoat` (Semgrep 11), zero rows attributable to the OWASP
+Benchmark corpus. The "live migration has not run" statement in Result above described the
+read-only agent's state at authoring time and is superseded by this verified close-out.
