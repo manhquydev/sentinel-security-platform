@@ -1,0 +1,33 @@
+docs/*
+plans/*
+assets/*
+dist/*
+coverage/*
+build/*
+ios/*
+android/*
+tests/*
+__tests__/*
+__pycache__/*
+node_modules/*
+
+.opencode/*
+.claude/*
+.serena/*
+.pnpm-store/*
+.github/*
+.dart_tool/*
+.idea/*
+.husky/*
+.venv/*
+
+# AI-SAST benchmark: run artifacts and vendored engines must not be packed.
+# benchmark/results/ leaks the host username, absolute paths, and scanned source;
+# runs/ holds 8000+ SARIF files; benchmark/tools/ and targets/ are cloned upstreams.
+runs/*
+benchmark/results/*
+benchmark/tools/*
+benchmark/targets/*
+.env
+.env.*
+!.env.example
