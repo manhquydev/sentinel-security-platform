@@ -163,10 +163,27 @@ if grep -Eq '^\s*-\s*"127\.0\.0\.1:4000:4000"' "$COMPOSE"; then
 else
   bad "port binding is not loopback-only"
 fi
-if grep -Eq '^[[:space:]]*-[[:space:]]*"[0-9]+:[0-9]+"' "$COMPOSE"; then
-  bad "a port is published on all interfaces"
-else
-  ok "no port published on all interfaces"
+# Parsed, not grepped. The pattern this replaced matched only `"PORT:PORT"` — digits and
+# a colon — so a real all-interfaces binding like `"0.0.0.0:4000:4000"` never matched and
+# the check reported success unconditionally. Both concrete cases were caught by sibling
+# assertions, so nothing was actually exposed, but a check that reads as protection and
+# provides none is worse than no check: it answers the question for a reader who then
+# stops asking. Parsing covers every service, including ones added later that no
+# service-specific assertion knows about.
+if python3 - "$COMPOSE" <<'PY'
+import sys, yaml
+services = (yaml.safe_load(open(sys.argv[1])) or {}).get("services", {})
+bad = []
+for name, svc in services.items():
+    for entry in (svc.get("ports") or []):
+        text = entry if isinstance(entry, str) else f"{entry.get('host_ip','')}:{entry.get('published','')}"
+        if not text.startswith("127.0.0.1:"):
+            bad.append(f"{name} -> {text}")
+print("\n".join(bad))
+sys.exit(1 if bad else 0)
+PY
+then ok "every published port binds loopback only"
+else bad "a port is reachable from outside this host"
 fi
 
 # The key store mints and validates every virtual key, and it holds them at rest. It has
