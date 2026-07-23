@@ -499,7 +499,34 @@ for correction in Phase 1. No unresolved contradictions.
 
 ## Result
 
-Not started. All five phases unblocked.
+Complete, with one disclosed residual. All five phases delivered across four commits
+(`670aff9` redaction repair, `6639322` safe import path, `ca9b3ea` the core, `59eda01`
+verification + adapters), each gated by an adversarial code review whose findings were
+applied before commit.
+
+The lake stopped losing findings and now feeds itself: 236 active before, **246 after**
+(Trivy 4, Semgrep 221, Nuclei 21), stable across reimport and verified read-only against a
+committed baseline. 135 assertions pass — redaction 39, core-gate 15, wrapper-status 15,
+import-contract 8, target-allowlist 9, verify-lake 6, workflow-safety 17, dd-smoke 26 — each
+paired with a negative control proven to fail. Three end-to-end behaviours were observed on
+the live instance: a finding-bearing scan lands and closes remediated findings; a clean scan
+lands without closing the baseline; a scanner error is caught and skipped with the lake
+untouched.
+
+**Residual (disclosed, not deferred silently):** ZAP has still never run live — the redaction
+fix that makes any future ZAP import possible is in place, but the image was not obtained this
+cycle. Out of scope as planned: Trivy vulnerability-DB scanning, the remaining supply-chain
+digests, the P2 spec, and P5 AI-SAST.
+
+Review findings that changed the design, kept here as provenance: the redaction repair
+introduced a Trivy `CweIDs` crash, an IPv6 locator corruption, and an uncaught URL-port
+exception, all fixed before commit; the completeness gate first summed `closed` into its
+total (false-failing every remediation) and was corrected to the present-in-report buckets;
+the CI workflow first ran a Java-only Semgrep ruleset against a Java-free public repo (a
+permanently-red gate) and was reduced to the language-agnostic Trivy scan.
+
+Move to `docs/plans/completed/` once the residual ZAP run is either done or formally accepted
+for the cycle.
 
 ## Open questions
 
