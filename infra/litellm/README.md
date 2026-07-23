@@ -18,23 +18,36 @@ curl -s http://127.0.0.1:4000/health/liveliness
 
 **One-time migration.** The gateway's variables previously lived in `benchmark/.env`,
 because the gateway lived under `benchmark/`. They now belong in `infra/.env`, the shared
-secrets file the other stacks already use. Copy the entries listed below across before
-first bring-up; compose refuses to start with a clear message naming the missing variable
-rather than booting a half-configured proxy, so a forgotten value fails loudly.
+secrets file the other stacks already use. Compose refuses to start with a message naming
+the missing variable rather than booting a half-configured proxy, so a forgotten value
+fails loudly rather than quietly.
 
 The proxy binds `127.0.0.1:4000` only. It holds the router credential and every virtual
 key, so nothing about it should be reachable from the network.
 
-**The database is not bundled.** `LITELLM_DATABASE_URL` points at an existing Postgres
-that holds the virtual keys reproducing the frozen benchmark arms. Standing up a fresh
-database here would invalidate those keys with no error at the point of failure.
+**The key store is bundled**, on the stack's own compose network with no published port.
+
+An earlier version of this file said the opposite — that the database was deliberately
+external because it held the virtual keys reproducing the frozen benchmark arms. That was
+wrong, and wrong in an instructive way: it was inferred from a config value rather than
+checked. The inherited `LITELLM_DATABASE_URL` pointed at `localhost:5433`, which belongs to
+`cmc-e2e-pg`, an unrelated project's end-to-end **test** database bound to `0.0.0.0`. On
+2026-07-23 neither the role `litellm` nor the database existed there. Whatever keys the
+frozen runs used were provisioned into a disposable test database that has since been
+reset.
+
+**Consequence for anyone re-scoring a frozen arm:** the `V0_*_VIRTUAL_KEY` values still
+listed in `benchmark/.env` authenticate against nothing. Regenerate them against this
+instance with `benchmark/scripts/provision-benchmark-keys.sh`. The frozen *scorecards* are
+unaffected — they are committed artifacts — and so is reproducibility, which depends on
+the `cheap-sast` alias rather than on any particular key.
 
 ## Environment contract
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `LITELLM_MASTER_KEY` | yes | Admin key; mints virtual keys via `/key/generate`. Never used by a client. |
-| `LITELLM_DATABASE_URL` | yes | Where virtual keys and spend persist. Loopback Postgres. |
+| `LITELLM_DB_USER`, `LITELLM_DB_PASSWORD` | yes | The bundled key store. Discrete, so the password never rides inside a DSN. |
 | `ROUTER_API_BASE`, `ROUTER_API_KEY` | yes | The `cx/*` router. Ends in `/v1`. |
 | `DEEPSEEK_API_KEY` | only to re-score the frozen arm | Backs the `cheap-sast` alias. |
 | `JUDGE_MODEL`, `JUDGE_API_KEY` | no | Placeholder for the V2 judge variant. |
@@ -69,26 +82,27 @@ frozen arms; it still gets egress redaction. The exemption is a separate entry r
 than a weaker global default so that any new caller is fail-closed unless someone
 deliberately adds it.
 
-## Spend is unavailable, and that is recorded rather than papered over
+## Recorded spend is a list-price equivalent, not a bill
 
-The router returns `usage.cost: null` and LiteLLM carries no pricing entry for `cx/*`, so
-the proxy cannot compute spend. **No `model_info` pricing is set**, and a test asserts its
-absence.
+**Read the `spend` column as an upper bound, not as money that was charged.**
 
-Setting a per-token cost would make LiteLLM emit a number, but that number would be
-derived from the backing model's public list price rather than what this router charges —
-and a confidently wrong figure in a FinOps dashboard is worse than an honest absence. The
-repository already follows this rule elsewhere: benchmark manifests record `spend_usd:
-null` with a reason instead of a misleading `0`.
+The benchmark-era documentation said LiteLLM had no pricing for these models and that
+spend was unavailable. That was inherited and is no longer true. Measured on this gateway
+on 2026-07-23: LiteLLM's cost map contains `gpt-5.6-sol` at **$5.00 in / $30.00 out** per
+1M tokens and matches it after stripping the `cx/` prefix. A real call of 103 in / 17 out
+recorded `spend = 0.001025`, which is that list price to the cent.
 
-For deliberate capacity planning, public list prices for the backing tiers as of
-2026-07-23 were **Sol $5.00 in / $30.00 out**, **Terra $2.50 / $15.00** per 1M tokens.
-Treat these as an **upper bound, not an estimate**: routers in this class advertise
-substantial savings over list, and this one reports its own model name rather than the
-backing one, so the mapping is not verifiable from here. Token volume is the measured
-quantity; anything in currency is a calculation someone chose to make.
+So the number in `LiteLLM_SpendLogs` is the **backing tier's public list price**. This
+router is not OpenAI, reports its own model name rather than the backing one, and routers
+in this class advertise substantial savings over list — so the figure is an upper bound
+whose distance from the real cost is unknown.
 
-Resolving the real rate is open work — see the plan's open questions.
+**No `model_info` override is set**, and a test asserts that. Overriding it would swap one
+unverified number for another; the useful act is labelling what the number is, not
+replacing it. For reference the other tiers list at Terra $2.50 / $15.00 per 1M tokens.
+
+Token volume remains the only directly measured quantity. Reconciling the recorded figure
+against an actual invoice is open work — see the plan's open questions.
 
 ## Topology
 

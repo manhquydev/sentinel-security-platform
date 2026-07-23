@@ -1,28 +1,68 @@
-# Sentinel shared LLM gateway (LiteLLM proxy).
+# Sentinel shared LLM gateway (LiteLLM proxy) and its key store.
 #
-# One service. The database is deliberately NOT bundled: LITELLM_DATABASE_URL points at
-# an existing Postgres that holds the virtual keys reproducing the frozen benchmark arms,
-# and standing up a fresh database here would invalidate them with no error message.
+# The database IS bundled here, and the reason is worth recording because the first
+# version of this file did the opposite for a reason that turned out to be false.
+#
+# `LITELLM_DATABASE_URL` inherited from the benchmark era pointed at localhost:5433,
+# which belongs to `cmc-e2e-pg` — an unrelated project's end-to-end TEST database, bound
+# to 0.0.0.0. Checked on 2026-07-23: the role `litellm` does not exist there and neither
+# does the database. Whatever virtual keys the frozen benchmark runs used were provisioned
+# into a disposable test database that has since been reset, so there was nothing to
+# preserve and the earlier "do not bundle, it holds the keys" rationale was asserted from
+# the presence of a config value rather than from checking it.
+#
+# A gateway that holds the router credential and mints every virtual key should not keep
+# its key store in another project's throwaway container, on an interface open to the
+# network. It owns its store, on loopback, pinned by digest.
 #
 # Bring-up (shared secrets file, see infra/.env.example):
 #   docker compose --env-file ../.env -f infra/litellm/docker-compose.yml up -d
 #
-# The proxy calls outward to the router and to DeepSeek; it needs no local network, so it
-# stays off dd-net and juice-net. It binds loopback only, like every other service here.
+# The proxy calls outward to the router and to DeepSeek; it needs no other local service,
+# so it stays off dd-net and juice-net.
 ---
 services:
+  postgres:
+    image: postgres:18.4-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    container_name: sentinel-litellm-db
+    restart: unless-stopped
+    environment:
+      # Discrete vars, never a DSN: a DSN carries the password inside a URL that shows up
+      # in tracebacks and in "docker inspect".
+      POSTGRES_DB: litellm
+      POSTGRES_USER: "${LITELLM_DB_USER:?LITELLM_DB_USER must be set - see infra/.env.example}"
+      POSTGRES_PASSWORD: "${LITELLM_DB_PASSWORD:?LITELLM_DB_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      # Single mount at /var/lib/postgresql, which is the layout postgres 18+ asks for:
+      # it stores data under a major-version subdirectory so a later `pg_upgrade --link`
+      # does not cross a mount boundary. Mounting at .../data instead makes the image
+      # refuse to start, reporting an "unused mount/volume".
+      #
+      # This differs from infra/defectdojo-db, which pins PGDATA to the pre-18 path. That
+      # stack carries existing data and inherits its layout from upstream DefectDojo's
+      # compose; this store is new, so it takes the forward-compatible shape instead.
+      - litellm-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [litellm-net]
+    # No ports. The key store is reachable only by the proxy, over the compose network.
+
   litellm:
     image: ghcr.io/berriai/litellm@sha256:467a55498422295f9d3534ad6154dc8075733a10cb41edc85e9ed60be41d3f2c
     container_name: sentinel-litellm
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     environment:
-      # Discrete vars, never a single DSN for the credentials: a DSN carries the password
-      # inside a URL that shows up in tracebacks and "docker inspect". LITELLM_DATABASE_URL
-      # is the exception LiteLLM forces, which is why it is the operator's to supply and
-      # why the database stays on loopback.
       LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set - see infra/.env.example}"
-      LITELLM_DATABASE_URL: "${LITELLM_DATABASE_URL:?LITELLM_DATABASE_URL must be set - virtual keys and spend live there}"
+      # Assembled here from the discrete parts rather than carried as a secret of its own,
+      # so the password exists in exactly one variable.
+      DATABASE_URL: "postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@postgres:5432/litellm"
       ROUTER_API_BASE: "${ROUTER_API_BASE:?ROUTER_API_BASE must be set}"
       ROUTER_API_KEY: "${ROUTER_API_KEY:?ROUTER_API_KEY must be set}"
       DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
@@ -48,4 +88,11 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 40s
+    networks: [litellm-net]
+
+volumes:
+  litellm-db:
+
+networks:
+  litellm-net:

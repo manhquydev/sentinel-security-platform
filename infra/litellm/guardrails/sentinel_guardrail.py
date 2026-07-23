@@ -32,7 +32,9 @@ from __future__ import annotations
 
 from typing import Any, Optional, Union
 
-from litellm._logging import verbose_proxy_logger
+import logging
+import sys
+
 from litellm.caching.caching import DualCache
 from litellm.integrations.custom_guardrail import CustomGuardrail
 from litellm.proxy._types import UserAPIKeyAuth
@@ -41,6 +43,24 @@ import egress_redaction
 import provenance
 
 METADATA_KEY = "sentinel_provenance"
+
+# The audit trail gets its own logger rather than riding on litellm's.
+#
+# The first version of this file emitted through `verbose_proxy_logger.info`, and nothing
+# was ever written: that logger's effective level is WARNING unless the proxy is started
+# in debug mode, so the audit trail documented in the hook contract did not exist in
+# practice. An audit record is a security artifact, not a debug line — whether it is
+# written must not depend on how verbosely someone happened to start the proxy.
+#
+# propagate=False keeps these lines out of litellm's own handlers, so redaction counts
+# cannot be silenced or duplicated by a change to the proxy's logging configuration.
+audit_logger = logging.getLogger("sentinel.guardrail.audit")
+if not audit_logger.handlers:
+    _handler = logging.StreamHandler(sys.stdout)
+    _handler.setFormatter(logging.Formatter("%(asctime)s sentinel-audit %(message)s"))
+    audit_logger.addHandler(_handler)
+audit_logger.setLevel(logging.INFO)
+audit_logger.propagate = False
 
 
 class SentinelGuardrail(CustomGuardrail):
@@ -93,8 +113,8 @@ class SentinelGuardrail(CustomGuardrail):
         # proxy log rather than back to the caller, so the guardrail cannot be used as an
         # oracle for what a caller managed to smuggle past it.
         if marked or redactions:
-            verbose_proxy_logger.info(
-                "sentinel guardrail: key=%s spotlighted=%d redactions=%s",
+            audit_logger.info(
+                "key=%s spotlighted=%d redactions=%s",
                 _key_fingerprint(user_api_key_dict),
                 len(marked),
                 _summarise(redactions),

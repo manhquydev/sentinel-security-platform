@@ -28,12 +28,17 @@ model_list:
   #     object and empty usage -> LiteLLM cannot parse it -> HTTP 500 on every call.
   #   glm/glm-5.2: HTTP 429 on 5/5 probes.
   #
-  # NO model_info PRICING IS SET, deliberately. The router returns usage.cost: null and
-  # LiteLLM carries no pricing entry for cx/*, so spend is unavailable. Setting
-  # input_cost_per_token would make LiteLLM emit a spend number computed from OpenAI's
-  # list price for the backing tier — which is NOT what this router charges, and a
-  # confidently wrong figure in a FinOps dashboard is worse than an honest absence.
-  # Reference list prices and how to use them deliberately are in README.md.
+  # NO model_info PRICING IS SET, and what that does NOT achieve is worth stating.
+  #
+  # Measured on the running gateway 2026-07-23: LiteLLM's own cost map contains
+  # `gpt-5.6-sol` at $5/$30 per 1M tokens and matches it after stripping the `cx/`
+  # prefix, so a real call recorded spend of exactly $0.001025 for 103 in / 17 out.
+  # Spend is therefore NOT absent — it is the backing tier's public list price, which
+  # is not what this router charges.
+  #
+  # Overriding model_info would replace one unverified number with another, so the
+  # honest move is to leave the computation alone and label what the number means.
+  # README.md carries that label. Reconciling it against an actual invoice is open work.
   - model_name: sast-sol
     litellm_params:
       model: openai/cx/gpt-5.6-sol
@@ -107,11 +112,11 @@ guardrails:
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
-  # Required for /key/generate (virtual keys) to persist. Local-only Postgres, never exposed beyond 127.0.0.1.
-  # Supplied by the operator rather than bundled into this stack: the existing database
-  # holds the virtual keys that reproduce the frozen benchmark arms, and standing up a
-  # fresh one would silently invalidate them.
-  database_url: os.environ/LITELLM_DATABASE_URL
+  # Required for /key/generate (virtual keys) to persist. The store is bundled with this
+  # stack and reachable only over the compose network — it has no published port at all.
+  # The URL is assembled in docker-compose.yml from discrete parts so the password lives
+  # in exactly one variable rather than inside a DSN that turns up in tracebacks.
+  database_url: os.environ/DATABASE_URL
   # Reject budgeted requests outright if spend can't be verified against the DB, instead of allowing through.
   fail_closed_budget_enforcement: true
 

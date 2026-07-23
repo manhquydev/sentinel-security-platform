@@ -411,6 +411,30 @@ def test_adapter_redacts_before_it_applies_provenance():
     )
 
 
+def test_audit_trail_does_not_depend_on_proxy_verbosity():
+    """An audit record is a security artifact, not a debug line.
+
+    The first version emitted through litellm's `verbose_proxy_logger.info`, whose
+    effective level is WARNING unless the proxy is started in debug mode — so nothing was
+    ever written and the audit trail the hook contract describes did not exist. Found by
+    reading the running container's log, not by reading the code.
+    """
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    # Match the import and the call, not the word — the module docstring names the old
+    # logger when explaining why it is gone, and a bare substring check would forbid
+    # recording that history.
+    assert "import verbose_proxy_logger" not in source, (
+        "the audit trail must not ride on the proxy's own logger"
+    )
+    assert "verbose_proxy_logger.info(" not in source
+    assert 'logging.getLogger("sentinel.guardrail.audit")' in source
+    assert "audit_logger.setLevel(logging.INFO)" in source
+    assert "audit_logger.propagate = False" in source, (
+        "propagation would let a change to the proxy's logging silence or duplicate "
+        "redaction counts"
+    )
+
+
 def test_adapter_requires_provenance_by_default():
     """A caller who forgets to declare must be refused, not silently trusted. An
     exemption is a named guardrail entry in the config, not a global default."""

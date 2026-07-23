@@ -23,13 +23,24 @@ check "docker available" command -v docker
 check "git available" command -v git
 check "python3 available" command -v python3
 
-check "ROUTER_API_KEY set" test -n "${ROUTER_API_KEY:-}"
-check "ROUTER_API_BASE set" test -n "${ROUTER_API_BASE:-}"
-check "LITELLM_MASTER_KEY set" test -n "${LITELLM_MASTER_KEY:-}"
+# The gateway's variables moved to infra/.env when the proxy became shared
+# infrastructure. Accept either an exported value or a non-empty entry in that file, and
+# never source it: exporting a secrets file into every child process is the pattern the
+# importer was repaired to stop doing.
+ENV_FILE="$REPO_ROOT/infra/.env"
+have_var() {
+  local name="$1"
+  [ -n "${!name:-}" ] && return 0
+  [ -f "$ENV_FILE" ] && grep -Eq "^${name}=.+" "$ENV_FILE"
+}
+
+check "ROUTER_API_KEY set (env or infra/.env)" have_var ROUTER_API_KEY
+check "ROUTER_API_BASE set (env or infra/.env)" have_var ROUTER_API_BASE
+check "LITELLM_MASTER_KEY set (env or infra/.env)" have_var LITELLM_MASTER_KEY
 
 # DEEPSEEK_API_KEY is only needed to re-score or reproduce the frozen V0 comparison
 # arm. New runs go to the router, so its absence is a note rather than a failure.
-if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+if ! have_var DEEPSEEK_API_KEY; then
   echo "[note] DEEPSEEK_API_KEY unset — fine for router runs; required only to reproduce the frozen DeepSeek arm"
 else
   echo "[ok]   DEEPSEEK_API_KEY set (frozen comparison arm reproducible)"

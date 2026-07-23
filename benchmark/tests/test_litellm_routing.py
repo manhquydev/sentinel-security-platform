@@ -63,8 +63,12 @@ def test_budget_enforcement_is_fail_closed_where_it_applies():
 
 
 def test_database_url_never_hardcoded():
+    """The invariant is that the DSN arrives from the environment, not which variable
+    carries it. Pinning the variable name made this fail when the gateway moved to its
+    own bundled store and adopted LiteLLM's own DATABASE_URL convention, even though
+    nothing about the property under test had changed."""
     config = load_config()
-    assert config["general_settings"]["database_url"] == "os.environ/LITELLM_DATABASE_URL"
+    assert config["general_settings"]["database_url"].startswith("os.environ/")
 
 
 def test_drop_params_enabled_for_provider_param_incompatibility():

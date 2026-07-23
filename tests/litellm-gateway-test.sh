@@ -103,15 +103,16 @@ else
   ok "credential fields read from the environment"
 fi
 
-sect "spend is honestly absent, not fabricated"
-# The router returns usage.cost: null and LiteLLM has no pricing for cx/*. Setting a
-# per-token cost would make the proxy emit a spend figure derived from the backing
-# model's public list price, which is not what this router charges. A confidently wrong
-# number in a FinOps dashboard is worse than a missing one, so its absence is asserted.
+sect "no hand-written pricing is added on top of what LiteLLM computes"
+# LiteLLM already prices these models from its own cost map — measured live, a call
+# recorded exactly the backing tier's public list price. Spend is therefore not absent,
+# and this assertion does not make it absent. What it guards is narrower and still worth
+# guarding: nobody may add a hand-written rate, which would swap one unverified number
+# for another while looking like a correction. The README labels what the figure means.
 if grep -Eq '^\s*(input_cost_per_token|output_cost_per_token|model_info):' "$CFG"; then
   bad "pricing is set for a tier whose real rate is unknown"
 else
-  ok "no fabricated per-token pricing"
+  ok "no hand-written per-token pricing"
 fi
 
 sect "guardrail is wired and fails closed by default"
@@ -160,11 +161,29 @@ if grep -Eq '^\s*-\s*"127\.0\.0\.1:4000:4000"' "$COMPOSE"; then
 else
   bad "port binding is not loopback-only"
 fi
-if grep -Eq '^\s*-\s*"[0-9]+:[0-9]+"' "$COMPOSE"; then
+if grep -Eq '^[[:space:]]*-[[:space:]]*"[0-9]+:[0-9]+"' "$COMPOSE"; then
   bad "a port is published on all interfaces"
 else
   ok "no port published on all interfaces"
 fi
+
+# The key store mints and validates every virtual key, and it holds them at rest. It has
+# no business being reachable from anywhere but the proxy, so it publishes no port at all.
+# The inherited configuration had this exactly backwards: the store lived in an unrelated
+# project's test database bound to 0.0.0.0.
+if python3 - "$COMPOSE" <<'PY'
+import sys, yaml
+services = (yaml.safe_load(open(sys.argv[1])) or {}).get("services", {})
+sys.exit(1 if (services.get("postgres") or {}).get("ports") else 0)
+PY
+then ok "key store publishes no port"
+else bad "key store publishes a port"
+fi
+grep -Eq 'image: postgres:[0-9.]+-alpine@sha256:[0-9a-f]{64}' "$COMPOSE" \
+  && ok "key store image pinned by digest" || bad "key store image is not digest-pinned"
+grep -Eq 'DATABASE_URL:.*@postgres:5432/litellm' "$COMPOSE" \
+  && ok "proxy reaches the store over the compose network" \
+  || bad "proxy does not reach its own bundled store"
 grep -q './guardrails:/app/guardrails:ro' "$COMPOSE" \
   && ok "guardrails mounted read-only" \
   || bad "guardrails must be mounted read-only"
