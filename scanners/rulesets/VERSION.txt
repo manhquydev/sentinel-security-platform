@@ -1,0 +1,2 @@
+# ruleset version: owasp-local v1 (2026-07-23), authored + pinned locally
+# verify: sha256sum -c CHECKSUMS.txt

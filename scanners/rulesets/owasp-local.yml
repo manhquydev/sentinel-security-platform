@@ -1,0 +1,32 @@
+# Mirrored, checksum-pinned Semgrep ruleset (phase-03).
+#
+# Vendored locally on purpose: p/owasp-top-ten pulled live from the registry is
+# mutable analysis logic (a weakened rule silently drops findings). This small
+# set is authored + checksummed here (see CHECKSUMS.txt) and version-recorded.
+# It targets two vulnerability classes that OWASP Benchmark Java exercises
+# heavily, so it produces abundant real findings for pipeline validation.
+rules:
+  - id: java-insecure-random
+    languages: [java]
+    severity: WARNING
+    message: "java.util.Random is not cryptographically secure; use java.security.SecureRandom."
+    metadata:
+      cwe: "CWE-330: Use of Insufficiently Random Values"
+      owasp: "A02:2021 - Cryptographic Failures"
+    pattern-either:
+      - pattern: new java.util.Random(...)
+      - pattern: new Random(...)
+
+  - id: java-weak-message-digest
+    languages: [java]
+    severity: WARNING
+    message: "Weak hash algorithm (MD5/SHA-1); use SHA-256 or stronger."
+    metadata:
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"
+      owasp: "A02:2021 - Cryptographic Failures"
+    pattern-either:
+      - pattern: MessageDigest.getInstance("MD5")
+      - pattern: MessageDigest.getInstance("SHA-1")
+      - pattern: MessageDigest.getInstance("SHA1")
+      - pattern: java.security.MessageDigest.getInstance("MD5")
+      - pattern: java.security.MessageDigest.getInstance("SHA-1")

@@ -1,0 +1,36 @@
+# OWASP Juice Shop — deliberately-vulnerable DAST/SAST validation harness (phase-03).
+#
+# Safety posture:
+#   - published ONLY on 127.0.0.1:13000 (loopback), never 0.0.0.0 — a pre-owned
+#     app must not be reachable from the LAN. Host :3000 is already occupied.
+#   - on its own isolated bridge network, off the default bridge and away from
+#     the DefectDojo stack.
+#   - image pinned by @sha256 digest (mutable tag drift is a supply-chain vector).
+#
+# Dockerized DAST scanners reach it over the host loopback via `--network host`
+# (TARGET_URL=http://127.0.0.1:13000); the allowlist pins 127.0.0.1:13000.
+name: juice-shop-harness
+
+services:
+  juice-shop:
+    image: bkimminich/juice-shop@sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a
+    container_name: juice-shop
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:13000:3000"
+    networks:
+      - juice-net
+    healthcheck:
+      # This image is distroless: no /bin/sh and node is not on the exec PATH,
+      # so CMD-SHELL fails. Use exec form with node's real path (/nodejs/bin/node).
+      # 200 from the version endpoint means the app is serving, not just booting.
+      test: ["CMD", "/nodejs/bin/node", "-e", "require('http').get('http://127.0.0.1:3000/rest/admin/application-version',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+networks:
+  juice-net:
+    name: juice-net
+    driver: bridge
