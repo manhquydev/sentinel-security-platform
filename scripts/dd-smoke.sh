@@ -67,11 +67,20 @@ u=Dojo_User.objects.get(username='$DD_SERVICE_ACCOUNT_USER')
 print('yes' if (u.is_superuser or u.is_staff) else 'no')" 2>/dev/null | tail -1)
 [ "$IS_PRIV" = "no" ] && ok "CI account is neither superuser nor staff" || bad "CI account is privileged ($IS_PRIV)"
 
+# A Product is one application, so the lake holds one Product per staging target and the
+# writer needs each of them. The control is least privilege, which is the exact SET of
+# grants — not their count, and not a Product_Type grant, which would extend to every
+# Product created under that type in future.
 SCOPE=$(docker exec "$APP_CONTAINER" python manage.py shell --no-imports -c "
 from dojo.models import Product, Product_Type, Dojo_User
 u=Dojo_User.objects.get(username='$DD_SERVICE_ACCOUNT_USER')
-print(Product.objects.filter(authorized_users=u).count() + Product_Type.objects.filter(authorized_users=u).count())" 2>/dev/null | tail -1)
-[ "$SCOPE" = "1" ] && ok "CI account scoped to exactly one product" || bad "CI account has $SCOPE grants, expected 1"
+prods=sorted(p.name for p in Product.objects.filter(authorized_users=u))
+types=Product_Type.objects.filter(authorized_users=u).count()
+print(','.join(prods) + '|' + str(types))" 2>/dev/null | tail -1)
+EXPECTED_SCOPE="juice-shop-harness,webgoat|0"
+[ "$SCOPE" = "$EXPECTED_SCOPE" ] \
+  && ok "CI account scoped to exactly the lake's two Products, with no Product_Type grant" \
+  || bad "CI account scope is '$SCOPE', expected '$EXPECTED_SCOPE'"
 
 # ---------------------------------------------------------------------------
 sect "hardening"

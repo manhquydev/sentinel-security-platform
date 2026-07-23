@@ -47,14 +47,22 @@ sect "the committed baseline reports today's real migration debt as drift"
 # test. This is real evidence, not a synthetic fixture: it is exactly the
 # "first timer firing fails the drift check" state the migration plan exists
 # to resolve.
-committed_out="$(BASELINE="$REPO_ROOT/infra/defectdojo/lake-baseline.json" "$VERIFY" 2>&1)"
 if BASELINE="$REPO_ROOT/infra/defectdojo/lake-baseline.json" "$VERIFY" >/dev/null 2>&1; then
-  bad "the committed baseline passed against a lake that still carries the stale Semgrep test — migration already happened and this check is stale"
-elif printf '%s' "$committed_out" | grep -q 'extra: Semgrep JSON Report'; then
-  ok "committed baseline correctly flags the un-retired OWASP Benchmark Semgrep test as drift"
+  ok "the committed baseline matches the live lake"
 else
-  bad "committed baseline failed for an unexpected reason:"$'\n'"$committed_out"
+  bad "the committed baseline no longer matches the live lake"
 fi
+
+# The property the Product split established, asserted directly rather than inferred from
+# a count: no Product may hold findings whose locators point into a scoring corpus. The
+# lake describes applications; OWASP Benchmark is 2740 synthetic cases with known ground
+# truth and nobody triages them.
+CORPUS=$(docker exec dd-uwsgi python manage.py shell --no-imports -c "
+from dojo.models import Finding
+print(Finding.objects.filter(active=True, file_path__contains='targets/owasp-benchmark').count())" 2>/dev/null | tail -1)
+[ "$CORPUS" = "0" ] \
+  && ok "no benchmark-corpus findings remain in the lake" \
+  || bad "$CORPUS benchmark-corpus findings are still in the lake"
 
 sect "a baseline that omits a real source fails (the engagement has an extra type)"
 python3 - "$WORK/partial.json" <<'PY'
