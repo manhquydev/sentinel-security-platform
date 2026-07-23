@@ -384,6 +384,12 @@ Phase 3 — the contract and the hygiene — **complete 2026-07-23**
 
 Phase 1 — the shared gateway — **complete 2026-07-23**
 
+Correction, same day: this section was first marked complete while its own gate — "structural
+parity asserted; **one live call succeeds**; no secret in any committed file" — had not been
+met. Compose was validated structurally and the required-variable guard was confirmed, but the
+proxy had never run, because the gateway's variables still lived in `benchmark/.env`. The live
+call is recorded below; the claim preceded the evidence and should not have.
+
 - [x] `infra/litellm/{config.yaml,docker-compose.yml,README.md}`. Git recorded the config
       as a rename rather than a delete-and-add, which is content parity at the file level;
       `tests/litellm-gateway-test.sh` asserts it structurally per alias and per setting.
@@ -411,18 +417,43 @@ Phase 1 — the shared gateway — **complete 2026-07-23**
       the measured timeout. One assertion was found vacuous before that — `grep -q`
       suppressed the output its own pipeline consumed — and was rewritten.
 
-Phase 2 — spend — **resolved as absent-with-reason 2026-07-23**
+Phase 1 live proof — **2026-07-23**, the gate its first version claimed without evidence
 
-- [x] Public list prices for the backing tiers were found (Sol $5.00/$30.00, Terra
-      $2.50/$15.00 per 1M tokens, 2026-07-23) but **not adopted as `model_info` pricing**.
-      They are OpenAI's rates for the backing model, not what this router charges, and the
-      router reports its own model name so the mapping is not verifiable from here. Setting
-      them would make LiteLLM emit a spend figure that is wrong in an unknown direction,
-      and a number in a spend column outlives the caveat attached to it.
-- [x] The figures are recorded in `infra/litellm/README.md` as an explicit upper bound for
-      deliberate capacity planning. Token volume remains the measured quantity; anything in
-      currency is a calculation someone chose to make. A test asserts no pricing is set.
-- [ ] Obtaining the router's actual rate stays open — see Open questions.
+- [x] Stack up and healthy; `/health/liveliness` answers; `/v1/models` serves the aliases.
+- [x] **Fail-closed proven on the running instance**, not only in unit tests: a request
+      without a provenance declaration was refused with the module's own message.
+- [x] A declared request carrying target-derived content routed end to end and returned a
+      reply, 103 in / 17 out tokens.
+- [x] The audit trail records one spotlighted span and an eighteen-character password
+      redaction; the planted secret appears **zero** times anywhere in the gateway log.
+- [x] Three claims this stack made were checked against the running system for the first
+      time, and all three were false. Recorded here because each was asserted from
+      configuration rather than observation:
+      - the key store was said to be external because it held the frozen arms' virtual
+        keys. It held nothing — the inherited URL pointed at an unrelated project's e2e
+        test database, bound to `0.0.0.0`, where neither the role nor the database
+        existed. The gateway now owns a bundled store with no published port.
+      - the audit trail did not exist. It went through the proxy's logger, whose effective
+        level is WARNING, so nothing was written despite the contract describing it.
+      - spend was said to be unavailable; see Phase 2 below.
+
+Phase 2 — spend — **corrected 2026-07-23; the first conclusion was wrong**
+
+- [x] The first conclusion — "spend stays honestly unavailable because LiteLLM has no rate
+      for `cx/*`" — was inherited from the benchmark README and never verified. It is
+      false for the running version. **Measured on the live gateway:** LiteLLM's cost map
+      contains `gpt-5.6-sol` at $5/$30 per 1M and matches it after stripping the `cx/`
+      prefix, so a real call recorded `spend = 0.001025` for 103 in / 17 out — the backing
+      tier's public list price to the cent.
+- [x] Declining to set `model_info` therefore does **not** make spend absent; it only
+      leaves LiteLLM's computation alone. The number exists in `LiteLLM_SpendLogs` either
+      way, so the useful act is labelling it rather than suppressing it.
+- [x] `infra/litellm/README.md` now states plainly that the recorded figure is the backing
+      tier's list price and an upper bound of unknown distance from the real cost. No
+      hand-written rate is added, and the test that guards this was rewritten: its
+      rationale had claimed an absence the system does not have.
+- [ ] Reconciling the recorded figure against an actual invoice stays open — see Open
+      questions.
 - [ ] Phase 4: Langfuse standing, metadata traces, then bodies after the stored-trace control.
 - [ ] Phase 5: static ASR baseline, test suites, gateway README.
 
