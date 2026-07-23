@@ -1,10 +1,20 @@
 {
-  "_comment": "Expected active, non-duplicate finding count per scan_type in the baseline engagement. verify-lake.sh compares the live lake against these EXACTLY: the scan target is pinned by @sha256 and the rulesets by checksum, so the count cannot legitimately move, and any drift is a defect. When a pin is deliberately bumped, re-record these numbers as part of that change.",
-  "product": "juice-shop-harness",
-  "engagement": "week1-baseline",
-  "expected": {
-    "Trivy Scan": 4,
-    "Semgrep JSON Report": 221,
-    "Nuclei Scan": 21
-  }
+  "_comment": "Per-Product expected active, non-duplicate finding count per scan_type. verify-lake.sh compares the live lake against these EXACTLY, product by product: each target is pinned by @sha256 and its ruleset by checksum, so a count cannot legitimately move, and any drift is a defect. When a pin is deliberately bumped, re-record these numbers as part of that change. A DefectDojo Product represents exactly one application (docs/decisions/0007) \u2014 benchmark/scoring corpora do not get a products[] entry here.",
+  "products": [
+    {
+      "product": "juice-shop-harness",
+      "engagement": "week1-baseline",
+      "expected": {
+        "Trivy Scan": 4,
+        "Nuclei Scan": 21
+      }
+    },
+    {
+      "product": "webgoat",
+      "engagement": "week1-baseline",
+      "expected": {
+        "Semgrep JSON Report": 11
+      }
+    }
+  ]
 }

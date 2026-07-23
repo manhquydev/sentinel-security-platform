@@ -1,24 +1,36 @@
-# The sole writer of the DefectDojo baseline.
+# The Juice Shop half of the sole baseline writer. Scans and imports into the
+# juice-shop-harness Product only — one Product, one application, per
+# docs/decisions/0007. WebGoat's SAST pass is the separate
+# sentinel-scan-webgoat.{service,timer} pair; the two never share a Product, so
+# a shared DAST-arm dedup collision (also 0007) cannot happen between them.
 #
 # Runs scan-and-import.sh on the developer host, where it can reach the
-# loopback-bound lake and the Juice Shop harness directly. This is the one process
-# allowed to close findings; the GitHub Actions workflow never touches the lake, so
-# there is no second writer to race, and the scan-and-import flock guards against
-# two timer firings overlapping.
+# loopback-bound lake and the Juice Shop harness directly. This is one of the
+# two processes allowed to close findings, each scoped to its own Product; the
+# GitHub Actions workflow never touches the lake, so there is no second writer
+# to race, and the scan-and-import flock guards against two timer firings
+# overlapping (this unit's and sentinel-scan-webgoat's share one lock file, so
+# an overlap between the two is serialised, not raced, and simply retries next
+# firing).
 #
 # Install (as the user who owns the repo and the docker access, not root):
 #   mkdir -p ~/.config/systemd/user
 #   # edit the placeholders below, then:
-#   cp infra/systemd/sentinel-scan.* ~/.config/systemd/user/
+#   cp infra/systemd/sentinel-scan*.service infra/systemd/sentinel-scan*.timer ~/.config/systemd/user/
 #   systemctl --user daemon-reload
-#   systemctl --user enable --now sentinel-scan.timer
-#   systemctl --user status sentinel-scan.timer
+#   systemctl --user enable --now sentinel-scan.timer sentinel-scan-webgoat.timer
+#   systemctl --user status sentinel-scan.timer sentinel-scan-webgoat.timer
+#
+# Do not enable either timer until the migration steps in
+# docs/plans/active/2026-07-23-no-issue-lake-product-split.md have run — before
+# that, the live lake still carries the stale OWASP Benchmark Semgrep test
+# inside juice-shop-harness, which fails this unit's own ExecStartPost.
 #
 # A user unit (not system) keeps it under the account that already holds the docker
 # group and the DefectDojo credentials, rather than granting root a new capability.
 
 [Unit]
-Description=Sentinel native SAST/DAST scan into the DefectDojo lake
+Description=Sentinel Juice Shop DAST/image scan into the DefectDojo lake
 # No After=docker.service / network-online.target: this is a --user unit and
 # cannot order against system units, so those directives would be silently
 # ignored. If the Persistent timer catches up at boot before docker is up, the
@@ -29,27 +41,30 @@ Type=oneshot
 
 # REQUIRED — set these to the real paths and targets on this host.
 WorkingDirectory=%h/Downloads/vinsoc
-# TARGET_SRC is Semgrep's target and MUST be the Java source the ruleset matches
-# (the WebGoat tree that produces the 221-finding baseline), not the repo root —
-# the owasp-local.yml ruleset is Java-only and scanning a non-Java tree produces
-# zero findings and trips the scanned>0 guard.
-Environment=TARGET_SRC=%h/Downloads/vinsoc/benchmark/targets/webgoat-src
-Environment=SEMGREP_RULESET=%h/Downloads/vinsoc/scanners/rulesets/owasp-local.yml
-# Trivy scans the Juice Shop IMAGE (set, so it ignores TARGET_SRC); Nuclei/ZAP
-# scan the running Juice Shop URL.
+# Trivy scans the Juice Shop IMAGE (set, so it ignores TARGET_SRC); Nuclei
+# scans the running Juice Shop URL. No SAST/TARGET_SRC here: Semgrep moved to
+# its own Product (sentinel-scan-webgoat.service) under decision 0007.
 Environment=IMAGE=bkimminich/juice-shop@sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a
 Environment=TARGET_URL=http://127.0.0.1:13000
 Environment=ALLOWLIST=127.0.0.1:13000
 Environment=TRIVY_IMAGE=aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f
 Environment=TRIVY_SCANNERS=secret,misconfig
 # Quoted: systemd splits an unquoted value on whitespace into separate assignments.
-Environment="SCANNERS=semgrep trivy nuclei"
+Environment="SCANNERS=trivy nuclei"
+# Explicit rather than relying on infra/.env's DD_PRODUCT/DD_ENGAGEMENT
+# defaults: a Product/Engagement pair should be visible in the unit that
+# writes to it, not implied by a file this unit merely happens to also source.
+Environment=PRODUCT_NAME=juice-shop-harness
+Environment=ENGAGEMENT_NAME=week1-baseline
 # import-report.sh reads infra/.env for the service-account credential when
 # DD_API_TOKEN is unset; the unit inherits the repo's own .env via WorkingDirectory.
 
 ExecStart=/usr/bin/env bash scripts/scan-and-import.sh
-# Verify the lake still matches its baseline after every scan; a drift fails the
-# unit loudly instead of accumulating silently.
+# Verify the WHOLE lake (every Product in lake-baseline.json) still matches its
+# baseline after every scan; a drift fails the unit loudly instead of
+# accumulating silently. Deliberately not scoped to this unit's own Product:
+# the lake is one shared asset and either writer finding it drifted is real
+# signal, not noise from the other Product's unit.
 ExecStartPost=/usr/bin/env bash scripts/verify-lake.sh
 
 # The scan pipeline is not trusted with more than it needs.

@@ -1,7 +1,7 @@
-# Schedule for the Juice Shop half of the baseline writer (see
-# sentinel-scan.service). sentinel-scan-webgoat.timer schedules the other half
-# independently; both share scan-and-import.sh's flock, so an overlap between
-# the two is serialised rather than raced.
+# Schedule for the WebGoat half of the baseline writer (see
+# sentinel-scan-webgoat.service). sentinel-scan.timer schedules the Juice Shop
+# half independently; both share scan-and-import.sh's flock, so an overlap
+# between the two is serialised rather than raced.
 #
 # Daily, with a randomised delay so it does not fire at a predictable instant, and
 # Persistent so a firing missed while the machine was off runs on next boot rather
@@ -9,7 +9,7 @@
 # it defines what "fresh" means for verify-lake.sh's MAX_IMPORT_AGE_SECONDS.
 
 [Unit]
-Description=Schedule the Sentinel Juice Shop scan into the DefectDojo lake
+Description=Schedule the Sentinel WebGoat scan into the DefectDojo lake
 
 [Timer]
 OnCalendar=daily
