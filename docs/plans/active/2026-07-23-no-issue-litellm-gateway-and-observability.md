@@ -382,8 +382,47 @@ Phase 3 — the contract and the hygiene — **complete 2026-07-23**
 - [x] No regression: `tests/` 45, `benchmark/` 95, workflow-safety 17, wrapper-status 15,
       target-allowlist 9, `bash -n` and `git diff --check` clean.
 
-- [ ] Phase 1: shared gateway at `infra/litellm/`, structural parity asserted, one live call.
-- [ ] Phase 2: pricing resolved; spend real-with-source or absent-with-reason.
+Phase 1 — the shared gateway — **complete 2026-07-23**
+
+- [x] `infra/litellm/{config.yaml,docker-compose.yml,README.md}`. Git recorded the config
+      as a rename rather than a delete-and-add, which is content parity at the file level;
+      `tests/litellm-gateway-test.sh` asserts it structurally per alias and per setting.
+- [x] One config, not two. `benchmark/litellm-config.yaml` removed; the benchmark's routing
+      test and `preflight.sh` now read the shared file. A second copy would drift, and the
+      drift would be invisible because only one of them is loaded.
+- [x] Guardrail wired at `pre_call`, on by default, provenance required. The one client
+      that cannot declare — a vendored scanner — is exempted through its own named entry
+      that is off by default, so a new caller is fail-closed unless someone adds it. That
+      entry still gets egress redaction, which asks nothing of the caller.
+- [x] **Ordering leak found and fixed.** The adapter ran provenance before redaction.
+      Datamarking replaces whitespace runs with a marker and the redactor keys on the
+      separator and its surrounding whitespace, so `token = value` became `token▁=▁value`
+      and the credential reached the upstream intact. Redaction now runs first. The
+      regression guard reads call order from the AST — and its own first version compared
+      a set rather than an order, because `ast.walk` is breadth-first, so a deliberate
+      reordering passed. Sorting by source position fixed the guard.
+- [x] Image pinned by digest, loopback-only binding, guardrails mounted read-only, database
+      supplied rather than bundled so the virtual keys reproducing the frozen arms survive.
+      Compose validated structurally; the required-variable guard was confirmed to refuse a
+      half-configured boot.
+- [x] `tests/litellm-gateway-test.sh` — 27 assertions. Six mutations each turned it red:
+      renaming `cheap-sast`, fabricating pricing, weakening the guardrail default,
+      publishing the port on all interfaces, committing a literal credential, and drifting
+      the measured timeout. One assertion was found vacuous before that — `grep -q`
+      suppressed the output its own pipeline consumed — and was rewritten.
+
+Phase 2 — spend — **resolved as absent-with-reason 2026-07-23**
+
+- [x] Public list prices for the backing tiers were found (Sol $5.00/$30.00, Terra
+      $2.50/$15.00 per 1M tokens, 2026-07-23) but **not adopted as `model_info` pricing**.
+      They are OpenAI's rates for the backing model, not what this router charges, and the
+      router reports its own model name so the mapping is not verifiable from here. Setting
+      them would make LiteLLM emit a spend figure that is wrong in an unknown direction,
+      and a number in a spend column outlives the caveat attached to it.
+- [x] The figures are recorded in `infra/litellm/README.md` as an explicit upper bound for
+      deliberate capacity planning. Token volume remains the measured quantity; anything in
+      currency is a calculation someone chose to make. A test asserts no pricing is set.
+- [ ] Obtaining the router's actual rate stays open — see Open questions.
 - [ ] Phase 4: Langfuse standing, metadata traces, then bodies after the stored-trace control.
 - [ ] Phase 5: static ASR baseline, test suites, gateway README.
 
