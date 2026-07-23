@@ -4,7 +4,7 @@ Date: 2026-07-23
 
 ## Status
 
-Active
+Complete, with disclosed residuals
 
 ## Outcome
 
@@ -30,7 +30,8 @@ Completion is observable when:
 - secret redaction on the egress path is proven by negative controls observed failing first,
   and the redacted request is still one the upstream accepts;
 - Langfuse holds traces of real calls, the bodies it holds are post-redaction, and a planted
-  secret is provably absent from the **stored trace**;
+  secret is provably absent from the **stored trace**. (Met only after the acceptance review:
+  when first claimed, it held for chat completions with string content and nothing else.)
 - an evaluation harness can produce a static-baseline ASR figure, so Week 7 has a
   before/after rather than an assertion; and
 - `benchmark/README.md`'s egress note matches what the system actually does.
@@ -478,7 +479,78 @@ Phase 4 — tracing — **complete 2026-07-23**
 - [x] The two checks that pinned message logging off were rewritten, not flipped: body
       logging and the guardrail are one decision, so logging without the guardrail fails.
 
-- [ ] Phase 5: static ASR baseline, remaining gateway documentation.
+Phase 5 — evaluation — **complete 2026-07-24**
+
+- [x] `evaluation/false-positive/` measures what the guardrail does to the real corpus: 371
+      WebGoat Java files, three sanitized scanner reports, the committed attack-surface
+      baseline. 84 redactions, **zero structural false positives**, zero payloads mangled.
+      False positives are decided by structure — contexts that cannot hold a credential —
+      not by opinion, because a redaction inside vulnerable-by-design source may well be
+      correct.
+- [x] The zero is meaningful only because the machinery can produce another number:
+      reverting the JWT pattern to the length-only form that shipped makes it report 36,
+      asserted by a test rather than by hand.
+- [x] `evaluation/agentdojo/` runs a bounded static baseline. Its first artifact was void —
+      both injection tasks scored zero standalone utility, so the scaffold could not execute
+      the injected goal even unattacked and a zero attack-success rate could not distinguish
+      a failed attack from an impossible one. The runner now probes every injection task and
+      scores only the viable ones; three of nine qualify in the banking suite. Superseded
+      artifact kept in place, marked, with its reason.
+- [x] Documentation: `evaluation/README.md`, the gateway README's tracing section, and the
+      corpus-provisioning step a fresh clone needs.
+
+## Acceptance review — 2026-07-23/24
+
+Four specialist reviewers ran against the finished work: gateway security, lake data
+integrity, a claims audit recomputing every number this plan asserts, and a mutation-based
+hunt for assertions that pass for the wrong reason. They found more than the implementation
+had found itself.
+
+Blocking, all closed and independently re-verified:
+
+- **The guardrail was inert on `/v1/responses`, `/v1/completions` and `/v1/embeddings`** —
+  enforcement keyed on `data["messages"]` alone, and the scanner this gateway exists for
+  calls the Responses API exclusively. Proven by execution: HTTP 200, no audit line,
+  plaintext in the trace store. Redaction now covers every text-bearing location and the
+  adapter refuses any shape it cannot label.
+- **Model responses were never redacted** — `pre_call` only. A `post_call` hook now covers
+  chat and Responses shapes. Streaming remains uncovered; LiteLLM has no post-hook there,
+  and the affected aliases are named rather than implied.
+- **Lake verification could be green about a lake it could not see** — an entire hidden
+  Product passed. It now compares DefectDojo's Product set against the baseline, reports
+  sibling engagements, and its freshness assertions stopped being unconditional passes.
+- **Semgrep finding identity depended on run mode** — docker and local-binary modes differ
+  in all three hashcode fields, so a mode switch would close every finding as remediated
+  and create the same number, invisible to a count-based drift check. Locators are now
+  repository-relative, and the importer refuses to close when the incoming scheme differs
+  from the lake's.
+
+Also corrected: two false statements in this plan's own Phase 1 and Phase 4 records, three
+detector gaps (JSON-quoted keys — the dominant serialisation in this workload — HTTP auth
+schemes other than Bearer, and DSN passwords), a port-exposure assertion that had never been
+able to fail, both Langfuse containers unhealthy for hours behind a loopback probe the app
+never binds, and ten trace rows holding credentials planted by the reviewers' own probes.
+
+## Result
+
+Complete, with disclosed residuals.
+
+The gateway is shared infrastructure: one config, digest-pinned, loopback-only, its own key
+store with no published port, tracing to a self-hosted Langfuse stack, and a guardrail that
+labels provenance and redacts secrets in both directions without attempting injection
+detection. 306 assertions pass across eleven suites.
+
+**Residuals, stated rather than deferred silently:**
+
+- Streaming responses are not redacted. LiteLLM exposes no post-call hook on that path.
+- Recorded spend is the backing tier's public list price, not what this router charges. It
+  is an upper bound of unknown distance from the real cost; reconciling against an invoice
+  is open.
+- The eleven WebGoat findings in the lake carry the pre-fix locator scheme. Reconciling them
+  needs a write; the danger — an automatic import fabricating eleven remediations — is
+  guarded, so this is now cleanup rather than a landmine.
+- The Semgrep ruleset is two crypto rules covering one OWASP category. WebGoat has a
+  pipeline signal, not SAST coverage.
 
 ## Decisions
 
