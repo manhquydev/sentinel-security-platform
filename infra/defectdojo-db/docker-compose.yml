@@ -1,0 +1,71 @@
+# DefectDojo external database.
+#
+# Deliberately a SEPARATE stack from infra/defectdojo/. plan-02 decision #7 requires
+# the database to be external to the application stack so that `docker compose down`
+# on the app can never take the data with it, and so the same app stack can later be
+# repointed at a managed host with no compose change.
+#
+# Brought up with the shared secrets file:
+#   docker compose --env-file ../.env -f infra/defectdojo-db/docker-compose.yml up -d
+---
+services:
+  dd-postgres:
+    # Digest matches the postgres build DefectDojo 3.1.200 is tested against
+    # (upstream docker-compose.yml). Tag is informational; the digest is the pin.
+    image: postgres:18.4-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    container_name: dd-postgres
+    restart: unless-stopped
+
+    # Wrapper stages TLS material with postgres-owned permissions before handing
+    # over to the stock entrypoint. See scripts/dd-pg-entrypoint.sh.
+    entrypoint: ["/dd-pg-entrypoint.sh"]
+    command:
+      - postgres
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/certs/server.crt
+      - -c
+      - ssl_key_file=/certs/server.key
+      - -c
+      - ssl_ca_file=/certs/ca.crt
+      - -c
+      - hba_file=/certs/pg_hba.conf
+
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: "${DD_DATABASE_NAME:?DD_DATABASE_NAME must be set}"
+      POSTGRES_USER: "${DD_DATABASE_USER:?DD_DATABASE_USER must be set}"
+      POSTGRES_PASSWORD: "${DD_DATABASE_PASSWORD:?DD_DATABASE_PASSWORD must be set}"
+      # scram-sha-256 for anything created by initdb, matching pg_hba.conf.
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+
+    volumes:
+      - dd_postgres_data:/var/lib/postgresql/data
+      - ../../scripts/dd-pg-entrypoint.sh:/dd-pg-entrypoint.sh:ro
+      - ./certs:/certs-src:ro
+      - ./pg_hba.conf:/pg_hba.conf.src:ro
+
+    # Host-published only on loopback: needed by dd-backup.sh and ad-hoc psql.
+    # 5432/5433/55432 are already taken on this host by unrelated stacks.
+    ports:
+      - "127.0.0.1:55433:5432"
+
+    healthcheck:
+      # Local socket, so this reports server liveness without depending on TLS.
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+    networks:
+      - dd-net
+
+volumes:
+  dd_postgres_data: {}
+
+networks:
+  dd-net:
+    external: true
+    name: dd-net

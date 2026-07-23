@@ -1,0 +1,230 @@
+# DefectDojo application stack (plan-02 P1).
+#
+# The database is NOT here - it lives in infra/defectdojo-db/ as a separate stack
+# (plan-02 decision #7). Five long-running services plus a one-shot initializer.
+#
+# Bring-up (shared secrets file, see infra/.env.example):
+#   docker network create dd-net
+#   docker compose --env-file ../.env -f infra/defectdojo-db/docker-compose.yml up -d
+#   docker compose --env-file ../.env -f infra/defectdojo/docker-compose.yml up -d
+#
+# Every Django container boots through scripts/dd-entrypoint.sh, which runs
+# scripts/dd-boot-guard.sh before Django is imported. See that script for why the
+# ordering is the control rather than a post-boot assertion.
+---
+x-dd-database-env: &dd-database-env
+  # Discrete vars, never DD_DATABASE_URL: a DSN carries the password inside a URL
+  # that shows up in tracebacks, "docker inspect", and celery log lines.
+  DD_DATABASE_ENGINE: "django.db.backends.postgresql"
+  DD_DATABASE_HOST: "dd-postgres"
+  DD_DATABASE_PORT: "5432"
+  DD_DATABASE_NAME: "${DD_DATABASE_NAME:?DD_DATABASE_NAME must be set}"
+  DD_DATABASE_USER: "${DD_DATABASE_USER:?DD_DATABASE_USER must be set}"
+  DD_DATABASE_PASSWORD: "${DD_DATABASE_PASSWORD:?DD_DATABASE_PASSWORD must be set}"
+  # DefectDojo's DATABASES dict has no OPTIONS key, so TLS cannot be configured
+  # through a DD_* variable. libpq reads these directly, which covers both the ORM
+  # and "manage.py dbshell" (the readiness probe in docker/reach_database.sh).
+  PGSSLMODE: "verify-full"
+  PGSSLROOTCERT: "/certs/ca.crt"
+  DD_DATABASE_READINESS_TIMEOUT: "${DD_DATABASE_READINESS_TIMEOUT:-60}"
+
+x-dd-secret-env: &dd-secret-env
+  DD_SECRET_KEY: "${DD_SECRET_KEY:?DD_SECRET_KEY must be set - see infra/.env.example}"
+  DD_CREDENTIAL_AES_256_KEY: "${DD_CREDENTIAL_AES_256_KEY:?DD_CREDENTIAL_AES_256_KEY must be set - see infra/.env.example}"
+
+x-dd-dedup-env: &dd-dedup-env
+  # Deduplication needs BOTH variables. The algorithm variable alone selects a
+  # STRATEGY; the fields variable selects WHAT the hash is computed over. Leaving
+  # the second unset silently keeps DefectDojo's defaults, which for our scanners
+  # are not endpoint-based:
+  #   ZAP Scan     default ["title","cwe","severity"]                        (settings.dist.py:1069)
+  #   Nuclei Scan  default ["title","cwe","severity","component_name"]       (settings.dist.py:1118)
+  #   Trivy Scan   default ["title","severity","vulnerability_ids","cwe","description"] (settings.dist.py:1080)
+  #   Semgrep JSON Report / Generic Findings Import  no default entry at all
+  # Per-key values REPLACE the defaults (settings.dist.py:1163-1177), they do not merge.
+  #
+  # When "endpoints" participates, DefectDojo hashes DEDUPE_ALGO_ENDPOINT_FIELDS =
+  # ["host","path"] (settings.dist.py:1276). That is the locator P3's redaction must
+  # preserve: redact credential values, never the host/path, or the hash moves
+  # every run and the lake inflates instead of deduplicating.
+  #
+  # Semgrep also hashes vuln_id_from_tool (the rule's check_id, set by
+  # dojo/tools/semgrep/parser.py). Without it, two DIFFERENT rules firing on the
+  # same line collapse into one finding and the second is lost - silent data loss
+  # in a lake whose whole purpose is aggregation.
+  #
+  # This config is committed rather than kept in .env because it is reviewable
+  # policy, not a secret.
+  DD_DEDUPLICATION_ALGORITHM_PER_PARSER: >-
+    {"ZAP Scan":"hash_code",
+     "Nuclei Scan":"hash_code",
+     "Semgrep JSON Report":"hash_code",
+     "Trivy Scan":"hash_code",
+     "Generic Findings Import":"unique_id_from_tool_or_hash_code"}
+  DD_HASHCODE_FIELDS_PER_SCANNER: >-
+    {"ZAP Scan":["title","cwe","severity","endpoints"],
+     "Nuclei Scan":["title","cwe","severity","endpoints"],
+     "Semgrep JSON Report":["file_path","line","vuln_id_from_tool"],
+     "Trivy Scan":["component_name","component_version","vulnerability_ids"],
+     "Generic Findings Import":["title","cwe","severity","description"]}
+
+x-dd-common-env: &dd-common-env
+  DD_DEBUG: "False"
+  DD_ALLOWED_HOSTS: "${DD_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+  DD_SITE_URL: "${DD_SITE_URL:-http://localhost:8080}"
+  DD_CELERY_BROKER_URL: "redis://redis:6379/0"
+
+x-dd-django-image: &dd-django-image
+  image: defectdojo/defectdojo-django@sha256:166d484b855105e18c033c1bf4dfc80a0aac9d1d54f54e122a86c9728400fbc3
+
+x-dd-tls-mounts: &dd-tls-mounts
+  # CA only. The server key never leaves the database stack.
+  - ../defectdojo-db/certs/ca.crt:/certs/ca.crt:ro
+  - ../../scripts/dd-boot-guard.sh:/dd-boot-guard.sh:ro
+  - ../../scripts/dd-entrypoint.sh:/dd-entrypoint.sh:ro
+
+services:
+  # One-shot. Owns migrations and fixture loading so that neither the app nor the
+  # two celery containers can race them or leave a half-applied migration behind
+  # on a crash-loop. Everything else waits on it completing successfully.
+  initializer:
+    <<: *dd-django-image
+    container_name: dd-initializer
+    entrypoint: ["/dd-entrypoint.sh", "/entrypoint-initializer.sh"]
+    environment:
+      <<: [*dd-database-env, *dd-secret-env, *dd-dedup-env, *dd-common-env]
+      DD_INITIALIZE: "true"
+      DD_ADMIN_USER: "${DD_ADMIN_USER:?DD_ADMIN_USER must be set}"
+      DD_ADMIN_PASSWORD: "${DD_ADMIN_PASSWORD:?DD_ADMIN_PASSWORD must be set}"
+      DD_ADMIN_MAIL: "${DD_ADMIN_MAIL:-admin@defectdojo.local}"
+      DD_ADMIN_FIRST_NAME: "${DD_ADMIN_FIRST_NAME:-Admin}"
+      DD_ADMIN_LAST_NAME: "${DD_ADMIN_LAST_NAME:-User}"
+    volumes: *dd-tls-mounts
+    restart: "no"
+    networks: [dd-net]
+
+  uwsgi:
+    <<: *dd-django-image
+    container_name: dd-uwsgi
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    entrypoint: ["/dd-entrypoint.sh", "/entrypoint-uwsgi.sh"]
+    environment:
+      <<: [*dd-database-env, *dd-secret-env, *dd-dedup-env, *dd-common-env]
+    volumes:
+      - ../defectdojo-db/certs/ca.crt:/certs/ca.crt:ro
+      - ../../scripts/dd-boot-guard.sh:/dd-boot-guard.sh:ro
+      - ../../scripts/dd-entrypoint.sh:/dd-entrypoint.sh:ro
+      - dd_media:/app/media
+    restart: unless-stopped
+    networks: [dd-net]
+
+  celeryworker:
+    <<: *dd-django-image
+    container_name: dd-celeryworker
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    entrypoint: ["/dd-entrypoint.sh", "/entrypoint-celery-worker.sh"]
+    environment:
+      <<: [*dd-database-env, *dd-secret-env, *dd-dedup-env, *dd-common-env]
+    volumes:
+      - ../defectdojo-db/certs/ca.crt:/certs/ca.crt:ro
+      - ../../scripts/dd-boot-guard.sh:/dd-boot-guard.sh:ro
+      - ../../scripts/dd-entrypoint.sh:/dd-entrypoint.sh:ro
+      - dd_media:/app/media
+    restart: unless-stopped
+    networks: [dd-net]
+
+  celerybeat:
+    <<: *dd-django-image
+    container_name: dd-celerybeat
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    entrypoint: ["/dd-entrypoint.sh", "/entrypoint-celery-beat.sh"]
+    environment:
+      <<: [*dd-database-env, *dd-secret-env, *dd-dedup-env, *dd-common-env]
+    volumes: *dd-tls-mounts
+    restart: unless-stopped
+    networks: [dd-net]
+
+  nginx:
+    image: defectdojo/defectdojo-nginx@sha256:1c2b8efc3b2309b0592288e57bcce9a11ff35bb50673317b232496793b6fff7c
+    container_name: dd-nginx
+    depends_on:
+      uwsgi:
+        condition: service_started
+        # nginx resolves the uwsgi hostname once at startup and caches the
+        # address in its workers. Recreating uwsgi (any change to its config)
+        # gives it a new container IP, and nginx keeps proxying to the old one -
+        # a permanent 502 that outlives the restart, not a transient blip.
+        # Observed: nginx held uwsgi://172.19.0.4 while uwsgi had moved to
+        # 172.19.0.6. This makes compose restart nginx whenever uwsgi is
+        # recreated, so the cached address can never go stale.
+        #
+        # Covers the normal path: edit config -> `docker compose up -d`, where
+        # compose recreates uwsgi and then restarts nginx for it (verified).
+        # It does NOT cover replacing the container outside compose
+        # (`docker rm dd-uwsgi` + `up -d uwsgi`), because compose sees nginx as
+        # already running and leaves it alone - that path still needs a manual
+        # `docker restart dd-nginx`.
+        restart: true
+    environment:
+      NGINX_METRICS_ENABLED: "false"
+      DD_UWSGI_HOST: "uwsgi"
+      DD_UWSGI_PORT: "3031"
+    volumes:
+      - dd_media:/usr/share/nginx/html/media
+    # Loopback-bound by default. Exposing this to a CI runner is an open question
+    # in plan-02; until it is answered, the safe default is no network exposure.
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    networks: [dd-net]
+
+  # Celery broker. Redis, NOT the valkey 9.1.0 that upstream's compose pins.
+  #
+  # Measured on this stack: with valkey 9.1.0 the celery worker connects, reports
+  # "ready", registers every task, and answers `inspect ping` / `active_queues`
+  # claiming to consume "celery" - but it never issues a BRPOP against the task
+  # queue. Only the pidbox (control) channel is polled, so control commands work
+  # while real tasks pile up untouched. Queue depth climbed 13 -> 53 with zero
+  # consumption and no error in any log.
+  #
+  # Same DefectDojo image, same broker URL, same worker command, redis 7.4
+  # instead: "Task ... received" -> "Task ... succeeded", queue drains to 0.
+  # The broker is the only variable that changed.
+  #
+  # This is not cosmetic: EVERY async path in DefectDojo runs through celery -
+  # deduplication, notifications, product grading, jira sync. On valkey they all
+  # silently do nothing.
+  redis:
+    image: redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    container_name: dd-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - dd_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+    networks: [dd-net]
+
+volumes:
+  dd_media: {}
+  dd_redis: {}
+
+networks:
+  dd-net:
+    external: true
+    name: dd-net

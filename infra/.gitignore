@@ -1,0 +1,9 @@
+# Secrets and generated key material. Never commit.
+.env
+defectdojo-db/certs/
+
+# Database dumps produced by scripts/dd-backup.sh
+*.dump
+*.sql
+*.sql.gz
+backups/
