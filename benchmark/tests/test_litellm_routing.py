@@ -78,9 +78,17 @@ def test_drop_params_enabled_for_provider_param_incompatibility():
     assert config["litellm_settings"]["drop_params"] is True
 
 
-def test_message_body_logging_is_disabled():
+def test_bodies_reach_the_trace_only_behind_the_redaction_guardrail():
+    """Bodies are logged to the tracing callback, which is only defensible because the
+    guardrail redacts secrets before anything reaches a callback. The two settings are
+    one decision: if body logging is on, the guardrail must be on and required. Asserting
+    the flag alone would let someone disable the guardrail and keep the logging."""
     config = load_config()
-    assert config["litellm_settings"]["turn_off_message_logging"] is True
+    assert config["litellm_settings"]["turn_off_message_logging"] is False
+    guardrails = {g["guardrail_name"]: g["litellm_params"] for g in config["guardrails"]}
+    default = guardrails["sentinel"]
+    assert default["default_on"] is True
+    assert default["require_provenance"] is True
 
 
 def test_virtual_key_info_is_redacted_from_logs():

@@ -62,7 +62,14 @@ services:
       LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set - see infra/.env.example}"
       # Assembled here from the discrete parts rather than carried as a secret of its own,
       # so the password exists in exactly one variable.
-      DATABASE_URL: "postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@postgres:5432/litellm"
+      #
+      # Addressed by CONTAINER name, not by the service name `postgres`. This proxy joins
+      # the tracing stack's network as well, and that stack also has a service called
+      # `postgres`; from a container on both networks the name resolves to two addresses
+      # and Docker's DNS offers both. The proxy reached the tracing database, where the
+      # `litellm` role does not exist, and startup failed on an authentication error that
+      # said nothing about the collision. Container names are unique across networks.
+      DATABASE_URL: "postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@sentinel-litellm-db:5432/litellm"
       ROUTER_API_BASE: "${ROUTER_API_BASE:?ROUTER_API_BASE must be set}"
       ROUTER_API_KEY: "${ROUTER_API_KEY:?ROUTER_API_KEY must be set}"
       DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
@@ -71,6 +78,11 @@ services:
       EMBED_MODEL: "${EMBED_MODEL:-}"
       EMBED_API_KEY: "${EMBED_API_KEY:-}"
       EMBED_API_BASE: "${EMBED_API_BASE:-}"
+      # Tracing. Langfuse publishes only a loopback port, which a container cannot reach,
+      # so the proxy joins that stack's network and addresses it by service name.
+      LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY:-}"
+      LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY:-}"
+      LANGFUSE_HOST: "${LANGFUSE_HOST:-http://langfuse-web:3000}"
       # The guardrail modules import each other by name, so their directory has to be on
       # the path as a directory rather than the files being scattered into /app.
       PYTHONPATH: "/app/guardrails"
@@ -89,10 +101,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
-    networks: [litellm-net]
+    networks: [litellm-net, langfuse-net]
 
 volumes:
   litellm-db:
 
 networks:
   litellm-net:
+  # Owned by infra/langfuse. Declared external so this stack can send traces without
+  # taking a hard dependency on it: if the tracing stack is down, the proxy still starts
+  # and still serves calls — the callback simply fails and is swallowed.
+  langfuse-net:
+    external: true
+    name: langfuse_langfuse-net

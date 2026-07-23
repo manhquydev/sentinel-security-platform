@@ -181,9 +181,19 @@ else bad "key store publishes a port"
 fi
 grep -Eq 'image: postgres:[0-9.]+-alpine@sha256:[0-9a-f]{64}' "$COMPOSE" \
   && ok "key store image pinned by digest" || bad "key store image is not digest-pinned"
-grep -Eq 'DATABASE_URL:.*@postgres:5432/litellm' "$COMPOSE" \
-  && ok "proxy reaches the store over the compose network" \
-  || bad "proxy does not reach its own bundled store"
+# The proxy also joins the tracing stack's network, and that stack has its own service
+# called `postgres`. From a container on both networks the bare service name resolves to
+# two addresses, the proxy reached the wrong database, and startup died on an
+# authentication error that said nothing about the collision. Container names are unique
+# across networks, so the store must be addressed by one.
+grep -Eq 'DATABASE_URL:.*@sentinel-litellm-db:5432/litellm' "$COMPOSE" \
+  && ok "store addressed by its unique container name" \
+  || bad "proxy does not reach its own bundled store by a collision-free name"
+if grep -Eq 'DATABASE_URL:.*@postgres:5432' "$COMPOSE"; then
+  bad "store addressed by the bare service name, which collides on the tracing network"
+else
+  ok "store not addressed by a name shared with another stack"
+fi
 grep -q './guardrails:/app/guardrails:ro' "$COMPOSE" \
   && ok "guardrails mounted read-only" \
   || bad "guardrails must be mounted read-only"

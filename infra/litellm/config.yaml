@@ -127,9 +127,19 @@ litellm_settings:
   # on these tiers completes in ~12s (38s at the observed maximum), so 120s is far
   # outside normal operation while leaving ample headroom for a slow-but-live request.
   request_timeout: 120
-  # Do not persist prompt/response bodies to any logging callback (source code + LLM output must not be retained
-  # beyond what the provider itself does under egress).
-  turn_off_message_logging: true
+  # Bodies DO reach the tracing callback, and the ordering that makes that defensible is
+  # not optional: the guardrail redacts secrets before the request leaves this process,
+  # and only redacted content is handed to any callback. A trace without bodies cannot
+  # show what an agent actually sent a target, which is the thing worth tracing here.
+  #
+  # This reverses the earlier boundary, deliberately and with the trade-off understood:
+  # every trace's safety now rests on redaction being complete, and no redactor is
+  # provably complete. The store is loopback-only and never leaves this host.
+  turn_off_message_logging: false
+  # Tracing is best-effort. A Langfuse outage must never fail an LLM call — the guardrail
+  # is the control, the trace is the record.
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
   # Never let a virtual key's own value leak into logs/callbacks.
   redact_user_api_key_info: true
   # DeepSeek doesn't support OpenAI's strict json_schema response_format (only json_object);

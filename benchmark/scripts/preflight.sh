@@ -49,7 +49,11 @@ fi
 check ".gitignore has runs/" grep -qxF "runs/" "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark db patterns" grep -q 'benchmark/\*\*/\*\.db' "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark/results/" grep -qxF "benchmark/results/" "$REPO_ROOT/.gitignore"
-check "gateway config disables message/body logging" grep -q "turn_off_message_logging: true" "$GATEWAY_CFG"
+# Body logging and the guardrail are one decision, so they are checked together. Bodies
+# reach the trace store only because secrets are redacted before any callback sees them;
+# logging without the guardrail would be a silent downgrade.
+check "gateway logs bodies to the trace store" grep -q "turn_off_message_logging: false" "$GATEWAY_CFG"
+check "gateway guardrail is loaded, guarding that logging" grep -q "guardrail: sentinel_guardrail.SentinelGuardrail" "$GATEWAY_CFG"
 check "gateway guardrail requires provenance by default" grep -q "require_provenance: true" "$GATEWAY_CFG"
 
 # The vendored Metis is patched in this tree (usage-file uniqueness). A re-provision

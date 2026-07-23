@@ -1,0 +1,256 @@
+# Self-hosted Langfuse v3 - the tracing backend for the Sentinel LLM gateway
+# (infra/litellm). Six containers because Langfuse v3 split its v2 all-in-one
+# Postgres into three stores with different jobs: Postgres for
+# projects/users/config, ClickHouse for the trace/observation event volume,
+# Redis for the ingestion queue, and an S3-compatible store (MinIO) for large
+# payload bodies. That footprint was presented to the operator and accepted
+# knowingly rather than discovered after the fact.
+#
+# This store holds prompt and response bodies from the gateway, which means it
+# holds source code and attacker-controlled content pulled from scanned
+# targets. Every service that is not the web UI publishes NO port at all -
+# reachable only over this stack's own compose network - and the web UI
+# itself binds 127.0.0.1 only. See README.md "Security posture".
+#
+# Bring-up (shared secrets file, see infra/.env.example once the gateway team
+# adds the LANGFUSE_* block reported alongside this file):
+#   docker compose --env-file ../.env -f infra/langfuse/docker-compose.yml up -d
+#
+# Nothing here calls out to the router or to any scanned target, and nothing
+# outside this host reads it, so it joins neither dd-net, juice-net, nor
+# litellm-net - it gets its own network.
+---
+x-langfuse-common-env: &langfuse-common-env
+  # Discrete vars assembled into a DSN here, never carried as a DSN secret of
+  # its own - same reasoning as infra/litellm: a DSN puts the password inside
+  # a URL that shows up in tracebacks and `docker inspect`.
+  DATABASE_URL: "postgresql://${LANGFUSE_DB_USER}:${LANGFUSE_DB_PASSWORD}@postgres:5432/langfuse"
+  SALT: "${LANGFUSE_SALT:?LANGFUSE_SALT must be set - see infra/.env.example}"
+  ENCRYPTION_KEY: "${LANGFUSE_ENCRYPTION_KEY:?LANGFUSE_ENCRYPTION_KEY must be set (openssl rand -hex 32) - see infra/.env.example}"
+  # Upstream defaults this to true. Flipped here because this instance carries
+  # attacker-controlled content pulled from scanned targets and the operating
+  # principle for that content is that it never leaves the host - usage
+  # telemetry is not trace content, but there is no reason to phone home at
+  # all from a store built specifically to keep this data local.
+  TELEMETRY_ENABLED: "${LANGFUSE_TELEMETRY_ENABLED:-false}"
+  CLICKHOUSE_MIGRATION_URL: "clickhouse://clickhouse:9000"
+  CLICKHOUSE_URL: "http://clickhouse:8123"
+  CLICKHOUSE_USER: "${LANGFUSE_CLICKHOUSE_USER:?LANGFUSE_CLICKHOUSE_USER must be set - see infra/.env.example}"
+  CLICKHOUSE_PASSWORD: "${LANGFUSE_CLICKHOUSE_PASSWORD:?LANGFUSE_CLICKHOUSE_PASSWORD must be set - see infra/.env.example}"
+  # Single node, no Keeper/ZooKeeper in this stack - leave clustering off
+  # rather than half-configure it.
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  # Same MinIO credential pair backs both bucket bootstrap and the app's S3
+  # access, matching upstream's own default (LANGFUSE_S3_*_ACCESS_KEY_ID
+  # defaults to the MINIO_ROOT_USER value). MinIO is reachable only from this
+  # network, so a scoped IAM user on top of the root credential buys no real
+  # isolation here - it would be a second credential to rotate for no
+  # additional boundary.
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: "langfuse"
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: "auto"
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: "${LANGFUSE_MINIO_ROOT_USER:?LANGFUSE_MINIO_ROOT_USER must be set - see infra/.env.example}"
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: "${LANGFUSE_MINIO_ROOT_PASSWORD:?LANGFUSE_MINIO_ROOT_PASSWORD must be set - see infra/.env.example}"
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: "http://minio:9000"
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: "events/"
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: "langfuse"
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: "auto"
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: "${LANGFUSE_MINIO_ROOT_USER:?LANGFUSE_MINIO_ROOT_USER must be set - see infra/.env.example}"
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: "${LANGFUSE_MINIO_ROOT_PASSWORD:?LANGFUSE_MINIO_ROOT_PASSWORD must be set - see infra/.env.example}"
+  # Media (image/attachment) previews are fetched by the *browser* via a
+  # presigned URL, so this endpoint has to be one the browser can resolve.
+  # MinIO publishes no port at all on this host (hard requirement - see
+  # README "Security posture"), so there is no such endpoint: media previews
+  # in the Langfuse UI will not load. Trace text (prompts/completions) is
+  # unaffected - it flows web-API-to-ClickHouse, never browser-to-S3. Left
+  # pointing at the internal name rather than a dead host URL so the failure
+  # is an empty image, not a broken link to something that looks reachable.
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: "http://minio:9000"
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: "media/"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_AUTH: "${LANGFUSE_REDIS_PASSWORD:?LANGFUSE_REDIS_PASSWORD must be set - see infra/.env.example}"
+  # Cluster mode is a known hazard (README "Known operational hazards"), not a
+  # feature to wire up here - this Redis is a single node.
+  REDIS_TLS_ENABLED: "false"
+
+x-langfuse-depends-on: &langfuse-depends-on
+  postgres:
+    condition: service_healthy
+  clickhouse:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    container_name: sentinel-langfuse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: "${LANGFUSE_DB_USER:?LANGFUSE_DB_USER must be set - see infra/.env.example}"
+      POSTGRES_PASSWORD: "${LANGFUSE_DB_PASSWORD:?LANGFUSE_DB_PASSWORD must be set - see infra/.env.example}"
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - langfuse-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [langfuse-net]
+    # No ports. Reachable only from langfuse-web and langfuse-worker, over
+    # the compose network.
+
+  clickhouse:
+    # Alpine variant: same clickhouse/clickhouse-server release, smaller
+    # image, and it ships wget for the healthcheck below.
+    image: clickhouse/clickhouse-server:25.8.28-alpine@sha256:f40cd6034fb8c54dce6a85338750fbad79f387e2705e1991a85f2e7086b5b9ea
+    container_name: sentinel-langfuse-clickhouse
+    restart: unless-stopped
+    # Matches the image's built-in clickhouse:clickhouse account (101:101).
+    # Running as root here would make ClickHouse fix up ownership under
+    # /var/lib/clickhouse on every start; pinning the uid/gid up front avoids
+    # that and keeps the volume owned by the account that actually needs it.
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: "${LANGFUSE_CLICKHOUSE_USER:?LANGFUSE_CLICKHOUSE_USER must be set - see infra/.env.example}"
+      CLICKHOUSE_PASSWORD: "${LANGFUSE_CLICKHOUSE_PASSWORD:?LANGFUSE_CLICKHOUSE_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      - langfuse-clickhouse-data:/var/lib/clickhouse
+      - langfuse-clickhouse-logs:/var/log/clickhouse-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      # ClickHouse is the slow starter in this stack - first boot lays down
+      # its system tables before /ping answers.
+      start_period: 60s
+    networks: [langfuse-net]
+    # No ports. Reachable only from langfuse-web and langfuse-worker.
+
+  redis:
+    image: redis:7.4-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    container_name: sentinel-langfuse-redis
+    restart: unless-stopped
+    # Langfuse's queue (BullMQ) issues multi-key operations that require every
+    # key to land in the same hash slot - that only holds on a single Redis
+    # node. Do not point this at a cluster-mode Redis; see README "Known
+    # operational hazards" for the CROSSSLOT failure that causes.
+    command: ["redis-server", "--requirepass", "${LANGFUSE_REDIS_PASSWORD:?LANGFUSE_REDIS_PASSWORD must be set - see infra/.env.example}", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
+    volumes:
+      - langfuse-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${LANGFUSE_REDIS_PASSWORD:?LANGFUSE_REDIS_PASSWORD must be set - see infra/.env.example}", "--no-auth-warning", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks: [langfuse-net]
+    # No ports. Reachable only from langfuse-web and langfuse-worker.
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    container_name: sentinel-langfuse-minio
+    restart: unless-stopped
+    entrypoint: ["sh", "-c"]
+    # The `langfuse` bucket has to exist before the app tries to write to it;
+    # `minio server` does not create buckets on its own, so this creates the
+    # directory (MinIO's on-disk bucket representation) before handing off.
+    command: ["mkdir -p /data/langfuse && exec minio server --address ':9000' --console-address ':9001' /data"]
+    environment:
+      MINIO_ROOT_USER: "${LANGFUSE_MINIO_ROOT_USER:?LANGFUSE_MINIO_ROOT_USER must be set - see infra/.env.example}"
+      MINIO_ROOT_PASSWORD: "${LANGFUSE_MINIO_ROOT_PASSWORD:?LANGFUSE_MINIO_ROOT_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      - langfuse-minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [langfuse-net]
+    # No ports, deliberately, even though upstream's own reference compose
+    # publishes 9090/9091. That trades away browser-loaded media previews
+    # (see LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT above) for never putting a blob
+    # store full of target-derived content on a listening socket.
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3.224.1@sha256:d517aad54f7030a104b6e32c52bbd998cae7e12777d23eb9cdbc9ed3f1a1fdf9
+    container_name: sentinel-langfuse-worker
+    restart: unless-stopped
+    depends_on: *langfuse-depends-on
+    environment: *langfuse-common-env
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3030/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks: [langfuse-net]
+    # No ports. Upstream's reference compose publishes 127.0.0.1:3030, but
+    # nothing on this host needs to reach the worker directly - the
+    # healthcheck above runs inside the container - and the web UI on 3000 is
+    # the only intended operator surface.
+
+  langfuse-web:
+    image: langfuse/langfuse:3.224.1@sha256:576132f792276d07380f46a6958877a38a51d20a94e42fa9b3cb096d76db1d9c
+    container_name: sentinel-langfuse-web
+    restart: unless-stopped
+    depends_on: *langfuse-depends-on
+    environment:
+      <<: *langfuse-common-env
+      # Host port is 3001, not Langfuse's default 3000: measured on this host,
+      # 0.0.0.0:3000 is already held by an unrelated container
+      # (cmcv2-prod-api-1), and a loopback bind on 3000 cannot coexist with
+      # that. NEXTAUTH_URL has to agree with whatever the operator's browser
+      # uses to reach this container, so it follows the same port.
+      NEXTAUTH_URL: "${LANGFUSE_NEXTAUTH_URL:-http://localhost:3001}"
+      NEXTAUTH_SECRET: "${LANGFUSE_NEXTAUTH_SECRET:?LANGFUSE_NEXTAUTH_SECRET must be set (openssl rand -hex 32) - see infra/.env.example}"
+      # Headless initialization: the organization, project, owner and API key pair are
+      # provisioned on first boot instead of through a browser signup.
+      #
+      # Without this the gateway callback cannot be configured without a human clicking
+      # through the UI, which makes the stack non-reproducible and means the key pair
+      # exists only wherever the person who created it happened to put it. With it, the
+      # keys are the ones already in infra/.env and a rebuild produces the same project.
+      #
+      # These values are deliberately NOT quoted: Langfuse's own troubleshooting notes
+      # that double-quoted LANGFUSE_INIT_* values in compose prevent initialization.
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:-sentinel}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME:-Sentinel}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:-sentinel-gateway}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME:-Sentinel LLM gateway}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:?LANGFUSE_PUBLIC_KEY must be set - see infra/.env.example}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:?LANGFUSE_SECRET_KEY must be set - see infra/.env.example}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:?LANGFUSE_INIT_USER_EMAIL must be set - the owner account for the UI}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME:-Sentinel Operator}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:?LANGFUSE_INIT_USER_PASSWORD must be set - the owner account for the UI}
+    ports:
+      # The only published port in this stack, and the only service meant to
+      # be reached by a human. Loopback only - this holds the gateway's
+      # tracing view of every scanned target's traffic.
+      - "127.0.0.1:3001:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks: [langfuse-net]
+
+volumes:
+  langfuse-db:
+  langfuse-clickhouse-data:
+  langfuse-clickhouse-logs:
+  langfuse-redis:
+  langfuse-minio:
+
+networks:
+  langfuse-net:
