@@ -1,0 +1,18 @@
+# Metis pointed at the gpt55 router tier through the local LiteLLM proxy.
+#
+# One config per tier rather than one templated file: the tier is part of a run's
+# identity (run dir, virtual key, scorecard), and a config that changes shape
+# depending on the environment makes a completed run's model unrecoverable from
+# its artifacts.
+#
+# api_key_env names a per-tier, per-run virtual key. run-full-benchmark.py sets
+# METIS_VIRTUAL_KEY to the correct V0_GPT55_RUN{N}_VIRTUAL_KEY before invoking Metis,
+# so two tiers at the same run number never bill through the same credential.
+llm_provider:
+  name: "openai"
+  model: "sast-gpt55"
+  base_url: "http://localhost:4000/v1"
+  api_key_env: "METIS_VIRTUAL_KEY"
+
+metis_engine:
+  max_workers: 1

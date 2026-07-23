@@ -1,0 +1,6 @@
+{"finding_id": "f1a", "target_test_case": "BenchmarkTest00001", "target": "owasp-benchmark", "cwe": 22, "rule_id": "r-pathtraver-a"}
+{"finding_id": "f1b", "target_test_case": "BenchmarkTest00001", "target": "owasp-benchmark", "cwe": 22, "rule_id": "r-pathtraver-b"}
+{"finding_id": "f3", "target_test_case": "BenchmarkTest00003", "target": "owasp-benchmark", "cwe": 328, "rule_id": "r-hash"}
+{"finding_id": "f4", "target_test_case": "BenchmarkTest00004", "target": "owasp-benchmark", "cwe": null, "rule_id": "r-no-cwe"}
+{"finding_id": "f10", "target_test_case": "BenchmarkTest00010", "target": "owasp-benchmark", "cwe": 79, "rule_id": "r-wrong-category"}
+{"finding_id": "f-ghost", "target_test_case": "BenchmarkTest09999", "target": "owasp-benchmark", "cwe": 89, "rule_id": "r-unknown-test-case"}

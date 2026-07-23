@@ -1,0 +1,101 @@
+{
+    "version": "2.1.0",
+    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "Metis",
+                    "version": "1.5.0",
+                    "fullName": "Metis v1.5.0",
+                    "informationUri": "https://github.com/arm/metis",
+                    "rules": [
+                        {
+                            "id": "AI001",
+                            "name": "AiSecurityRisk",
+                            "helpUri": "https://raw.githubusercontent.com/arm/metis/main/docs/rules/AI001.md",
+                            "shortDescription": {
+                                "text": "AI-identified security vulnerability",
+                                "markdown": "AI-identified security vulnerability"
+                            },
+                            "fullDescription": {
+                                "text": "This rule indicates a security issue detected by an AI system. These insights are heuristic in nature and should be reviewed by a developer.",
+                                "markdown": "This rule indicates a security issue detected by an AI system. These insights are heuristic in nature and should be reviewed by a developer."
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning"
+                            },
+                            "help": {
+                                "text": "Provides an overview of the security issue found by the AI system and a proposed mitigation.",
+                                "markdown": "Provides an overview of the security issue found by the AI system and a proposed mitigation."
+                            }
+                        }
+                    ]
+                }
+            },
+            "automationDetails": {
+                "id": "metis-run-1"
+            },
+            "results": [
+                {
+                    "ruleId": "AI001",
+                    "level": "error",
+                    "message": {
+                        "id": "AI001",
+                        "arguments": [
+                            "SQL Injection via string concatenation of untrusted input"
+                        ],
+                        "text": "SQL Injection via string concatenation of untrusted input"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "VulnSample.java"
+                                },
+                                "region": {
+                                    "startLine": 9,
+                                    "endLine": 10,
+                                    "snippet": {
+                                        "text": "String query = \"SELECT * FROM users WHERE username = '\" + username + \"'\";\nreturn stmt.executeQuery(query);"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "startLine": 6,
+                                    "endLine": 12,
+                                    "snippet": {
+                                        "text": "    public ResultSet lookupUser(Connection conn, String username) throws Exception {\n        Statement stmt = conn.createStatement();\n        // Deliberately vulnerable: untrusted input concatenated directly into SQL.\n        String query = \"SELECT * FROM users WHERE username = '\" + username + \"'\";\n        return stmt.executeQuery(query);\n    }\n}"
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "partialFingerprints": {
+                        "primaryLocationLineHash": "b9e8cfa0cb30b92632d93c86ba52a609a6a68120ea85a5a5ebd42e9ebcf3dfbd",
+                        "metisAnchor/v1": "250703d9cbdf20f5889de58f177c18ff967124e06c95ab5355a222bac0c5d5f6"
+                    },
+                    "properties": {
+                        "cwe": "CWE-89",
+                        "severity": "Critical",
+                        "reasoning": "The `username` parameter is directly concatenated into a SQL query string without any sanitization, parameterization, or escaping. An attacker can control the `username` value (e.g., from an HTTP request) and inject arbitrary SQL commands, leading to data exfiltration, modification, or deletion. The comment on line 8 explicitly acknowledges this is deliberately vulnerable.",
+                        "mitigation": "Use a parameterized query (PreparedStatement) instead of string concatenation. For example: PreparedStatement stmt = conn.prepareStatement(\"SELECT * FROM users WHERE username = ?\"); stmt.setString(1, username); return stmt.executeQuery();",
+                        "confidence": 1.0,
+                        "anchor": {
+                            "file_path": "VulnSample.java",
+                            "start_line": 9,
+                            "end_line": 10,
+                            "start_col": 0,
+                            "end_col": 40,
+                            "start_byte": 327,
+                            "end_byte": 449,
+                            "symbol": null,
+                            "kind": "range",
+                            "content_hash": "52faf19abefc54a0",
+                            "confidence": "exact"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
