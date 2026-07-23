@@ -96,19 +96,18 @@ guardrails:
       default_on: true
       require_provenance: true
 
-  # The one named exemption. Metis is a vendored third-party scanner that cannot be
-  # taught to send a provenance declaration, and it is the client that reproduces the
-  # frozen benchmark arms. It still gets egress redaction — that half needs nothing from
-  # the caller — but provenance is not required of it.
+  # There is no exemption entry, and the reason is a fact about the proxy rather than a
+  # preference. LiteLLM will not let a caller switch off a `default_on` guardrail from the
+  # request body — its own guardrail code says the restriction exists "to prevent callers
+  # from disabling guardrails". Probed against this deployment: passing the guardrail name
+  # in `guardrails`, setting `{"sentinel": false}`, and putting either under `metadata` are
+  # all refused.
   #
-  # This exists as a separate, reviewable entry rather than as a weaker global default so
-  # that any NEW caller is fail-closed unless someone deliberately adds it here.
-  - guardrail_name: sentinel-legacy-client
-    litellm_params:
-      guardrail: sentinel_guardrail.SentinelGuardrail
-      mode: pre_call
-      default_on: false
-      require_provenance: false
+  # An earlier version declared a `sentinel-legacy-client` entry as a named exemption for a
+  # vendored scanner assumed unable to send a declaration. It never worked; it only read as
+  # though it did. The assumption was also wrong — a third-party benchmark harness was
+  # taught to declare provenance in this repository, and the vendored scanner is already
+  # patched here for an unrelated reason, so the same is available to it.
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

@@ -76,11 +76,20 @@ The gateway does **not** detect prompt injection, deliberately — see
 Callers declare provenance per
 [the hook contract](../../docs/product/guardrail-hook-contract.md).
 
-`sentinel-legacy-client` is the one named exemption, off by default. Metis is a vendored
-scanner that cannot be taught to send a declaration and is the client that reproduces the
-frozen arms; it still gets egress redaction. The exemption is a separate entry rather
-than a weaker global default so that any new caller is fail-closed unless someone
-deliberately adds it.
+**There is no exemption, and none is reachable.** LiteLLM refuses to let a caller switch
+off a `default_on` guardrail from the request body — a restriction its own code explains
+as preventing callers from disabling guardrails. Probed against this deployment: the
+guardrail name in `guardrails`, `{"sentinel": false}`, and either of those nested under
+`metadata` are all refused.
+
+An earlier version of this file described a `sentinel-legacy-client` entry as a named
+exemption for a vendored scanner. That entry never functioned; it only read as though it
+did, which is worse than not having it. Its premise was wrong too: a third-party
+benchmark harness was taught to declare provenance in this repository, and the vendored
+scanner is already patched here for an unrelated reason, so the same route is open to it.
+
+**Consequence for the benchmark client:** it does not declare, so it is refused today.
+Teaching it to declare is the fix; weakening the gateway is not.
 
 ## Recorded spend is a list-price equivalent, not a bill
 

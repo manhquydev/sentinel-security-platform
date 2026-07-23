@@ -133,11 +133,13 @@ else:
         problems.append("sentinel guardrail is not on by default")
     if default.get("require_provenance") is not True:
         problems.append("sentinel guardrail does not require provenance")
-# Any exemption must be an explicitly named, off-by-default entry rather than a weaker
-# global default, so that a new caller is fail-closed unless someone adds it here.
+# No exemption entry may exist. LiteLLM refuses to let a caller disable a default_on
+# guardrail from the request body, so such an entry is unreachable config that reads like
+# a working control — probed against the deployment in all three forms and refused each
+# time. A caller that cannot declare must be taught to, not exempted.
 for name, params in guards.items():
-    if params.get("require_provenance") is False and params.get("default_on") is not False:
-        problems.append(f"exemption '{name}' is on by default")
+    if params.get("require_provenance") is False:
+        problems.append(f"'{name}' declares an exemption that no caller can reach")
 print("\n".join(problems))
 sys.exit(1 if problems else 0)
 PY
