@@ -145,35 +145,30 @@ passes `path`/`check_id` through unchanged whatever value they arrive with):
   Semgrep version changing its prefixing heuristic is caught here instead of
   silently reintroducing mode-dependent identity.
 
-**Existing lake data predates this fix.** The 11 WebGoat `Semgrep JSON Report`
-findings already in the lake (`infra/defectdojo/lake-baseline.json`) were
-produced by the local-binary path under the old scheme — confirmed by reading
-them back from DefectDojo: `file_path=/home/<user>/.../benchmark/targets/webgoat-src/...`,
-`vuln_id_from_tool=scanners.rulesets.java-insecure-random`. A plain reimport
-under the new scheme (`file_path` becomes `src/main/java/...`, `vuln_id_from_tool`
-becomes the bare rule id, e.g. `java-insecure-random`) changes every hashcode
-field DefectDojo dedups on, so it will **not** update those 11 findings in
-place — it will close all 11 as "remediated" (a fabricated event; nothing was
-fixed) and create 11 new findings with the normalised identity. The active
-count stays 11 either way, so this passes `verify-lake.sh` silently. **Do not
-run a plain reimport against the existing webgoat engagement.** Before the
-next Semgrep import there, an operator must choose one of:
+**The 11 pre-existing WebGoat findings were reconciled in place (2026-07-24).**
+They had been produced by the local-binary path under the old scheme
+(`file_path=/home/<user>/.../benchmark/targets/webgoat-src/...`,
+`vuln_id_from_tool=scanners.rulesets.java-insecure-random`), which no longer
+matches what the wrapper emits. A plain reimport at that point would have changed
+every hashcode field DefectDojo dedups on and so **not** updated those findings in
+place — it would have closed all 11 as "remediated" (a fabricated event; nothing
+fixed) and created 11 new ones. The active count stays 11 either way, so
+`verify-lake.sh`'s exact-count check is blind to it.
 
-1. Accept the one-time re-key deliberately, and record in the engagement/PR
-   that the resulting "remediated ×11 / new ×11" history is a re-key, not real
-   remediation (cheapest, but permanently pollutes that test's finding
-   history with a fabricated event unless annotated).
-2. Delete the existing `Semgrep JSON Report` test (or its 11 findings) for the
-   webgoat engagement before importing fresh, so the new-identity findings
-   land as a clean import with no false mitigation entries (loses whatever
-   notes/age were attached to the original 11).
-3. Patch the 11 existing findings' `file_path`/`vuln_id_from_tool` in place via
-   the DefectDojo API to the new normalised values, with no import at all —
-   preserves finding history/age/notes; the most surgical option, and the only
-   one that needs no new import event.
+The 11 rows' `file_path`/`vuln_id_from_tool` were therefore patched in place via
+the DefectDojo API to the normalised values (`src/main/java/...`, bare rule id
+e.g. `java-insecure-random`), with no import event — the surgical option that
+preserves finding history/age/notes and removes the host-path/username leak the
+old absolute paths carried. Their stored identity now matches the wrapper's
+output, so the next Semgrep import updates them in place rather than re-keying.
+`verify-lake.sh --locator-scheme` reports `relative` for `Semgrep JSON Report`.
 
-This wrapper does not perform any of the above — it only stops the drift from
-recurring on the next scan.
+This wrapper does not reconcile existing rows — it only stops the drift from
+recurring on the next scan. **If the identity scheme is ever changed again**, the
+same hazard returns: before the next import against an already-populated
+engagement, either reconcile the stored rows in place first, or delete the test
+and reimport clean; never let a plain close-enabled reimport re-key a populated
+engagement.
 
 ## Supply-chain pinning
 

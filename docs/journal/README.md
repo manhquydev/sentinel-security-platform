@@ -20,3 +20,12 @@ repeating. Entries are never edited to look better in hindsight.
 - [2026-07-23 — DefectDojo standup: two checks that could not fail](2026-07-23-defectdojo-standup-checks-that-could-not-fail.md)
   — a restore drill and a smoke suite that both passed while proving nothing, and the
   broker defect hiding behind healthy-looking diagnostics.
+- [2026-07-23 — Native scanners: routing around a dead registry](2026-07-23-native-scanners-routing-around-a-dead-registry.md)
+  — registry blob throughput defeated image pulls, and the local-binary fallback that kept
+  the scanners running instead of blocked.
+- [2026-07-23 — Checks that passed because they checked nothing](2026-07-23-checks-that-passed-because-they-checked-nothing.md)
+  — one recurring failure across shipped code, review tooling, tests, and the verification of
+  those tests: a check reporting a pass without examining the thing it names.
+- [2026-07-24 — The guard that read the wrong lake](2026-07-24-the-guard-that-read-the-wrong-lake.md)
+  — reconciling the 11 WebGoat rows in place, and the locator-scheme probe whose ignored
+  filter read every scan type and reported a confident wrong answer.
