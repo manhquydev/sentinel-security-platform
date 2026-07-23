@@ -120,3 +120,7 @@ scripts/bin/harness.exe
 scanners/out/
 *.san.json
 /tmp/scan-*
+
+# Week-2 Kong gateway: TLS material and the rendered (secret-bearing) declarative
+# policy are generated locally and must never be committed. The template is tracked.
+infra/kong/kong.rendered.yml

@@ -1,0 +1,168 @@
+# Kong declarative policy for the Sentinel app-ingress gateway (Week 2).
+#
+# This file is the REVIEWABLE SOURCE OF TRUTH for who may call what. It is a
+# template: `${...}` placeholders are secrets (provision key, per-agent client
+# secrets) that never live in git. `render-config.sh` substitutes them from
+# infra/.env into a gitignored kong.rendered.yml, which `kong config db_import`
+# loads. Editing policy means editing THIS file, not the running database.
+#
+# Authorization model (see docs/decisions):
+#   - Authentication  = OAuth2 client-credentials grant. Each agent is a Consumer
+#     with an oauth2 credential; it mints a short-TTL bearer token. This replaces
+#     shared static tokens with a per-agent, expiring identity.
+#   - Authorization   = ACL groups per route. A Consumer reaches a route only if it
+#     belongs to that route's allowed group. This is the "reach /rest/products/search
+#     but NOT /rest/admin/application-version" boundary the brief requires, and it is
+#     the ONLY thing enforced.
+#   - The ACL GROUPS are the scoping mechanism, and their names mirror the Week-1
+#     attack-surface auth taxonomy (read-public / read-authenticated / read-admin /
+#     write-basket) so Week 2 authorizes exactly the boundaries Week 1 mapped.
+#
+# Deliberately NO OAuth2 `scopes`/`mandatory_scope`: Kong OSS's oauth2 plugin does
+# not bind a scope to a consumer — ANY authenticated client may mint a token for ANY
+# scope in the service list, and the plugin does not re-check a token's scope against
+# the route it hits. A `scope` claim here would therefore advertise a permission the
+# gateway does not enforce (agent-recon could mint a "read:admin"-labelled token it
+# still cannot use). Rather than ship a misleading claim, scoping lives entirely in
+# the ACL groups, which ARE per-consumer and ARE enforced. Recorded as a decision so
+# no later reader reintroduces enforcement-free scopes believing Kong honors them.
+#
+# hide_credentials:true strips the bearer token before the request is proxied AND
+# before the audit log serializes it, so no access token is ever written to disk or
+# forwarded to the target. gateway-authz-test.sh asserts that absence.
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: juice-shop
+    # Reached by CONTAINER name across the shared juice-net bridge, not by the
+    # loopback publish (127.0.0.1:13000) — a container cannot reach the host's
+    # loopback, and the service name would collide on multi-network membership.
+    url: http://juice-shop:3000
+    routes:
+      # Token endpoint. No ACL: a caller must reach it unauthenticated to obtain a token.
+      # The path is a REGEX anchored to exactly the mint endpoint. A broad "/oauth" prefix
+      # route was an ACL-escape: with no ACL and a shared upstream, an authenticated agent
+      # could proxy arbitrary app paths through it (POST /oauth/rest/basket and
+      # /oauth2/token/rest/basket both reached Juice Shop, escaping the per-route ACLs).
+      # Anchoring so only POST /oauth/oauth2/token matches means any other /oauth* path
+      # matches no route and 404s, closing the bypass. The oauth2 plugin still recognizes
+      # this as the mint (the request path ends in /oauth2/token) and short-circuits before
+      # any upstream proxying.
+      - name: oauth-token
+        paths:
+          - ~/oauth/oauth2/token$
+        methods:
+          - POST
+        strip_path: false
+
+      # public, read-only  -> group read-public
+      - name: public-read
+        paths:
+          - /rest/products/search
+          - /.well-known/security.txt
+          - /api-docs/swagger.json
+          - /metrics
+          - /robots.txt
+        methods:
+          - GET
+        strip_path: false
+
+      # authenticated, read-only -> group read-authenticated
+      - name: authenticated-read
+        paths:
+          - /rest/user/whoami
+        methods:
+          - GET
+        strip_path: false
+
+      # administrative, read-only -> group read-admin (NOT granted to scanner agents)
+      - name: admin-read
+        paths:
+          - /rest/admin/application-version
+        methods:
+          - GET
+        strip_path: false
+
+      # state-changing -> group write-basket (granted to NO agent this cycle; HITL, Week 8)
+      - name: basket-write
+        paths:
+          - /rest/basket
+        methods:
+          - POST
+        strip_path: false
+
+    plugins:
+      # Authentication for every route on this service, including the token mint.
+      - name: oauth2
+        config:
+          enable_client_credentials: true
+          # A token minted at the /oauth route is accepted on the resource routes.
+          global_credentials: true
+          # Strip the Authorization/token from the proxied request and from the log.
+          hide_credentials: true
+          provision_key: ${KONG_PROVISION_KEY}
+          # 5-minute access tokens bound the blast radius of a leaked token.
+          token_expiration: 300
+
+      # Audit trail: one JSON line per request (method, path, consumer, status,
+      # latencies) to the container's stdout, captured by the Docker logging driver
+      # as the central audit sink. Bodies are not serialized; hide_credentials keeps
+      # the bearer token out of the request headers the serializer sees. stdout is
+      # always writable by the kong user, unlike a root-owned mounted volume; the
+      # raw nginx access log is turned off in compose so this stream is audit-only.
+      - name: file-log
+        config:
+          path: /dev/stdout
+          reopen: false
+
+# Per-route authorization. ACL is attached to the RESOURCE routes only, never to
+# the token route. allow-lists are fail-closed: a consumer not in the group gets 403.
+plugins:
+  - name: acl
+    route: public-read
+    config:
+      allow:
+        - read-public
+      hide_groups_header: true
+  - name: acl
+    route: authenticated-read
+    config:
+      allow:
+        - read-authenticated
+      hide_groups_header: true
+  - name: acl
+    route: admin-read
+    config:
+      allow:
+        - read-admin
+      hide_groups_header: true
+  - name: acl
+    route: basket-write
+    config:
+      allow:
+        - write-basket
+      hide_groups_header: true
+
+consumers:
+  # The Recon agent (Week 4) holds only public read. It cannot reach the admin
+  # version route or any state-changing route — proven by gateway-authz-test.sh.
+  - username: agent-recon
+    acls:
+      - group: read-public
+    oauth2_credentials:
+      - name: agent-recon-cc
+        client_id: agent-recon
+        client_secret: ${AGENT_RECON_SECRET}
+
+  # A deliberately privileged consumer that DOES hold read-admin, so the boundary
+  # is proven from both sides: the same admin route that agent-recon is refused,
+  # probe-admin reaches. It is not an agent; it is the test's positive control.
+  - username: probe-admin
+    acls:
+      - group: read-public
+      - group: read-admin
+    oauth2_credentials:
+      - name: probe-admin-cc
+        client_id: probe-admin
+        client_secret: ${PROBE_ADMIN_SECRET}
