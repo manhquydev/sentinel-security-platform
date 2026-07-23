@@ -1,0 +1,10 @@
+{
+  "_comment": "Expected active, non-duplicate finding count per scan_type in the baseline engagement. verify-lake.sh compares the live lake against these EXACTLY: the scan target is pinned by @sha256 and the rulesets by checksum, so the count cannot legitimately move, and any drift is a defect. When a pin is deliberately bumped, re-record these numbers as part of that change.",
+  "product": "juice-shop-harness",
+  "engagement": "week1-baseline",
+  "expected": {
+    "Trivy Scan": 4,
+    "Semgrep JSON Report": 221,
+    "Nuclei Scan": 21
+  }
+}

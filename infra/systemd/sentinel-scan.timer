@@ -1,0 +1,17 @@
+# Schedule for the sole baseline writer.
+#
+# Daily, with a randomised delay so it does not fire at a predictable instant, and
+# Persistent so a firing missed while the machine was off runs on next boot rather
+# than being skipped. Adjust OnCalendar to the cadence you want; whatever it is,
+# it defines what "fresh" means for verify-lake.sh's MAX_IMPORT_AGE_SECONDS.
+
+[Unit]
+Description=Schedule the Sentinel scan into the DefectDojo lake
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

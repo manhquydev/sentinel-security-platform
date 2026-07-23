@@ -372,19 +372,47 @@ Phase 3 — the core — **complete 2026-07-23**
       `close=false`); a scanner error (Maven 429) is caught via `status=error reported=-1`,
       the import skipped and alerted, the lake untouched.
 
-Phase 4 — prove it
+Phase 4 — prove it — **complete 2026-07-23**
 
-- [ ] `scripts/verify-lake.sh`: two runs, per-source counts exactly match the recorded
-      baseline, no duplicate growth, last-import age fresh.
+- [x] `scripts/verify-lake.sh` + committed `infra/defectdojo/lake-baseline.json`, fully
+      READ-ONLY: it verifies (1) the engagement contains exactly the baseline's scan_types —
+      no missing source, no rogue extra test, no shared scan_type; (2) each source's active,
+      non-duplicate count matches the baseline EXACTLY (4/221/21); (3) last-import age,
+      reported always and fatal only when `MAX_IMPORT_AGE_SECONDS` is set. scan_type→test
+      mapped at runtime, so no instance-specific id is baked in.
+- [x] Deduplication idempotency is **not** re-proven here. An earlier draft reimported the
+      sanitized reports to check it, which a code review showed made a "verification" step
+      write to the lake (it could reactivate a mitigated finding) and depend on scratch files
+      that a clean checkout lacks. That behaviour is already proven behaviourally by
+      `dd-smoke.sh` ("reimported finding is flagged duplicate"), so verify-lake was reduced
+      to a pure read.
+- [x] `tests/verify-lake-test.sh` — 6 negative controls against the live lake: inflated
+      count, deflated count, a baseline that omits a real source (caught by the scan_type-set
+      check), an absent scan_type, and a missing baseline file all fail closed; the committed
+      baseline passes. Live lake stayed at 246, 0 mitigated throughout.
 
-Phase 5 — the two adapters
+Phase 5 — the two adapters — **complete 2026-07-23**
 
-- [ ] systemd timer + unit as sole writer; documented install steps.
-- [ ] `.github/workflows/security-scan.yml`: SAST-only, hosted runner, artifact upload,
-      never contacts the lake.
-- [ ] Workflow triggers, action pinning, permissions and `persist-credentials` verified; a
-      test greps for forbidden triggers so drift fails rather than being caught by review.
-- [ ] `scripts/README.md`: env contract, token scope, local-run steps.
+- [x] `infra/systemd/sentinel-scan.{service,timer}` — a *user* systemd unit as the sole
+      baseline writer, running `scan-and-import.sh` then `verify-lake.sh` daily with a
+      randomised delay; install steps in the service header. `systemd-analyze verify` clean
+      (the `SCANNERS` multi-word value is quoted so systemd does not split it).
+- [x] `.github/workflows/security-scan.yml` — Trivy secret+misconfig on push +
+      `workflow_dispatch`, hosted runner, redact, upload only the `.san` report. Holds **no
+      secrets** and never contacts the lake. **Semgrep is deliberately not in CI**: a review
+      caught that its mirrored ruleset is Java-only (it targets the gitignored WebGoat source
+      that produces the 221-finding baseline), and this repo's own source is Bash/Python/YAML
+      with no mirrored ruleset — running it would scan zero files and trip the scanned>0
+      guard, leaving the gate permanently red. Trivy's scanners are language-agnostic and
+      scan the repo for real; the exact CI command was dry-run locally and exits 0. The
+      systemd unit's `TARGET_SRC` was corrected to the WebGoat Java path for the same reason.
+- [x] `tests/workflow-safety-test.sh` — 15/15: no `pull_request`/`pull_request_target`,
+      `permissions: contents: read` with no write scope, both actions pinned to a 40-hex SHA,
+      `persist-credentials: false`, no reference to the importer/lake/DD token/`:8080`, and
+      only redacted reports in the upload artifact. Enforced so a later edit fails the test
+      rather than relying on review.
+- [x] `scripts/README.md`: the loop, the env contract table, token scope and why CI never
+      needs `infra/.env`, local-run steps, and the one-writer/two-adapter topology.
 
 ## Decisions
 

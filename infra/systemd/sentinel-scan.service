@@ -1,0 +1,57 @@
+# The sole writer of the DefectDojo baseline.
+#
+# Runs scan-and-import.sh on the developer host, where it can reach the
+# loopback-bound lake and the Juice Shop harness directly. This is the one process
+# allowed to close findings; the GitHub Actions workflow never touches the lake, so
+# there is no second writer to race, and the scan-and-import flock guards against
+# two timer firings overlapping.
+#
+# Install (as the user who owns the repo and the docker access, not root):
+#   mkdir -p ~/.config/systemd/user
+#   # edit the placeholders below, then:
+#   cp infra/systemd/sentinel-scan.* ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now sentinel-scan.timer
+#   systemctl --user status sentinel-scan.timer
+#
+# A user unit (not system) keeps it under the account that already holds the docker
+# group and the DefectDojo credentials, rather than granting root a new capability.
+
+[Unit]
+Description=Sentinel native SAST/DAST scan into the DefectDojo lake
+# No After=docker.service / network-online.target: this is a --user unit and
+# cannot order against system units, so those directives would be silently
+# ignored. If the Persistent timer catches up at boot before docker is up, the
+# scan simply fails and the unit goes failed — fail-closed, not a silent no-scan.
+
+[Service]
+Type=oneshot
+
+# REQUIRED — set these to the real paths and targets on this host.
+WorkingDirectory=%h/Downloads/vinsoc
+# TARGET_SRC is Semgrep's target and MUST be the Java source the ruleset matches
+# (the WebGoat tree that produces the 221-finding baseline), not the repo root —
+# the owasp-local.yml ruleset is Java-only and scanning a non-Java tree produces
+# zero findings and trips the scanned>0 guard.
+Environment=TARGET_SRC=%h/Downloads/vinsoc/benchmark/targets/webgoat-src
+Environment=SEMGREP_RULESET=%h/Downloads/vinsoc/scanners/rulesets/owasp-local.yml
+# Trivy scans the Juice Shop IMAGE (set, so it ignores TARGET_SRC); Nuclei/ZAP
+# scan the running Juice Shop URL.
+Environment=IMAGE=bkimminich/juice-shop@sha256:e68144772ebaaca0ec117b38d44903af92416793230288ef7c5437fc4f26850a
+Environment=TARGET_URL=http://127.0.0.1:13000
+Environment=ALLOWLIST=127.0.0.1:13000
+Environment=TRIVY_IMAGE=aquasec/trivy@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f
+Environment=TRIVY_SCANNERS=secret,misconfig
+# Quoted: systemd splits an unquoted value on whitespace into separate assignments.
+Environment="SCANNERS=semgrep trivy nuclei"
+# import-report.sh reads infra/.env for the service-account credential when
+# DD_API_TOKEN is unset; the unit inherits the repo's own .env via WorkingDirectory.
+
+ExecStart=/usr/bin/env bash scripts/scan-and-import.sh
+# Verify the lake still matches its baseline after every scan; a drift fails the
+# unit loudly instead of accumulating silently.
+ExecStartPost=/usr/bin/env bash scripts/verify-lake.sh
+
+# The scan pipeline is not trusted with more than it needs.
+NoNewPrivileges=true
+PrivateTmp=true
