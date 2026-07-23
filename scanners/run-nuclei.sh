@@ -55,6 +55,17 @@ if [ "$rc" -ne 0 ]; then
   exit 5
 fi
 
+# Proof of contact, checked AFTER the scan. Nuclei exits 0 with an empty report
+# both when the target is genuinely clean and when it never answered — it skips a
+# host after repeated errors and still succeeds. A findings-free report is only
+# evidence of remediation if the target was actually up, so re-probe it here
+# rather than trusting the pre-scan readiness gate, which says nothing about the
+# minutes the scan itself spanned.
+if ! ALLOWLIST="$ALLOWLIST" "$HERE/target-allowlist.sh" ready "$TARGET_URL" >/dev/null 2>&1; then
+  echo "run-nuclei: $TARGET_URL did not answer after the scan — findings-free output is not proof of a clean target" >&2
+  exit 7
+fi
+
 # The resolved IP was validated + pinned by target-allowlist. Forcing nuclei
 # onto that exact IP (defeating a rebind between validation and scan) matters
 # only for hostname targets; the current harness target is a literal loopback IP,

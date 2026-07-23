@@ -28,6 +28,16 @@ TRIVY_SCANNERS="${TRIVY_SCANNERS:-vuln,secret,misconfig}"
 common=(--format json --scanners "$TRIVY_SCANNERS" --quiet)
 
 if [ -n "$TARGET_SRC" ]; then
+  # Proof of contact, checked BEFORE the scan because Trivy reports no scanned-file
+  # count to check afterwards. An empty or wrong TARGET_SRC yields a valid,
+  # findings-free report and exit 0 — indistinguishable from a genuinely clean tree,
+  # and enough to mitigate a whole baseline as "remediated" if it is ever imported
+  # with close_old_findings. This is weaker than Semgrep's post-scan paths.scanned:
+  # it proves the directory had content, not that Trivy read it.
+  if [ -z "$(find "$TARGET_SRC" -type f -print -quit 2>/dev/null)" ]; then
+    echo "run-trivy: TARGET_SRC ($TARGET_SRC) contains no files — refusing to produce a would-be clean report" >&2
+    exit 7
+  fi
   # Scan a source tree. Mount read-only; Trivy needs no write access to it.
   docker run --rm \
     -v "$TARGET_SRC":/src:ro \

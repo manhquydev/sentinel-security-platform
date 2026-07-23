@@ -315,18 +315,37 @@ Phase 1 — stop the bleeding — **complete 2026-07-23**
       remediation that never happened, and a lake whose value is trustworthy aggregation
       cannot carry false remediation history. Verified: 0 mitigated, 246 active.
 
-Phase 2 — safe import path
+Phase 2 — safe import path — **complete 2026-07-23**
 
-- [ ] `close_old_findings` parameterised; never true on a zero-finding or
-      proof-of-contact-less report.
-- [ ] Proof of contact: scanned-file count > 0 for Semgrep and Trivy, requests-issued count
-      for Nuclei.
-- [ ] `DD_API_TOKEN` auth path; `infra/.env` not required by the importer.
-- [ ] A caller-supplied engagement reaches the API call unmodified (test asserts it).
-- [ ] `--form-string` for all non-file fields; derived names validated.
-- [ ] Importer emits full response JSON including `statistics` and `deduplication_complete`.
-- [ ] `reported` counted from the raw report; Semgrep `errors` non-empty fails the run.
-- [ ] Missing `CHECKSUMS.txt` is fatal.
+- [x] `close_old_findings` is a parameter defaulting to **false**. The importer cannot tell a
+      genuinely clean scan from a broken one, so the caller must opt in; the safe direction
+      is the default.
+- [x] Proof of contact per source, each using the strongest signal that source actually
+      offers, and the asymmetry documented rather than papered over:
+      **Semgrep** post-scan `paths.scanned > 0` read from the raw report;
+      **Trivy** pre-scan file presence in `TARGET_SRC`, because Trivy reports no scanned
+      count at all — this proves the directory had content, not that Trivy read it;
+      **Nuclei** post-scan re-probe of the target, since nuclei skips an erroring host and
+      still exits 0, and the pre-scan readiness gate says nothing about the minutes the scan
+      spanned.
+- [x] `DD_API_TOKEN` auth path; verified importing with `ENV_FILE` pointed at a nonexistent
+      path, so CI never needs the file carrying the AES key and database password.
+- [x] A caller-supplied engagement reaches the API unmodified — caller values are captured
+      before the env file is sourced. Asserted against a decoy env file naming a different
+      engagement.
+- [x] `--form-string` for every non-file field, plus a character allowlist on names. `@` and
+      `<` prefixes are rejected before reaching the wire.
+- [x] Importer emits the full response JSON; `statistics` and `deduplication_complete` are
+      present, and `deduplication_execution_mode=async_wait` makes the statistics
+      post-deduplication rather than a race.
+- [x] `reported` counted from the raw report. Semgrep `errors` non-empty fails the run — the
+      redactor blanks that array, so a count taken from the sanitized file would describe a
+      scan that never happened.
+- [x] Missing `CHECKSUMS.txt` is fatal (exit 6), not a warning that scrolls past.
+- [x] New `tests/import-contract-test.sh` — 8/8, each assertion covering a way an unattended
+      scheduler could destroy the lake. Negative controls verified: missing checksums,
+      zero-file Semgrep scan, empty Trivy target, dead Nuclei target all fail closed, and
+      none of them blocks a healthy run.
 
 Phase 3 — the core
 
