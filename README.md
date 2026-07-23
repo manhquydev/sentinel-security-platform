@@ -83,7 +83,7 @@ flowchart LR
 |---|---|
 | `scanners/` | Scanner wrappers, redaction, import; SSRF allowlist. Start at [`scanners/README.md`](scanners/README.md). |
 | `scripts/` | Lake orchestration + verification (`scan-and-import.sh`, `verify-lake.sh`), DefectDojo bootstrap. |
-| `infra/` | Compose stacks & systemd units: `defectdojo/`, `litellm/`, `langfuse/`, `harness/` (pinned Juice Shop), `systemd/` writers. |
+| `infra/` | Compose stacks & systemd units: `defectdojo/`, `litellm/`, `langfuse/`, `kong/` (Week‑2 app‑ingress gateway), `harness/` (pinned Juice Shop), `systemd/` writers. |
 | `evaluation/` | AgentDojo baseline + guardrail false‑positive measurement. |
 | `attack-surface/` | Juice Shop attack‑surface schema, manifest, baselines. |
 | `benchmark/` | AI‑SAST scoring harness, targets, results. |
@@ -128,6 +128,14 @@ path and never commit one.
 **Built (Week‑1):** the data lake, scanner→lake pipeline, LLM gateway (provenance +
 redaction + audit), Langfuse tracing, the evaluation baselines, and the Juice Shop
 attack‑surface baseline.
+
+**Built (Week‑2):** an [app‑ingress API gateway](infra/kong/) (Kong OSS) fronting the
+Juice Shop staging target, with **Agent IAM** — each agent gets a per‑agent OAuth2
+client‑credentials identity (short‑TTL token) and is authorized by fail‑closed ACL groups
+whose names mirror the Week‑1 attack‑surface auth taxonomy. An agent reaches only the
+endpoints its group permits (e.g. public read, *not* the admin route). This app‑ingress
+plane is orthogonal to the Week‑1 LLM‑egress gateway
+([decision 0008](docs/decisions/0008-kong-fronts-the-app-litellm-fronts-the-model.md)).
 
 **Roadmap (later phases, not in this repo):** the multi‑agent recon/fuzz/exploit
 syndicate, human‑in‑the‑loop gating, threat‑intel RAG, and self‑hosted vLLM serving.

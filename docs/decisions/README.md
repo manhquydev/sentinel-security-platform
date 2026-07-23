@@ -34,3 +34,13 @@ documents here as real choices are accepted, then index them in this file.
   — adaptive attack recovers 64% ASR on action-open tasks and domain-camouflaged payloads
   evade production classifiers entirely, so Stream E freezes the hook signature and taint
   labels while Stream D enforces at the agent layer.
+- [0008 Kong fronts the app; LiteLLM fronts the model](0008-kong-fronts-the-app-litellm-fronts-the-model.md)
+  — two orthogonal gateway planes with disjoint data and failure modes; Kong OSS is the
+  app-ingress plane (Week 2), LiteLLM stays the LLM-egress plane.
+- [0009 Agent IAM is OAuth2 identity with ACL authorization](0009-agent-iam-is-oauth2-identity-with-acl-authorization.md)
+  — MCP/A2A defer authorization to the gateway, and Kong OSS does not bind scopes to a
+  consumer, so identity is a short-TTL OAuth2 token and enforcement is fail-closed ACL groups
+  named after the attack-surface auth taxonomy.
+- [0010 Authorization enforcement is Kong ACL; OPA deferred](0010-authorization-enforcement-is-acl-opa-deferred.md)
+  — the Week-2 boundary is a static per-consumer/per-route allow that ACL enforces natively;
+  OPA is adopted only when a decision becomes conditional (Week 5 fuzzing scope, Week 8 HITL).
