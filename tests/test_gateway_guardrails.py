@@ -354,6 +354,84 @@ def test_reset_token_in_a_url_path_is_redacted():
 
 
 @requires_redaction
+def test_redaction_before_spotlighting_removes_a_spaced_assignment():
+    """Order is a safety property here.
+
+    Datamarking replaces whitespace runs with a marker, and the redactor recognises an
+    assignment by its separator and the whitespace around it. Spotlighting first turns
+    `token = secret` into `token▁=▁secret`, which the assignment pattern no longer
+    matches, so the credential reaches the upstream untouched. Measured, not reasoned:
+    an earlier adapter ran them the other way round and leaked.
+    """
+    secret = "abc123def456secret"
+    text = f"debug header token = {secret}"
+
+    leaks_when_marked_first, _ = egress_redaction.redact(provenance.spotlight(text, "datamark"))
+    assert secret in leaks_when_marked_first, (
+        "if this stops holding the hazard has changed and the ordering rationale needs "
+        "revisiting, not the assertion deleting"
+    )
+
+    redacted_first, findings = egress_redaction.redact(text)
+    assert secret not in provenance.spotlight(redacted_first, "datamark")
+    assert findings
+
+
+def test_adapter_redacts_before_it_applies_provenance():
+    """The regression guard for the ordering above: reordering the two calls in the
+    adapter must fail a test rather than rely on someone remembering the docstring."""
+    import ast
+
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    hook = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "async_pre_call_hook"
+    )
+    # ast.walk is breadth-first, so it does NOT yield nodes in source order. Sorting by
+    # position is what makes this an ordering assertion rather than a set membership one;
+    # an earlier version of this test missed a deliberate reordering for exactly that
+    # reason.
+    calls = sorted(
+        (
+            (node.lineno, node.col_offset, f"{node.func.value.id}.{node.func.attr}")
+            for node in ast.walk(hook)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+        )
+    )
+    ordered = [
+        name for _, _, name in calls
+        if name in ("egress_redaction.redact_messages", "provenance.apply")
+    ]
+    assert ordered[:2] == ["egress_redaction.redact_messages", "provenance.apply"], (
+        f"redaction must run before spotlighting, saw {ordered}"
+    )
+
+
+def test_adapter_requires_provenance_by_default():
+    """A caller who forgets to declare must be refused, not silently trusted. An
+    exemption is a named guardrail entry in the config, not a global default."""
+    import ast
+
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    init = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.FunctionDef) and node.name == "__init__"
+    )
+    default = next(
+        default
+        for arg, default in zip(init.args.args[1:], init.args.defaults)
+        if arg.arg == "require_provenance"
+    )
+    assert default.value is True
+
+
+@requires_redaction
 def test_whole_scanner_finding_survives_redaction_intact():
     """The round trip that matters: a realistic prompt in, the same prompt out."""
     redacted, _ = egress_redaction.redact(SCANNER_FINDING)

@@ -1,15 +1,22 @@
 """LiteLLM CustomGuardrail wiring for the Sentinel gateway.
 
 This is the thin adapter between LiteLLM's hook interface and the two pure modules that
-hold the actual behaviour: provenance labelling/spotlighting and egress secret redaction.
+hold the actual behaviour: egress secret redaction and provenance labelling/spotlighting.
 It contains no policy of its own, deliberately - everything testable lives in the pure
 modules so the suite runs without the proxy installed.
 
-Order matters and is not arbitrary. Provenance runs first so that spotlighting markers
-are already in place when redaction rewrites the text; running redaction first would let
-it rewrite content that is about to be wrapped, and a marker inserted into a partially
-redacted span is harder to reason about than the reverse. Both run before the request
-leaves the host.
+Order is a safety property, not a preference. Redaction runs FIRST, then spotlighting.
+Datamarking replaces whitespace runs with a marker character, and the redactor recognises
+an assignment by its `key`, separator and surrounding whitespace - so spotlighting first
+turns `token = secret` into `token▁=▁secret`, which the assignment pattern no longer
+matches, and the credential reaches the upstream untouched. That was measured, not
+reasoned about: an earlier version of this file ran them the other way round on the
+argument that marking should precede rewriting, and it leaked. Both halves still run
+before the request leaves the host.
+
+Because the order matters this much, both halves live in one guardrail with a fixed
+internal sequence rather than two guardrails whose relative order would depend on how
+the config happens to be written.
 
 Where the declaration lives: `metadata.sentinel_provenance`. LiteLLM treats `metadata` as
 proxy-side data and does not forward it to the upstream provider, which is what this
@@ -37,14 +44,20 @@ METADATA_KEY = "sentinel_provenance"
 
 
 class SentinelGuardrail(CustomGuardrail):
-    """Label provenance, spotlight untrusted spans, and redact secrets on egress.
+    """Redact secrets on egress, then label and spotlight target-derived content.
 
-    Configured in the proxy config as a `pre_call` guardrail. It rejects rather than
-    repairs: a request whose provenance declaration is missing or incomplete is refused,
-    because the alternative is guessing which content the system may trust.
+    Redaction is unconditional: it needs nothing from the caller and protects this host
+    from what it sends to a router that publishes no retention terms.
+
+    Provenance enforcement is `require_provenance`, and it defaults to True so that a
+    caller who forgets to declare is refused rather than silently trusted. A caller that
+    genuinely cannot declare - a vendored third-party tool, for instance - is exempted by
+    giving it its own guardrail entry with the flag off, which makes the exemption a
+    named, reviewable thing in the config rather than a global weakening.
     """
 
-    def __init__(self, spotlight_mode: str = "auto", **kwargs):
+    def __init__(self, require_provenance: bool = True, spotlight_mode: str = "auto", **kwargs):
+        self.require_provenance = require_provenance
         self.spotlight_mode = spotlight_mode
         self.optional_params = kwargs
         super().__init__(**kwargs)
@@ -58,22 +71,27 @@ class SentinelGuardrail(CustomGuardrail):
     ) -> Optional[Union[Exception, str, dict]]:
         messages = data.get("messages")
         if not isinstance(messages, list):
-            # Embeddings and other non-chat calls carry no messages; there is nothing to
-            # label. They still pass through redaction below via their own input field.
+            # Embeddings and other non-chat calls carry no messages array; there is
+            # nothing to label and nothing this hook can redact.
             return data
 
-        declaration = (data.get("metadata") or {}).get(METADATA_KEY)
+        # Redaction first - see the module docstring for the leak that ordering prevents.
+        redacted_messages, redactions = egress_redaction.redact_messages(messages)
 
-        # Raising here is what makes the guardrail fail closed: LiteLLM surfaces the
-        # exception to the caller and the upstream request is never issued.
-        marked_messages, marked = provenance.apply(messages, declaration, self.spotlight_mode)
-        redacted_messages, redactions = egress_redaction.redact_messages(marked_messages)
+        declaration = (data.get("metadata") or {}).get(METADATA_KEY)
+        marked: list[dict] = []
+        if self.require_provenance or declaration is not None:
+            # Raising is what makes the guardrail fail closed: LiteLLM surfaces the
+            # exception to the caller and the upstream request is never issued.
+            redacted_messages, marked = provenance.apply(
+                redacted_messages, declaration, self.spotlight_mode
+            )
 
         data["messages"] = redacted_messages
 
-        # The audit trail records classes and positions, never values. It is written to
-        # the proxy log rather than returned to the caller, so a caller cannot use the
-        # guardrail as an oracle for what it managed to smuggle in.
+        # The audit trail records classes and positions, never values. It goes to the
+        # proxy log rather than back to the caller, so the guardrail cannot be used as an
+        # oracle for what a caller managed to smuggle past it.
         if marked or redactions:
             verbose_proxy_logger.info(
                 "sentinel guardrail: key=%s spotlighted=%d redactions=%s",

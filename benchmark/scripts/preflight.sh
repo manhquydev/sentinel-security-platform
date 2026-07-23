@@ -5,6 +5,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BENCHMARK_DIR="$REPO_ROOT/benchmark"
+GATEWAY_CFG="$REPO_ROOT/infra/litellm/config.yaml"
 fail=0
 
 check() {
@@ -37,7 +38,8 @@ fi
 check ".gitignore has runs/" grep -qxF "runs/" "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark db patterns" grep -q 'benchmark/\*\*/\*\.db' "$REPO_ROOT/.gitignore"
 check ".gitignore has benchmark/results/" grep -qxF "benchmark/results/" "$REPO_ROOT/.gitignore"
-check "litellm-config.yaml disables message/body logging" grep -q "turn_off_message_logging: true" "$BENCHMARK_DIR/litellm-config.yaml"
+check "gateway config disables message/body logging" grep -q "turn_off_message_logging: true" "$GATEWAY_CFG"
+check "gateway guardrail requires provenance by default" grep -q "require_provenance: true" "$GATEWAY_CFG"
 
 # The vendored Metis is patched in this tree (usage-file uniqueness). A re-provision
 # or a manual `git checkout` inside benchmark/tools/arm-metis silently reverts it and

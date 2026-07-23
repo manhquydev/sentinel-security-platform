@@ -1,0 +1,51 @@
+# Sentinel shared LLM gateway (LiteLLM proxy).
+#
+# One service. The database is deliberately NOT bundled: LITELLM_DATABASE_URL points at
+# an existing Postgres that holds the virtual keys reproducing the frozen benchmark arms,
+# and standing up a fresh database here would invalidate them with no error message.
+#
+# Bring-up (shared secrets file, see infra/.env.example):
+#   docker compose --env-file ../.env -f infra/litellm/docker-compose.yml up -d
+#
+# The proxy calls outward to the router and to DeepSeek; it needs no local network, so it
+# stays off dd-net and juice-net. It binds loopback only, like every other service here.
+---
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm@sha256:467a55498422295f9d3534ad6154dc8075733a10cb41edc85e9ed60be41d3f2c
+    container_name: sentinel-litellm
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      # Discrete vars, never a single DSN for the credentials: a DSN carries the password
+      # inside a URL that shows up in tracebacks and "docker inspect". LITELLM_DATABASE_URL
+      # is the exception LiteLLM forces, which is why it is the operator's to supply and
+      # why the database stays on loopback.
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY must be set - see infra/.env.example}"
+      LITELLM_DATABASE_URL: "${LITELLM_DATABASE_URL:?LITELLM_DATABASE_URL must be set - virtual keys and spend live there}"
+      ROUTER_API_BASE: "${ROUTER_API_BASE:?ROUTER_API_BASE must be set}"
+      ROUTER_API_KEY: "${ROUTER_API_KEY:?ROUTER_API_KEY must be set}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      JUDGE_MODEL: "${JUDGE_MODEL:-}"
+      JUDGE_API_KEY: "${JUDGE_API_KEY:-}"
+      EMBED_MODEL: "${EMBED_MODEL:-}"
+      EMBED_API_KEY: "${EMBED_API_KEY:-}"
+      EMBED_API_BASE: "${EMBED_API_BASE:-}"
+      # The guardrail modules import each other by name, so their directory has to be on
+      # the path as a directory rather than the files being scattered into /app.
+      PYTHONPATH: "/app/guardrails"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./guardrails:/app/guardrails:ro
+    ports:
+      # Loopback only. The gateway holds the router credential and every virtual key;
+      # nothing about it should be reachable from the network.
+      - "127.0.0.1:4000:4000"
+    healthcheck:
+      # /health/liveliness answers without touching an upstream provider, so a dead
+      # router does not make the container look unhealthy and get restarted in a loop.
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

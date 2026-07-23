@@ -1,3 +1,10 @@
+# Sentinel shared LLM gateway.
+#
+# Moved here from benchmark/ when the gateway stopped being a benchmark component and
+# became the dependency root every stream calls through. The benchmark is now one client
+# among several. Nothing about the model list changed in the move; the comments below are
+# the measured history that produced it and are kept because re-deriving them costs runs.
+
 model_list:
   # cheap-sast: the FROZEN DeepSeek comparison arm (V0 baseline, runs 1-2). Kept so that
   # arm stays re-scoreable; no new run uses it. Do not rename or remove — the frozen
@@ -20,6 +27,13 @@ model_list:
   #   ag/gemini-3.5-flash-{low,extra-low}: answer /v1/responses with a chat.completion
   #     object and empty usage -> LiteLLM cannot parse it -> HTTP 500 on every call.
   #   glm/glm-5.2: HTTP 429 on 5/5 probes.
+  #
+  # NO model_info PRICING IS SET, deliberately. The router returns usage.cost: null and
+  # LiteLLM carries no pricing entry for cx/*, so spend is unavailable. Setting
+  # input_cost_per_token would make LiteLLM emit a spend number computed from OpenAI's
+  # list price for the backing tier — which is NOT what this router charges, and a
+  # confidently wrong figure in a FinOps dashboard is worse than an honest absence.
+  # Reference list prices and how to use them deliberately are in README.md.
   - model_name: sast-sol
     litellm_params:
       model: openai/cx/gpt-5.6-sol
@@ -62,9 +76,41 @@ model_list:
       api_key: os.environ/EMBED_API_KEY
       api_base: os.environ/EMBED_API_BASE
 
+guardrails:
+  # The default. Secrets are stripped from every outbound prompt, and a caller that does
+  # not declare provenance is refused rather than silently trusted.
+  #
+  # Both halves live in one guardrail because their order is a safety property: redaction
+  # runs first, since spotlighting rewrites the whitespace the assignment detector keys
+  # on and a credential written `token = value` would otherwise survive. Splitting them
+  # into two entries would make that order depend on how this file happens to be written.
+  - guardrail_name: sentinel
+    litellm_params:
+      guardrail: sentinel_guardrail.SentinelGuardrail
+      mode: pre_call
+      default_on: true
+      require_provenance: true
+
+  # The one named exemption. Metis is a vendored third-party scanner that cannot be
+  # taught to send a provenance declaration, and it is the client that reproduces the
+  # frozen benchmark arms. It still gets egress redaction — that half needs nothing from
+  # the caller — but provenance is not required of it.
+  #
+  # This exists as a separate, reviewable entry rather than as a weaker global default so
+  # that any NEW caller is fail-closed unless someone deliberately adds it here.
+  - guardrail_name: sentinel-legacy-client
+    litellm_params:
+      guardrail: sentinel_guardrail.SentinelGuardrail
+      mode: pre_call
+      default_on: false
+      require_provenance: false
+
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   # Required for /key/generate (virtual keys) to persist. Local-only Postgres, never exposed beyond 127.0.0.1.
+  # Supplied by the operator rather than bundled into this stack: the existing database
+  # holds the virtual keys that reproduce the frozen benchmark arms, and standing up a
+  # fresh one would silently invalidate them.
   database_url: os.environ/LITELLM_DATABASE_URL
   # Reject budgeted requests outright if spend can't be verified against the DB, instead of allowing through.
   fail_closed_budget_enforcement: true

@@ -1,8 +1,15 @@
-"""Config-only tests for benchmark/litellm-config.yaml. No API key or network needed."""
+"""Config-only tests for the shared gateway config. No API key or network needed.
+
+The config moved to infra/litellm/ when the gateway stopped being a benchmark
+component; the benchmark is now one client of it. These assertions follow the file
+rather than keeping a second copy under benchmark/, which would drift.
+"""
 import pathlib
 import yaml
 
-CONFIG_PATH = pathlib.Path(__file__).resolve().parents[1] / "litellm-config.yaml"
+CONFIG_PATH = (
+    pathlib.Path(__file__).resolve().parents[2] / "infra" / "litellm" / "config.yaml"
+)
 
 
 def load_config():
