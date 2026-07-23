@@ -89,25 +89,38 @@ class SentinelGuardrail(CustomGuardrail):
         data: dict,
         call_type: Optional[Any] = None,
     ) -> Optional[Union[Exception, str, dict]]:
+        # Redaction first, over every text-bearing location the request has - see the
+        # module docstring for the ordering, and redact_request for why keying on
+        # `messages` alone was a bypass rather than a limitation.
+        data, redactions, covered = egress_redaction.redact_request(data)
+
         messages = data.get("messages")
-        if not isinstance(messages, list):
-            # Embeddings and other non-chat calls carry no messages array; there is
-            # nothing to label and nothing this hook can redact.
-            return data
-
-        # Redaction first - see the module docstring for the leak that ordering prevents.
-        redacted_messages, redactions = egress_redaction.redact_messages(messages)
-
         declaration = (data.get("metadata") or {}).get(METADATA_KEY)
         marked: list[dict] = []
-        if self.require_provenance or declaration is not None:
-            # Raising is what makes the guardrail fail closed: LiteLLM surfaces the
-            # exception to the caller and the upstream request is never issued.
-            redacted_messages, marked = provenance.apply(
-                redacted_messages, declaration, self.spotlight_mode
-            )
 
-        data["messages"] = redacted_messages
+        if isinstance(messages, list) and messages:
+            if self.require_provenance or declaration is not None:
+                # Raising is what makes the guardrail fail closed: LiteLLM surfaces the
+                # exception to the caller and the upstream request is never issued.
+                data["messages"], marked = provenance.apply(
+                    messages, declaration, self.spotlight_mode
+                )
+        elif self.require_provenance:
+            # Anything that is not the chat shape is refused rather than forwarded.
+            #
+            # Schema 1.0 of the provenance contract addresses messages by index, so it
+            # cannot describe a Responses-API `input` or a bare `prompt`. The previous
+            # behaviour was to return the request untouched, which meant the guardrail
+            # was inert on exactly the route this gateway's primary client uses. An
+            # unrecognised shape must be a loud failure, not a quiet pass: refusing
+            # costs a caller an error, while passing costs an unlabelled prompt sent to
+            # a third party and then persisted to the trace store.
+            raise provenance.ProvenanceError(
+                "request carries no 'messages' array, so its content cannot be labelled "
+                f"under provenance schema {provenance.SCHEMA_VERSION} (text was found at: "
+                f"{covered or 'nowhere recognised'}); the gateway refuses rather than "
+                "forwarding content it cannot account for"
+            )
 
         # The audit trail records classes and positions, never values. It goes to the
         # proxy log rather than back to the caller, so the guardrail cannot be used as an

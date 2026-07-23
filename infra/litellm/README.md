@@ -91,6 +91,16 @@ scanner is already patched here for an unrelated reason, so the same route is op
 **Consequence for the benchmark client:** it does not declare, so it is refused today.
 Teaching it to declare is the fix; weakening the gateway is not.
 
+That sentence was false when first written, and the reason is worth keeping. Enforcement
+keyed on `data["messages"]` and returned every other request shape untouched — and this
+client calls the Responses API exclusively, where content lives in `input`. Its traffic
+was not refused; it was unguarded, and it was then persisted to the trace store in
+plaintext. Verified by probe: an undeclared prompt carrying credential-shaped strings
+returned HTTP 200 with zero audit entries. The guardrail now redacts every text-bearing
+location it recognises — `messages`, `input`, `prompt`, `instructions`, multimodal parts
+and tool-call arguments — and **refuses any shape it cannot label** rather than
+forwarding it.
+
 ## Recorded spend is a list-price equivalent, not a bill
 
 **Read the `spend` column as an upper bound, not as money that was charged.**
@@ -119,9 +129,15 @@ Traces go to the self-hosted Langfuse stack in [`../langfuse`](../langfuse/READM
 The proxy joins that stack's network because Langfuse publishes only a loopback port,
 which a container cannot reach.
 
-**Bodies are in the traces**, and the ordering is what makes that defensible: the
-guardrail redacts before anything reaches a callback, so what Langfuse stores is
-post-redaction. The stored trace shows it directly — a redacted assignment reads
+**Request bodies are in the traces**, and the ordering is what makes that defensible: the
+guardrail redacts before anything reaches a callback, so what Langfuse stores for a
+request is post-redaction.
+
+**Model responses are not redacted.** The guardrail runs at `pre_call` only, so a
+completion is stored verbatim — including any header, cookie or token the model quotes
+back out of target-derived content it was asked to analyse, and including upstream error
+bodies. This is a known gap, stated rather than implied: an output-side hook is not
+built. The stored trace shows it directly — a redacted assignment reads
 `password=[redacted:password]`, with the spotlight marker applied around the assignment
 but not inside it. Had spotlighting run first the text would read `password▁=`, the
 redactor's pattern would not have matched, and the credential would be in ClickHouse.

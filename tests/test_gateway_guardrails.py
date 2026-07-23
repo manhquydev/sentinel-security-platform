@@ -404,9 +404,9 @@ def test_adapter_redacts_before_it_applies_provenance():
     )
     ordered = [
         name for _, _, name in calls
-        if name in ("egress_redaction.redact_messages", "provenance.apply")
+        if name in ("egress_redaction.redact_request", "provenance.apply")
     ]
-    assert ordered[:2] == ["egress_redaction.redact_messages", "provenance.apply"], (
+    assert ordered[:2] == ["egress_redaction.redact_request", "provenance.apply"], (
         f"redaction must run before spotlighting, saw {ordered}"
     )
 
@@ -462,3 +462,65 @@ def test_whole_scanner_finding_survives_redaction_intact():
     assert "' OR 1=1--" in redacted
     assert "sqli-error-based" in redacted
     assert "/rest/products/search" in redacted
+
+
+# --- the request shapes that bypassed the guardrail entirely ---------------------
+# Enforcement keyed on `data["messages"]` and returned the request untouched for every
+# other shape. The Responses API carries content in `input`, the legacy completion API in
+# `prompt`, and tool arguments in `tool_calls[].function.arguments` — and the scanner this
+# gateway exists for calls the Responses API exclusively. Undeclared prompts carrying
+# credentials left the host with HTTP 200 and no audit entry, then were persisted to the
+# trace store. Nothing in this suite exercised a call shape, which is why it shipped.
+
+
+@requires_redaction
+@pytest.mark.parametrize(
+    "body, where",
+    [
+        ({"model": "m", "input": "password=leakcanary1"}, "input"),
+        ({"model": "m", "input": [{"type": "input_text", "text": "password=leakcanary1"}]},
+         "input[0].text"),
+        ({"model": "m", "prompt": "password=leakcanary1"}, "prompt"),
+        ({"model": "m", "messages": [{"role": "user", "content": [{"type": "text", "text": "password=leakcanary1"}]}]},
+         "messages[0].content[0].text"),
+        ({"model": "m", "messages": [{"role": "assistant", "content": None, "tool_calls": [
+            {"function": {"name": "f", "arguments": '{"password": "leakcanary1"}'}}]}]},
+         "messages[0].tool_calls[0].arguments"),
+    ],
+)
+def test_every_content_location_is_redacted(body, where):
+    redacted, findings, covered = egress_redaction.redact_request(body)
+    assert "leakcanary1" not in repr(redacted), f"credential survived at {where}"
+    assert findings and where in covered
+
+
+@requires_redaction
+def test_a_request_with_no_recognised_content_reports_nothing_covered():
+    """This is what lets the adapter fail closed. A shape carrying text somewhere this
+    function does not know about yields an empty coverage list, and the guardrail refuses
+    rather than forwarding content it cannot account for."""
+    _, _, covered = egress_redaction.redact_request({"model": "m", "some_future_field": "x"})
+    assert covered == []
+
+
+def test_adapter_refuses_a_request_it_cannot_label():
+    """The fail-open branch that shipped returned `data` for any non-chat shape. It must
+    now raise, because a refusal costs a caller an error while a silent pass costs an
+    unlabelled prompt sent to a third party and then stored."""
+    import ast
+
+    source = (GUARDRAILS / "sentinel_guardrail.py").read_text(encoding="utf-8")
+    hook = next(
+        node for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "async_pre_call_hook"
+    )
+    raises = [n for n in ast.walk(hook) if isinstance(n, ast.Raise)]
+    returns_bare_data = [
+        n for n in ast.walk(hook)
+        if isinstance(n, ast.Return) and isinstance(n.value, ast.Name) and n.value.id == "data"
+    ]
+    assert raises, "the adapter has no refusal path"
+    assert len(returns_bare_data) == 1, (
+        f"expected exactly one `return data` (the success path), found {len(returns_bare_data)}; "
+        "an early return is how the bypass shipped"
+    )

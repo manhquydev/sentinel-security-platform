@@ -16,8 +16,8 @@
     },
     "webgoat-java": {
       "documents": 371,
-      "documents_altered": 35,
-      "redactions_located": 82
+      "documents_altered": 37,
+      "redactions_located": 84
     }
   },
   "documents_total": 375,
@@ -29,12 +29,12 @@
     "what_this_does_not_measure": "It is not a recall figure. A redaction inside vulnerable-by-design source may be correct, because that source really does contain hardcoded credentials; those alterations are counted in the rate and deliberately not judged here.",
     "what_this_measures": "How the egress guardrail behaves on the content this gateway actually carries. Unambiguous false positives are decided by structure, not by opinion: the contexts listed cannot hold a credential."
   },
-  "measured_at": "2026-07-23T15:46:44+00:00",
+  "measured_at": "2026-07-23T16:23:18+00:00",
   "redactions_by_detector": {
     "authorization": 2,
     "cookie": 8,
     "jwt": 8,
-    "password": 21,
+    "password": 23,
     "pem-private-key": 2,
     "secret": 4,
     "token": 37

@@ -90,11 +90,34 @@ _PEM_BLOCK = re.compile(
 # `Bearer <token>` alternative is what makes `authorization: Bearer <jwt>` redact as
 # one finding under the `authorization` class instead of leaving the token exposed
 # after only the literal word "Bearer" gets consumed by the bare-token alternative.
+# The optional closing quote after the key is not cosmetic. JSON is the dominant
+# serialisation in this workload — scanner findings, HTTP captures, `docker inspect`
+# output and config dumps all arrive as JSON — and `{"password":"x"}` puts a quote
+# between the key and the colon. Without it the detector missed the most common shape it
+# exists for and only appeared to work because a few values carry their own recognisable
+# prefix.
+#
+# The scheme list generalises `Bearer`: an unlisted scheme fell through to the bare
+# alternative, which consumed only the scheme word and left the credential in place while
+# still recording a redaction — a false clean signal, worse than no detector.
+#
+# `&` and `#` terminate the bare value because a query string continues past the
+# credential: consuming to the next space swallowed `&csrf=...` and destroyed adjacent
+# evidence, which is the corruption this module is built to avoid.
 _ASSIGNMENT = re.compile(
-    r"(?P<head>\b(?P<key>token|secret|password|api[_-]?key|authorization|cookie)\s*[:=]\s*)"
-    r"(?:\"(?P<dq>[^\"]+)\"|'(?P<sq>[^']+)'|(?P<bearer>Bearer\s+\S+)|(?P<bare>[^\s,;\"']+))",
+    r"(?P<head>\b(?P<key>token|secret|password|passwd|api[_-]?key|client[_-]secret"
+    r"|access[_-]token|refresh[_-]token|private[_-]key|access[_-]key|authorization|cookie)"
+    r"[\"']?\s*[:=]\s*)"
+    r"(?:\"(?P<dq>[^\"]+)\"|'(?P<sq>[^']+)'"
+    r"|(?P<scheme>(?:Bearer|Basic|Digest|Negotiate|Token|ApiKey)\s+\S+)"
+    r"|(?P<bare>[^\s,;&#\"']+))",
     re.IGNORECASE,
 )
+
+# A DSN carries its password inside the URL. This repository's own compose files avoid
+# DSNs for exactly that reason — "it shows up in tracebacks and in docker inspect" — and
+# tracebacks are precisely what an agent pastes into a prompt.
+_DSN_CREDENTIAL = re.compile(r"(?P<pre>[a-z][a-z0-9+.\-]*://[^\s:/@]+:)(?P<pw>[^\s@/]+)(?P<post>@)", re.IGNORECASE)
 
 _ASSIGNMENT_CLASS = {
     "token": "token",
@@ -172,7 +195,7 @@ def _apply_assignment(text: str, findings: list[dict]) -> str:
     def _sub(match: re.Match[str]) -> str:
         key = match.group("key").lower().replace("-", "_")
         cls = _ASSIGNMENT_CLASS.get(key, key)
-        value = match.group("dq") or match.group("sq") or match.group("bearer") or match.group("bare") or ""
+        value = match.group("dq") or match.group("sq") or match.group("scheme") or match.group("bare") or ""
         findings.append(_finding(cls, len(value), _line_of(text, match.start())))
         # `head` is the key plus its separator (`token=`, `Cookie: `); keeping it
         # intact preserves the surrounding syntax so the redacted text still reads
@@ -180,6 +203,14 @@ def _apply_assignment(text: str, findings: list[dict]) -> str:
         return f"{match.group('head')}{_placeholder(cls)}"
 
     return _ASSIGNMENT.sub(_sub, text)
+
+
+def _apply_dsn(text: str, findings: list[dict]) -> str:
+    def _sub(match: re.Match[str]) -> str:
+        findings.append(_finding("dsn-password", len(match.group("pw")), _line_of(text, match.start())))
+        return f"{match.group('pre')}{_placeholder('dsn-password')}{match.group('post')}"
+
+    return _DSN_CREDENTIAL.sub(_sub, text)
 
 
 def _apply_credential_prefix(text: str, findings: list[dict]) -> str:
@@ -216,11 +247,84 @@ def redact(text: str) -> tuple[str, list[dict]]:
     findings: list[dict] = []
     working = _apply(text, _PEM_BLOCK, "pem-private-key", findings)
     working = _apply_assignment(working, findings)
+    working = _apply_dsn(working, findings)
     working = _apply_credential_prefix(working, findings)
     working = _apply(working, _JWT, "jwt", findings)
     working = _apply(working, _UUID, "uuid", findings)
     _flag_high_entropy_hex(working, findings)
     return working, findings
+
+
+def _redact_in_place(container, key, findings: list[dict], where: str) -> None:
+    """Redact one text-bearing slot, recording where it was."""
+    value = container[key]
+    if not isinstance(value, str) or not value:
+        return
+    redacted, found = redact(value)
+    if found:
+        container[key] = redacted
+        findings.extend({"location": where, **f} for f in found)
+
+
+def redact_request(data: dict) -> tuple[dict, list[dict], list[str]]:
+    """Redact every text-bearing location in a proxy request, whatever its shape.
+
+    Returns the mutated request, the audit entries, and the list of locations that
+    actually carried text. That last value is what lets the caller fail closed: a request
+    whose content lives somewhere this function does not know about yields an empty list,
+    and the guardrail can refuse rather than forward it unexamined.
+
+    Keying redaction on `messages` alone was a silent bypass. The Responses API carries
+    content in `input`, the legacy completion API in `prompt`, and tool arguments in
+    `tool_calls[].function.arguments` — and the scanner this gateway was built for calls
+    the Responses API exclusively. Requests on those routes left the host with the
+    guardrail inert and were then persisted to the trace store in plaintext.
+    """
+    if not isinstance(data, dict):
+        raise RedactionError(f"request must be an object, got {type(data).__name__}")
+
+    findings: list[dict] = []
+    covered: list[str] = []
+
+    def walk_content(container, key, where):
+        value = container.get(key)
+        if isinstance(value, str) and value:
+            covered.append(where)
+            _redact_in_place(container, key, findings, where)
+        elif isinstance(value, list):
+            for index, part in enumerate(value):
+                if isinstance(part, str) and part:
+                    covered.append(f"{where}[{index}]")
+                    _redact_in_place(value, index, findings, f"{where}[{index}]")
+                elif isinstance(part, dict):
+                    # Multimodal parts and Responses-API items both nest their text.
+                    for text_key in ("text", "content", "input_text"):
+                        if isinstance(part.get(text_key), str) and part[text_key]:
+                            covered.append(f"{where}[{index}].{text_key}")
+                            _redact_in_place(part, text_key, findings, f"{where}[{index}].{text_key}")
+                        elif isinstance(part.get(text_key), list):
+                            walk_content(part, text_key, f"{where}[{index}].{text_key}")
+
+    messages = data.get("messages")
+    if isinstance(messages, list):
+        for index, message in enumerate(messages):
+            if not isinstance(message, dict):
+                continue
+            walk_content(message, "content", f"messages[{index}].content")
+            # Tool arguments are the quieter half: `content` is often null on a tool
+            # call, so a redactor that only reads `content` sees nothing while a
+            # credential rides in the arguments on every turn of an agent loop.
+            for call_index, call in enumerate(message.get("tool_calls") or []):
+                function = (call or {}).get("function") or {}
+                if isinstance(function.get("arguments"), str) and function["arguments"]:
+                    where = f"messages[{index}].tool_calls[{call_index}].arguments"
+                    covered.append(where)
+                    _redact_in_place(function, "arguments", findings, where)
+
+    for key in ("input", "prompt", "instructions", "system"):
+        walk_content(data, key, key)
+
+    return data, findings, covered
 
 
 def redact_messages(messages: list[dict]) -> tuple[list[dict], list[dict]]:
