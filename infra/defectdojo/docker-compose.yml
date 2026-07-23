@@ -48,10 +48,34 @@ x-dd-dedup-env: &dd-dedup-env
   # preserve: redact credential values, never the host/path, or the hash moves
   # every run and the lake inflates instead of deduplicating.
   #
+  # Nuclei keeps component_name ALONGSIDE endpoints. component_name carries the
+  # template's matcher-name, and one template reports many matchers against the
+  # same URL: the eight http-missing-security-headers matchers share title, cwe,
+  # severity and endpoint, so without component_name they hash identically and
+  # seven of the eight are filed as duplicates of the first. Endpoint-based dedup
+  # answers "same place"; component_name answers "same check".
+  #
   # Semgrep also hashes vuln_id_from_tool (the rule's check_id, set by
   # dojo/tools/semgrep/parser.py). Without it, two DIFFERENT rules firing on the
   # same line collapse into one finding and the second is lost - silent data loss
   # in a lake whose whole purpose is aggregation.
+  #
+  # Trivy hashes title/severity/file_path/line, NOT the component fields. Only
+  # Trivy's VULNERABILITY findings populate component_name/version; its SECRET and
+  # MISCONFIGURATION findings leave all three configured component fields empty
+  # (dojo/tools/trivy/parser.py sets component_name only on the vulnerability
+  # branch), and HASHCODE_ALLOWS_NULL_CWE suppresses the legacy fallback - so every
+  # secret hashed identically and four distinct secrets in four distinct files
+  # collapsed to one finding with three duplicates. Both field names are already
+  # proven in this deployment by the Semgrep entry above.
+  #
+  # KNOWN RESIDUAL, unchanged by this config: the parser does not set `line` on the
+  # MISCONFIGURATION branch, so two occurrences of the same rule in one file still
+  # hash identically and the second is filed as a duplicate. The previous
+  # vulnerability_ids config collapsed them too (shared AVDID), so this is not a
+  # regression - but the redactor also drops CauseMetadata wholesale, so
+  # CauseMetadata.StartLine (a line number, not a secret) is not available to fix
+  # it. Revisit together when misconfiguration volume justifies it.
   #
   # This config is committed rather than kept in .env because it is reviewable
   # policy, not a secret.
@@ -63,9 +87,9 @@ x-dd-dedup-env: &dd-dedup-env
      "Generic Findings Import":"unique_id_from_tool_or_hash_code"}
   DD_HASHCODE_FIELDS_PER_SCANNER: >-
     {"ZAP Scan":["title","cwe","severity","endpoints"],
-     "Nuclei Scan":["title","cwe","severity","endpoints"],
+     "Nuclei Scan":["title","cwe","severity","endpoints","component_name"],
      "Semgrep JSON Report":["file_path","line","vuln_id_from_tool"],
-     "Trivy Scan":["component_name","component_version","vulnerability_ids"],
+     "Trivy Scan":["title","severity","file_path","line"],
      "Generic Findings Import":["title","cwe","severity","description"]}
 
 x-dd-common-env: &dd-common-env

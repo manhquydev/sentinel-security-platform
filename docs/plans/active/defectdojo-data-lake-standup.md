@@ -107,6 +107,16 @@ migration after a crash-loop.
       scanners: Trivy (4), Semgrep (221), Nuclei (21) → 246 findings aggregated in one
       engagement, no duplication on reimport.
 
+      **Corrected 2026-07-23.** 246 was the count the scanners *reported*; the lake only
+      ever held 236 of them. Redaction was dropping two Nuclei dedup inputs
+      (`matcher-name`, `info.classification`) and the configured Trivy hashcode fields are
+      unpopulated by secret findings, so Trivy collapsed 4→1 and Nuclei 21→14 — silently,
+      with four Nuclei findings auto-closed as remediated and re-created. Both fixed in
+      [week1-ci-orchestration-and-scanner-hardening](week1-ci-orchestration-and-scanner-hardening.md)
+      Phase 1. The lake now genuinely holds 246 active findings (4 / 221 / 21), stable
+      across reimport. The redaction fixture count also moved 29/29 → 39/39: the suite
+      could not previously detect a report that redacts perfectly and imports never.
+
 ## Owed to P4 (P3 residuals, accepted knowingly)
 
 P3 was accepted at the plan's "≥3 native scanners" bar rather than held on a fourth. What
@@ -127,6 +137,16 @@ did not get proven is recorded here so P4 inherits it explicitly:
   loopback/link-local/metadata/RFC1918 unless explicitly listed, rejects when *any* resolved
   answer is dangerous, and pins the IP — but the P3 wrappers do not yet force the scanner
   onto that pinned IP, and cross-host redirects are not blocked. Both belong to the P4 core.
+
+  **Retired 2026-07-23, half delivered and half withdrawn.** The *forcing* half is a no-op
+  for this system and will not be built: the only target is the literal `127.0.0.1:13000`,
+  so there is no second DNS resolution to rebind, and the `-resolvers` flag cited as the
+  mechanism supplies DNS *servers* rather than a hostname→IP mapping. It is recorded as a
+  precondition instead — a caller MUST force the pinned IP if a hostname target is ever
+  introduced. The *redirect-blocking* half remains real work and is carried into
+  [week1-ci-orchestration-and-scanner-hardening](week1-ci-orchestration-and-scanner-hardening.md)
+  Phase 3, scoped to Nuclei and ZAP only, since Semgrep and Trivy read `TARGET_SRC` and
+  never issue HTTP.
 
 ## Decisions
 
