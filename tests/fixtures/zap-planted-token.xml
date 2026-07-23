@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fixture for the native-path redaction guarantee (phase-03).
+  Contains PLANTED secrets that redact-report.sh MUST remove, and endpoint
+  LOCATORS (host, port, path, param, method) that it MUST preserve so P1
+  endpoint-dedup keeps hashing the same finding to the same hash_code.
+-->
+<OWASPZAPReport version="2.15.0" generated="Thu, 23 Jul 2026 09:40:00">
+  <site name="http://127.0.0.1:13000" host="127.0.0.1" port="13000" ssl="false">
+    <alerts>
+      <alertitem>
+        <pluginid>40018</pluginid>
+        <alertRef>40018-1</alertRef>
+        <alert>SQL Injection</alert>
+        <name>SQL Injection</name>
+        <riskcode>3</riskcode>
+        <confidence>2</confidence>
+        <riskdesc>High (Medium)</riskdesc>
+        <cweid>89</cweid>
+        <wascid>19</wascid>
+        <instances>
+          <instance>
+            <uri>http://127.0.0.1:13000/rest/products/search</uri>
+            <method>GET</method>
+            <param>q</param>
+            <attack>')) UNION SELECT * FROM Users--</attack>
+            <requestheader>GET /rest/products/search?q=apple HTTP/1.1
+Host: 127.0.0.1:13000
+Authorization: Bearer PLANTED_ZAP_TOKEN_abc123
+Cookie: token=PLANTED_ZAP_COOKIE_def456; io=abcd
+X-CSRF-Token: PLANTED_ZAP_CSRF_ghi789
+</requestheader>
+            <requestbody>{"email":"admin@juice-sh.op","password":"PLANTED_ZAP_BODYPW_jkl012"}</requestbody>
+            <responseheader>HTTP/1.1 500 Internal Server Error
+Set-Cookie: token=PLANTED_ZAP_SETCOOKIE_mno345; Path=/
+</responseheader>
+            <responsebody>SQLITE_ERROR: near "UNION": syntax error</responsebody>
+            <evidence>Authorization: Bearer PLANTED_ZAP_EVIDENCE_pqr678</evidence>
+            <otherinfo>session cookie value PLANTED_ZAP_OTHERINFO_stu901 observed</otherinfo>
+          </instance>
+        </instances>
+      </alertitem>
+    </alerts>
+  </site>
+</OWASPZAPReport>

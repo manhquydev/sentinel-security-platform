@@ -115,3 +115,8 @@ benchmark/tools/
 # Harness core maintenance binary
 scripts/bin/harness
 scripts/bin/harness.exe
+
+# phase-03 scanner artifacts (raw reports are secret-bearing until redacted)
+scanners/out/
+*.san.json
+/tmp/scan-*

@@ -95,8 +95,14 @@ migration after a crash-loop.
 - [x] Acceptance suite: 26/26, and proven able to fail.
 - [ ] Correct the Week-1 phase documents that describe the superseded RBAC model and the
       two-variable-only deduplication requirement.
-- [ ] P3 native scanners (unblocked — the benchmark that was consuming the host has
-      finished; note Juice Shop's default port 3000 is already taken on this host).
+- [~] P3 native scanners — **in progress** (2026-07-23). The ClaudeKit plan
+      `plans/260721-2216-week1-sast-dast-data-lake-defectdojo/` was narrowed for the
+      solo/no-customer context: Jenkins cut (GitHub Actions only), replica-swap cut
+      (Juice Shop permanent), TDD structure added; Juice Shop binds `127.0.0.1:13000`
+      (host `:3000` taken). Proven so far: parser-aware 4-tool redaction (fixture 20/20 +
+      a real Trivy report), fail-closed SSRF allowlist (9/9), Juice Shop harness healthy,
+      and the **Trivy** scan→redact→import→dedup loop end-to-end against live DefectDojo
+      (4 real secrets, no duplication on reimport). ZAP + Nuclei pending image pulls.
 
 ## Decisions
 
