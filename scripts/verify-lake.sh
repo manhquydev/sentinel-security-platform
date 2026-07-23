@@ -98,9 +98,28 @@ api() { curl -sS -H "Authorization: Token $TOKEN" "$@"; }
 # caller can refuse an import that would re-key every finding it touches. Read-only
 # like everything else here, and it prints one word rather than joining the pass/fail
 # report — it answers a question, it does not assert anything.
+#
+# The scan type must be isolated by its test_type id, not by test__test_type__name:
+# DefectDojo does not register that name lookup as a finding filter, so passing it is
+# silently ignored and the query returns EVERY active finding regardless of scan type.
+# Reading paths across all types then reports whichever scheme any type happens to use
+# (a single absolute Trivy path makes a fully-relative Semgrep lake read "absolute"),
+# which is the exact false answer this probe exists to prevent. Resolve the name to its
+# id first, exact-match, and filter on that.
 if [ "${1:-}" = "--locator-scheme" ]; then
   scan_type="${REPORT_SCAN_TYPE:?REPORT_SCAN_TYPE required}"
-  api "$DD_URL/api/v2/findings/?limit=100&active=true&test__test_type__name=$(printf '%s' "$scan_type" | sed 's/ /%20/g')" \
+  enc="$(printf '%s' "$scan_type" | sed 's/ /%20/g')"
+  tt_id="$(api "$DD_URL/api/v2/test_types/?name=$enc" | python3 -c '
+import json, os, sys
+try:
+    rows = json.load(sys.stdin).get("results") or []
+except Exception:
+    raise SystemExit(0)
+want = os.environ["REPORT_SCAN_TYPE"]
+m = [r for r in rows if r.get("name") == want]
+print(m[0]["id"] if m else "")')"
+  [ -n "$tt_id" ] || { echo "unknown"; exit 0; }
+  api "$DD_URL/api/v2/findings/?limit=100&active=true&test__test_type=$tt_id" \
     | python3 -c '
 import json, sys
 try:
