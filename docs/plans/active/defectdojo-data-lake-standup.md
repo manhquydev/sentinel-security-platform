@@ -33,10 +33,11 @@ In scope:
 
 - P1: DefectDojo stack, external TLS database, boot guard, seeded data model, scoped CI
   token, deduplication, backup + rehearsed restore drill, acceptance checks.
+- P3: native scanner wrappers, the Juice Shop harness, whitelist redaction, the fail-closed
+  target allowlist, and the scan→redact→import→dedup loop.
 
 Out of scope for now:
 
-- P3 native scanners and the Juice Shop harness (unblocked, not started).
 - P4 CI-agnostic orchestration.
 - P5 AI-SAST source wiring (held pending engine choice).
 - Exposing the instance beyond loopback — deferred until P4 establishes where CI runs.
@@ -95,14 +96,37 @@ migration after a crash-loop.
 - [x] Acceptance suite: 26/26, and proven able to fail.
 - [ ] Correct the Week-1 phase documents that describe the superseded RBAC model and the
       two-variable-only deduplication requirement.
-- [~] P3 native scanners — **in progress** (2026-07-23). The ClaudeKit plan
-      `plans/260721-2216-week1-sast-dast-data-lake-defectdojo/` was narrowed for the
-      solo/no-customer context: Jenkins cut (GitHub Actions only), replica-swap cut
+- [x] P3 native scanners — **complete, with disclosed residuals** (accepted 2026-07-23). The
+      ClaudeKit plan `plans/260721-2216-week1-sast-dast-data-lake-defectdojo/` was narrowed
+      for the solo/no-customer context: Jenkins cut (GitHub Actions only), replica-swap cut
       (Juice Shop permanent), TDD structure added; Juice Shop binds `127.0.0.1:13000`
-      (host `:3000` taken). Proven so far: parser-aware 4-tool redaction (fixture 20/20 +
-      a real Trivy report), fail-closed SSRF allowlist (9/9), Juice Shop harness healthy,
-      and the **Trivy** scan→redact→import→dedup loop end-to-end against live DefectDojo
-      (4 real secrets, no duplication on reimport). ZAP + Nuclei pending image pulls.
+      (host `:3000` taken). Proven: parser-aware 4-tool **whitelist** redaction (fixture
+      29/29 — the original blacklist leaked through un-enumerated fields and was rewritten
+      after code review), fail-closed SSRF allowlist (9/9), Juice Shop harness healthy, and
+      the scan→redact→import→dedup loop end-to-end against live DefectDojo for **three**
+      scanners: Trivy (4), Semgrep (221), Nuclei (21) → 246 findings aggregated in one
+      engagement, no duplication on reimport.
+
+## Owed to P4 (P3 residuals, accepted knowingly)
+
+P3 was accepted at the plan's "≥3 native scanners" bar rather than held on a fourth. What
+did not get proven is recorded here so P4 inherits it explicitly:
+
+- **ZAP has never run.** `scanners/run-zap.sh` exists and its redaction passes the fixture,
+  but the image pull was blocked by registry blob throughput, so no part of the ZAP
+  scan→redact→import path has executed against anything real. Endpoint-hash stability for
+  ZAP is fixture-only. P4 must populate `ZAP_IMAGE` or use the local-binary fallback, then
+  re-assert on a real report.
+- **Trivy vulnerability scanning is unproven** — the vulnerability database was unreachable;
+  only the secret and misconfiguration scanners ran.
+- **Supply-chain pins are incomplete.** `NUCLEI_IMAGE`, `ZAP_IMAGE`, and `SEMGREP_IMAGE` are
+  unpopulated in `scanners/image-pins.env`, and the Nuclei template set is unpinned. The
+  wrappers fail closed on a non-digest image, so this is a gap in coverage, not in
+  enforcement. Nuclei ran through the local-binary fallback (decision 0005).
+- **The allowlist validates but does not force.** It resolves the target, rejects
+  loopback/link-local/metadata/RFC1918 unless explicitly listed, rejects when *any* resolved
+  answer is dangerous, and pins the IP — but the P3 wrappers do not yet force the scanner
+  onto that pinned IP, and cross-host redirects are not blocked. Both belong to the P4 core.
 
 ## Decisions
 
