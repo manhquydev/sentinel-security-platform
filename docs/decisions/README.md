@@ -56,3 +56,21 @@ documents here as real choices are accepted, then index them in this file.
   — a committed payload corpus ranked/mutated by the LLM; 5xx/stack-trace/reflection signals are
   code-detected facts, not LLM opinions; the engine stays in agent-recon's read-only scope and
   defers state-changing payloads to the Week-8 HITL gate.
+- [0014 The syndicate is a LangGraph supervisor over the existing agents; observability is a redaction-gated Phoenix plane](0014-the-syndicate-is-a-langgraph-supervisor-over-existing-agents-observability-is-a-redaction-gated-phoenix-plane.md)
+  — hand-rolled `StateGraph` over Recon+Fuzz with model access still at the gateway (a model-egress
+  contract test enforces it); durable checkpoint + spans run through a secret-AND-target-raw scrub
+  distinct from egress redaction; Arize Phoenix (loopback, digest-pinned) traces the graph flow,
+  Langfuse keeps per-call bodies; the `interrupt()` seam is inert-but-tested for Week-8 HITL.
+- [0015 IPI defense is structural output-integrity; the real surface is recon-analysis; detection is measured](0015-ipi-defense-is-structural-output-integrity-the-real-surface-is-recon-analysis-detection-is-measured.md)
+  — a red-team showed there is no rogue-execution surface to gate (already read-only/contained), so
+  Week-7 defends the one real IPI surface (a scanner `title` → recon `_analyze` → analyst narrative):
+  the code-computed facts a hijacked narrative can't alter are the control, a contradicted analysis is
+  quarantined, and detectors (in-repo heuristic; LlamaFirewall air-gapped sidecar) are MEASURED
+  defense-in-depth with the false-positive rate on security content as the differentiator.
+- [0016 Week-8 HITL is a fail-closed gate over a simulated action with out-of-process Ed25519 approval; real execution deferred](0016-week8-hitl-is-a-failclosed-gate-over-a-simulated-action-with-out-of-process-ed25519-approval-real-execution-deferred.md)
+  — a red-team proved "approve+execute the real payload" rested on 5 broken axes (no runnable payload,
+  approvable≠write endpoints, self-forgeable approval, no OPA on Kong OSS, illusory reversibility), so
+  Week-8 ships a genuine fail-closed HITL gate over a SIMULATED action: approval is Ed25519-signed and
+  the agent holds only the verify key (can't self-approve), the single-use token binds the exact
+  reviewed proposal + is audited before the dry-run action; real execution + its prerequisites are
+  deferred to an explicit future cycle.

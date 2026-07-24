@@ -1,0 +1,46 @@
+# Self-hosted Arize Phoenix — the GRAPH-flow tracing backend for the Week-6 multi-agent
+# Supervisor (docs/plans/active/2026-07-24-...-multi-agent-syndicate.md, decisions D5/D10).
+# Distinct from infra/langfuse: Langfuse traces every LLM *call* through the gateway (decision
+# 0006); Phoenix traces the Supervisor *graph* itself (Recon -> Fuzz, node-by-node), which the
+# gateway never sees, via the manual OTel spans agent/trace.py emits. One container is enough
+# here — Phoenix bundles its own SQLite store and needs no external Postgres/ClickHouse the way
+# Langfuse does at this project's trace volume.
+#
+# Every span this container receives has already passed through agent/trace.py's redacting
+# SpanProcessor (secrets AND target-raw text stripped before export — see that module and
+# tests/syndicate-test.sh's I5). That redaction guarantee is a reason this container needs no
+# further defense-in-depth of its own, not a reason to expose it further: it still binds
+# loopback only (D10), matching every other trace/audit plane in this repo (infra/langfuse).
+#
+# Bring-up:
+#   docker compose -f infra/phoenix/docker-compose.yml up -d
+# agent/trace.py ships spans to it over OTLP/gRPC at 127.0.0.1:4317 (PHOENIX_COLLECTOR_ENDPOINT
+# to override); the UI is at http://127.0.0.1:6006.
+services:
+  phoenix:
+    image: arizephoenix/phoenix:version-19.5.0@sha256:3a2c1ad2bf6dd01e03c4457987129bca5c1ea1b84173857a8c73aa14dfbd64bc
+    container_name: sentinel-phoenix
+    restart: unless-stopped
+    environment:
+      PHOENIX_WORKING_DIR: /mnt/data
+    volumes:
+      - phoenix-data:/mnt/data
+    ports:
+      # UI + OTLP/HTTP collector. Loopback only (D10) — this store holds the agent-to-agent
+      # graph trace and nothing on this host needs it reachable beyond an operator's own
+      # browser or the agent process itself.
+      - "127.0.0.1:6006:6006"
+      # OTLP/gRPC collector — what agent/trace.py's exporter ships spans to.
+      - "127.0.0.1:4317:4317"
+    networks: [phoenix-net]
+    # No container healthcheck: the published image is distroless (no curl/wget inside to
+    # probe itself with; only a "-debug" variant carries wget, and pulling a second, heavier
+    # image just to satisfy a healthcheck is not worth it here). Reachability is instead
+    # asserted externally by tests/syndicate-test.sh, the same "skip if down, unless
+    # REQUIRE_AGENT=1" pattern every other live-gated suite in this repo already uses.
+
+volumes:
+  phoenix-data:
+
+networks:
+  phoenix-net:
