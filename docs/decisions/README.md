@@ -52,3 +52,7 @@ documents here as real choices are accepted, then index them in this file.
   — the Week-4 pipeline is linear and the gateway is fail-closed on the provenance contract, so
   the agent is a thin provenance-bound loop with a frozen, code-checked Attack Surface Map schema;
   LangGraph is adopted at Week 6 when the supervisor and HITL interrupt arrive.
+- [0013 Fuzzing is hybrid, read-only, with deterministic signal detection](0013-fuzzing-is-hybrid-read-only-with-deterministic-signals.md)
+  — a committed payload corpus ranked/mutated by the LLM; 5xx/stack-trace/reflection signals are
+  code-detected facts, not LLM opinions; the engine stays in agent-recon's read-only scope and
+  defers state-changing payloads to the Week-8 HITL gate.
