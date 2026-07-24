@@ -44,3 +44,7 @@ documents here as real choices are accepted, then index them in this file.
 - [0010 Authorization enforcement is Kong ACL; OPA deferred](0010-authorization-enforcement-is-acl-opa-deferred.md)
   — the Week-2 boundary is a static per-consumer/per-route allow that ACL enforces natively;
   OPA is adopted only when a decision becomes conditional (Week 5 fuzzing scope, Week 8 HITL).
+- [0011 RAG uses local embeddings + pgvector hybrid; GraphRAG deferred](0011-rag-is-local-embeddings-pgvector-hybrid-graphrag-deferred.md)
+  — the chat gateway cannot embed (proven), so Week-3 RAG is self-hosted fastembed BGE + pgvector
+  with RRF hybrid and a measured, regression-guarded accuracy baseline; GraphRAG and a re-ranker
+  wait behind explicit triggers.
