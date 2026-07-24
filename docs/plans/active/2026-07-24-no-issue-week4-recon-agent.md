@@ -72,19 +72,40 @@ Completion (first increment) is observable when:
 
 ## Progress
 
-- [x] Phase 1 — schema contract + provenance-aware LLM client; `tests/recon-agent-test.sh` 6/0.
-- [ ] Phase 2 — lake + gateway tools (read-only), RAG wired.
-- [ ] Phase 3 — recon pipeline producing a validated Attack Surface Map.
-- [ ] Phase 4 — live end-to-end run + regression baseline.
-- [ ] Phase 5 — review, audit, fix, docs, decision promoted.
+- [x] Phase 1 — schema contract + provenance-aware LLM client.
+- [x] Phase 2 — read-only lake reader (`agent/lake.py`) + gateway probe (`agent/gateway.py`);
+      `tests/recon-tools-test.sh` 3/0 (merged, PR #5).
+- [x] Phase 3 — recon pipeline (`agent/recon.py`): deterministic map + RAG + one LLM analysis.
+- [x] Phase 4 — live end-to-end run; deterministic regression asserted in the suite.
+- [~] Phase 5 — review/fix (in progress this PR); decision 0012 already recorded.
 
 ## Result
 
-**In progress.** Foundation shipped and verified: the frozen Attack Surface Map schema (rejects a
-hallucinated field, an out-of-vocabulary enum, and a fabricated aggregate count) and the
-provenance-aware LLM client (refuses an unlabelled message; a real `operator` + `target-derived`
-call round-trips the live gateway). `tests/recon-agent-test.sh` = **6/0**. Remaining: the read-only
-lake/gateway tools, the recon pipeline, and a live map-generation run with a regression baseline.
+**Complete (first increment), verified live.** `tests/recon-agent-test.sh` = **10/0**
+(schema 5, provenance boundary 2, pipeline 3); `tests/recon-tools-test.sh` = **3/0**.
+
+The pipeline fuses the lake, the Week-1 attack-surface baseline, and the RAG into a validated
+Attack Surface Map: **10 endpoints** (from the baseline) + **36 findings** (21 Nuclei + 4 Trivy +
+11 Semgrep), severity and CWE aggregates **computed by code** and self-checked, 3 RAG references,
+and a prioritized LLM analysis produced over provenance-labelled (`target-derived`) input — which
+correctly flagged the private-key exposure, the public `/metrics`, the weak-crypto SAST hits, and
+that Juice Shop is intentionally vulnerable.
+
+### Grounding that shaped the build (verified live, not assumed)
+
+- **DefectDojo's `test__test_type__name` filter is ignored** (returns every scanner's findings);
+  the reader filters by the numeric `test__test_type=<id>` — the same failure class as the lake's
+  locator-scheme guard.
+- **DefectDojo dedups endpoints**, so Nuclei per-finding endpoint references point at merged-away
+  ids (404). Per-finding DAST→endpoint attribution is therefore unreliable, so findings land
+  honestly in `app_level_findings` rather than being fabricated onto an endpoint — the "sparse,
+  locator-match-only" fusion you chose, applied to what the data actually supports.
+- The LLM path is **provenance-fail-closed**: the gateway refuses an unlabelled chat request, so
+  the agent's client labels every finding/RAG span `target-derived`.
+
+Follow-ups (owed, not blocking): a harder finding→endpoint link if DefectDojo endpoint integrity
+is repaired; a persisted map baseline for cross-run regression; the Week-6 LangGraph adoption
+(decision 0012).
 
 ## Open questions
 

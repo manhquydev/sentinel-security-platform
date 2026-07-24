@@ -149,5 +149,46 @@ PY
 fi
 
 # ---------------------------------------------------------------------------
+sect "pipeline: deterministic Attack Surface Map"
+
+if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 "${DD_URL:-http://localhost:8080}/api/v2/" 2>/dev/null)" = "000" ]; then
+  m="DefectDojo not reachable"; [ "$REQUIRE_AGENT" = 1 ] && bad "$m" || skip "$m"
+else
+  # The map's facts are code-assembled and must pass the map's own consistency check; the
+  # aggregates must equal the findings; and no CWE outside the set the scanners actually report
+  # may appear (a hallucination guard — though here the facts come from code, not the LLM).
+  if run_py <<'PY'
+import sys
+from agent.recon import build_map
+m = build_map(use_llm=False)                      # deterministic, no LLM
+total = len(m.all_findings())
+sev_sum = sum(m.severity_counts.values())
+print(f"  endpoints={len(m.endpoints)} findings={total} severity={m.severity_counts} cwes={sorted(m.cwe_summary)}")
+ok = (not m.consistency_errors()                  # aggregates match findings
+      and len(m.endpoints) == 10                  # the Juice Shop baseline inventory
+      and total == 36                             # 21 Nuclei + 4 Trivy + 11 Semgrep
+      and sev_sum == total                        # every finding counted once
+      and set(m.cwe_summary).issubset({"200", "693", "330", "327"}))  # known CWE set
+sys.exit(0 if ok else 1)
+PY
+  then ok "deterministic map: 10 endpoints, 36 findings, consistent aggregates, known CWEs"
+  else bad "deterministic map wrong"; fi
+
+  # The LLM enrichment path (one real call) produces a non-empty analysis on the real data.
+  if [ "$REQUIRE_AGENT" = 1 ] && [ -n "${LITELLM_MASTER_KEY:-}" ]; then
+    if run_py <<'PY'
+import sys
+from agent.recon import build_map
+m = build_map(use_llm=True)
+sys.exit(0 if (m.analysis and len(m.analysis) > 40 and m.provenance.model != "none") else 1)
+PY
+    then ok "full run: LLM analysis produced over provenance-labelled input"
+    else bad "LLM analysis empty/failed"; fi
+  else
+    skip "LLM analysis run (needs REQUIRE_AGENT=1 + key)"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 printf '\n%d passed, %d failed, %d skipped\n' "$PASS" "$FAIL" "$SKIP"
 [ "$FAIL" -eq 0 ]
