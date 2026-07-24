@@ -1,0 +1,33 @@
+{
+  "_provenance": "SYNTHETIC. Hand-authored for Week-9 (decision 0017). Card numbers are public Luhn-valid TEST PANs; emails use the public @juice-sh.op teaching domain; hashes are MD5 of throwaway strings. No value is scraped from a real target or person.",
+  "_policy": {
+    "redact": "the redactor MUST remove this PII (counts toward recall)",
+    "gap": "a documented shape the redactor deliberately does NOT catch this increment (bound to decision 0016); tracked so a behavior change is noticed, never counted against recall",
+    "preserve": "legitimate security content / non-PII that MUST pass unchanged (counts toward false-positive)"
+  },
+  "items": [
+    {"policy": "redact", "cls": "email", "text": "row: user_email=admin@juice-sh.op"},
+    {"policy": "redact", "cls": "email", "text": "contact acc0unt4nt@juice-sh.op for access"},
+    {"policy": "redact", "cls": "email", "text": "free-text: my answer is rsa_lord@juice-sh.op"},
+    {"policy": "redact", "cls": "card", "text": "card_number=4532015112830366"},
+    {"policy": "redact", "cls": "card", "text": "\"pan\": \"4111 1111 1111 1111\""},
+    {"policy": "redact", "cls": "card", "text": "creditCard: 5555555555554444"},
+    {"policy": "redact", "cls": "card", "text": "\"cardNumber\":4111111111111111"},
+    {"policy": "redact", "cls": "jwt", "text": "auth eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoxfQ.c2ln-_stub tail"},
+    {"policy": "redact", "cls": "uuid", "text": "session 7d3f2a1b-4c5d-6e7f-8a9b-0c1d2e3f4a5b end"},
+
+    {"policy": "gap", "cls": "card-bare", "text": "positional row: 4 4532015112830366 alice"},
+    {"policy": "gap", "cls": "phone", "text": "phone +1-202-555-0143 on file"},
+
+    {"policy": "preserve", "text": "' OR 1=1-- UNION SELECT username,password FROM Users"},
+    {"policy": "preserve", "text": "<script>alert(document.cookie)</script>"},
+    {"policy": "preserve", "text": "../../../../etc/passwd"},
+    {"policy": "preserve", "text": "Traceback (most recent call last): SequelizeDatabaseError near \"UNION\""},
+    {"policy": "preserve", "text": "sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"policy": "preserve", "text": "md5 digest 0192023a7bbd73250516f069df18b500 stored unsalted"},
+    {"policy": "preserve", "text": "session_id=4408041234567893"},
+    {"policy": "preserve", "text": "user_id=4532015112830366"},
+    {"policy": "preserve", "text": "offset 4111111111111111 in ring buffer"},
+    {"policy": "preserve", "text": "CVE-2021-44228 Log4Shell ${jndi:ldap://x}"}
+  ]
+}

@@ -188,10 +188,23 @@ reviewed proposal, is TTL‑bounded, and is audited before the dry‑run. Real s
 is **deferred** with its prerequisites named
 ([decision 0016](docs/decisions/0016-week8-hitl-is-a-failclosed-gate-over-a-simulated-action-with-out-of-process-ed25519-approval-real-execution-deferred.md)).
 
+**Built (Week‑9):** real‑time [PII redaction](agent/pii.py) over a **simulated** (HITL‑approved,
+loopback) mock‑user dump. The honest surface finding: the syndicate has no live DB‑dump path (the
+Exploit agent never executes, the fuzzer reduces bodies to signal‑kinds, RAG ingests only static
+records), so Week‑9 **creates** the surface — a fixture‑backed dry‑run on the Week‑8 seam — and
+**scrubs it at capture**, before the dump reaches the checkpoint, the approval‑audit ledger, or the
+console. Detection is **narrow deterministic regex** (email, Luhn‑checked card under a label anchor,
+JWT, UUID) — Presidio/NER rejected (460 MB model, air‑gapped break, false positives on security
+vocabulary) — so the legitimate SQLi/XSS/hash workload passes untouched. The unsalted‑MD5 password
+*value* is removed via the existing credential pass while the weak‑hashing *finding* survives. The
+residual is **measured** (recall on planted PII, false‑positive on security content) with a
+CI regression guard that fails closed on an absent corpus
+([decision 0017](docs/decisions/0017-week9-pii-redaction-is-structural-at-capture-measured-not-trusted.md)).
+
 **Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
 decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
-license); PII redaction (Week 9); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG
-(deferred per decision 0011).
+license); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG (deferred per decision
+0011).
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)

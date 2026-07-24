@@ -11,6 +11,8 @@ import argparse
 import os
 import sys
 
+from agent import pii
+
 from . import chunking, embedding, sources, store
 
 DEFAULT_ATTACK_SURFACE = os.path.join(
@@ -33,10 +35,16 @@ def _docs_for(source: str, args) -> list[sources.SourceDoc]:
 
 
 def _chunks_for(doc: sources.SourceDoc) -> list[chunking.Chunk]:
+    # Week-9 boundary (decision 0017): scrub PII BEFORE chunking, so the content that is hashed
+    # (keep-hash below) and stored is the same scrubbed text — the ON CONFLICT (content_sha256)
+    # idempotency holds and a re-ingest still prunes/inserts zero chunks (M2). Defence-in-depth:
+    # today's sources (owasp/nvd/attack-surface) carry no PII, but any future PII-bearing source
+    # (e.g. ingested agent findings) is scrubbed at this one boundary before it reaches pgvector.
+    text = pii.scrub(doc.text) or ""
     if doc.kind == "markdown":
-        return chunking.chunk_markdown(doc.text)
+        return chunking.chunk_markdown(text)
     # A structured record is short; store it whole (one chunk), section = None.
-    return [chunking.Chunk(section=None, content=doc.text)]
+    return [chunking.Chunk(section=None, content=text)]
 
 
 def ingest(source_names: list[str], args) -> dict:

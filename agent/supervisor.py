@@ -73,6 +73,7 @@ Design load-bearing points (see docs/plans/active/2026-07-24-...):
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sqlite3
 import sys
@@ -83,7 +84,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 from langgraph.types import Command, interrupt
 
-from . import approval, exploit, fuzz, recon, trace
+from . import approval, exploit, fuzz, pii, recon, sim_dump, trace
 from .schema import AttackSurfaceMap
 
 CHECKPOINT_PATH = os.path.join(os.path.dirname(__file__), "out", "syndicate.sqlite")
@@ -347,16 +348,35 @@ def state_change_node(state: SyndicateState) -> dict[str, Any]:
             raise PermissionError(
                 f"state_change_node: invalid approval token for {pid!r} — refusing (fail-closed)")
 
+        endpoint = proposal.get("endpoint")
+
+        # Week-9 (decision 0017): the simulated (dry-run) action "returns" a synthetic mock user
+        # dump — the ONLY place target-shaped data enters this runtime. Scrub it AT CAPTURE, before
+        # the value is placed in state, audited, or printed, so the checkpoint, the audit `detail`,
+        # and stderr below all carry redacted text or class-counts only — never a raw email, PAN, or
+        # crackable password hash. `state_change_result` is never routed through `redact_persisted`
+        # elsewhere, so THIS is its only protection: apply the full persist-scrub (secrets +
+        # target-raw + PII, PII last) that every other checkpointed field already gets, and record
+        # the PII class-counts separately for the audit. The dump is serialized multi-line so the
+        # line-bounded credential rule scrubs one field at a time (the `password` MD5 value goes;
+        # the weak-hashing finding survives via class label + endpoint, W9-D2a).
+        _pretty_dump = json.dumps(sim_dump.SIMULATED_USER_DUMP, indent=2)
+        scrubbed_dump = trace.redact_persisted(_pretty_dump)
+        pii_findings = pii.redact(_pretty_dump)[1]
+        pii_classes = ",".join(f"{f.cls}={f.count}" for f in sorted(pii_findings, key=lambda f: f.cls)) or "none"
+
         # Audit BEFORE the simulated action (RD4/HA4) — the token is already consumed above, so
         # this row is the durable record of the one and only time this token will ever authorize
-        # anything.
-        endpoint = proposal.get("endpoint")
+        # anything. Only the redacted class-counts are recorded, never the dumped values.
         ledger.record(proposal_id=pid, action="simulated-execute",
-                      detail=f"SIMULATED: would execute proposal against {endpoint}")
+                      detail=f"SIMULATED: would execute proposal against {endpoint}; "
+                             f"dump PII redacted at capture [{pii_classes}]")
         print(f"SIMULATED: would execute proposal {pid} vs {endpoint} "
-              f"(vuln_class={proposal.get('vuln_class')}) — no network call, no target mutation",
+              f"(vuln_class={proposal.get('vuln_class')}) — no network call, no target mutation; "
+              f"dump PII redacted at capture [{pii_classes}]",
               file=sys.stderr)
-        return {"state_change_result": {"proposal_id": pid, "endpoint": endpoint, "simulated": True}}
+        return {"state_change_result": {"proposal_id": pid, "endpoint": endpoint, "simulated": True,
+                                        "dump": scrubbed_dump, "pii_redacted": pii_classes}}
     finally:
         ledger.close()
 

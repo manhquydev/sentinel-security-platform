@@ -32,3 +32,10 @@ repeating. Entries are never edited to look better in hindsight.
 - [2026-07-24 — A configured interface is not a working one](2026-07-24-a-configured-interface-is-not-a-working-one.md)
   — the `embed` alias that was a chat model and the chat gateway that refused unlabelled
   requests; both legible, both dead until probed. Legibility is not liveness.
+- [2026-07-24 — Weeks 6–8: the AI-attack phase and its hardening](2026-07-24-weeks-6-8-agent-phase-and-hardening.md)
+  — the syndicate, IPI defense, and the HITL gate; the red-team re-scoping a broken maximal task
+  three weeks running, and structure-over-detection as the durable control.
+- [2026-07-24 — Week-9: the PII surface that had to be built, then measured](2026-07-24-week9-pii-redaction-the-surface-that-had-to-be-built.md)
+  — the charter's DB-dump surface didn't exist, so Week-9 built a simulated one and scrubbed it at
+  capture; the plan's sink inventory was two-thirds wrong until the code was read; measurement over
+  an absent corpus is the same lie as no measurement.
