@@ -74,8 +74,8 @@ Completion (first increment) is observable when:
 **Complete (first increment), verified live.** `tests/fuzz-engine-test.sh` = **4/0**; no
 regression (recon-agent 10/0, gateway 29/0).
 
-A bounded, read-only run through Kong as `agent-recon` sent **23 requests** to the one public
-read-only fuzz target (`GET /rest/products/search?q=`) and produced **13 distinct findings**,
+A bounded, read-only run through Kong as `agent-recon` sent **19 requests** to the one public
+read-only fuzz target (`GET /rest/products/search?q=`) and produced **11 distinct findings**,
 detected deterministically: the SQLi payload `')--` and a raw null byte each tripped **HTTP 500 +
 a stack-trace signature + a JSON→HTML content-type drift** — Juice Shop's real search SQL injection
 surfaced by code, not asserted by the model. One provenance-labelled LLM call then read the flagged
@@ -86,9 +86,20 @@ Safety held by construction: only public read-only GET targets are selected, the
 state-changing verb/command (asserted), the ACL 403s anything else, and the run is bounded by a
 per-target budget + kill-switch. Raw payloads/responses stay in a gitignored path.
 
+### Security review applied (provenance)
+
+A STRIDE-focused review (`plans/reports/security-review-260724-1101-week5-fuzzer.md`) found the
+**safety posture sound — no reachable state-change** (four stacked controls: read-only-GET target
+selection, GET-only transport, full value URL-encoding, no state-changing verb in the corpus, ACL
+backstop). Applied: the same URL-encoding that makes it safe was neutering the param-*structure*
+classes (type-confusion, nosql, encoded-traversal, `%00`), so those dead probes were removed — an
+honest corpus (structural/param-name fuzzing is a follow-up). Added a loopback assertion (refuse
+TLS-unverified requests to a non-loopback host), a global request budget, and reconciled the
+decision's budget wording.
+
 Follow-ups (owed, not blocking): the reserved state-changing payloads run only behind the Week-8
-HITL gate; more fuzzable params as the attack-surface map grows; a persisted signal baseline for
-cross-run regression.
+HITL gate; structural/param-name fuzzing; more fuzzable params as the attack-surface map grows; a
+persisted signal baseline for cross-run regression.
 
 ## Open questions
 

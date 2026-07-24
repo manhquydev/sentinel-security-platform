@@ -36,8 +36,9 @@ executor, and Week-5 fuzzing stays inside `agent-recon`'s read-only scope.**
 - **Read-only scope, state-changing deferred to Week-8 HITL.** The engine sends only requests
   `agent-recon` is already authorized for (public reads; the ACL returns 403 for the rest), so
   fuzzing cannot mutate target state. State-changing/exploit payloads are defined but **not sent**
-  until Week-8 adds human approval. Bounds: a per-target request budget, a token budget, dedup, and
-  a kill-switch that pauses a target after repeated transport failures.
+  until Week-8 adds human approval. Bounds: a per-target and a global request budget, dedup, a
+  single bounded LLM call per run (capped output), and a kill-switch that pauses a target after
+  repeated transport failures.
 
 ## Alternatives Considered
 

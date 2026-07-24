@@ -30,7 +30,8 @@ from .gateway import Gateway
 BASELINE = os.path.join(os.path.dirname(__file__), "..",
                         "attack-surface", "baselines", "juice-shop-df1b6bbd8bce.json")
 OUT_DIR = os.path.join(os.path.dirname(__file__), "out")
-MAX_REQUESTS_PER_TARGET = 40      # hard budget
+MAX_REQUESTS_PER_TARGET = 40      # per-target hard budget
+MAX_TOTAL_REQUESTS = 500          # global hard budget across all targets
 KILL_SWITCH_FAILURES = 3          # consecutive transport failures -> pause a target
 
 
@@ -84,6 +85,9 @@ def run(use_llm: bool = True, baseline_path: str = BASELINE) -> FuzzReport:
     seen: set[tuple[str, str, str]] = set()   # (endpoint, payload_class, signal_kind) dedup
 
     for t in _fuzzable_targets(baseline_path):
+        if report.requests_sent >= MAX_TOTAL_REQUESTS:
+            print(f"  global budget {MAX_TOTAL_REQUESTS} reached; stopping", file=sys.stderr)
+            break
         report.targets.append(f"GET {t.path}?{t.param}")
         # Benign baseline for this target.
         try:

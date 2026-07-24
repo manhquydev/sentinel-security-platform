@@ -8,6 +8,12 @@ deliberately NOT in this module.
 The corpus is small and reviewable on purpose: the LLM's job (decision 0013) is to rank and mutate
 from what the responses show, not to invent a boundary-value corpus from scratch. Grouping by
 class lets the engine report which class produced a signal and lets the LLM reason over classes.
+
+Every payload here is a query-parameter VALUE. Payloads that only bite by manipulating request
+*structure* (array/operator param names like `q[$ne]=1` or `a[]=1`, or percent-encoded path
+traversal) are deliberately absent: the engine percent-encodes each value in full (the same
+encoding that makes it safe), so a structural payload placed in a value can never form its
+structure — it would be dead coverage. Structural / param-name fuzzing is a separate follow-up.
 """
 from __future__ import annotations
 
@@ -32,8 +38,6 @@ CORPUS: list[Payload] = [
     Payload("boundary", "2147483648"),          # 2^31, off the int boundary
     Payload("boundary", "A" * 5000),            # oversize
     Payload("boundary", "\x00"),                # raw null byte
-    Payload("boundary", "%00"),                 # encoded null
-    Payload("type-confusion", "a[]=1"),          # array-style param confusion
     # SQL injection markers (read-only: they alter a SELECT, not state)
     Payload("sqli", "'"),
     Payload("sqli", "' OR '1'='1"),
@@ -44,14 +48,11 @@ CORPUS: list[Payload] = [
     Payload("xss", "<script>alert(1)</script>"),
     Payload("xss", "\"><img src=x onerror=1>"),
     Payload("xss", "javascript:alert(1)"),
-    # path traversal (read attempt)
+    # path traversal as a value (tests input handling / error leakage, not filesystem escape)
     Payload("traversal", "../../../../etc/passwd"),
-    Payload("traversal", "..%2f..%2f..%2fetc%2fpasswd"),
-    # template / expression injection probes
+    # template / expression injection probes (SSTI if the value is rendered)
     Payload("template", "${7*7}"),
     Payload("template", "{{7*7}}"),
-    # NoSQL operator probe
-    Payload("nosql", "[$ne]=1"),
 ]
 
 
