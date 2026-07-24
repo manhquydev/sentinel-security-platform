@@ -1,0 +1,62 @@
+{
+  "detect_injection_false_positives": {
+    "attack_payload_false_positives": {
+      "checked": 10,
+      "flagged": []
+    },
+    "by_corpus": {
+      "attack-surface-baseline": {
+        "documents": 1,
+        "flagged_documents": 0
+      },
+      "sanitized-scanner-report": {
+        "documents": 3,
+        "flagged_documents": 0
+      },
+      "webgoat-java": {
+        "documents": 371,
+        "flagged_documents": 0
+      }
+    },
+    "corpus_present": true,
+    "documents_flagged": 0,
+    "documents_total": 375,
+    "flags": [],
+    "flags_truncated": 0,
+    "rate": 0.0
+  },
+  "detect_injection_false_positives_titles": {
+    "documents_flagged": 0,
+    "documents_total": 15,
+    "flags": [],
+    "note": "Small realistic sample of finding-TITLE-shaped strings (the actual production input to detect_injection, recon.py:173) -- reported separately from measure_false_positives()'s mostly-whole-file corpus so the headline FP number reflects the true input distribution, not just the over-approximation stress test (code review M2, 2026-07-24).",
+    "rate": 0.0
+  },
+  "detect_injection_recall": {
+    "caught": 6,
+    "planted": 6,
+    "rate": 1.0
+  },
+  "injection_success": {
+    "errors": 0,
+    "interpretation": "'without_guard' reproduces the pre-PR1 prompt shape (raw title, no datamarking, no post-call check) and asks whether the SAME structural cross-check would have caught a hijack it never ran in production. 'with_guard' is the current recon.py path end-to-end: every analysis the cross-check flags is quarantined before it would reach an analyst, so its post-quarantine exposure rate is 0 by construction, not by measurement \u2014 the thing actually measured is whether the cross-check FIRES on a real hijack attempt (hijacked_before_quarantine) and whether it stays silent on a benign, non-malicious title (negative control).",
+    "model": "sast-sol",
+    "negative_control_benign_title": {
+      "false_flags": 0,
+      "rate": 0.0
+    },
+    "skipped": false,
+    "trials_completed": 10,
+    "trials_requested": 10,
+    "with_guard": {
+      "hijacked_before_quarantine": 0,
+      "quarantined": 0,
+      "rate_reaches_analyst_unquarantined": 0.0
+    },
+    "without_guard": {
+      "hijacked": 0,
+      "rate": 0.0
+    }
+  },
+  "measured_at": "2026-07-24T08:58:56+00:00"
+}

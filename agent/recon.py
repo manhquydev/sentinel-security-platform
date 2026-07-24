@@ -13,6 +13,13 @@ reliably resolves to that endpoint's path. DefectDojo's endpoint dedup breaks Nu
 endpoint references, and Trivy/Semgrep locate by file, so most findings land in app_level_findings
 rather than being fabricated onto an endpoint.
 
+Output integrity (Week 7, `agent/guard.py`): a scanner `title` is attacker-controlled free text,
+so it is the one real indirect-prompt-injection surface into `_analyze`'s narrative call. The
+data-marking and post-call cross-check against the code-computed `severity_counts`/`cwe_summary`
+above mean a hijacked narrative can contradict the facts (and gets quarantined for it) but can
+never rewrite them — the facts stay authoritative regardless of what the model was talked into
+saying.
+
     rag/.venv/bin/python -m agent.recon              # print a map for the configured targets
     rag/.venv/bin/python -m agent.recon --no-llm     # deterministic map only (offline, no analysis)
 """
@@ -25,6 +32,7 @@ import sys
 from datetime import datetime, timezone
 
 from . import llm
+from .guard import analysis_integrity_errors, detect_injection, quarantine, spotlight_findings
 from .lake import Lake, LakeFinding
 from .schema import AttackSurfaceMap, EndpointSurface, Finding, Provenance
 
@@ -136,6 +144,17 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
         ),
     ).recompute_aggregates()
 
+    # Output-integrity guard (Week 7, agent/guard.py): severity_counts/cwe_summary are
+    # already code-computed above, so this cross-checks the ONE narrative field a hijacked
+    # scanner title could have subverted. On a contradiction, quarantine the text in place —
+    # the map is still returned (facts stay authoritative either way) rather than raising,
+    # since a suspected hijack is an analyst-triage signal, not an assembly failure.
+    if m.analysis:
+        hijack_errs = analysis_integrity_errors(m, m.analysis)
+        if hijack_errs:
+            print(f"  (analysis integrity check flagged: {hijack_errs})", file=sys.stderr)
+            m.analysis = quarantine(m.analysis)
+
     errs = m.consistency_errors()
     if errs:
         raise RuntimeError(f"assembled map failed its own consistency check: {errs}")
@@ -144,10 +163,19 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
 
 def _analyze(findings: list[LakeFinding], per_cwe: dict[int, list[str]], model: str) -> str:
     """One provenance-labelled LLM call: prioritized synthesis over the findings + RAG context.
-    All finding/RAG text is target-derived; the instruction is the only operator content."""
-    lines = [f"- [{f.severity}] {f.scanner} CWE-{f.cwe or '?'}: {f.title}" for f in findings]
+    All finding/RAG text is target-derived; the instruction is the only operator content.
+
+    The findings block is built by `spotlight_findings` (agent/guard.py): a scanner `title`
+    is the one attacker-controlled free-text field a finding carries, so on top of the
+    `target_derived` provenance label below it is also data-marked in-text (defense-in-depth,
+    not the control — see `analysis_integrity_errors`, run on the result in `build_map`)."""
+    for f in findings:
+        markers = detect_injection(f.title)
+        if markers:  # best-effort, measured signal only — never blocks the call (0006)
+            print(f"  (possible injection markers in finding {f.finding_id} title: {markers})",
+                  file=sys.stderr)
+    data_block = spotlight_findings(findings)
     ctx = "\n".join(f"CWE-{c}: {', '.join(refs)}" for c, refs in per_cwe.items() if refs)
-    data_block = "FINDINGS (untrusted, from scanning targets):\n" + "\n".join(lines)
     if ctx:
         data_block += "\n\nRETRIEVED CONTEXT REFERENCES (untrusted):\n" + ctx
     msgs = [

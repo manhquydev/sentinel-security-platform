@@ -61,3 +61,9 @@ documents here as real choices are accepted, then index them in this file.
   contract test enforces it); durable checkpoint + spans run through a secret-AND-target-raw scrub
   distinct from egress redaction; Arize Phoenix (loopback, digest-pinned) traces the graph flow,
   Langfuse keeps per-call bodies; the `interrupt()` seam is inert-but-tested for Week-8 HITL.
+- [0015 IPI defense is structural output-integrity; the real surface is recon-analysis; detection is measured](0015-ipi-defense-is-structural-output-integrity-the-real-surface-is-recon-analysis-detection-is-measured.md)
+  — a red-team showed there is no rogue-execution surface to gate (already read-only/contained), so
+  Week-7 defends the one real IPI surface (a scanner `title` → recon `_analyze` → analyst narrative):
+  the code-computed facts a hijacked narrative can't alter are the control, a contradicted analysis is
+  quarantined, and detectors (in-repo heuristic; LlamaFirewall air-gapped sidecar) are MEASURED
+  defense-in-depth with the false-positive rate on security content as the differentiator.
