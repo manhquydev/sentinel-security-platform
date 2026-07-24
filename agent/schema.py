@@ -64,8 +64,14 @@ class AttackSurfaceMap(BaseModel):
     generated_at: str = Field(..., description="RFC 3339 timestamp of the analysis")
     agent_version: str
     endpoints: list[EndpointSurface]
+    # Findings that cannot be honestly tied to a specific endpoint — app/file-level (a Trivy
+    # secret, a Semgrep SAST hit) or a DAST finding whose endpoint reference DefectDojo's dedup
+    # merged away. Kept here rather than fabricated onto an endpoint.
+    app_level_findings: list[Finding] = Field(default_factory=list)
     severity_counts: dict[str, int] = Field(default_factory=dict)
     cwe_summary: dict[str, int] = Field(default_factory=dict, description="CWE id (str) -> count")
+    analysis: Optional[str] = Field(None, description="Agent's prioritized synthesis over the "
+                                    "findings and retrieved context; narrative, not a source of counts")
     provenance: Provenance
 
     @field_validator("generated_at")
@@ -79,45 +85,46 @@ class AttackSurfaceMap(BaseModel):
             raise ValueError(f"generated_at must be an RFC 3339 timestamp, got {v!r}") from e
         return v
 
+    def all_findings(self) -> list[Finding]:
+        """Every finding in the map — endpoint-attributed and app-level — for aggregation."""
+        out = list(self.app_level_findings)
+        for ep in self.endpoints:
+            out.extend(ep.findings)
+        return out
+
     @model_validator(mode="after")
     def _rag_refs_declared(self) -> "AttackSurfaceMap":
         """Every RAG reference a finding cites must be declared in provenance.rag_source_refs —
         a finding pointing at context the map never recorded retrieving is an inconsistency (or a
         fabricated citation), and the contract rejects it."""
         declared = set(self.provenance.rag_source_refs)
-        for ep in self.endpoints:
-            for f in ep.findings:
-                undeclared = [r for r in f.rag_refs if r not in declared]
-                if undeclared:
-                    raise ValueError(
-                        f"finding {f.finding_id} cites RAG refs not in provenance: {undeclared}")
+        for f in self.all_findings():
+            undeclared = [r for r in f.rag_refs if r not in declared]
+            if undeclared:
+                raise ValueError(
+                    f"finding {f.finding_id} cites RAG refs not in provenance: {undeclared}")
         return self
+
+    def _derive(self) -> tuple[dict[str, int], dict[str, int]]:
+        sev: dict[str, int] = {}
+        cwe: dict[str, int] = {}
+        for f in self.all_findings():
+            sev[f.severity] = sev.get(f.severity, 0) + 1
+            if f.cwe is not None:
+                cwe[str(f.cwe)] = cwe.get(str(f.cwe), 0) + 1
+        return sev, cwe
 
     def recompute_aggregates(self) -> "AttackSurfaceMap":
         """Derive severity_counts and cwe_summary from the findings, so the aggregates are
         computed by code (trustworthy) rather than by the LLM (mockable). Returns self."""
-        sev: dict[str, int] = {}
-        cwe: dict[str, int] = {}
-        for ep in self.endpoints:
-            for f in ep.findings:
-                sev[f.severity] = sev.get(f.severity, 0) + 1
-                if f.cwe is not None:
-                    cwe[str(f.cwe)] = cwe.get(str(f.cwe), 0) + 1
-        self.severity_counts = sev
-        self.cwe_summary = cwe
+        self.severity_counts, self.cwe_summary = self._derive()
         return self
 
     def consistency_errors(self) -> list[str]:
         """Deterministic self-check: aggregates must match the findings. A mismatch means the
         map was assembled wrong (or an LLM fabricated a count). Empty list == consistent."""
         errs: list[str] = []
-        sev: dict[str, int] = {}
-        cwe: dict[str, int] = {}
-        for ep in self.endpoints:
-            for f in ep.findings:
-                sev[f.severity] = sev.get(f.severity, 0) + 1
-                if f.cwe is not None:
-                    cwe[str(f.cwe)] = cwe.get(str(f.cwe), 0) + 1
+        sev, cwe = self._derive()
         if sev != {k: v for k, v in self.severity_counts.items() if v}:
             errs.append(f"severity_counts {self.severity_counts} != derived {sev}")
         if cwe != {k: v for k, v in self.cwe_summary.items() if v}:
