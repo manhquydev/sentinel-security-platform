@@ -160,7 +160,7 @@ signals **by code**; one provenance‑labelled call ranks/mutates. Bounded by a 
 kill‑switch; state‑changing payloads are reserved for the Week‑8 HITL gate
 ([decision 0013](docs/decisions/0013-fuzzing-is-hybrid-read-only-with-deterministic-signals.md)).
 
-**Built (Week‑6, this branch):** the [multi‑agent syndicate](agent/supervisor.py) — a hand‑rolled
+**Built (Week‑6):** the [multi‑agent syndicate](agent/supervisor.py) — a hand‑rolled
 LangGraph `StateGraph` Supervisor running Recon → map‑guided Fuzz → [Exploit(sim)](agent/exploit.py),
 with a durable, **redacted** checkpoint (no raw target text or secrets on disk), a tested
 `interrupt()` seam reserved for Week‑8 HITL, and agent‑flow tracing to a loopback‑bound
@@ -170,8 +170,28 @@ never executes** — it has no target client (structural containment), its verdi
 `suspected‑needs‑hitl`, and real exploitation is reserved for the Week‑8 HITL gate
 ([decision 0014](docs/decisions/0014-the-syndicate-is-a-langgraph-supervisor-over-existing-agents-observability-is-a-redaction-gated-phoenix-plane.md)).
 
-**Roadmap (later phases):** human‑in‑the‑loop gating for real exploitation (Week 7–8), PII
-redaction (Week 9), GraphRAG (deferred per decision 0011), and self‑hosted vLLM serving.
+**Built (Week‑7):** indirect‑prompt‑injection defense at the one real surface — an attacker‑controlled
+scanner finding `title` flowing into the recon analysis. The control is **structural**: the
+code‑computed severity/CWE facts a hijacked narrative cannot alter stay authoritative, and a
+contradicted analysis is quarantined ([`agent/guard.py`](agent/guard.py)); a heuristic detector plus
+a self‑hosted, reproducible [adaptive‑attacker evaluation](evaluation/ipi-guard/) **measure** the
+residual (the adaptive loop evades the cheap detector while the structural control holds), with the
+false‑positive rate on real security content as the differentiator
+([decision 0015](docs/decisions/0015-ipi-defense-is-structural-output-integrity-the-real-surface-is-recon-analysis-detection-is-measured.md)).
+A LlamaFirewall air‑gapped sidecar detector is a scoped follow‑up (needs an HF‑license acceptance).
+
+**Built (Week‑8):** a fail‑closed [Human‑in‑the‑Loop approval gate](agent/approval.py) on the
+`interrupt()` seam, over a **simulated** state‑changing action. Approval is Ed25519‑signed **out of
+the agent's runtime** — the graph holds only the public verify key and has no signer, so a
+compromised/prompt‑injected runtime cannot self‑approve; the single‑use token binds the exact
+reviewed proposal, is TTL‑bounded, and is audited before the dry‑run. Real state‑changing execution
+is **deferred** with its prerequisites named
+([decision 0016](docs/decisions/0016-week8-hitl-is-a-failclosed-gate-over-a-simulated-action-with-out-of-process-ed25519-approval-real-execution-deferred.md)).
+
+**Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
+decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
+license); PII redaction (Week 9); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG
+(deferred per decision 0011).
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)
