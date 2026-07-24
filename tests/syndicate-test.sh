@@ -630,5 +630,359 @@ PY
 fi
 
 # ---------------------------------------------------------------------------
+# PR2 — Exploit(sim): E1-E4 from docs/plans/active/2026-07-24-...-multi-agent-syndicate.md
+# ---------------------------------------------------------------------------
+sect "E1: exploit.py imports no target/network client (structural containment, D4)"
+
+EXPLOIT_FILE="$REPO_ROOT/agent/exploit.py"
+if [ -f "$EXPLOIT_FILE" ]; then
+  BANNED_PATTERN='^[[:space:]]*(import|from)[[:space:]]+.*(gateway|requests|httpx|socket)\b'
+  offenders="$(grep -nE "$BANNED_PATTERN" "$EXPLOIT_FILE" || true)"
+  if [ -z "$offenders" ]; then
+    ok "exploit.py imports no gateway/requests/httpx/socket"
+  else
+    bad "exploit.py imports a network/target client"; printf '%s\n' "$offenders" >&2
+  fi
+
+  tmpf="$(mktemp /tmp/exploit-negctl-XXXXXX.py)"
+  trap 'rm -f "$tmpf"' EXIT
+  printf 'import requests\nfrom .gateway import Gateway\nimport socket\nimport httpx\n' > "$tmpf"
+  hits="$(grep -cE "$BANNED_PATTERN" "$tmpf" || true)"
+  rm -f "$tmpf"; trap - EXIT
+  if [ "${hits:-0}" -ge 3 ]; then
+    ok "negative control: the pattern flags planted gateway/requests/socket/httpx imports"
+  else
+    bad "negative control failed — pattern did not flag a planted network import"
+  fi
+
+  # D4: the only agent-internal modules exploit.py may import are llm (the model door) and schema.
+  agent_imports="$(grep -nE '^[[:space:]]*from \.(schema)?( import|[a-zA-Z_]+ import)' "$EXPLOIT_FILE" || true)"
+  echo "  exploit.py agent-internal imports: $agent_imports"
+  if printf '%s\n' "$agent_imports" | grep -vqE '^\s*$|llm|schema'; then
+    bad "exploit.py imports an agent-internal module beyond llm/schema"; printf '%s\n' "$agent_imports" >&2
+  else
+    ok "exploit.py's agent-internal imports are limited to llm + schema (D4)"
+  fi
+else
+  bad "missing $EXPLOIT_FILE"
+fi
+
+# ---------------------------------------------------------------------------
+sect "E2: verdict is always the fixed HITL-gated literal (no services)"
+
+if run_py <<'PY'
+import sys
+import agent.exploit as exploit
+
+report = {"findings": [
+    {"endpoint": "GET /a", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+    {"endpoint": "GET /b", "payload_class": "xss", "signal_kinds": ["reflected"]},
+    {"endpoint": "GET /c", "payload_class": "boundary", "signal_kinds": ["size_drift"]},
+]}
+proposals = exploit.propose(report, use_llm=False)
+ok = len(proposals) == 3 and all(p.verdict == "suspected-needs-hitl" for p in proposals)
+sys.exit(0 if ok else 1)
+PY
+then ok "every deterministic proposal's verdict is fixed to suspected-needs-hitl"
+else bad "verdict was not fixed on the deterministic path"; fi
+
+if run_py <<'PY'
+# Negative control: the Literal is a real constraint, not just a happy default — a non-HITL
+# verdict value must be rejected by the schema itself.
+import sys
+from pydantic import ValidationError
+from agent.schema import ExploitProposal
+try:
+    ExploitProposal(endpoint="e", vuln_class="v", signal_kinds=[], technique="t",
+                     justification="j", expected_impact="i", verdict="confirmed-and-executed")
+    sys.exit(1)
+except ValidationError:
+    sys.exit(0)
+PY
+then ok "negative control: a non-HITL verdict value is rejected by the schema"
+else bad "schema accepted a non-HITL verdict value"; fi
+
+[ -f "$ENV_FILE" ] && { set -a; . "$ENV_FILE"; set +a; }
+LLM_UP="$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 http://127.0.0.1:4000/health 2>/dev/null)"
+if [ -z "${LITELLM_MASTER_KEY:-}" ] || [ "$LLM_UP" = "000" ]; then
+  m="gateway not reachable / no key"
+  if [ "$REQUIRE_AGENT" = "1" ]; then bad "$m"; else skip "$m"; fi
+else
+  if run_py <<'PY'
+import sys
+import agent.exploit as exploit
+
+report = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli",
+     "signal_kinds": ["stack_trace", "server_error"]},
+]}
+proposals = exploit.propose(report, use_llm=True)
+print(f"  technique: {proposals[0].technique!r}" if proposals else "  no proposals")
+ok = (len(proposals) == 1 and proposals[0].verdict == "suspected-needs-hitl"
+      and proposals[0].technique and proposals[0].justification and proposals[0].expected_impact)
+sys.exit(0 if ok else 1)
+PY
+  then ok "live: a real narrative LLM call still leaves verdict fixed and narrative fields populated"
+  else bad "live narrative call failed or altered verdict"; fi
+fi
+
+# ---------------------------------------------------------------------------
+sect "E3: the narrative is scrubbed of a runnable payload (no services)"
+
+if run_py <<'PY'
+import json, sys
+from unittest.mock import patch
+import agent.exploit as exploit
+
+RAW_PAYLOAD = "'; DROP TABLE users;--"
+report = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+]}
+
+def fake_chat(msgs, model, max_tokens=800, **kw):
+    return json.dumps([{"technique": f"Try {RAW_PAYLOAD} against the parameter manually",
+                        "justification": "j", "expected_impact": "e"}])
+
+with patch.object(exploit.llm, "chat", side_effect=fake_chat):
+    proposals = exploit.propose(report, use_llm=True)
+
+blob = json.dumps([p.model_dump() for p in proposals])
+ok = (RAW_PAYLOAD not in blob and "[scrubbed:runnable-payload]" in blob)
+print(f"  technique: {proposals[0].technique!r}")
+sys.exit(0 if ok else 1)
+PY
+then ok "a planted runnable payload (DROP TABLE) is scrubbed out of the proposal's narrative"
+else bad "a runnable payload survived into the proposal"; fi
+
+if run_py <<'PY'
+# Negative control: a benign technique description (no runnable-payload shape) must survive
+# the scrub unchanged — proves the scrub is targeted, not a blanket rewrite of every narrative.
+import json, sys
+from unittest.mock import patch
+import agent.exploit as exploit
+
+BENIGN = ("Manually replay the flagged request with a benign value and compare the response "
+         "to the recorded baseline before drawing a conclusion.")
+report = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+]}
+
+def fake_chat(msgs, model, max_tokens=800, **kw):
+    return json.dumps([{"technique": BENIGN, "justification": "j", "expected_impact": "e"}])
+
+with patch.object(exploit.llm, "chat", side_effect=fake_chat):
+    proposals = exploit.propose(report, use_llm=True)
+
+sys.exit(0 if proposals[0].technique == BENIGN else 1)
+PY
+then ok "negative control: a benign technique description survives the scrub unchanged"
+else bad "negative control failed — the scrub mangled a benign narrative"; fi
+
+if run_py <<'PY'
+# Per-class coverage (code-review H1 / security-audit M1): the original E3 case above only ever
+# planted DROP TABLE, so the suite stayed green while sibling DDL/script/shell shapes leaked.
+# Prove each enumerated sibling is actually caught: TRUNCATE, DROP DATABASE, comment-obfuscated
+# DROP/**/TABLE, ALTER TABLE, EXEC xp_cmdshell, and an <img onerror=...> XSS shape (not just
+# <script>). Each case goes through the real exploit.propose() -> ExploitProposal pipeline, same
+# as the DROP TABLE case above, not a direct call into the private scrub helper.
+import json, sys
+from unittest.mock import patch
+import agent.exploit as exploit
+
+CASES = {
+    "TRUNCATE TABLE": "TRUNCATE TABLE users",
+    "DROP DATABASE": "DROP DATABASE app",
+    "comment-obfuscated DROP TABLE": "DROP/**/TABLE users",
+    "ALTER TABLE": "ALTER TABLE users ADD COLUMN pwned INT",
+    "EXEC xp_cmdshell": "EXEC xp_cmdshell('dir')",
+    "img onerror XSS": "<img src=x onerror=alert(1)>",
+}
+report = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+]}
+
+fails = []
+for label, payload in CASES.items():
+    def fake_chat(msgs, model, max_tokens=800, **kw):
+        return json.dumps([{"technique": f"Try {payload} against the parameter manually",
+                            "justification": "j", "expected_impact": "e"}])
+    with patch.object(exploit.llm, "chat", side_effect=fake_chat):
+        proposals = exploit.propose(report, use_llm=True)
+    blob = json.dumps([p.model_dump() for p in proposals])
+    if payload in blob or "[scrubbed:runnable-payload]" not in blob:
+        fails.append(label)
+    print(f"  {label}: {proposals[0].technique!r}")
+
+sys.exit(0 if not fails else 1)
+PY
+then ok "TRUNCATE/DROP DATABASE/comment-obfuscated DROP/ALTER/xp_cmdshell/img-onerror are all scrubbed"
+else bad "one or more sibling runnable-payload classes were NOT scrubbed"; fi
+
+if run_py <<'PY'
+# Positive control: a non-state-changing READ-PROBE lead (boolean SQLi) is intentionally left
+# unscrubbed — it is human-facing lead text for a reviewer to verify manually, never executed,
+# per the honest scope stated in agent/exploit.py's module docstring. Proves the broadened
+# pattern is still targeted, not a blanket rewrite that would also eat this legitimate class of
+# technique description.
+import json, sys
+from unittest.mock import patch
+import agent.exploit as exploit
+
+READ_PROBE = "Try admin' OR '1'='1 in the login field to confirm a boolean SQLi auth bypass."
+report = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+]}
+
+def fake_chat(msgs, model, max_tokens=800, **kw):
+    return json.dumps([{"technique": READ_PROBE, "justification": "j", "expected_impact": "e"}])
+
+with patch.object(exploit.llm, "chat", side_effect=fake_chat):
+    proposals = exploit.propose(report, use_llm=True)
+
+sys.exit(0 if proposals[0].technique == READ_PROBE else 1)
+PY
+then ok "positive control: a benign boolean-SQLi read-probe lead description survives unscrubbed"
+else bad "read-probe lead text was unexpectedly scrubbed — scope regressed"; fi
+
+if run_py <<'PY'
+# Non-vacuous proof (revert-proof): the PRE-FIX pattern (DROP TABLE/DELETE FROM/INSERT INTO/
+# UPDATE...SET + <script> + rm -rf/shell-chain only, no TRUNCATE/DROP DATABASE/obfuscation arm)
+# genuinely misses TRUNCATE TABLE — reconstructed here from the code-review finding (H1) rather
+# than by editing agent/exploit.py, so this test would fail if the broadening were reverted.
+import re, sys
+import agent.exploit as exploit
+
+OLD_PATTERN = re.compile(
+    r"(?s:<script\b[^>]*>.*?</script\s*>)"
+    r"|\bUNION\s+SELECT\b[^\r\n]*?--"
+    r"|\bDROP\s+TABLE\b[^\r\n]*"
+    r"|\bDELETE\s+FROM\b[^\r\n]*"
+    r"|\bINSERT\s+INTO\b[^\r\n]*"
+    r"|\bUPDATE\s+\S+\s+SET\b[^\r\n]*"
+    r"|\brm\s+-rf\b[^\r\n]*"
+    r"|[;&|]\s*(?:rm|cat|wget|curl|nc|bash|sh|chmod)\b[^\r\n]*",
+    re.IGNORECASE,
+)
+SIBLING = "TRUNCATE TABLE users"
+old_missed = SIBLING in OLD_PATTERN.sub("[scrubbed:runnable-payload]", SIBLING)
+new_catches = SIBLING not in exploit._RUNNABLE_PAYLOAD_PATTERN.sub("[scrubbed:runnable-payload]", SIBLING)
+
+print(f"  old pattern missed TRUNCATE TABLE: {old_missed}")
+print(f"  current pattern catches TRUNCATE TABLE: {new_catches}")
+sys.exit(0 if (old_missed and new_catches) else 1)
+PY
+then ok "revert-proof: the pre-fix pattern missed TRUNCATE TABLE; the broadened pattern catches it"
+else bad "revert-proof failed — either the old pattern already caught it or the new one still misses it"; fi
+
+if run_py <<'PY'
+# The same planted payload must not reach the Supervisor checkpoint either — exploit.py's own
+# scrub (E3) plus supervisor.py's D5 redact_persisted pass, both exercised through a real graph
+# run (only the exploit narrative LLM call is mocked; recon/fuzz are mocked with fixtures).
+import json, os, sqlite3, sys, tempfile
+from unittest.mock import patch
+
+import agent.exploit as exploit
+import agent.fuzz as fuzz
+import agent.recon as recon
+import agent.supervisor as sup
+from agent.schema import AttackSurfaceMap, Provenance
+
+RAW_PAYLOAD = "'; DROP TABLE users;--"
+
+def fake_map(use_llm=True):
+    return AttackSurfaceMap(
+        target="t", generated_at="2026-07-24T00:00:00Z", agent_version="0.1", endpoints=[],
+        provenance=Provenance(attack_surface_baseline="b", model="none"),
+    ).recompute_aggregates()
+
+def fake_run(use_llm=True, baseline_path=fuzz.BASELINE, surface_map=None):
+    finding = fuzz.Finding(endpoint="GET /rest/products/search", param="q", payload_class="sqli",
+                            payload="' UNION SELECT NULL--", signals=["stack_trace: near syntax error"])
+    return fuzz.FuzzReport(targets=["GET /rest/products/search?q"], requests_sent=2,
+                            findings=[finding], signal_counts={"stack_trace": 1}, guidance=None)
+
+def fake_chat(msgs, model, max_tokens=800, **kw):
+    return json.dumps([{"technique": f"Try {RAW_PAYLOAD} manually",
+                        "justification": "j", "expected_impact": "e"}])
+
+d = tempfile.mkdtemp()
+path = os.path.join(d, "cp.sqlite")
+conn = sqlite3.connect(path, check_same_thread=False)
+from langgraph.checkpoint.sqlite import SqliteSaver
+saver = SqliteSaver(conn)
+saver.setup()
+
+with patch.object(recon, "build_map", side_effect=fake_map), \
+     patch.object(fuzz, "run", side_effect=fake_run), \
+     patch.object(exploit.llm, "chat", side_effect=fake_chat):
+    result = sup.run_syndicate("exploit-redaction-check", use_llm=True, checkpointer=saver)
+
+conn.close()
+
+state_only = {k: v for k, v in result.items() if k != "__interrupt__"}
+blob = json.dumps(state_only)
+assert RAW_PAYLOAD not in blob, "planted runnable payload leaked into the returned state"
+
+raw_db = open(path, "rb").read()
+if RAW_PAYLOAD.encode() in raw_db:
+    print("  FOUND planted runnable payload in checkpoint DB", file=sys.stderr)
+    sys.exit(1)
+
+proposals = state_only.get("exploit_proposals") or []
+assert proposals, "expected at least one exploit proposal from the planted fuzz finding"
+assert all(p.get("verdict") == "suspected-needs-hitl" for p in proposals)
+sys.exit(0)
+PY
+then ok "a planted runnable payload never reaches the checkpoint DB; proposals still produced with verdict fixed"
+else bad "planted runnable payload leaked into the checkpoint DB, or no proposal was produced"; fi
+
+# ---------------------------------------------------------------------------
+sect "E4: exploit consumes fuzz findings -> proposals; empty findings -> none (no services)"
+
+if run_py <<'PY'
+import sys
+import agent.exploit as exploit
+
+with_signal = {"findings": [
+    {"endpoint": "GET /rest/products/search", "payload_class": "sqli", "signal_kinds": ["stack_trace"]},
+]}
+proposals = exploit.propose(with_signal, use_llm=False)
+ok = (len(proposals) >= 1 and proposals[0].endpoint == "GET /rest/products/search"
+      and proposals[0].vuln_class == "sql-injection-suspected")
+
+# Negative control: no findings (or a missing/None report) must yield no proposals — a lead is
+# never conjured for an endpoint the fuzzer never actually flagged.
+ok = (ok and exploit.propose({"findings": []}, use_llm=False) == []
+      and exploit.propose({}, use_llm=False) == []
+      and exploit.propose(None, use_llm=False) == [])
+sys.exit(0 if ok else 1)
+PY
+then ok "a real fuzz signal yields >=1 proposal; empty/missing findings yield none"
+else bad "exploit did not consume the fuzz report correctly"; fi
+
+# ---------------------------------------------------------------------------
+sect "E2/E4 (live): the full syndicate graph now yields exploit proposals too"
+
+if [ -z "${AGENT_RECON_SECRET:-}" ] || [ "$GW_UP" = "000" ] || [ "$DD_UP" = "000" ]; then
+  m="gateway/lake not reachable / no secret"
+  if [ "$REQUIRE_AGENT" = "1" ]; then bad "$m"; else skip "$m"; fi
+else
+  if run_py <<'PY'
+import os, sys, tempfile
+import agent.supervisor as sup
+
+d = tempfile.mkdtemp()
+saver = sup.default_checkpointer(os.path.join(d, "cp.sqlite"))
+result = sup.run_syndicate("live-exploit", use_llm=False, checkpointer=saver)
+proposals = result.get("exploit_proposals")
+print(f"  exploit proposals: {len(proposals) if proposals is not None else 'MISSING'}")
+ok = proposals is not None and all(p.get("verdict") == "suspected-needs-hitl" for p in proposals)
+sys.exit(0 if ok else 1)
+PY
+  then ok "live e2e Recon -> Fuzz -> Exploit(sim): exploit_proposals present, every verdict HITL-gated"
+  else bad "live e2e run did not produce a well-formed exploit_proposals list"; fi
+fi
+
+# ---------------------------------------------------------------------------
 printf '\n%d passed, %d failed, %d skipped\n' "$PASS" "$FAIL" "$SKIP"
 [ "$FAIL" -eq 0 ]

@@ -1,6 +1,6 @@
-"""The Supervisor graph: Recon -> (map-consuming) Fuzz, hand-rolled `StateGraph` (Week 6,
-decision D2). Durable, redacted, budget-bounded, and reserving an `interrupt()` seam for the
-Week-8 HITL exploit branch.
+"""The Supervisor graph: Recon -> (map-consuming) Fuzz -> Exploit(sim), hand-rolled `StateGraph`
+(Week 6, decision D2). Durable, redacted, budget-bounded, and reserving an `interrupt()` seam for
+the Week-8 HITL state-changing branch.
 
 Design load-bearing points (see docs/plans/active/2026-07-24-...):
 
@@ -15,9 +15,24 @@ Design load-bearing points (see docs/plans/active/2026-07-24-...):
   `{endpoint, param, payload_class, signal_kinds, counts}` (the raw truncated payload and the
   raw per-signal "reason" text are DROPPED, only the signal *kind* survives). Every free-text
   field that DOES persist (recon `analysis`, endpoint `notes`, every `Finding.title` in both
-  `endpoints[].findings` and `app_level_findings`, fuzz `guidance`) is LLM narrative synthesized
-  over target-derived input, not operator-authored (0006/MF2) — so each one runs through
-  `trace.redact_persisted()`, the same secret-AND-target-raw scrub the span path uses.
+  `endpoints[].findings` and `app_level_findings`, fuzz `guidance`, exploit `technique` /
+  `justification` / `expected_impact`) is LLM narrative synthesized over target-derived input,
+  not operator-authored (0006/MF2) — so each one runs through `trace.redact_persisted()`, the
+  same secret-AND-target-raw scrub the span path uses. The exploit narrative fields ALSO pass
+  through `agent/exploit.py`'s own runnable-payload scrub (E3, a DISTINCT, best-effort concern —
+  see that module's docstring for exactly what it does and does not cover) before this redaction
+  ever runs. The two layers cover different, non-overlapping vocabularies (this pass: secrets +
+  target-raw markers; E3: runnable state-changing/script/shell syntax) — neither is a substitute
+  for the other, and NEITHER is the safety control: the exploit agent never executing anything
+  (D3/D4) is. This pass runs regardless so a persisted narrative is never worse-redacted just
+  because it came from the exploit node instead of recon/fuzz.
+- **D3/D4 — Exploit(sim) is contained by import, not by promise.** `exploit_node` calls
+  `agent.exploit.propose()`, which imports only `agent.llm` and `agent.schema` — no
+  `agent.gateway`, no `requests`/`httpx`/socket (`tests/syndicate-test.sh` E1 asserts this
+  statically) — so it is structurally incapable of reaching the target itself; it only reads the
+  fuzz findings this module already redacted and makes one narrative LLM call. `verdict` is
+  fixed `suspected-needs-hitl` in the schema itself (E2): this agent proposes, Week-8 HITL
+  decides.
 - **D11 — the request budget lives IN the checkpointed state**, and `run_syndicate()` only
   seeds it on a brand-new thread. LangGraph merges an `invoke()`'s input dict over whatever a
   thread already has checkpointed, so re-supplying `budget` on a second call against the SAME
@@ -41,7 +56,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 from langgraph.types import interrupt
 
-from . import fuzz, recon, trace
+from . import exploit, fuzz, recon, trace
 from .schema import AttackSurfaceMap
 
 CHECKPOINT_PATH = os.path.join(os.path.dirname(__file__), "out", "syndicate.sqlite")
@@ -58,6 +73,7 @@ class SyndicateState(TypedDict, total=False):
     use_llm: bool
     recon_map: dict[str, Any] | None
     fuzz_report: dict[str, Any] | None
+    exploit_proposals: list[dict[str, Any]] | None
     budget: dict[str, int]
     interrupt_ack: bool
     # L1: gates `interrupt_seam_node`. PR1 never sets this (always False/absent), so a normal
@@ -142,6 +158,18 @@ def _redact_fuzz_report(report: fuzz.FuzzReport) -> dict[str, Any]:
     }
 
 
+def _redact_proposal(p: dict[str, Any]) -> None:
+    """D5, same rule as every other persisted narrative field: `technique`/`justification`/
+    `expected_impact` are LLM narrative synthesized over the (already-redacted) fuzz findings
+    (D3), so they get the full secret+target-raw scrub before the checkpoint sees them — on top
+    of, not instead of, `agent/exploit.py`'s own runnable-payload scrub (E3), which already ran
+    before this function is called. `endpoint`/`vuln_class`/`signal_kinds`/`verdict` are code-
+    derived facts (D3), not model output, so they are left as-is."""
+    for field in ("technique", "justification", "expected_impact"):
+        if p.get(field):
+            p[field] = trace.redact_persisted(p[field])
+
+
 # --- graph nodes --------------------------------------------------------------------------
 
 
@@ -183,6 +211,25 @@ def fuzz_node(state: SyndicateState) -> dict[str, Any]:
     return {"fuzz_report": _redact_fuzz_report(report), "budget": budget}
 
 
+def exploit_node(state: SyndicateState) -> dict[str, Any]:
+    """D3/D4: `exploit.propose()` only reads the fuzz findings this graph already redacted
+    (`fuzz_node` ran before this node) and makes one narrative LLM call — it never touches the
+    target. `model` is passed directly as a function argument (D7) rather than threaded through
+    `os.environ` the way `recon.py`/`fuzz.py` are, since `exploit.py` is Week-6-native code, not
+    a reused module that only knows how to read the ambient env."""
+    fuzz_report = state.get("fuzz_report") or {}
+    use_llm = bool(state.get("use_llm", True))
+    with trace.node_span("exploit", use_llm=use_llm,
+                          findings=len(fuzz_report.get("findings") or [])):
+        proposals = exploit.propose(fuzz_report, use_llm=use_llm,
+                                    model=state.get("model", "sast-sol"))
+
+    dumped = [p.model_dump() for p in proposals]
+    for p in dumped:
+        _redact_proposal(p)
+    return {"exploit_proposals": dumped}
+
+
 def interrupt_seam_node(state: SyndicateState) -> dict[str, Any]:
     """Reserved for the Week-8 HITL state-changing branch (decision D2/0013). Gated on
     `pending_state_change` (L1): PR1 never sets it, so this is a no-op and the graph reaches
@@ -202,10 +249,12 @@ def build_graph(checkpointer: SqliteSaver):
     g = StateGraph(SyndicateState)
     g.add_node("recon", recon_node)
     g.add_node("fuzz", fuzz_node)
+    g.add_node("exploit", exploit_node)
     g.add_node("interrupt_seam", interrupt_seam_node)
     g.set_entry_point("recon")
     g.add_edge("recon", "fuzz")
-    g.add_edge("fuzz", "interrupt_seam")
+    g.add_edge("fuzz", "exploit")
+    g.add_edge("exploit", "interrupt_seam")
     g.add_edge("interrupt_seam", END)
     return g.compile(checkpointer=checkpointer)
 
@@ -252,7 +301,8 @@ def run_syndicate(thread_id: str, *, model: str = "sast-sol", use_llm: bool = Tr
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Run the Week-6 Supervisor graph (Recon -> Fuzz).")
+    ap = argparse.ArgumentParser(
+        description="Run the Week-6 Supervisor graph (Recon -> Fuzz -> Exploit(sim)).")
     ap.add_argument("--thread", default="cli", help="checkpoint thread id (reuse to resume)")
     ap.add_argument("--no-llm", action="store_true", help="deterministic run only")
     ap.add_argument("--model", default=os.environ.get("RECON_MODEL", "sast-sol"))
@@ -261,9 +311,12 @@ def main(argv: list[str] | None = None) -> int:
     result = run_syndicate(args.thread, model=args.model, use_llm=not args.no_llm)
     fr = result.get("fuzz_report") or {}
     rm = result.get("recon_map") or {}
+    proposals = result.get("exploit_proposals") or []
     print(f"Syndicate run (thread={args.thread!r}) — endpoints: {len(rm.get('endpoints', []))}"
           f"  fuzz targets: {fr.get('targets')}  requests: {fr.get('requests_sent')}"
-          f"  findings: {len(fr.get('findings', []))}")
+          f"  findings: {len(fr.get('findings', []))}  exploit proposals: {len(proposals)}")
+    for p in proposals:
+        print(f"    {p.get('endpoint')} [{p.get('vuln_class')}] verdict={p.get('verdict')}")
     if "__interrupt__" in result:
         print("  paused at interrupt_seam (reserved for Week-8 HITL)")
     return 0

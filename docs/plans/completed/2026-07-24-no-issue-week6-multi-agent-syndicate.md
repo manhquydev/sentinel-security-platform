@@ -4,8 +4,8 @@ Date: 2026-07-24
 
 ## Status
 
-Active — plan CLEAN (red-team + validate resolved); **PR1 implemented, reviewed, audited, fixed,
-verified GREEN**. Remaining: PR1 docs + PR, then PR2 (Exploit-sim).
+Completed — **Week 6 done (both PRs)**. PR1 committed (`40066e4`); PR2 implemented, reviewed,
+audited, fixed, verified GREEN. Archive to `docs/plans/completed/` on the PR2 commit.
 
 ## Outcome
 
@@ -59,9 +59,17 @@ every existing safety control. Delivered as two reviewable PRs. Observable when:
   `llm.py` remains the labelled door.
 - **D2 — Hand-rolled `StateGraph`** (explicit linear flow, less magic to audit).
 - **D3 — Exploit(sim) = facts-by-code + one narrative LLM call**; proposals are technique
-  descriptions (no runnable state-changing payload strings in git); `verdict` fixed
-  `suspected-needs-hitl`; the narrative is scrubbed/validated so an injected runnable payload cannot
-  land verbatim.
+  descriptions; `verdict` fixed `suspected-needs-hitl`. The REAL guarantee is structural: the agent
+  never executes anything (D4 import containment) and the verdict is HITL-gated by the schema
+  itself (E2) — that is what makes "no runnable payload actually executes" hold even under a
+  compromised narrative. The narrative additionally passes a BEST-EFFORT scrub of runnable
+  state-changing SQL DDL/DML, `xp_cmdshell`, shell metacharacter chains, and script/XSS shapes
+  (E3) as defense-in-depth layered on top of that structural control, not a completeness claim
+  (corrected after code review/STRIDE audit H1/M1: the initial scrub covered only `DROP TABLE`/
+  `DELETE FROM`/`INSERT INTO`/`UPDATE...SET`, missing siblings like `TRUNCATE`/`DROP DATABASE`/
+  `ALTER`/comment-obfuscated DDL). Non-state-changing read-probe leads (boolean SQLi, UNION-read,
+  traversal/template markers) may legitimately survive as human-facing lead text — a human
+  verifies them manually, they are never executed, so scrubbing them is not this scrub's job.
 - **D4 — Structural containment:** `agent/exploit.py` imports no network/gateway client (test-asserted).
 - **D5 — Trace + checkpoint redaction is a hard gate, DISTINCT from egress redaction.** A working OTel
   span processor strips secrets AND target-raw text before export; the SqliteSaver checkpoint stores
@@ -134,6 +142,11 @@ invariants, docs.
 **PR2 — Exploit(sim):** `agent/exploit.py`, `ExploitProposal` contract, its invariants, docs.
 Out of scope: real state-changing exploitation (Week-8 HITL), broadening `agent-recon` ACL, PII
 redaction engine (Week 9), guardrail/IPI hardening beyond the existing contract (Week 7), vLLM/FinOps.
+Also deferred to Week-7 (security audit L1, PR2 fix pass): `exploit_node`'s `endpoint` field is
+copied verbatim from the fuzz report and is not run through `trace.redact_persisted` in
+`_redact_proposal` — low risk (URL path, target-influenced but not free narrative text) and
+consistent with the pre-existing unscrubbed fuzz `endpoint`, so left as-is now; fold into the
+Week-7 systematic target-text provenance pass rather than a one-off fix here.
 
 ## TDD Approach (tests-first; red → green per phase)
 
@@ -163,8 +176,9 @@ lands. Gate: versions pinned+hash-pinned in `agent/requirements.txt`; compat ver
 
 **PR2 phases:**
 - **P2.1 RED — Exploit contracts + invariants.** `ExploitProposal` (`extra=forbid`, verdict Literal);
-  E1 exploit module imports no network client; E2 verdict always HITL-gated; E3 narrative scrubbed of
-  runnable payloads; E4 exploit consumes FuzzReport → ≥1 proposal from a real signal. Failing.
+  E1 exploit module imports no network client; E2 verdict always HITL-gated; E3 narrative passes a
+  best-effort scrub of runnable state-changing/script/shell payload shapes; E4 exploit consumes
+  FuzzReport → ≥1 proposal from a real signal. Failing.
 - **P2.2 GREEN — `agent/exploit.py`** to pass E1–E4; wire as a graph node.
 - **P2.3 — cook loop + docs + PR2.**
 
@@ -205,8 +219,19 @@ lands. Gate: versions pinned+hash-pinned in `agent/requirements.txt`; compat ver
   closes the connection it opens itself). syndicate 16/0, egress 12/0, fuzz-engine 4/0,
   recon-agent 9/0, recon-tools 3/0, gateway-authz 29/0 — all green. Report:
   `plans/reports/fullstack-260724-1239-week6-pr1-fixes.md`.
-- [ ] PR1 docs + PR.
-- [ ] PR2 (P2.1–P2.3) — Exploit(sim).
+- [x] PR1 docs + decision 0014 + README Status W4–6; **PR1 committed** (`40066e4`).
+- [x] PR2 — Exploit(sim) implemented + cook loop closed: code-review (1 High/2 Med/2 Low) + STRIDE
+  audit (1 Med/3 Low, structural containment verified SOUND) → fixed. The converged finding (the
+  runnable-payload scrub was narrower than its claim) resolved both ways: broadened the
+  state-changing/script/shell coverage + added per-class E3 cases, AND reworded D3/E3 to honest
+  best-effort-hygiene-over-structural-control scope. M2 (JSON-blob leak), M1 (free-text dup), L3
+  (llm-error now fails open to the deterministic fallback — engaged for real on a live gateway
+  timeout), L2 (docstring honesty) fixed; L1 (endpoint provenance) deferred to Week-7. Suites:
+  syndicate 30/0, egress 12/0, fuzz 4/0, recon-agent 10/0, recon-tools 3/0, gateway-authz 29/0 —
+  all green. Reports: `plans/reports/{fullstack-260724-1328-week6-pr2-exploit-sim,
+  code-review-260724-1345-week6-pr2,security-audit-260724-1345-week6-pr2,
+  fullstack-260724-1351-week6-pr2-fixes}.md`.
+- [ ] PR2 commit + Week-6 plan → completed/.
 
 ## Decisions
 
@@ -286,4 +311,15 @@ syndicate 16/0, model-egress 12/0, fuzz-engine 4/0, recon-agent 9/0, recon-tools
 gateway-authz 29/0 — no regression. Live e2e: recon map → map-guided fuzz surfaces the real Juice
 Shop SQLi read-only, within budget, checkpoint+spans redacted.
 
-Remaining: PR1 docs (README Status W4–6, decision record) + PR; then PR2 (Exploit-sim).
+**PR2 COMPLETE (verified).** The read-only/simulated Exploit agent (`agent/exploit.py`, wired
+recon→fuzz→exploit→interrupt_seam) implemented, then the full cook loop: code-review (1 High) +
+STRIDE audit (structural containment SOUND — cannot reach the target, immutable HITL verdict,
+correct provenance) → fixed. The one converged finding — the runnable-payload scrub narrower than
+its claim — was resolved honestly: broadened the state-changing/script/shell coverage + per-class
+E3 cases, and reworded the claim to best-effort hygiene layered on the real structural control
+(non-execution). Suites: syndicate 30/0, egress 12/0, fuzz 4/0, recon-agent 10/0, recon-tools 3/0,
+gateway-authz 29/0 — no regression.
+
+**Week 6 is complete** (both PRs). Next charter unit: Week 7 (advanced guardrails / indirect
+prompt-injection defense) — the `interrupt_seam` and endpoint-provenance follow-up (L1) feed into
+Weeks 7–8.

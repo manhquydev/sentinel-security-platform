@@ -136,3 +136,33 @@ class AttackSurfaceMap(BaseModel):
         if cwe != {k: v for k, v in self.cwe_summary.items() if v}:
             errs.append(f"cwe_summary {self.cwe_summary} != derived {cwe}")
         return errs
+
+
+class ExploitProposal(BaseModel):
+    """A Week-6 Exploit(sim) lead (decision D3, 0013's read-only bound). `endpoint`/`vuln_class`/
+    `signal_kinds` are FACTS assembled by code from the fuzz report — never the model's word for
+    it (mirrors `AttackSurfaceMap`'s "facts by code" discipline). `technique`/`justification`/
+    `expected_impact` are the one narrative LLM call's output: a technique DESCRIPTION for a
+    human to verify next, never a runnable payload/script/command — `agent/exploit.py` passes
+    them through a BEST-EFFORT scrub of runnable state-changing/script/shell shapes (SQL DDL/DML,
+    `xp_cmdshell`, shell chains, `<script>`/on-error/on-load/`javascript:`) before this model is
+    ever constructed with LLM content, LAYERED ON the real safety guarantee: this agent never
+    executes anything (structural containment, see `agent/exploit.py`'s module docstring), so the
+    scrub is defense-in-depth, not the control. On the supervisor/graph path, `agent/supervisor.py`
+    additionally redacts these fields (secrets + target-raw) before they reach the checkpoint, the
+    same D5 rule every other persisted narrative field follows; the standalone CLI has only the
+    scrub above. Non-state-changing read-probe leads (boolean SQLi, UNION-read, traversal/template
+    markers) may legitimately appear as human-facing technique text — those are leads for a human
+    to verify manually, never executed. `verdict` is fixed to a single HITL-gated literal — this
+    agent proposes, it never gets to decide "go"."""
+    model_config = _forbid
+    endpoint: str
+    vuln_class: str = Field(..., description="Code-derived from payload_class + signal_kinds, "
+                            "e.g. 'sql-injection-suspected' — not an LLM assertion")
+    signal_kinds: list[str] = Field(default_factory=list,
+                                    description="Deterministic fuzz signal kinds behind this lead")
+    technique: str = Field(..., description="A description of what a human should try next to "
+                           "verify the lead — never a runnable payload")
+    justification: str
+    expected_impact: str
+    verdict: Literal["suspected-needs-hitl"] = "suspected-needs-hitl"

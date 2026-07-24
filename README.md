@@ -160,18 +160,18 @@ signals **by code**; one provenance‑labelled call ranks/mutates. Bounded by a 
 kill‑switch; state‑changing payloads are reserved for the Week‑8 HITL gate
 ([decision 0013](docs/decisions/0013-fuzzing-is-hybrid-read-only-with-deterministic-signals.md)).
 
-**In progress (Week‑6, this branch — PR1):** the [multi‑agent syndicate](agent/supervisor.py) — a
-hand‑rolled LangGraph `StateGraph` Supervisor running Recon → map‑guided Fuzz, with a durable,
-**redacted** checkpoint (no raw target text or secrets on disk), a tested `interrupt()` seam
-reserved for Week‑8 HITL, and agent‑flow tracing to a loopback‑bound [Arize Phoenix](infra/phoenix/)
-plane behind a secret‑AND‑target‑raw span redactor. Model access stays at the gateway (a
-model‑egress contract test enforces it)
+**Built (Week‑6, this branch):** the [multi‑agent syndicate](agent/supervisor.py) — a hand‑rolled
+LangGraph `StateGraph` Supervisor running Recon → map‑guided Fuzz → [Exploit(sim)](agent/exploit.py),
+with a durable, **redacted** checkpoint (no raw target text or secrets on disk), a tested
+`interrupt()` seam reserved for Week‑8 HITL, and agent‑flow tracing to a loopback‑bound
+[Arize Phoenix](infra/phoenix/) plane behind a secret‑AND‑target‑raw span redactor. Model access
+stays at the gateway (a model‑egress contract test enforces it). The Exploit agent **proposes,
+never executes** — it has no target client (structural containment), its verdict is immutably
+`suspected‑needs‑hitl`, and real exploitation is reserved for the Week‑8 HITL gate
 ([decision 0014](docs/decisions/0014-the-syndicate-is-a-langgraph-supervisor-over-existing-agents-observability-is-a-redaction-gated-phoenix-plane.md)).
-The read‑only/simulated Exploit agent is PR2.
 
-**Roadmap (later phases):** the Exploit(sim) agent (Week‑6 PR2), human‑in‑the‑loop gating
-(Week 8), PII redaction (Week 9), GraphRAG (deferred per decision 0011), and self‑hosted
-vLLM serving.
+**Roadmap (later phases):** human‑in‑the‑loop gating for real exploitation (Week 7–8), PII
+redaction (Week 9), GraphRAG (deferred per decision 0011), and self‑hosted vLLM serving.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)

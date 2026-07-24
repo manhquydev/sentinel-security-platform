@@ -4,7 +4,7 @@ Date: 2026-07-24
 
 ## Status
 
-Accepted (PR1 of 2 — supervisor + observability; the Exploit(sim) agent is PR2)
+Accepted — both PRs shipped (PR1 supervisor + observability; PR2 the Exploit(sim) agent)
 
 ## Context
 
