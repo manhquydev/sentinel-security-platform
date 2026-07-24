@@ -152,11 +152,20 @@ Week-8 HITL execution, Week-9 PII redaction, external paid eval SaaS, GraphRAG, 
   PR3's adaptive round. detect_injection recall 6/6; FP 0/375 (mostly whole Java files — real
   finding-title distribution under-represented, code-review M2). **Code-review + STRIDE done:**
   0 Crit/0 High; primary control (code-computed facts authoritative) verified SOUND by both.
-- [ ] PR1 fix (M1 newline-datamark, M2 FP-corpus honesty, M3 done, L1 Info false-quarantine, L2
-  real-`_analyze` integration test, I2 omission positive-check) → re-verify → docs + PR.
+- [x] PR1 fix done (M1 newline-datamark; L1 Info excluded; I2 omission check widened to a 3-way
+  anchor after a measured live FP spike; M2 title-shaped FP corpus; L2 real-`_analyze` integration
+  test; M3 baseline refreshed) → re-verified (week7-ipi-guard 6/0, recon 10/0, syndicate 30/0, egress
+  12/0, fuzz 4/0) → **PR1 committed `52fab70`** + decision 0015.
 - [ ] PR2 (LlamaFirewall sidecar detector + FP study) — GATED on user action items (HF license,
   sidecar infra confirm).
-- [ ] PR3 (self-hosted adaptive eval + consolidated report; endpoint-vector plumbing if pursued).
+- [x] PR3 (adaptive-eval part, GC1/GC2) — `evaluation/ipi-guard/adaptive-attacker.py` (reproducible
+  seeded mutation lineage + bounded live measurement), committed baseline, `tests/week7-adaptive-eval-test.sh`.
+  Cook loop: code-review SHIP (0 Crit/High/Med, 1 Low fixed: markers-key redaction). Result: the
+  adaptive attacker evades the cheap detector (catch 1.0→0.667→0.0) while the STRUCTURAL control holds
+  (code-computed facts authoritative, decision 0012) — empirically validates 0006. Suites: adaptive
+  4/0, ipi-guard 6/0, recon 10/0, syndicate 30/0. GC3 (forward capability gate) DEFERRED to Week 8
+  (speculative until the real action surface exists). Consolidated report folds in PR2 when it lands.
+- [ ] PR3 commit; then the consolidated Week-7 report once PR2 lands.
 
 ## Decisions
 
