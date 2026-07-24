@@ -4,7 +4,7 @@ Date: 2026-07-24
 
 ## Status
 
-Active
+Complete
 
 ## Outcome
 
@@ -77,7 +77,7 @@ Completion (first increment) is observable when:
       `tests/recon-tools-test.sh` 3/0 (merged, PR #5).
 - [x] Phase 3 — recon pipeline (`agent/recon.py`): deterministic map + RAG + one LLM analysis.
 - [x] Phase 4 — live end-to-end run; deterministic regression asserted in the suite.
-- [~] Phase 5 — review/fix (in progress this PR); decision 0012 already recorded.
+- [x] Phase 5 — CodeRabbit review applied (PR #6); decision 0012 recorded.
 
 ## Result
 
