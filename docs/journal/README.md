@@ -29,3 +29,6 @@ repeating. Entries are never edited to look better in hindsight.
 - [2026-07-24 — The guard that read the wrong lake](2026-07-24-the-guard-that-read-the-wrong-lake.md)
   — reconciling the 11 WebGoat rows in place, and the locator-scheme probe whose ignored
   filter read every scan type and reported a confident wrong answer.
+- [2026-07-24 — A configured interface is not a working one](2026-07-24-a-configured-interface-is-not-a-working-one.md)
+  — the `embed` alias that was a chat model and the chat gateway that refused unlabelled
+  requests; both legible, both dead until probed. Legibility is not liveness.
