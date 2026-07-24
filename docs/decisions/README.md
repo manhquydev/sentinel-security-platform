@@ -48,3 +48,7 @@ documents here as real choices are accepted, then index them in this file.
   — the chat gateway cannot embed (proven), so Week-3 RAG is self-hosted fastembed BGE + pgvector
   with RRF hybrid and a measured, regression-guarded accuracy baseline; GraphRAG and a re-ranker
   wait behind explicit triggers.
+- [0012 The Recon agent is a thin, provenance-bound pipeline; LangGraph deferred](0012-recon-agent-is-a-thin-provenance-bound-pipeline-langgraph-deferred.md)
+  — the Week-4 pipeline is linear and the gateway is fail-closed on the provenance contract, so
+  the agent is a thin provenance-bound loop with a frozen, code-checked Attack Surface Map schema;
+  LangGraph is adopted at Week 6 when the supervisor and HITL interrupt arrive.
