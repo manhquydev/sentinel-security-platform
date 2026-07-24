@@ -128,3 +128,7 @@ infra/kong/kong.rendered.yml
 # Week-3 RAG: local venv and any downloaded model cache are not committed
 rag/.venv/
 rag/.cache/
+
+# Week-4 agent local virtualenv and generated maps are not committed
+agent/.venv/
+agent/out/
