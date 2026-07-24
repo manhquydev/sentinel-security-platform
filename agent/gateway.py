@@ -54,6 +54,13 @@ class Gateway:
                          verify=False, timeout=TIMEOUT)
         return r.status_code, r.text
 
+    def probe(self, path: str) -> tuple[int, str, str]:
+        """Like get(), but also returns the response Content-Type — the fuzzing signal detector
+        needs it to spot a content-type change (e.g. a JSON endpoint returning an HTML error)."""
+        r = requests.get(f"{BASE}{path}", headers={"Authorization": f"Bearer {self._tok}"},
+                         verify=False, timeout=TIMEOUT)
+        return r.status_code, r.text, r.headers.get("content-type", "")
+
     def reachable(self, path: str) -> bool:
         """True if the agent-recon identity may read this path (2xx), False if the gateway
         refuses it (401/403) — a cheap liveness+authorization probe."""
