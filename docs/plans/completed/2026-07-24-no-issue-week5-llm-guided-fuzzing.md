@@ -4,7 +4,7 @@ Date: 2026-07-24
 
 ## Status
 
-Active
+Complete
 
 ## Outcome
 
@@ -67,7 +67,7 @@ Completion (first increment) is observable when:
 - [x] Phase 2 — deterministic signal detector (`agent/fuzz_signals.py`).
 - [x] Phase 3 — bounded engine (`agent/fuzz.py`) with LLM-in-the-loop guidance + report.
 - [x] Phase 4 — live bounded run; offline metric asserted in the suite.
-- [~] Phase 5 — review/fix (this PR); decision 0013 recorded.
+- [x] Phase 5 — security review applied (PR #8); decision 0013 recorded.
 
 ## Result
 
