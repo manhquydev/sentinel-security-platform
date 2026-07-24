@@ -38,6 +38,10 @@ def rrf_fuse(lists: list[list[store.Hit]], rrf_k: int = RRF_K) -> list[store.Hit
 
 def hybrid_search(conn, query: str, k: int = 5,
                   candidate_k: int = CANDIDATE_K, rrf_k: int = RRF_K) -> list[store.Hit]:
+    if k < 1 or candidate_k < 1:
+        raise ValueError(f"k and candidate_k must be >= 1 (got k={k}, candidate_k={candidate_k})")
+    if rrf_k < 0:
+        raise ValueError(f"rrf_k must be >= 0 (got {rrf_k})")
     qvec = embedding.embed_query(query)
     dense = store.dense_search(conn, qvec, candidate_k)
     lexical = store.lexical_search(conn, query, candidate_k)
@@ -46,8 +50,14 @@ def hybrid_search(conn, query: str, k: int = 5,
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Hybrid RAG retrieval over the threat-intel store.")
+    def _positive(v):
+        iv = int(v)
+        if iv < 1:
+            raise argparse.ArgumentTypeError("must be >= 1")
+        return iv
+
     ap.add_argument("query")
-    ap.add_argument("-k", type=int, default=5)
+    ap.add_argument("-k", type=_positive, default=5)
     ap.add_argument("--mode", choices=["hybrid", "dense", "lexical"], default="hybrid")
     args = ap.parse_args(argv)
 

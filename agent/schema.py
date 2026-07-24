@@ -12,9 +12,10 @@ severities) — not an invented superset — so a value outside them signals a h
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 SCHEMA_VERSION = "1.0"
 
@@ -66,6 +67,31 @@ class AttackSurfaceMap(BaseModel):
     severity_counts: dict[str, int] = Field(default_factory=dict)
     cwe_summary: dict[str, int] = Field(default_factory=dict, description="CWE id (str) -> count")
     provenance: Provenance
+
+    @field_validator("generated_at")
+    @classmethod
+    def _rfc3339(cls, v: str) -> str:
+        """generated_at is a timestamp contract, so reject a value that is not RFC 3339 rather
+        than accept an arbitrary string the model happened to emit."""
+        try:
+            datetime.fromisoformat(v.replace("Z", "+00:00"))
+        except ValueError as e:
+            raise ValueError(f"generated_at must be an RFC 3339 timestamp, got {v!r}") from e
+        return v
+
+    @model_validator(mode="after")
+    def _rag_refs_declared(self) -> "AttackSurfaceMap":
+        """Every RAG reference a finding cites must be declared in provenance.rag_source_refs —
+        a finding pointing at context the map never recorded retrieving is an inconsistency (or a
+        fabricated citation), and the contract rejects it."""
+        declared = set(self.provenance.rag_source_refs)
+        for ep in self.endpoints:
+            for f in ep.findings:
+                undeclared = [r for r in f.rag_refs if r not in declared]
+                if undeclared:
+                    raise ValueError(
+                        f"finding {f.finding_id} cites RAG refs not in provenance: {undeclared}")
+        return self
 
     def recompute_aggregates(self) -> "AttackSurfaceMap":
         """Derive severity_counts and cwe_summary from the findings, so the aggregates are

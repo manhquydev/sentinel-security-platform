@@ -31,6 +31,11 @@ for v in KONG_PROVISION_KEY AGENT_RECON_SECRET PROBE_ADMIN_SECRET; do
   fi
 done
 
+# Restrict permissions at creation time, not after: a chmod that runs after the write leaves a
+# brief window where the secret-bearing file is world-readable. umask 077 makes the redirect
+# create it 0600 from the first byte.
+umask 077
+
 # Explicit allowlist: substitute exactly these names, nothing else.
 envsubst '${KONG_PROVISION_KEY} ${AGENT_RECON_SECRET} ${PROBE_ADMIN_SECRET}' \
   < "$TMPL" > "$OUT"

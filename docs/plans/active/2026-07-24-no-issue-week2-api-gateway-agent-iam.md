@@ -8,9 +8,16 @@ Active
 
 ## Outcome
 
-All agent→staging-app traffic is forced through a self-hosted API gateway that gives every
+> **Terminology note (superseded by [decision 0009](../../decisions/0009-agent-iam-is-oauth2-identity-with-acl-authorization.md)):**
+> where this plan says an agent's "scope", the shipped design enforces authorization with **Kong
+> ACL groups**, not OAuth2 scopes — Kong OSS does not bind scopes to a consumer, so scopes were
+> dropped as unenforceable. Read "scope" below as "the ACL group(s) the agent holds". The gateway
+> is also the *sanctioned* path, not the only reachable one (the direct `:13000` publish remains a
+> disclosed residual). See the Result section and decision 0009 for the as-built reality.
+
+All agent→staging-app traffic is routed through a self-hosted API gateway that gives every
 AI agent a **scoped, non-human identity** instead of a shared static token. An agent can reach
-exactly the endpoints its scope permits and no others — proven both ways: a read-scoped agent
+exactly the endpoints its group permits and no others — proven both ways: a read-scoped agent
 reaches a public read endpoint and is refused an administrative one, with no token refused
 outright.
 

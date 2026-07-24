@@ -147,7 +147,8 @@ deferred behind an explicit trigger
 ([decision 0011](docs/decisions/0011-rag-is-local-embeddings-pgvector-hybrid-graphrag-deferred.md)).
 
 **Roadmap (later phases, not in this repo):** the multi‑agent recon/fuzz/exploit
-syndicate, human‑in‑the‑loop gating, threat‑intel RAG, and self‑hosted vLLM serving.
+syndicate, human‑in‑the‑loop gating, GraphRAG (deferred per decision 0011), and self‑hosted
+vLLM serving.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)

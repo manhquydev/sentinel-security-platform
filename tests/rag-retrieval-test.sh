@@ -20,6 +20,9 @@ skip() { printf '  \033[33mSKIP\033[0m %s\n' "$1"; SKIP=$((SKIP+1)); }
 sect() { printf '\n== %s ==\n' "$1"; }
 
 [ -x "$PY" ] || { echo "missing rag venv at $PY (python -m venv rag/.venv && pip install -r rag/requirements.txt)"; exit 2; }
+# Run from the repo root so the inline Python heredocs can `import rag` regardless of the caller's
+# working directory.
+cd "$REPO_ROOT" || { echo "cannot cd to $REPO_ROOT"; exit 2; }
 
 # ---------------------------------------------------------------------------
 sect "unit: RRF fusion (no services)"

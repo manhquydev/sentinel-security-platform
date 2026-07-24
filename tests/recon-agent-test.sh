@@ -21,7 +21,7 @@ skip() { printf '  \033[33mSKIP\033[0m %s\n' "$1"; SKIP=$((SKIP+1)); }
 sect() { printf '\n== %s ==\n' "$1"; }
 
 [ -x "$PY" ] || { echo "missing venv at $PY"; exit 2; }
-cd "$REPO_ROOT"
+cd "$REPO_ROOT" || { echo "cannot cd to $REPO_ROOT"; exit 2; }
 run_py() { "$PY" - "$@"; }
 
 # ---------------------------------------------------------------------------
@@ -36,7 +36,8 @@ good = {
                  "state_change": "read-only",
                  "findings": [{"finding_id": "1", "title": "XSS", "severity": "High",
                                "scanner": "DAST", "cwe": 79, "rag_refs": ["owasp:XSS"]}]}],
-  "provenance": {"attack_surface_baseline": "juice-shop-df1b6bbd8bce", "model": "sast-sol"},
+  "provenance": {"attack_surface_baseline": "juice-shop-df1b6bbd8bce", "model": "sast-sol",
+                 "rag_source_refs": ["owasp:XSS"]},
 }
 m = AttackSurfaceMap.model_validate(good).recompute_aggregates()
 sys.exit(0 if (m.severity_counts == {"High": 1} and m.cwe_summary == {"79": 1}
@@ -49,7 +50,7 @@ if run_py <<'PY'
 import sys
 from pydantic import ValidationError
 from agent.schema import AttackSurfaceMap
-bad = {"target": "x", "generated_at": "t", "agent_version": "0.1", "endpoints": [],
+bad = {"target": "x", "generated_at": "2026-07-24T00:00:00Z", "agent_version": "0.1", "endpoints": [],
        "provenance": {"attack_surface_baseline": "b", "model": "m"},
        "hallucinated_field": "boom"}
 try:
@@ -75,7 +76,7 @@ if run_py <<'PY'
 import sys
 from agent.schema import AttackSurfaceMap
 m = AttackSurfaceMap.model_validate({
-  "target": "x", "generated_at": "t", "agent_version": "0.1",
+  "target": "x", "generated_at": "2026-07-24T00:00:00Z", "agent_version": "0.1",
   "endpoints": [{"path": "/x", "auth_class": "public", "state_change": "read-only",
                  "findings": [{"finding_id": "1", "title": "t", "severity": "Low", "scanner": "SAST"}]}],
   "severity_counts": {"Low": 5},  # deliberately wrong (real is 1)
@@ -83,6 +84,36 @@ m = AttackSurfaceMap.model_validate({
 sys.exit(0 if m.consistency_errors() else 1)  # must FLAG the fabricated count
 PY
 then ok "a fabricated aggregate count is flagged by the consistency check"; else bad "consistency check missed a bad count"; fi
+
+if run_py <<'PY'
+import sys
+from pydantic import ValidationError
+from agent.schema import AttackSurfaceMap
+base = {"target": "x", "agent_version": "0.1", "endpoints": [],
+        "provenance": {"attack_surface_baseline": "b", "model": "m"}}
+try:  # a non-RFC3339 timestamp must be rejected
+    AttackSurfaceMap.model_validate({**base, "generated_at": "yesterday"}); sys.exit(1)
+except ValidationError:
+    sys.exit(0)
+PY
+then ok "a non-RFC3339 generated_at is rejected"; else bad "bad timestamp not rejected"; fi
+
+if run_py <<'PY'
+import sys
+from pydantic import ValidationError
+from agent.schema import AttackSurfaceMap
+# a finding cites a RAG ref the provenance never declared -> rejected
+m = {"target": "x", "generated_at": "2026-07-24T00:00:00Z", "agent_version": "0.1",
+     "endpoints": [{"path": "/x", "auth_class": "public", "state_change": "read-only",
+                    "findings": [{"finding_id": "1", "title": "t", "severity": "Low",
+                                  "scanner": "SAST", "rag_refs": ["cve:CVE-9999-0001"]}]}],
+     "provenance": {"attack_surface_baseline": "b", "model": "m", "rag_source_refs": []}}
+try:
+    AttackSurfaceMap.model_validate(m); sys.exit(1)
+except ValidationError:
+    sys.exit(0)
+PY
+then ok "a finding citing an undeclared RAG ref is rejected"; else bad "undeclared rag_ref not rejected"; fi
 
 # ---------------------------------------------------------------------------
 sect "provenance: the LLM boundary"

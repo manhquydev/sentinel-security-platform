@@ -34,13 +34,14 @@ GraphRAG and a cross-encoder re-ranker are deferred behind explicit triggers.**
   Qdrant is the runner-up, warranted only at tens of millions of vectors.
 - **Hybrid = RRF** over dense (cosine) and lexical (Postgres FTS), because rank fusion needs no
   score calibration between incompatible scales.
-- **Ingestion is idempotent** (`content_sha256` UNIQUE, `ON CONFLICT DO NOTHING`), the shippable
-  form of "continuously updating".
+- **Ingestion is idempotent and reconciling** (per-document `(document_id, content_sha256)`
+  UNIQUE, `ON CONFLICT DO NOTHING`, plus a stale-chunk prune on re-ingest), the shippable form of
+  "continuously updating".
 - **Accuracy is measured** offline (Recall@k / MRR / nDCG) against a committed labelled set with
   a baseline regression guard — reproducible and cost-free, like `verify-lake`. LLM-judge
   (RAGAS) is deferred to keep the first number deterministic.
 
-Proven live: 407 chunks across three sources; re-ingest adds 0; hybrid recall@10 = 1.0, never
+Proven live (clean reseed): 402 chunks across three sources; re-ingest adds 0; hybrid recall@10 = 1.0, never
 below dense or lexical.
 
 **Deferred, with triggers (so each deferral is a decision, not an omission):**

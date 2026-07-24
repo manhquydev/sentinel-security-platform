@@ -113,13 +113,27 @@ def main(argv=None) -> int:
             print("no baseline to check against; run --write-baseline first", file=sys.stderr)
             return 2
         with open(BASELINE, encoding="utf-8") as f:
-            base = json.load(f)["modes"]["hybrid"]
+            baseline = json.load(f)
+        # A baseline recorded at a different k is not comparable — refuse rather than compare
+        # metrics across different cut-offs.
+        if baseline.get("k") != report["k"]:
+            print(f"baseline k={baseline.get('k')} != current k={report['k']}; re-baseline",
+                  file=sys.stderr)
+            return 2
+        base = baseline["modes"]["hybrid"]
         cur = report["modes"]["hybrid"]
         regressed = [m for m in base if cur.get(m, 0) < base[m] - 1e-9]
         if regressed:
             print(f"REGRESSION in hybrid: {regressed} dropped below baseline {base}", file=sys.stderr)
             return 1
-        print("no regression: hybrid meets or beats the baseline")
+        # Hybrid must also not be worse than either single retriever in THIS run — the property
+        # the pipeline exists to hold, checked live rather than only against a stored number.
+        rk = f"recall@{report['k']}"
+        den, lex = report["modes"]["dense"][rk], report["modes"]["lexical"][rk]
+        if cur[rk] < den - 1e-9 or cur[rk] < lex - 1e-9:
+            print(f"hybrid recall {cur[rk]} < dense {den} or lexical {lex} this run", file=sys.stderr)
+            return 1
+        print("no regression: hybrid meets the baseline and is no worse than dense or lexical")
     return 0
 
 

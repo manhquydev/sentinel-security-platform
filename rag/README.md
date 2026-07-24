@@ -21,9 +21,10 @@ query  →  Postgres FTS  ┘→  Reciprocal Rank Fusion  →  top-k  ←── 
   guardrail refuses `/v1/embeddings` (verified). See decision 0011.
 - **Hybrid**: dense cosine + lexical FTS fused with Reciprocal Rank Fusion (RRF) — rank-based
   fusion needs no score calibration between cosine and `ts_rank`.
-- **Idempotent ingest**: `chunks.content_sha256` is UNIQUE and inserts are
-  `ON CONFLICT DO NOTHING`, so re-ingesting the same corpus adds zero chunks — the shippable
-  form of "continuously updating".
+- **Idempotent + reconciling ingest**: uniqueness is per-document `(document_id, content_sha256)`
+  and inserts are `ON CONFLICT DO NOTHING`, so re-ingesting unchanged content adds zero chunks; a
+  changed document also has its stale chunks pruned. The shippable form of "continuously updating"
+  (an identical chunk may legitimately recur across two documents and is kept under each).
 
 ## Setup
 

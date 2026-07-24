@@ -56,7 +56,7 @@ def ingest(source_names: list[str], args) -> dict:
                 # inserted (idempotent); changed upstream => stale chunks removed, not orphaned.
                 keep = [store.sha256(c.content) for c in chunks]
                 stats["chunks_pruned"] += store.delete_stale_chunks(conn, doc_id, keep)
-                for ord_, (c, v) in enumerate(zip(chunks, vectors)):
+                for ord_, (c, v) in enumerate(zip(chunks, vectors, strict=True)):
                     stats["chunks_seen"] += 1
                     if store.insert_chunk(conn, doc_id, ord_, c.section, c.content, v):
                         stats["chunks_inserted"] += 1
