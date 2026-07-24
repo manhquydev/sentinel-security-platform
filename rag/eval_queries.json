@@ -1,0 +1,16 @@
+{
+  "_comment": "Labelled retrieval-eval set. Each query names the document(s) whose source_ref must appear in the top-k. Relevance is judged at document level (a chunk hit counts if its parent document's source_ref is expected). OWASP + attack-surface refs are deterministic; NVD is ingested for coverage but not judged here because its returned CVE ids are not pinnable. evaluate.py compares hybrid vs dense-only vs lexical-only against this set.",
+  "queries": [
+    {"query": "how do I prevent SQL injection in a web application", "expected": ["owasp:CheatSheetSeries/SQL_Injection_Prevention_Cheat_Sheet"]},
+    {"query": "techniques to stop cross site scripting attacks", "expected": ["owasp:CheatSheetSeries/Cross_Site_Scripting_Prevention_Cheat_Sheet"]},
+    {"query": "how to defend against cross site request forgery", "expected": ["owasp:CheatSheetSeries/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet"]},
+    {"query": "secure session management and cookie flags", "expected": ["owasp:CheatSheetSeries/Session_Management_Cheat_Sheet"]},
+    {"query": "password storage and authentication best practices", "expected": ["owasp:CheatSheetSeries/Authentication_Cheat_Sheet"]},
+    {"query": "enforce access control and authorization checks", "expected": ["owasp:CheatSheetSeries/Authorization_Cheat_Sheet"]},
+    {"query": "validate and sanitize untrusted user input", "expected": ["owasp:CheatSheetSeries/Input_Validation_Cheat_Sheet"]},
+    {"query": "securing a REST API against common attacks", "expected": ["owasp:CheatSheetSeries/REST_Security_Cheat_Sheet"]},
+    {"query": "which administrative endpoint exists on the juice shop target", "expected": ["attack-surface:GET /rest/admin/application-version"]},
+    {"query": "state changing basket operation on the target application", "expected": ["attack-surface:POST /rest/basket/:id/products"]},
+    {"query": "user login authentication endpoint of the shop", "expected": ["attack-surface:POST /rest/user/login"]}
+  ]
+}

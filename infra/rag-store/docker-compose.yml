@@ -1,0 +1,40 @@
+# Sentinel Threat-Intelligence RAG store (Week 3) — pgvector on Postgres 16.
+#
+# The vector + lexical store the retrieval pipeline (rag/) ingests into and queries. It is a
+# NEW, dedicated Postgres so the RAG corpus never shares a database with the lake, the gateway,
+# or tracing — a corpus mix-up is exactly the class of error decision 0007 exists to prevent.
+#
+# Safety posture, consistent with the rest of the repo:
+#   - image pinned by @sha256 (mutable-tag drift is a supply-chain vector);
+#   - published ONLY on 127.0.0.1 (the rag/ venv on the host connects over loopback);
+#   - discrete env vars, never a DSN carrying the password;
+#   - schema applied deterministically at first init from schema.sql.
+#
+# Bring-up:
+#   docker compose --env-file infra/.env -f infra/rag-store/docker-compose.yml up -d
+name: sentinel-rag-store
+
+services:
+  rag-db:
+    image: pgvector/pgvector@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
+    container_name: sentinel-rag-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rag
+      POSTGRES_USER: "${RAG_DB_USER:?RAG_DB_USER must be set - see infra/.env.example}"
+      POSTGRES_PASSWORD: "${RAG_DB_PASSWORD:?RAG_DB_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      - rag-db:/var/lib/postgresql/data
+      # Applied once, on an empty data dir, by the postgres entrypoint. Read-only mount.
+      - ./schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    ports:
+      # Published on loopback so the host-side rag/ venv (ingest + query + eval) can connect.
+      - "127.0.0.1:55434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d rag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rag-db:
