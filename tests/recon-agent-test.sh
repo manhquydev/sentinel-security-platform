@@ -152,7 +152,7 @@ fi
 sect "pipeline: deterministic Attack Surface Map"
 
 if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 "${DD_URL:-http://localhost:8080}/api/v2/" 2>/dev/null)" = "000" ]; then
-  m="DefectDojo not reachable"; [ "$REQUIRE_AGENT" = 1 ] && bad "$m" || skip "$m"
+  if [ "$REQUIRE_AGENT" = "1" ]; then bad "DefectDojo not reachable"; else skip "DefectDojo not reachable"; fi
 else
   # The map's facts are code-assembled and must pass the map's own consistency check; the
   # aggregates must equal the findings; and no CWE outside the set the scanners actually report

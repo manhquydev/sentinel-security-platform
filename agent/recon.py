@@ -78,10 +78,12 @@ def _rag_for_cwes(cwes: set[int]) -> tuple[dict[int, list[str]], list[str]]:
     except Exception as e:  # noqa: BLE001 - RAG is enrichment; its absence must not fail recon
         print(f"  (RAG context unavailable: {e})", file=sys.stderr)
     # de-dup preserving order
-    seen, flat = set(), []
+    seen: set[str] = set()
+    flat: list[str] = []
     for r in allrefs:
         if r not in seen:
-            seen.add(r); flat.append(r)
+            seen.add(r)
+            flat.append(r)
     return per_cwe, flat
 
 
@@ -97,6 +99,9 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
         products_read.append(tgt["product"])
         for scanner in tgt["scanners"]:
             all_lake.extend(lake.findings(tgt["product"], scanner))
+
+    # Resolve the model once: the analysis model when the LLM runs, else "none".
+    model = (os.environ.get("RECON_MODEL", "sast-sol") if use_llm else "none")
 
     cwes = {lf.cwe for lf in all_lake if lf.cwe}
     per_cwe, all_refs = _rag_for_cwes(cwes)
@@ -114,9 +119,7 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
         else:
             app_level.append(finding)
 
-    analysis = None
-    if use_llm:
-        analysis = _analyze(all_lake, per_cwe)
+    analysis = _analyze(all_lake, per_cwe, model) if use_llm else None
 
     m = AttackSurfaceMap(
         target="+".join(t["name"] for t in TARGETS),
@@ -129,7 +132,7 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
             attack_surface_baseline="juice-shop-df1b6bbd8bce",
             lake_products=products_read,
             rag_source_refs=all_refs,
-            model=(os.environ.get("RECON_MODEL", "sast-sol") if use_llm else "none"),
+            model=model,
         ),
     ).recompute_aggregates()
 
@@ -139,7 +142,7 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
     return m
 
 
-def _analyze(findings: list[LakeFinding], per_cwe: dict[int, list[str]]) -> str:
+def _analyze(findings: list[LakeFinding], per_cwe: dict[int, list[str]], model: str) -> str:
     """One provenance-labelled LLM call: prioritized synthesis over the findings + RAG context.
     All finding/RAG text is target-derived; the instruction is the only operator content."""
     lines = [f"- [{f.severity}] {f.scanner} CWE-{f.cwe or '?'}: {f.title}" for f in findings]
@@ -158,7 +161,7 @@ def _analyze(findings: list[LakeFinding], per_cwe: dict[int, list[str]]) -> str:
         llm.Msg("user", data_block,
                 llm.target_derived(source="defectdojo-lake", target="juice-shop+webgoat")),
     ]
-    return llm.chat(msgs, model=os.environ.get("RECON_MODEL", "sast-sol"), max_tokens=400).strip()
+    return llm.chat(msgs, model=model, max_tokens=400).strip()
 
 
 def main(argv=None) -> int:
