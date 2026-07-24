@@ -1,0 +1,10 @@
+fastembed==0.8.0
+numpy==2.5.1
+onnxruntime==1.27.0
+pgvector==0.5.0
+pillow==12.3.0
+psycopg==3.3.4
+psycopg-binary==3.3.4
+requests==2.34.2
+tokenizers==0.23.1
+tqdm==4.69.0

@@ -83,7 +83,8 @@ flowchart LR
 |---|---|
 | `scanners/` | Scanner wrappers, redaction, import; SSRF allowlist. Start at [`scanners/README.md`](scanners/README.md). |
 | `scripts/` | Lake orchestration + verification (`scan-and-import.sh`, `verify-lake.sh`), DefectDojo bootstrap. |
-| `infra/` | Compose stacks & systemd units: `defectdojo/`, `litellm/`, `langfuse/`, `harness/` (pinned Juice Shop), `systemd/` writers. |
+| `infra/` | Compose stacks & systemd units: `defectdojo/`, `litellm/`, `langfuse/`, `kong/` (Week‑2 app‑ingress gateway), `rag-store/` (Week‑3 pgvector store), `harness/` (pinned Juice Shop), `systemd/` writers. |
+| `rag/` | Week‑3 threat‑intel RAG: ingest, local embeddings, hybrid retrieval, accuracy eval. Start at [`rag/README.md`](rag/README.md). |
 | `evaluation/` | AgentDojo baseline + guardrail false‑positive measurement. |
 | `attack-surface/` | Juice Shop attack‑surface schema, manifest, baselines. |
 | `benchmark/` | AI‑SAST scoring harness, targets, results. |
@@ -129,8 +130,25 @@ path and never commit one.
 redaction + audit), Langfuse tracing, the evaluation baselines, and the Juice Shop
 attack‑surface baseline.
 
+**Built (Week‑2):** an [app‑ingress API gateway](infra/kong/) (Kong OSS) fronting the
+Juice Shop staging target, with **Agent IAM** — each agent gets a per‑agent OAuth2
+client‑credentials identity (short‑TTL token) and is authorized by fail‑closed ACL groups
+whose names mirror the Week‑1 attack‑surface auth taxonomy. An agent reaches only the
+endpoints its group permits (e.g. public read, *not* the admin route). This app‑ingress
+plane is orthogonal to the Week‑1 LLM‑egress gateway
+([decision 0008](docs/decisions/0008-kong-fronts-the-app-litellm-fronts-the-model.md)).
+
+**Built (Week‑3):** a self‑hosted [threat‑intelligence RAG pipeline](rag/) — hybrid
+retrieval (dense + lexical fused with Reciprocal Rank Fusion) over CVE (NVD), OWASP
+guidance, and the local pentest findings, backed by pgvector with local BGE embeddings
+(no GPU, no external provider). Ingestion is idempotent and reconciling; retrieval
+accuracy is measured against a committed labelled set with a regression guard. GraphRAG is
+deferred behind an explicit trigger
+([decision 0011](docs/decisions/0011-rag-is-local-embeddings-pgvector-hybrid-graphrag-deferred.md)).
+
 **Roadmap (later phases, not in this repo):** the multi‑agent recon/fuzz/exploit
-syndicate, human‑in‑the‑loop gating, threat‑intel RAG, and self‑hosted vLLM serving.
+syndicate, human‑in‑the‑loop gating, GraphRAG (deferred per decision 0011), and self‑hosted
+vLLM serving.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)

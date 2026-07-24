@@ -34,3 +34,21 @@ documents here as real choices are accepted, then index them in this file.
   — adaptive attack recovers 64% ASR on action-open tasks and domain-camouflaged payloads
   evade production classifiers entirely, so Stream E freezes the hook signature and taint
   labels while Stream D enforces at the agent layer.
+- [0008 Kong fronts the app; LiteLLM fronts the model](0008-kong-fronts-the-app-litellm-fronts-the-model.md)
+  — two orthogonal gateway planes with disjoint data and failure modes; Kong OSS is the
+  app-ingress plane (Week 2), LiteLLM stays the LLM-egress plane.
+- [0009 Agent IAM is OAuth2 identity with ACL authorization](0009-agent-iam-is-oauth2-identity-with-acl-authorization.md)
+  — MCP/A2A defer authorization to the gateway, and Kong OSS does not bind scopes to a
+  consumer, so identity is a short-TTL OAuth2 token and enforcement is fail-closed ACL groups
+  named after the attack-surface auth taxonomy.
+- [0010 Authorization enforcement is Kong ACL; OPA deferred](0010-authorization-enforcement-is-acl-opa-deferred.md)
+  — the Week-2 boundary is a static per-consumer/per-route allow that ACL enforces natively;
+  OPA is adopted only when a decision becomes conditional (Week 5 fuzzing scope, Week 8 HITL).
+- [0011 RAG uses local embeddings + pgvector hybrid; GraphRAG deferred](0011-rag-is-local-embeddings-pgvector-hybrid-graphrag-deferred.md)
+  — the chat gateway cannot embed (proven), so Week-3 RAG is self-hosted fastembed BGE + pgvector
+  with RRF hybrid and a measured, regression-guarded accuracy baseline; GraphRAG and a re-ranker
+  wait behind explicit triggers.
+- [0012 The Recon agent is a thin, provenance-bound pipeline; LangGraph deferred](0012-recon-agent-is-a-thin-provenance-bound-pipeline-langgraph-deferred.md)
+  — the Week-4 pipeline is linear and the gateway is fail-closed on the provenance contract, so
+  the agent is a thin provenance-bound loop with a frozen, code-checked Attack Surface Map schema;
+  LangGraph is adopted at Week 6 when the supervisor and HITL interrupt arrive.

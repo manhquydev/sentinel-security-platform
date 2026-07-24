@@ -1,0 +1,152 @@
+# Sentinel app-ingress API gateway (Kong) — Week 2.
+#
+# This is the plane that gives AI agents a scoped identity in front of the staging
+# app. It is ORTHOGONAL to infra/litellm (the LLM-egress plane): Kong answers "did
+# this agent earn access to this app endpoint?"; LiteLLM answers "does this model
+# call leak PII / carry injection risk?". They share no data and no failure mode.
+#
+# Safety posture, consistent with the rest of the repo:
+#   - images pinned by @sha256 (mutable-tag drift is a supply-chain vector);
+#   - proxy and admin published ONLY on 127.0.0.1, never 0.0.0.0;
+#   - proxy is TLS-only (no plaintext :8000) — the oauth2 plugin refuses plaintext
+#     and the edge should be encrypted;
+#   - the Kong database has no published port — reachable only over kong-net;
+#   - secrets come from the git-ignored infra/.env; the declarative policy is
+#     rendered from a template so no secret is ever committed.
+#
+# Bring-up (see infra/kong/README.md):
+#   bash infra/kong/render-config.sh          # needs infra/.env
+#   docker compose --env-file infra/.env -f infra/kong/docker-compose.yml up -d
+name: sentinel-kong
+
+services:
+  kong-database:
+    image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    container_name: sentinel-kong-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: "${KONG_DB_USER:?KONG_DB_USER must be set - see infra/.env.example}"
+      POSTGRES_PASSWORD: "${KONG_DB_PASSWORD:?KONG_DB_PASSWORD must be set - see infra/.env.example}"
+    volumes:
+      # postgres:16 keeps its data under .../data (pre-18 layout), matching the
+      # DefectDojo store rather than the litellm 18+ store.
+      - kong-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [kong-net]
+    # No ports: the gateway database is reachable only by kong over the compose network.
+
+  kong-migrations:
+    image: kong@sha256:62721edc9669e2a96fe9d188ab8950b9105e69abb033129624a72d3e10da6777
+    container_name: sentinel-kong-migrations
+    depends_on:
+      kong-database:
+        condition: service_healthy
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: sentinel-kong-db
+      KONG_PG_USER: "${KONG_DB_USER}"
+      KONG_PG_PASSWORD: "${KONG_DB_PASSWORD}"
+      KONG_PG_DATABASE: kong
+    command: ["kong", "migrations", "bootstrap"]
+    restart: on-failure
+    networks: [kong-net]
+
+  kong:
+    image: kong@sha256:62721edc9669e2a96fe9d188ab8950b9105e69abb033129624a72d3e10da6777
+    container_name: sentinel-kong
+    restart: unless-stopped
+    depends_on:
+      kong-database:
+        condition: service_healthy
+      kong-migrations:
+        condition: service_completed_successfully
+      # Seed the policy into the DB BEFORE Kong boots. kong config db_import writes
+      # straight to the DB without the cache-invalidation events an Admin-API write
+      # emits, so a already-running node would not rebuild its router from it. Booting
+      # Kong against an already-populated DB sidesteps that entirely.
+      kong-config:
+        condition: service_completed_successfully
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: sentinel-kong-db
+      KONG_PG_USER: "${KONG_DB_USER}"
+      KONG_PG_PASSWORD: "${KONG_DB_PASSWORD}"
+      KONG_PG_DATABASE: kong
+      # Admin API bound to the container's OWN loopback and NOT published to the host.
+      # It is unauthenticated (Kong OSS has no admin auth) and returns the provision key
+      # and every client secret in cleartext, so exposing it — even on host loopback —
+      # lets any local uid, or an SSRF pivot from one of this host's 0.0.0.0-bound
+      # neighbours, mint tokens as any consumer and rewrite all routes/ACLs. Nothing in
+      # normal operation needs it reachable: policy is seeded by db_import straight to the
+      # DB, and the healthcheck uses the `kong health` CLI. Reach it for debugging with
+      # `docker exec sentinel-kong curl http://127.0.0.1:8001/...`.
+      KONG_ADMIN_LISTEN: "127.0.0.1:8001"
+      # Proxy is TLS-only. The plaintext :8000 listener is deliberately absent.
+      # No KONG_SSL_CERT is set: Kong generates its own default self-signed cert
+      # inside the container, so the private key never touches the host filesystem.
+      # Clients on loopback skip verification (self-signed) — a disclosed residual.
+      KONG_PROXY_LISTEN: "0.0.0.0:8443 ssl"
+      # Raw nginx access logs off: the file-log plugin owns the audit stream on stdout,
+      # so this stays pure structured JSON. Error logs remain on stderr for debugging.
+      KONG_PROXY_ACCESS_LOG: "off"
+      KONG_ADMIN_ACCESS_LOG: "off"
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+    ports:
+      # Only the TLS proxy is published. The admin API is deliberately NOT here.
+      - "127.0.0.1:18443:8443"   # TLS proxy — loopback only
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [kong-net, juice-net]
+
+  # One-shot: import the rendered declarative policy into the DB, then exit.
+  # NOTE: db_import is UPSERT-ONLY — it adds/updates entities but never DELETES ones absent
+  # from the file. So it cannot revoke: removing a consumer's group or a route from the
+  # template and re-importing leaves the old grant live in the DB. The only workflow that
+  # applies revocations is a full rebuild on an empty DB (`down -v && up`), which is what
+  # the README documents. Do not treat a re-import as a reconcile.
+  kong-config:
+    image: kong@sha256:62721edc9669e2a96fe9d188ab8950b9105e69abb033129624a72d3e10da6777
+    container_name: sentinel-kong-config
+    # Runs as root ONLY for this ephemeral one-shot: it parses the rendered policy and
+    # writes to the DB (no nginx), and root is the portable way to read a host-owned
+    # 600 secret file whose uid (1000) differs from the container kong user (1001).
+    # Keeping the file 600 on the host is worth the root read here.
+    user: "0:0"
+    depends_on:
+      kong-database:
+        condition: service_healthy
+      kong-migrations:
+        condition: service_completed_successfully
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: sentinel-kong-db
+      KONG_PG_USER: "${KONG_DB_USER}"
+      KONG_PG_PASSWORD: "${KONG_DB_PASSWORD}"
+      KONG_PG_DATABASE: kong
+    volumes:
+      # The rendered (secret-bearing, gitignored) policy produced by render-config.sh.
+      - ./kong.rendered.yml:/kong/kong.rendered.yml:ro
+    command: ["kong", "config", "db_import", "/kong/kong.rendered.yml"]
+    restart: on-failure
+    networks: [kong-net]
+
+networks:
+  kong-net:
+    name: kong-net
+    driver: bridge
+  # Juice Shop's isolated bridge, created by infra/harness/juice-shop.compose.yml.
+  # Declared external so this stack joins it rather than owning it.
+  juice-net:
+    external: true
+
+volumes:
+  kong-db:

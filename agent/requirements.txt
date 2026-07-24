@@ -1,0 +1,3 @@
+# The agent layer imports rag, so they share one virtualenv.
+-r ../rag/requirements.txt
+pydantic==2.13.4

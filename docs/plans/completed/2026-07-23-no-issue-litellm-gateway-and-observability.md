@@ -602,10 +602,6 @@ detection. 306 assertions pass across eleven suites.
   `workflow-safety`), `SKIP_REIMPORT=1 tests/verify-lake-test.sh`,
   `tests/test_attack_surface_baseline.py`, `git diff --check`.
 
-## Result
-
-Pending.
-
 ## Open questions
 
 - **Are the `cx/*` per-token rates obtainable at all?** Phase 2 branches on this and it cannot
