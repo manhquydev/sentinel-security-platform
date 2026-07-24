@@ -13,3 +13,8 @@ langgraph-checkpoint-sqlite==3.1.0
 opentelemetry-sdk==1.44.0
 opentelemetry-exporter-otlp-proto-grpc==1.44.0
 openinference-semantic-conventions==0.1.30
+
+# Week-8 PR1 HITL approval gate (agent/approval.py, agent/approve.py): Ed25519 sign/verify for
+# the out-of-process approval token (RD1/RD5). Verified 2026-07-24 to resolve against rag's
+# existing pins with no numpy/onnxruntime/fastembed disturbance (pulls only cffi/pycparser).
+cryptography==49.0.0

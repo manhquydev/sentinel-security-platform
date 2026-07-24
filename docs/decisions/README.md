@@ -67,3 +67,10 @@ documents here as real choices are accepted, then index them in this file.
   the code-computed facts a hijacked narrative can't alter are the control, a contradicted analysis is
   quarantined, and detectors (in-repo heuristic; LlamaFirewall air-gapped sidecar) are MEASURED
   defense-in-depth with the false-positive rate on security content as the differentiator.
+- [0016 Week-8 HITL is a fail-closed gate over a simulated action with out-of-process Ed25519 approval; real execution deferred](0016-week8-hitl-is-a-failclosed-gate-over-a-simulated-action-with-out-of-process-ed25519-approval-real-execution-deferred.md)
+  — a red-team proved "approve+execute the real payload" rested on 5 broken axes (no runnable payload,
+  approvable≠write endpoints, self-forgeable approval, no OPA on Kong OSS, illusory reversibility), so
+  Week-8 ships a genuine fail-closed HITL gate over a SIMULATED action: approval is Ed25519-signed and
+  the agent holds only the verify key (can't self-approve), the single-use token binds the exact
+  reviewed proposal + is audited before the dry-run action; real execution + its prerequisites are
+  deferred to an explicit future cycle.

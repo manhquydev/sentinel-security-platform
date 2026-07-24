@@ -7,8 +7,10 @@ aiosqlite==0.22.1
 annotated-types==0.8.0
 anyio==4.14.2
 certifi==2026.7.22
+cffi==2.1.0
 charset-normalizer==3.4.9
 click==8.4.2
+cryptography==49.0.0
 distro==1.9.0
 fastembed==0.8.0
 filelock==3.32.0
@@ -52,6 +54,7 @@ protobuf==7.35.1
 psycopg==3.3.4
 psycopg-binary==3.3.4
 py_rust_stemmers==0.1.8
+pycparser==3.0
 pydantic==2.13.4
 pydantic_core==2.46.4
 PyYAML==6.0.3

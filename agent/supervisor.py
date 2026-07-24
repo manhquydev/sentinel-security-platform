@@ -39,9 +39,36 @@ Design load-bearing points (see docs/plans/active/2026-07-24-...):
   thread_id would silently reset it back to zero — the exact re-arm bug this module's tests
   (I4) assert against. `fuzz_node` also refuses to call `fuzz.run()` again once the persisted
   counter has already reached the ceiling, as a second, independent line of defense.
-- **D2 — the `interrupt()` seam.** `interrupt_seam_node` is inert this week: it takes no
-  action and exists only so a future state-changing branch (Week-8 HITL) has a proven pause
-  point to attach to. `tests/syndicate-test.sh` (I6) fires and resumes it so it cannot rot.
+- **D2 — the `interrupt()` seam.** `interrupt_seam_node` is inert unless BOTH
+  `pending_state_change` is set AND `exploit_proposals` is non-empty — `tests/syndicate-test.sh`
+  (I6) exercises the pause/resume mechanics with `pending_state_change=True` but no proposals
+  (its fixtures yield none), so it still reaches END afterward exactly as before; that is not a
+  special case for the test, it is the real rule — there is nothing to gate approval over when no
+  proposal exists.
+- **Week-8 PR1 — the HITL approval gate (RD1-RD5, `agent/approval.py`/`agent/approve.py`).** When
+  a run DOES have both `pending_state_change=True` and a non-empty `exploit_proposals`,
+  `interrupt_seam_node` pauses `interrupt()` with the first proposal attached, and a
+  `Command(resume=<token>)` routes into `state_change_node` (see `_route_after_interrupt`) instead
+  of straight to END. That node verifies the resume value as a signed `ApprovalToken` using ONLY
+  the Ed25519 PUBLIC verify key (`agent/approval.py::load_public_key`) — it has no code path that
+  can mint a valid token itself (self-approval is structurally impossible, not policy-forbidden).
+  On success it performs a SIMULATED dry-run (`SIMULATED: would execute ...`, no gateway/requests/
+  network call, no target mutation) and appends to the audit ledger BEFORE logging that line; on
+  any failure (missing/forged/expired/replayed/proposal-mismatched token) it raises rather than
+  silently no-op, so the action never runs and a bug that reaches this node without a real
+  approval is loud. The real token-minting CLI (`agent/approve.py`) is a SEPARATE, human-run
+  process this module never imports — see that module's docstring for the out-of-process
+  boundary and the honest single-shared-user-host residual.
+- **`resume_state_change` — the sanctioned way to resume a paused seam.** LangGraph's
+  `Command(resume=...)` treats a dict whose keys all look like interrupt ids as a per-interrupt
+  resume MAP rather than a literal value — and an EMPTY dict satisfies that check vacuously, so a
+  bare `graph.invoke(Command(resume={}), config=cfg)` (the natural way to express "resume with no
+  token") delivers no value to `interrupt_seam_node`'s `interrupt()` call at all: it silently
+  re-pauses at the SAME seam instead of ever reaching `state_change_node`, so nothing is raised or
+  audited — a LangGraph resume-routing quirk `state_change_node` cannot see or guard against from
+  inside a node. `resume_state_change` closes that gap: if the graph is STILL interrupted right
+  after a resume attempt, it itself records a `refused` audit row against the pending proposal and
+  raises, so this one remaining "quiet nothing happened" path can't be mistaken for success.
 """
 from __future__ import annotations
 
@@ -54,9 +81,9 @@ from typing import Any, Iterator, TypedDict
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
-from langgraph.types import interrupt
+from langgraph.types import Command, interrupt
 
-from . import exploit, fuzz, recon, trace
+from . import approval, exploit, fuzz, recon, trace
 from .schema import AttackSurfaceMap
 
 CHECKPOINT_PATH = os.path.join(os.path.dirname(__file__), "out", "syndicate.sqlite")
@@ -76,10 +103,22 @@ class SyndicateState(TypedDict, total=False):
     exploit_proposals: list[dict[str, Any]] | None
     budget: dict[str, int]
     interrupt_ack: bool
-    # L1: gates `interrupt_seam_node`. PR1 never sets this (always False/absent), so a normal
-    # run flows straight through to END without pausing. Week-8's HITL state-changing branch
-    # will set it True before this node runs; I6 sets it explicitly to keep the seam exercised.
+    # L1: gates `interrupt_seam_node`. A normal run never sets this (always False/absent), so it
+    # flows straight through to END without pausing. Week-8's HITL branch sets it True before
+    # this node runs; I6 sets it explicitly (with no proposals) to keep the seam exercised
+    # without engaging the real approval gate below.
     pending_state_change: bool
+    # Week-8 PR1 (RD1/RD3): the value LangGraph's `Command(resume=...)` delivered at the
+    # `interrupt_seam` pause point — expected to be a signed `ApprovalToken.to_dict()` when a real
+    # state-change is being approved, but this field accepts whatever a caller resumes with (D7:
+    # JSON-native only) and `state_change_node` is what actually validates its shape/signature.
+    approval_token: dict[str, Any] | None
+    # Set by `state_change_node` on a valid approval; absent/None on every other run.
+    state_change_result: dict[str, Any] | None
+    # Optional overrides threaded through state (D7: no ambient env for this), so tests can point
+    # `state_change_node` at an isolated keypair/ledger without touching agent/keys or agent/out.
+    approval_pubkey_path: str
+    approval_db_path: str
 
 
 # --- state <-> reused-module bridging ---------------------------------------------------------
@@ -231,15 +270,95 @@ def exploit_node(state: SyndicateState) -> dict[str, Any]:
 
 
 def interrupt_seam_node(state: SyndicateState) -> dict[str, Any]:
-    """Reserved for the Week-8 HITL state-changing branch (decision D2/0013). Gated on
-    `pending_state_change` (L1): PR1 never sets it, so this is a no-op and the graph reaches
-    END normally on every run this week — it no longer pauses unconditionally. Only when a
-    future branch sets `pending_state_change=True` before this node runs does it actually call
-    `interrupt()` and wait for a `Command(resume=...)`."""
+    """Gated on `pending_state_change` (L1): a normal run never sets it, so this is a no-op and
+    the graph reaches END directly. When it IS set, this pauses `interrupt()` with the first
+    exploit proposal attached (PR1: one proposal per HITL round — selecting among several is a
+    future extension, not needed for this gate to be real) so a human/out-of-process approver can
+    see exactly what they are approving, and waits for `Command(resume=<value>)`. The resume value
+    is threaded into `approval_token` verbatim; `_route_after_interrupt` below decides whether
+    that value gets a chance to mean anything (only when there was a real proposal to approve)."""
     if not state.get("pending_state_change"):
         return {}
-    interrupt({"seam": "pre-state-change", "note": "reserved for Week-8 HITL; no action taken"})
-    return {"interrupt_ack": True}
+    proposals = state.get("exploit_proposals") or []
+    proposal = proposals[0] if proposals else None
+    resume_value = interrupt({
+        "seam": "pre-state-change",
+        "note": "Week-8 HITL: resume with a signed ApprovalToken (agent/approve.py) to proceed",
+        "proposal": proposal,
+    })
+    return {"interrupt_ack": True, "approval_token": resume_value}
+
+
+def _route_after_interrupt(state: SyndicateState) -> str:
+    """Only route into `state_change_node` when there is BOTH an active HITL request
+    (`pending_state_change`) AND an actual proposal to gate (`exploit_proposals` non-empty) — a
+    `pending_state_change=True` run with no proposal (e.g. `tests/syndicate-test.sh` I6's
+    fixtures, which yield zero findings) has nothing to approve, so it reaches END exactly as
+    every pre-Week-8 run did; this is the correct rule, not a carve-out to keep I6 passing."""
+    if state.get("pending_state_change") and state.get("exploit_proposals"):
+        return "state_change"
+    return END
+
+
+def state_change_node(state: SyndicateState) -> dict[str, Any]:
+    """Week-8 PR1's HITL gate consumer (RD1-RD4). Only reachable via `_route_after_interrupt`,
+    i.e. only when a proposal actually exists to gate. SIMULATED, not real (RD2): on a valid
+    token this logs "SIMULATED: would execute ..." and appends one audit row — it makes no
+    gateway/requests/network call and mutates no target. Fail-closed (RD3): without a token that
+    verifies (real Ed25519 signature over THIS exact proposal, not expired, not already
+    consumed), it RAISES rather than silently no-op, so a bug that reaches this node without a
+    genuine approval is loud, not swallowed. Idempotent under a LangGraph re-run of this node
+    (RD4): `approval.verify_approval` consumes the token's nonce atomically and ONLY on full
+    success, so a second execution with the SAME resume value finds the nonce already consumed
+    and refuses — the simulated action can only ever "happen" (and be audited) once per token."""
+    proposals = state.get("exploit_proposals") or []
+    proposal = proposals[0] if proposals else None
+    token = state.get("approval_token")
+    pid = approval.proposal_id(proposal) if proposal else "<no-proposal>"
+
+    pubkey_path = state.get("approval_pubkey_path") or approval.DEFAULT_PUBKEY_PATH
+    db_path = state.get("approval_db_path") or approval.DEFAULT_DB_PATH
+    ledger = approval.ApprovalLedger(db_path)
+    try:
+        if proposal is None or not isinstance(token, dict):
+            ledger.record(proposal_id=pid, action="refused",
+                          detail="state_change_node reached with no proposal or no token")
+            raise PermissionError(
+                "state_change_node: no proposal/token present — refusing (fail-closed)")
+
+        try:
+            pubkey = approval.load_public_key(pubkey_path)
+            verified = approval.verify_approval(token, proposal, pubkey, ledger)
+        except Exception as e:  # noqa: BLE001 - an approval-infra failure (missing/corrupt pubkey
+            # file, a non-IntegrityError sqlite error) must be a LOUD, AUDITED, fail-closed refusal,
+            # never an un-audited raw raise that could read as "something else broke" (code-review
+            # M1/M2). The action still never runs.
+            try:
+                ledger.record(proposal_id=pid, action="refused",
+                              detail=f"approval infrastructure error — refusing (fail-closed): {type(e).__name__}")
+            except Exception:  # noqa: BLE001 - if the ledger itself is the failure, still fail closed
+                pass
+            raise PermissionError(
+                f"state_change_node: approval check errored for {pid!r} — refusing (fail-closed)") from e
+        if not verified:
+            ledger.record(proposal_id=pid, action="refused",
+                          detail="approval token failed verification (bad signature, expired, "
+                                 "already consumed, or bound to a different proposal)")
+            raise PermissionError(
+                f"state_change_node: invalid approval token for {pid!r} — refusing (fail-closed)")
+
+        # Audit BEFORE the simulated action (RD4/HA4) — the token is already consumed above, so
+        # this row is the durable record of the one and only time this token will ever authorize
+        # anything.
+        endpoint = proposal.get("endpoint")
+        ledger.record(proposal_id=pid, action="simulated-execute",
+                      detail=f"SIMULATED: would execute proposal against {endpoint}")
+        print(f"SIMULATED: would execute proposal {pid} vs {endpoint} "
+              f"(vuln_class={proposal.get('vuln_class')}) — no network call, no target mutation",
+              file=sys.stderr)
+        return {"state_change_result": {"proposal_id": pid, "endpoint": endpoint, "simulated": True}}
+    finally:
+        ledger.close()
 
 
 # --- graph assembly / entry point -----------------------------------------------------------
@@ -251,12 +370,50 @@ def build_graph(checkpointer: SqliteSaver):
     g.add_node("fuzz", fuzz_node)
     g.add_node("exploit", exploit_node)
     g.add_node("interrupt_seam", interrupt_seam_node)
+    g.add_node("state_change", state_change_node)
     g.set_entry_point("recon")
     g.add_edge("recon", "fuzz")
     g.add_edge("fuzz", "exploit")
     g.add_edge("exploit", "interrupt_seam")
-    g.add_edge("interrupt_seam", END)
+    g.add_conditional_edges("interrupt_seam", _route_after_interrupt,
+                            {"state_change": "state_change", END: END})
+    g.add_edge("state_change", END)
     return g.compile(checkpointer=checkpointer)
+
+
+def resume_state_change(graph: Any, cfg: dict[str, Any], resume_value: Any) -> dict[str, Any]:
+    """The sanctioned way to resume a paused `interrupt_seam` for Week-8 HITL (RD3/RD4) — prefer
+    this over a bare `graph.invoke(Command(resume=...), config=cfg)`. See the module docstring's
+    `resume_state_change` bullet for why the bare call alone is not sufficient: an EMPTY dict
+    resume value (the natural way to express "no token") is swallowed by LangGraph's own
+    per-interrupt resume-map heuristic before `state_change_node` ever runs, so no code inside the
+    graph gets a chance to raise or audit it.
+
+    This wrapper invokes the resume and, if the graph is STILL paused at an interrupt immediately
+    afterward, treats that as a refused resume: it records one audit row against the pending
+    proposal and raises `PermissionError`, so a caller can never observe "nothing happened" as if
+    it were a quiet success. When the resume DOES reach `state_change_node` (every other
+    missing/forged/expired/replayed/proposal-mismatched token shape), that node's own fail-closed
+    raise+audit already applies and this wrapper simply returns/re-raises whatever it produced."""
+    result = graph.invoke(Command(resume=resume_value), config=cfg)
+    if "__interrupt__" not in result:
+        return result
+
+    proposal = result["__interrupt__"][0].value.get("proposal")
+    pid = approval.proposal_id(proposal) if proposal else "<no-proposal>"
+    db_path = result.get("approval_db_path") or approval.DEFAULT_DB_PATH
+    ledger = approval.ApprovalLedger(db_path)
+    try:
+        ledger.record(
+            proposal_id=pid, action="refused",
+            detail="resume attempt did not deliver a usable value (e.g. an empty resume value, "
+                   "which LangGraph treats as an empty per-interrupt resume map rather than a "
+                   "literal token) — state_change_node was never reached; refusing (fail-closed)")
+    finally:
+        ledger.close()
+    raise PermissionError(
+        f"resume_state_change: resume for {pid!r} did not advance past interrupt_seam — "
+        "refusing (fail-closed)")
 
 
 def default_checkpointer(path: str = CHECKPOINT_PATH) -> SqliteSaver:
@@ -275,8 +432,10 @@ def run_syndicate(thread_id: str, *, model: str = "sast-sol", use_llm: bool = Tr
                    checkpointer: SqliteSaver | None = None) -> dict[str, Any]:
     """Run (or continue) the Supervisor graph for one thread. A brand-new `thread_id` seeds the
     budget at zero; an EXISTING thread_id must not resupply `budget` in the input (D11) — see
-    the module docstring. The first call against a thread pauses at `interrupt_seam` only once a
-    future branch sets `pending_state_change=True` (PR1: it never does, so this reaches END).
+    the module docstring. This convenience wrapper never sets `pending_state_change` itself, so a
+    call through it always reaches END; the Week-8 HITL gate is exercised by callers that build
+    the graph directly (`build_graph`) and invoke with `pending_state_change=True` (see
+    `tests/week8-hitl-test.sh` / `tests/syndicate-test.sh` I6).
 
     L1: when `checkpointer` is omitted, this function opens its OWN connection via
     `default_checkpointer()` for the duration of this call and closes it before returning — the
