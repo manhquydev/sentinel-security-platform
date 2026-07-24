@@ -146,8 +146,31 @@ accuracy is measured against a committed labelled set with a regression guard. G
 deferred behind an explicit trigger
 ([decision 0011](docs/decisions/0011-rag-is-local-embeddings-pgvector-hybrid-graphrag-deferred.md)).
 
-**Roadmap (later phases, not in this repo):** the multi‑agent recon/fuzz/exploit
-syndicate, human‑in‑the‑loop gating, GraphRAG (deferred per decision 0011), and self‑hosted
+**Built (Week‑4):** the [Recon & Analysis agent](agent/recon.py) — a thin, provenance‑bound
+pipeline that fuses the lake, the attack‑surface baseline, and the RAG into a frozen, code‑checked
+[Attack Surface Map](agent/schema.py) (aggregates computed by code, not the model, with a
+consistency self‑check). One provenance‑labelled LLM call adds a prioritized narrative; every
+finding/RAG byte reaches the model labelled `target‑derived`
+([decision 0012](docs/decisions/0012-recon-agent-is-a-thin-provenance-bound-pipeline-langgraph-deferred.md)).
+
+**Built (Week‑5):** an [LLM‑guided read‑only fuzzing engine](agent/fuzz.py) — a deterministic
+executor with an LLM in the loop. Code selects public read‑only targets, sends the payload corpus
+through Kong as `agent‑recon` (the ACL 403s anything else), and flags 5xx/stack‑trace/reflection
+signals **by code**; one provenance‑labelled call ranks/mutates. Bounded by a per‑target budget +
+kill‑switch; state‑changing payloads are reserved for the Week‑8 HITL gate
+([decision 0013](docs/decisions/0013-fuzzing-is-hybrid-read-only-with-deterministic-signals.md)).
+
+**In progress (Week‑6, this branch — PR1):** the [multi‑agent syndicate](agent/supervisor.py) — a
+hand‑rolled LangGraph `StateGraph` Supervisor running Recon → map‑guided Fuzz, with a durable,
+**redacted** checkpoint (no raw target text or secrets on disk), a tested `interrupt()` seam
+reserved for Week‑8 HITL, and agent‑flow tracing to a loopback‑bound [Arize Phoenix](infra/phoenix/)
+plane behind a secret‑AND‑target‑raw span redactor. Model access stays at the gateway (a
+model‑egress contract test enforces it)
+([decision 0014](docs/decisions/0014-the-syndicate-is-a-langgraph-supervisor-over-existing-agents-observability-is-a-redaction-gated-phoenix-plane.md)).
+The read‑only/simulated Exploit agent is PR2.
+
+**Roadmap (later phases):** the Exploit(sim) agent (Week‑6 PR2), human‑in‑the‑loop gating
+(Week 8), PII redaction (Week 9), GraphRAG (deferred per decision 0011), and self‑hosted
 vLLM serving.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)

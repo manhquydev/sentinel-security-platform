@@ -1,3 +1,15 @@
 # The agent layer imports rag, so they share one virtualenv.
 -r ../rag/requirements.txt
 pydantic==2.13.4
+
+# Week-6 multi-agent syndicate. Phase-0 verified these resolve against rag's exact pins
+# (pydantic 2.13.4, requests 2.34.2) with no numpy/onnxruntime/fastembed disturbance.
+# Phoenix runs as a Docker container (infra/), so the agent installs only the OTel CLIENT libs
+# to ship spans to it — not the arize-phoenix server package.
+# SAFETY: langchain-core pulls langsmith transitively; it must stay inert — never set
+# LANGCHAIN_TRACING_V2 / LANGCHAIN_API_KEY (would exfiltrate traces to LangSmith SaaS). See D12.
+langgraph==1.2.9
+langgraph-checkpoint-sqlite==3.1.0
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-grpc==1.44.0
+openinference-semantic-conventions==0.1.30

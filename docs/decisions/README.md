@@ -56,3 +56,8 @@ documents here as real choices are accepted, then index them in this file.
   — a committed payload corpus ranked/mutated by the LLM; 5xx/stack-trace/reflection signals are
   code-detected facts, not LLM opinions; the engine stays in agent-recon's read-only scope and
   defers state-changing payloads to the Week-8 HITL gate.
+- [0014 The syndicate is a LangGraph supervisor over the existing agents; observability is a redaction-gated Phoenix plane](0014-the-syndicate-is-a-langgraph-supervisor-over-existing-agents-observability-is-a-redaction-gated-phoenix-plane.md)
+  — hand-rolled `StateGraph` over Recon+Fuzz with model access still at the gateway (a model-egress
+  contract test enforces it); durable checkpoint + spans run through a secret-AND-target-raw scrub
+  distinct from egress redaction; Arize Phoenix (loopback, digest-pinned) traces the graph flow,
+  Langfuse keeps per-call bodies; the `interrupt()` seam is inert-but-tested for Week-8 HITL.

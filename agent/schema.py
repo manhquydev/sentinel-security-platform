@@ -46,7 +46,10 @@ class EndpointSurface(BaseModel):
     auth_class: AuthClass
     state_change: StateChange
     findings: list[Finding] = Field(default_factory=list)
-    notes: Optional[str] = Field(None, description="Agent analysis; operator-authored, not target text")
+    notes: Optional[str] = Field(None, description="Agent analysis; LLM narrative synthesized "
+                                 "over target-derived findings (target-influenced, not raw target "
+                                 "response text) — scrubbed for secrets and target-raw markers "
+                                 "before it is persisted (see agent/supervisor.py)")
 
 
 class Provenance(BaseModel):
@@ -71,7 +74,10 @@ class AttackSurfaceMap(BaseModel):
     severity_counts: dict[str, int] = Field(default_factory=dict)
     cwe_summary: dict[str, int] = Field(default_factory=dict, description="CWE id (str) -> count")
     analysis: Optional[str] = Field(None, description="Agent's prioritized synthesis over the "
-                                    "findings and retrieved context; narrative, not a source of counts")
+                                    "findings and retrieved context; LLM narrative over "
+                                    "target-derived input (target-influenced), not a source of "
+                                    "counts — scrubbed for secrets and target-raw markers before "
+                                    "it is persisted (see agent/supervisor.py)")
     provenance: Provenance
 
     @field_validator("generated_at")
