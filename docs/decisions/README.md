@@ -143,3 +143,11 @@ documents here as real choices are accepted, then index them in this file.
   absent control has no token to match; it is observable only in behaviour, i.e. at RUNTIME. So more
   SAST rules cannot close it — this is the measured justification for the SAST ∪ DAST architecture and
   for the agentic syndicate. Instruments: analyze_cwe_gap.py, classify_gap.py (offline, no LLM).
+- [0024 The standard SAST benchmark contains 0% absence-of-control cases](0024-the-standard-sast-benchmark-cannot-measure-half-of-real-vulnerabilities.md)
+  — self-verified from OWASP Benchmark's own expectedresults CSV: all 2740 cases fall in 11 presence-type
+  categories (sqli/xss/weakrand/crypto/cmdi/pathtraver/...), with **zero** CWE-284/639/862/863/306/307.
+  Against 47% absence-class in RealVuln and 26-53% in Juice Shop, the benchmark that drives SAST tool
+  development cannot measure the larger half of real vulnerabilities — what is not measured is not built.
+  Explains strong AI-SAST leaderboard scores alongside low real-world recall, and makes benchmark choice
+  a load-bearing decision. Also: Juice Shop's /api/Challenges carries no CWE/endpoint, so the E8/E9
+  runtime probers still lack a recall denominator (hand-labelling deferred).

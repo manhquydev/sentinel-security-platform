@@ -201,3 +201,34 @@ Harness: `evaluation/sast-fp-discrimination/` (all scripts reproducible offline 
   big class — **IDOR / broken object-level authz (CWE-639/862)** — needs TWO authenticated identities,
   i.e. login/registration = state change → decision 0016's HITL gate. That is a user decision, not
   something to slip past the boundary.
+
+## E10 — Why the field under-invests in absence detection → **the benchmark cannot see it (0%)**
+
+- **Hypothesis:** if absence-of-control is the larger half of real vulnerabilities (E5) yet tools
+  under-serve it, the cause may be a *measurement* artefact — the benchmarks tools optimise against may
+  not contain the class at all.
+- **Method:** verified from PRIMARY data, not from the literature. Parsed OWASP Benchmark's own
+  `expectedresults-1.2beta.csv` (2740 cases) for its category/CWE list; queried the live Juice Shop
+  `/api/Challenges` (113 challenges) for its category distribution and available fields.
+- **Data:**
+
+  OWASP Benchmark v1.2beta — complete category list:
+  `sqli 504 · weakrand 493 · xss 455 · pathtraver 268 · cmdi 251 · crypto 246 · hash 236 ·
+  trustbound 126 · securecookie 67 · ldapi 59 · xpathi 35`; CWEs 22/78/79/89/90/327/328/330/501/614/643.
+  **CWE-284: 0 · 639: 0 · 862: 0 · 863: 0 · 306: 0 · 307: 0** — every case is presence-class.
+
+  | source | what it is | absence-class share |
+  |---|---|---|
+  | OWASP Benchmark | the benchmark tools optimise against | **0%** (0/2740) |
+  | RealVuln | real CVE-backed corpus (E5) | **47%** (847/1790) |
+  | Juice Shop | real vulnerable app, live API | **26–53%** (29–60 of 113) |
+
+- **Conclusion:** the standard SAST benchmark's category list **is** the presence bucket by
+  construction, so a tool maximising its benchmark score is optimising exactly the half static analysis
+  can see, and is neither rewarded nor penalised for the half it cannot. **What is not measured is not
+  built.** It also explains how AI-SAST efforts can post strong leaderboard numbers (e.g. F2-optimised
+  results) while real-world recall stays low — tools *and* their benchmarks both live in the presence
+  bucket. → decision **0024**.
+- **Side finding:** Juice Shop's `/api/Challenges` exposes `category/difficulty/tags/description` but
+  **no CWE and no endpoint**, so it is not machine-readable ground truth for scoring a scanner without
+  hand-labelling — which is why the E8/E9 probers still have no recall denominator.
