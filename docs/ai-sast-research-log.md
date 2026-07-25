@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E28 | does the conclusion replicate? | **STANDS** — 8/40 vs 1/42, diff **+0.176** against E24's **+0.177**, p = 0.012; individual verdicts churn, the difference does not |
 | E27 | how much did the classifier under-count? | **STANDS** — narrow (~1 file in 53 on this corpus); and E23/E24 found **non-re-analysable** (responses truncated at 400 chars) |
 | E26 | sensitivity on authored unseen code | **STANDS (demonstration)** — 3/4 planted defects found, 0/4 false claims on controls; classifier under-counted 2/4, so published sensitivity is a **floor** |
 | E25 | transfer to unseen code | **STANDS (bounded)** — 0 flags on 25 files of our own code (written days before): **specificity transfers**; sensitivity untested, no ground truth |
@@ -2098,3 +2099,43 @@ Registered 2026-07-26 06:06 +07. **Nothing below was measured before this text w
 - **Falsifying result.** If the conclusion flips (arm C comparable to arm A′), then E24 was a lucky draw,
   the file-role confound is open again, and decision 0027 loses that support for a second time. That
   outcome is published if it occurs.
+
+## E28 — RESULT: the conclusion replicates to within 0.001, on an instrument that flips 36% of verdicts
+
+Run 2026-07-26, identical design to E24, full response storage, both arms measured fresh.
+
+| run | arm A′ (handlers **with** an absent control) | arm C (**without**) | difference | 95% CI | Fisher p |
+|---|---|---|---|---|---|
+| **E24** | 9/40 = 0.225 | 2/42 = 0.048 | **+0.177** | [+0.031, +0.326] | 0.0195 |
+| **E28** | 8/40 = 0.200 | 1/42 = 0.024 | **+0.176** | [+0.052, +0.325] | 0.0120 |
+
+**Both arms moved by exactly one file — and the difference reproduced to within 0.001.**
+
+### This is the direct test of the assumption the whole chain rests on
+
+Every experiment here assumes that a conclusion drawn from a single run is stable, on an instrument
+measured flipping **36% of individual verdicts** (E22). That assumption had never been tested; E28 tests
+it directly, and it holds:
+
+- **Individual verdicts are unreliable** — arm A′ lost a file, arm C lost a file, and E22 showed 36% of
+  single verdicts flip on identical input.
+- **The aggregate difference is reliable** — +0.177 against +0.176, with overlapping intervals and the
+  same verdict at a stronger p.
+
+This is the empirical justification for the design rule adopted after E22 (*measure rates, never reuse
+labels*), now confirmed rather than merely argued. It also matches the earlier incidental check: the same
+53 files scored **10, 10, 11** flagged across three runs.
+
+### Debt paid, and what it bought
+
+E27 recorded re-running E24 as **owed work** because its stored responses were truncated at 400
+characters. E28 pays it: responses are stored in full, so this result **can** be re-verified from its
+artefact, unlike the one it replaces.
+
+**The file-role confound is closed on two independent runs.** Decision 0027's mechanism claim — the model
+responds to the missing control, not to the file being a request handler — now rests on a replicated
+result rather than a single marginal one. E24 stands as reported; E28 is the version future work should
+re-analyse.
+
+**Unchanged limits:** n is small; one model; one corpus; the defect distribution is RealVuln's;
+structural familiarity untested; and every sensitivity figure remains a floor.

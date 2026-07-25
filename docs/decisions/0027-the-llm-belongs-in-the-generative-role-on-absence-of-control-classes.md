@@ -88,6 +88,11 @@ and the model never returns identical prose (0 of 14).** Consequently:
     **2/42 = 0.048**, difference **+0.177, 95% CI [+0.031, +0.326], p = 0.0195**. It tolerates two extra
     flags before crossing α (E20 tolerated one) and its interval excludes zero. **The file-role confound
     is closed on evidence that survives its own instrument.**
+  - **REPLICATED (E28).** An independent re-run gives **8/40 vs 1/42, difference +0.176 [+0.052, +0.325],
+    p = 0.0120** — against E24's +0.177. Both arms moved by one file; **the difference reproduced to
+    within 0.001**. On an instrument that flips 36% of individual verdicts, the conclusion is stable
+    across runs even though the labels are not. E28 also stores responses in full, so unlike E24 it can
+    be re-verified from its artefact.
 
 **2. The prose classifier had four demonstrated defects**, all now fixed and pinned by SM13 (it
 previously had **no test at all**, despite every result scoring through it). Re-scoring the stored
