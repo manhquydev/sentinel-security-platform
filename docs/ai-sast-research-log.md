@@ -1372,3 +1372,18 @@ Registered 2026-07-26 04:25 +07. **Nothing below was measured before this text w
   canary rule are unchanged from E16b/E17/E18/E19.
 - **Known limits carried forward:** file-level granularity, one model, and arm A′ is reused rather than
   re-run (deterministic instrument, temperature 0), which is stated rather than hidden.
+
+### E20 — arm C composition, verified before the result
+
+Checked while the run was in flight, so the arm's validity is on record independently of what it
+returns: the 42 files are **28 `views.py`, 10 `routes/*`, 3 `api/*`, 1 `handlers.py` — and zero
+`urls.py`**. That matters because Django's `urls.py` is routing *configuration*, not handler logic, and
+would rarely contain an authorization check whether or not one was required. Had arm C been dominated by
+config files it would have been a weaker comparator wearing the right filename. It is not: both arms are
+genuine request-handling code.
+
+**Limit that applies to arm C and is worth stating with it:** RealVuln's ground truth is not exhaustive,
+so a handler here could genuinely lack an authorization check that the corpus simply never labelled. If
+that happens, the model flagging it is a **true** positive being scored as a false one — which biases
+**against** the hypothesis. A positive result is therefore safe from this; a null result would be
+partially explainable by it.
