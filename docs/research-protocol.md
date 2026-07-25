@@ -314,8 +314,8 @@ Three rules follow, and they are the highest-value output of the whole exercise:
 ## 11. `temperature=0` is not determinism (E22, 2026-07-26)
 
 The night this protocol was written, three of its own experiments were built on an assumption nobody
-tested: that a frozen prompt at `temperature=0.0` returns a stable verdict. **Measured: 36% of verdicts
-flip on identical input, and the model never returned identical prose once (0 of 14.)**
+tested: that a frozen prompt at `temperature=0.0` returns a stable verdict. **Measured: ~40% of raw verdicts differ (n=38) — but E31 shows most is clean<->non-answer churn; FLAG decisions churn on only ~1 file in 12**, and the model never
+returned identical prose once (0 of 38).
 
 Two experiments died of it. E19 paired freshly measured mutated verdicts against *reused* original ones;
 its perfect null — 3 lost, 3 gained, difference exactly 0.000 — is what that flip rate alone produces,

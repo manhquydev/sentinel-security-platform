@@ -40,8 +40,9 @@ There, the model contributes:
 
 | measurement | result |
 |---|---|
-| flags files with an absent control vs clean files | 10/60 vs 1/40, **p = 0.024** |
+| flags files with an absent control vs clean files | **9/60 vs 0/40, p = 0.0078** (corrected classifier; published as 10/60 vs 1/40, p = 0.024) |
 | names the ground-truth class | 6 of 10 flags |
+| specificity | **0 of 40** clean files — the one flag was a classifier false positive |
 | deterministic engines on the identical files | **0 of 60** |
 
 Three preregistered controls, each removing a different rival explanation:
@@ -54,8 +55,7 @@ Three preregistered controls, each removing a different rival explanation:
 
 **A Stage-8 review of this entire chain, plus the determinism check it prompted, cost two of these
 controls.** E19 and E20 were withdrawn because they treated single LLM verdicts as fixed values;
-**E22 measured the instrument flipping 36% of verdicts on identical input at `temperature=0`, with the
-model never returning identical prose (0/14)**. E23 and E24 rebuilt both controls on designs that
+**E22/E29 measured ~40% of raw verdicts differ (n=38) — but E31 shows most is clean<->non-answer churn; FLAG decisions churn on only ~1 file in 12, with the model never returning identical prose (0/38)**. E23 and E24 rebuilt both controls on designs that
 survive that noise — measuring every arm fresh in the same run and comparing aggregate rates rather than
 per-file labels. Both re-established their conclusions; E24's is sturdier than the one it replaced.
 
