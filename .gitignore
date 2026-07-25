@@ -132,3 +132,6 @@ rag/.cache/
 # Week-4 agent local virtualenv and generated maps are not committed
 agent/.venv/
 agent/out/
+
+# Week-plus AI-SAST: RealVuln corpus is fetched at eval time (Apache-2.0), never committed (decision 0018/0019 pattern)
+evaluation/sast-fp-discrimination/corpus/

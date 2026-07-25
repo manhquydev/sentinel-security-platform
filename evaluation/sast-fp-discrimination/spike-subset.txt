@@ -1,0 +1,5 @@
+# Bounded viability-spike subset (repo slugs from RealVuln benchmark-manifest.json).
+# ~24 vulns + 6 FP-traps across Flask + FastAPI — enough for a dev+held-out signal without a big LLM bill.
+realvuln-intentionally-vulnerable-python-application
+realvuln-python-insecure-app
+realvuln-insecure-web

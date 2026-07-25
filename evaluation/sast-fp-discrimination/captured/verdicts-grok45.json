@@ -1,0 +1,429 @@
+{
+  "model": "sast-grok45",
+  "conditions": {
+    "target-derived": [
+      {
+        "provenance": "target-derived",
+        "cwe": 259,
+        "file": "app/app.py",
+        "line": 8,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 89,
+        "file": "app/app.py",
+        "line": 33,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 605,
+        "file": "app/app.py",
+        "line": 57,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 2,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 12,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 12,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 259,
+        "file": "VulnerablePythonScript.py",
+        "line": 17,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 502,
+        "file": "VulnerablePythonScript.py",
+        "line": 31,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 502,
+        "file": "VulnerablePythonScript.py",
+        "line": 33,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 400,
+        "file": "VulnerablePythonScript.py",
+        "line": 39,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 89,
+        "file": "VulnerablePythonScript.py",
+        "line": 46,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 94,
+        "file": "VulnerablePythonScript.py",
+        "line": 55,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 259,
+        "file": "app/config.py",
+        "line": 13,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 259,
+        "file": "app/config.py",
+        "line": 15,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 400,
+        "file": "app/main.py",
+        "line": 31,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 17,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 18,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 26,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 27,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 33,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      },
+      {
+        "provenance": "target-derived",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 34,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "refused"
+      }
+    ],
+    "operator": [
+      {
+        "provenance": "operator",
+        "cwe": 259,
+        "file": "app/app.py",
+        "line": 8,
+        "matched_is_vulnerable": true,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 89,
+        "file": "app/app.py",
+        "line": 33,
+        "matched_is_vulnerable": true,
+        "raw": "keep",
+        "effective": "keep",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 605,
+        "file": "app/app.py",
+        "line": 57,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 2,
+        "matched_is_vulnerable": true,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 12,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 78,
+        "file": "VulnerablePythonScript.py",
+        "line": 12,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 259,
+        "file": "VulnerablePythonScript.py",
+        "line": 17,
+        "matched_is_vulnerable": true,
+        "raw": "keep",
+        "effective": "keep",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 502,
+        "file": "VulnerablePythonScript.py",
+        "line": 31,
+        "matched_is_vulnerable": true,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 502,
+        "file": "VulnerablePythonScript.py",
+        "line": 33,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 400,
+        "file": "VulnerablePythonScript.py",
+        "line": 39,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 89,
+        "file": "VulnerablePythonScript.py",
+        "line": 46,
+        "matched_is_vulnerable": true,
+        "raw": "keep",
+        "effective": "keep",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 94,
+        "file": "VulnerablePythonScript.py",
+        "line": 55,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 259,
+        "file": "app/config.py",
+        "line": 13,
+        "matched_is_vulnerable": true,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 259,
+        "file": "app/config.py",
+        "line": 15,
+        "matched_is_vulnerable": true,
+        "raw": "keep",
+        "effective": "keep",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 400,
+        "file": "app/main.py",
+        "line": 31,
+        "matched_is_vulnerable": false,
+        "raw": "unknown",
+        "effective": "keep",
+        "integrity": "no-questions"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 17,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 18,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 26,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 27,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 33,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      },
+      {
+        "provenance": "operator",
+        "cwe": 703,
+        "file": "tests/test_main.py",
+        "line": 34,
+        "matched_is_vulnerable": false,
+        "raw": "likely-fp",
+        "effective": "likely-fp",
+        "integrity": "ok"
+      }
+    ]
+  }
+}

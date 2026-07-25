@@ -1,0 +1,11 @@
+{
+  "cwe": 89,
+  "category": "sqli",
+  "note": "Clean-room, Sentinel-authored from the CWE-89 definition. NOT derived from VulnHunterX templates.",
+  "questions": [
+    "Is the flagged value derived from request/user input (query params, form/body, headers, path, or cookies)?",
+    "Is that value concatenated or f-string/%-interpolated into the SQL text, rather than passed as a bound parameter (?, :name) or via ORM query args?",
+    "Is there NO intervening validator, allow-list, integer/enum cast, or ORM parameterization between the input and the SQL sink?"
+  ],
+  "keep_if": "untrusted input reaches the SQL sink without parameterization or an equivalent guard"
+}

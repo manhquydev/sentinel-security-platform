@@ -1,0 +1,11 @@
+{
+  "cwe": 79,
+  "category": "xss",
+  "note": "Clean-room, Sentinel-authored from the CWE-79 definition. NOT derived from VulnHunterX templates.",
+  "questions": [
+    "Is the flagged value derived from request/user input (params, body, headers, path, or stored user data)?",
+    "Is that value written into an HTML/JS response context (template render, Response body, mark_safe/|safe, innerHTML) rather than auto-escaped output?",
+    "Is there NO intervening HTML/attribute escaping, sanitizer, or safe-templating between the input and the output sink?"
+  ],
+  "keep_if": "untrusted input reaches an HTML/JS sink without escaping or sanitization"
+}
