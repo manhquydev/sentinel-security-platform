@@ -35,12 +35,15 @@ proposes, deterministic code disposes, and no model is ever consulted about its 
 
 Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 
-| comparison | result |
-|---|---|
-| **LLM vs deterministic engines, identical 60 vulnerable files** — model named the ground-truth class | **6/60 vs 0/60, p = 0.0137** |
-| same, model flagged the file at all | 10/60 vs **0/60**, p = 0.00065 |
-| LLM on vulnerable vs clean control files (preregistered primary) | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** |
-| specificity | **1 of 40 clean files** drew a false absence-class claim |
+| comparison | result | what it establishes |
+|---|---|---|
+| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** | the model **discriminates** — both arms could have scored |
+| specificity | **1 of 40** clean files drew a false absence-class claim | it is not flagging indiscriminately |
+| class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
+| capability gap vs deterministic engines, identical files | model 6/60 · **engines 0/60** | the engines emit 33 CWE classes, **none absence-class** — a *capability statement*, not a contest (see below) |
+
+The p-values against the deterministic arm (0.0137 / 0.00065) are **not quoted as the headline**: that
+arm is structurally incapable of scoring, so a significance test against it overstates what happened.
 
 **Bandit and Semgrep together flagged an absence-class CWE in zero of sixty files.** Not approximately
 zero — zero. This is the first capability measured in this project that deterministic tooling cannot
