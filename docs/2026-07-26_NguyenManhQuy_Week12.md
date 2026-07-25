@@ -23,11 +23,20 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > **Bandit + Semgrep tìm được 0/60 file**, còn LLM gọi đúng tên lớp lỗ ở **6/60 file
 > (p = 0.0137)** — cùng một bộ file, nên không phải do "file này bẩn hơn".
 >
-> Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Nhưng
-> **chưa bán được**: tỉ lệ trúng chỉ ~10%, 1/3 lượt model không trả lời, chỉ ở mức file
-> chứ không ra dòng, và **corpus là public + do LLM sinh** nên **không tách được "biết
-> làm" khỏi "đã học thuộc"** — tuyệt đối không hứa điều này cho code riêng của khách
-> (quyết định 0027).
+> Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Và
+> em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
+> - **Có phải model chỉ "thấy code xấu là kêu"?** Không. Trên 80 file có lỗ thật nhưng
+>   **không thuộc lớp thiếu-kiểm-soát**, model chỉ kêu 3/80 — ngang với file sạch
+>   (p = 0.59), khác hẳn nhóm có lỗ thiếu-kiểm-soát (p = 0.010). Nó phân biệt **đúng lớp
+>   lỗ**, không phải phân biệt "bẩn/sạch".
+> - **Có phải model chỉ học thuộc corpus public?** Đổi tên toàn bộ hàm/biến/route/tên file
+>   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không đổi** (10/53 → 10/53). Loại trừ được
+>   khả năng "học thuộc bề mặt".
+>
+> **Nhưng vẫn chưa bán được:** tỉ lệ trúng chỉ ~19% (bỏ sót 4/5), 1/3 lượt model không trả
+> lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
+> chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
+> bán cho khách (quyết định 0027).
 
 Vậy Sentinel là gì, nói thẳng bằng một câu:
 

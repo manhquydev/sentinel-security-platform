@@ -221,6 +221,26 @@ PY
 then ok "defective-but-no-absent-control files stay near the clean rate, so mess is not the driver"
 else bad "SM9: the mechanism control arm is missing or its rate rose to meet arm A"; fi
 
+sect "SM10: the anonymisation transfer result is published with its paired interval"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/mutation-transfer-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run run_mutation_transfer.py"); sys.exit(1)
+d = json.load(open(p))
+# This is what narrows 0027 from "capability and memorisation are inseparable" to a much smaller
+# bound. If mutation ever starts collapsing detection, that narrowing is invalid and must fail here.
+n = d["n_pairs"]; o = d["original_flagged"]; m = d["mutated_flagged"]
+drop = (o - m) / n
+paired = d["lost_by_mutation"] + d["gained_by_mutation"]
+print("  n=%d original=%d mutated=%d drop=%+.3f discordant=%d p=%s"
+      % (n, o, m, drop, paired, d["mcnemar_p_one_sided"]))
+# A >10-point drop would mean surface memorisation was doing the work after all.
+sys.exit(0 if (n >= 40 and drop < 0.10 and d["mcnemar_p_one_sided"] >= 0.05) else 1)
+PY
+then ok "anonymised source still detects at the same rate — surface memorisation stays excluded"
+else bad "SM10: mutation now collapses detection; 0027's narrowed contamination bound is invalid"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
