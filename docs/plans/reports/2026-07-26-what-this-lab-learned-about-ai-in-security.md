@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 25 experiments (E1–E25). Written 2026-07-26 at the close of the research session that
+Synthesis across 26 experiments (E1–E26). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -70,6 +70,11 @@ hold despite a handicap and the ~15–19% sensitivity is a **floor**.
 
 ## 3. What is still not true
 
+- **Every published sensitivity figure is a FLOOR.** E26 caught the scoring classifier missing a
+  *correct* model finding (a precisely-described missing webhook signature verification, for which the
+  vocabulary had no term) and counting a validation complaint as an absence claim. Between-arm
+  comparisons survive — the same classifier scored both sides — but absolute rates understate the model,
+  and the gateway-redaction confound pushes the same way.
 - **It is a weak detector, and this is not fixable at the prompt/retry level.** ~19–25% of vulnerable
   files flagged; four in five missed. E21 tested whether the 33% non-answer rate was hiding detections:
   53% of non-answers do resolve on a retry, but **9 of 10 resolve to `clean`**, moving sensitivity only
@@ -83,10 +88,11 @@ hold despite a handicap and the ~15–19% sensitivity is a **floor**.
 - **Transfer is HALF answered (E25).** The lab spent the session recording that no genuinely unseen
   target existed. It was wrong — this project's own source, written 1–3 days before the measurement, is
   provably outside any deployed model's training set. Run over 25 of those files the model produced
-  **zero** absence-class findings, reproducing its perfect corpus specificity on unseen input. So
-  **specificity transfers; sensitivity is untested**, because our own code is a library rather than a
-  web application and offers no known positives to find. Closing that half needs a recently-written web
-  application with hand-built ground truth.
+  **zero** absence-class findings, reproducing its perfect corpus specificity on unseen input. So **specificity transfers**. The other half was then closed by building the missing target (E26): four
+  matched pairs of Flask handlers authored minutes before measurement, shown blind — the model found
+  **3 of 4** planted absence-of-control defects and made **0 of 4** false claims on the controls.
+  **Both halves now have evidence outside the memorised corpus**, with the caveat that n = 8 and the
+  defects are of classes this author chose.
 - **One model, one language, one corpus** — and that corpus is synthetic-seeded, not organic CVEs.
 
 **Therefore: a research result and a roadmap item, not a shippable feature.** The business case sells the

@@ -115,7 +115,13 @@ file-role recognition. Both are open questions again.
 
 ## The bounds are part of the claim
 
-1. **It is a weak detector.** 10% class-attributed hit rate. Six of seven vulnerable files are missed.
+1. **It is a weak detector — but every published rate is a FLOOR, not an estimate.** The measured
+   ~19–22% is scored by a keyword classifier that E26 caught missing a *correct* finding (the model
+   named a missing webhook signature verification precisely; the vocabulary had no term for it) and
+   counting a validation complaint as an absence claim. Two independent reasons the true rate is higher:
+   that under-counting, and the gateway redaction confound below. **Between-arm comparisons are
+   unaffected** — the same classifier scored both sides — but absolute rates should be read as lower
+   bounds.
 2. **It is file-level, not line-level.** No model would emit machine-readable structure — five aliases ×
    three formats × an assistant prefill produced **zero** format compliance while correctly identifying
    planted defects (E16a). The disposal layer therefore consumes prose.
@@ -164,8 +170,15 @@ file-role recognition. Both are open questions again.
   code** — this project's own source, written 1–3 days before measurement and therefore outside any
   deployed model's training corpus — the model produced **0 findings on 25 files**, reproducing its
   perfect specificity. **Specificity transfers. Sensitivity does not yet have an answer**, because our
-  own code is a library with no request handlers and therefore no known positives. **Still outstanding:**
-  structural familiarity, and a recently-written *web application* with hand-built ground truth.
+  own code is a library with no request handlers and therefore no known positives.
+  - **Sensitivity transfer ANSWERED (E26).** Four matched pairs of Flask handlers authored minutes
+    before measurement, shown blind, exact ground truth: the model found **3 of 4** planted
+    absence-of-control defects and described each correctly, with **0 of 4** false claims on the
+    controls. Both halves of the behaviour now have evidence outside the memorised corpus.
+    **Limits:** n = 8, and the defects are of classes this author chose in this author's style — the
+    matched-pair design prevents conspicuousness from inflating the score but cannot make them
+    representative of a real client codebase. **Still outstanding:** structural familiarity, and a
+    realistic defect distribution nobody designed to be findable.
 - **Recorded process failure:** the deterministic control arm was preregistered and the implementation
   silently dropped it during a redesign. It was caught before publication and run. The mechanism claim
   was withdrawn on a weaker comparison and then partially restored by the correct one — both movements
