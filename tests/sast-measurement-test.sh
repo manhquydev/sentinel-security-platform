@@ -164,16 +164,23 @@ if not os.path.exists(p):
 d = json.load(open(p))
 # The totals must still reproduce decision 0022, or the number is a different measurement.
 t = d["totals"]
-drift = t != {"repos": 63, "real": 1790, "bandit_tp": 234, "semgrep_tp": 212, "union_tp": 336}
+# Findings counts are pinned too: precision is tp/findings, so a ruleset change adding findings that
+# match no ground truth moves the precision clause while leaving every TP untouched.
+expect = {"repos": 63, "real": 1790, "bandit_tp": 234, "semgrep_tp": 212, "union_tp": 336,
+          "bandit_findings": 1764, "semgrep_findings": 675, "union_findings": 2439}
+drift = any(t.get(k) != v for k, v in expect.items())
 lo, hi = d["relative_gain_ci95"]
 plo, phi = d["precision_delta_ci95"]
-# The recall gain must be reported with an interval that excludes 0 (it is a real effect), while the
-# precision delta interval must SPAN 0 -- that is what makes "no measurable cost" the honest reading
-# rather than "precision improves". Reading a positive point estimate as a win is the E14 error.
+# `lo > 0` would be VACUOUS: a union only ever adds matches, so union_tp >= bandit_tp in every repo and
+# no resample can produce a negative gain (a review measured 0 of 2000; minimum +0.234). The
+# preregistration committed to +10% as the threshold that could actually fail -- assert THAT.
+# `plo <= 0 <= phi` is not vacuous: a deduplicated denominator makes it fail.
+fresh = os.path.getmtime(p) >= os.path.getmtime(
+    "evaluation/sast-fp-discrimination/run_multiengine_grouped.py")
 zero_gain_published = d.get("repos_with_zero_gain", 0) > 0
-print("  drift=%s gain_ci=[%.3f,%.3f] prec_ci=[%.4f,%.4f] zero_gain_repos=%s"
-      % (drift, lo, hi, plo, phi, d.get("repos_with_zero_gain")))
-sys.exit(0 if (not drift and lo > 0 and plo <= 0 <= phi and zero_gain_published) else 1)
+print("  drift=%s fresh=%s gain_ci=[%.3f,%.3f] prec_ci=[%.4f,%.4f] zero_gain_repos=%s"
+      % (drift, fresh, lo, hi, plo, phi, d.get("repos_with_zero_gain")))
+sys.exit(0 if (not drift and fresh and lo > 0.10 and plo <= 0 <= phi and zero_gain_published) else 1)
 PY
 then ok "recall gain carries a CI excluding 0, precision delta spans 0, and the no-gain repo count ships"
 else bad "SM7: the multi-engine claim drifted or lost its interval/caveat"; fi

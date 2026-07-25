@@ -985,3 +985,46 @@ Resolving it needs a design this experiment did not have: either line-level attr
 E16a — no model would emit structure), or a control arm of files that are **messy but contain no
 absence-class vulnerability**, which would separate "reacts to mess" from "detects absent controls".
 That is the next experiment, not a footnote to this one.
+
+### E17 — the preregistered DETERMINISTIC CONTROL ARM, and what it restores
+
+The preregistration promised a deterministic control arm — "Bandit + Semgrep on the identical file set"
+— and the pivot to prose classification had **dropped it**. That omission was caught while writing up
+the result, and the arm was run before publishing anything.
+
+**Bandit + Semgrep flag an absence-class CWE in 0 of the 60 vulnerable files.** Not approximately zero.
+Zero. The premise decisions 0022–0024 established holds exactly on this sample.
+
+| comparison, identical 60 vulnerable files | rate | one-sided Fisher |
+|---|---|---|
+| LLM flagged the file at all vs deterministic | 10/60 = 0.167 **vs 0/60** | **p = 0.00065** |
+| **LLM named the ground-truth class** vs deterministic | 6/60 = 0.100 **vs 0/60** | **p = 0.0137** |
+
+**This is the comparison the preregistration actually specified, and it changes the reading of the
+self-audit above.**
+
+The self-audit withdrew the mechanism claim because, under the strict class-attribution criterion, the
+LLM-vs-**clean-files** comparison was not significant (p = 0.149). But clean files are the wrong
+comparator for the mechanism question: they differ from vulnerable files in *many* ways, so "the model
+reacts to messier files" survives as a confound.
+
+The deterministic control arm removes that confound **by design** — both arms see the **same 60 files**.
+File messiness, size, style and repo are all held fixed; only the detector changes. On that comparison
+the LLM beats the deterministic engines **even when required to name the ground-truth class**
+(6/60 vs 0/60, p = 0.0137).
+
+**Corrected conclusion — narrower than the first draft, broader than the withdrawal:**
+
+- **Established:** on absence-of-control classes, the LLM identifies vulnerabilities that Bandit and
+  Semgrep together identify **not once in 60 files**, and does so naming the correct class in 6 of them.
+  This is the first measured capability in this project that deterministic tooling cannot supply at all.
+- **Still not established:** that it does so *reliably*. 6 of 60 is a 10% class-attributed hit rate.
+  Four of ten flags named a different issue than ground truth, and a third of all calls were
+  non-answers.
+- **Unchanged:** contamination. RealVuln is public and `llm_generated_corpus: true`, so capability and
+  memorisation remain inseparable and transfer to private code is unproven.
+
+**Process note.** A claim was withdrawn on one analysis, then partially restored by a control arm that
+the preregistration had required and the implementation had silently dropped. Both movements are in the
+record, in order. The lesson is not that the withdrawal was wrong — it is that **a comparison is only
+as good as its comparator**, and the preregistration had named the right one before the data existed.

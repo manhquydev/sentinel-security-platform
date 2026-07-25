@@ -33,7 +33,7 @@ Giá trị kinh doanh nằm ở ba chỗ, tất cả đều có số:
 
 | Trụ cột | Số đo được | Nguồn |
 |---|---|---|
-| **Tìm lỗ rẻ và liên tục** | Gộp 2 engine → recall **+43.6%** tương đối, **KTC 95% [+31.5%, +58.4%]** (bootstrap trên 63 repo), **không đo được tổn thất precision, $0** | decision 0022, E15 |
+| **Tìm lỗ rẻ và liên tục** | Gộp 2 engine → recall **+43.6%** tương đối, **KTC 95% [+31.5%, +58.4%]** (bootstrap trên 63 repo), **không đo được tổn thất precision so với Bandit, $0** | decision 0022, E15 |
 | **Chi phí lớp AI có trần** | 3 lần chạy live: **$0.048–0.051/lần**, ~7k token, ~35s, 0 lỗi | E13, `agent/finops.py` |
 | **Lớp Security-FOR-AI** | Che PII: **6/6** payload injection bị chặn, **0** false-positive rõ ràng (corpus 375 tài liệu); IAM fail-closed | decision 0017, 0025 |
 
@@ -80,7 +80,7 @@ kế hoạch.
 | # | Năng lực | Trạng thái | Bằng chứng đo được |
 |---|---|---|---|
 | P1 | **Kho lỗ hổng đa nguồn** (SAST/DAST về một chỗ, không đếm trùng) | Đã build (Tuần 1) | 3 công cụ, 36 lỗ, 7 bước kiểm tra khớp |
-| P2 | **Gộp nhiều engine tất định** | Đã build & đo | recall **+43.6%** [+31.5%,+58.4%], không đo được tổn thất precision, $0; **22/63 repo không lợi gì** (0022, E15) |
+| P2 | **Gộp nhiều engine tất định** | Đã build & đo | recall **+43.6%** [+31.5%,+58.4%] (tuyệt đối 0.188 — vẫn sót ~81%), không đo được tổn thất precision **so với Bandit**, $0; **22/63 repo không lợi gì** (0022, E15) |
 | P3 | **Cổng xuất xứ LiteLLM** (mọi lời gọi model gắn nhãn `operator`/`target-derived`, fail-closed nếu thiếu) | Đã build | test cổng 30/31 pass; SAIST bên thứ ba **không** kết nối qua được (E11) |
 | P4 | **Kong Agent IAM** (OAuth2 + ACL fail-closed cho agent) | Đã build & đo | 29/29 test authz; 1 finding gateway-only-enforcement (decision 0025) |
 | P5 | **Che PII lúc thu thập** | Đã build & đo | 6/6 payload tấn công bị chặn; 0 FP rõ ràng; 37/371 tài liệu WebGoat bị che (84 chỗ) (decision 0017) |
@@ -170,8 +170,11 @@ lỗi gán CWE — tỷ lệ hai nửa hiện **chưa xác định**; điều đ
 
 - Pentest thủ công mua **chiều sâu + phán đoán con người** — tìm lớp business-logic và
   absence mà máy đo được là mình bỏ sót. **Không thay được**, và Sentinel không cố thay.
-- Sentinel mua **tần suất**: chạy phần presence-class **liên tục**, chi phí ~compute,
-  giữ recall cao (+44%). Giữa hai đợt pentest thủ công tốn-tuần, **khoảng mù được lấp**.
+- Sentinel mua **tần suất**: chạy phần presence-class **liên tục**, chi phí ~compute.
+  Nói cho đúng: gộp 2 engine **tăng recall thêm 43.6% tương đối** so với 1 engine, nhưng
+  recall **tuyệt đối vẫn chỉ 0.188** — tức là **vẫn bỏ sót ~81% lỗ thật**. Đây không phải
+  "recall cao"; đây là "rẻ nên chạy được liên tục". Giữa hai đợt pentest thủ công tốn-tuần,
+  **khoảng mù được lấp một phần**, không phải được lấp hết.
 - **Điểm hòa vốn** không đến từ thay người, mà từ **giảm số giờ người tiêu vào việc
   lặp**: mỗi finding presence-class máy đã bắt và AI đã phân loại là một finding người
   không phải rà tay. (Số giờ tiết kiệm/finding: **chưa đo** — mục 8, không được bịa.)

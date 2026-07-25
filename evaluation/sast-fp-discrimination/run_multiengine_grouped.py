@@ -34,7 +34,13 @@ import run_multiengine as rm      # noqa: E402
 # The committed baseline these per-repo counts must sum back to. A mismatch means the environment
 # drifted (engine version, corpus, rules) — in which case the run must NOT be published under 0022's
 # name, because it would be a different measurement wearing the old claim's label.
-EXPECTED = {"repos": 63, "real": 1790, "bandit_tp": 234, "semgrep_tp": 212, "union_tp": 336}
+# Findings counts are pinned alongside true positives because precision is tp/findings: a ruleset
+# update that adds findings matching no ground truth leaves every TP untouched, sails through a
+# TP-only abort, and moves H3 — and because it enlarges the union denominator, it moves H3 in the
+# NEGATIVE direction. The drift most able to falsify the precision clause was the one the abort could
+# not see. All six numbers come from the committed baseline.
+EXPECTED = {"repos": 63, "real": 1790, "bandit_tp": 234, "semgrep_tp": 212, "union_tp": 336,
+            "bandit_findings": 1764, "semgrep_findings": 675, "union_findings": 2439}
 
 
 def per_repo_stats() -> list[dict]:
@@ -89,7 +95,10 @@ def main() -> int:
     tot = {"repos": len(stats), "real": sum(s["real"] for s in stats),
            "bandit_tp": sum(s["bandit_tp"] for s in stats),
            "semgrep_tp": sum(s["semgrep_tp"] for s in stats),
-           "union_tp": sum(s["union_tp"] for s in stats)}
+           "union_tp": sum(s["union_tp"] for s in stats),
+           "bandit_findings": sum(s["bandit_findings"] for s in stats),
+           "semgrep_findings": sum(s["semgrep_findings"] for s in stats),
+           "union_findings": sum(s["union_findings"] for s in stats)}
     print(f"per-repo totals: {tot}")
     drift = {k: (EXPECTED[k], tot[k]) for k in EXPECTED if EXPECTED[k] != tot[k]}
     if drift:
@@ -141,6 +150,7 @@ def main() -> int:
     print(f"   H3 {h3}")
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "totals": tot,
+           "primary_estimand": "micro-pooled recall ratio; macro per-repo agrees (+40.7%)",
            "pooled": point, "relative_recall_gain": round(rel_gain, 4),
            "relative_gain_ci95": [round(r_lo, 4), round(r_hi, 4)],
            "median_per_repo_gain": round(median_gain, 4),
