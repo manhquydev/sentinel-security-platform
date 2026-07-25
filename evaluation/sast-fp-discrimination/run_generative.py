@@ -169,7 +169,9 @@ def names_ground_truth_class(text: str, gt_cwes) -> bool:
 
 
 def classify_prose(text: str) -> str:
-    """flagged | clean | non-answer — decided by deterministic rules over the model's own words."""
+    """flagged | clean | non-answer | file-missing — deterministic rules over the model's own words."""
+    if text == "\x00FILE-MISSING":
+        return "file-missing"          # never shown to the model; not a negative detection
     t = (text or "").strip()
     if not t:
         return "non-answer"
@@ -340,7 +342,11 @@ def main() -> int:
                 src = open(os.path.join(rs.REPOS, slug, relpath), encoding="utf-8",
                            errors="replace").read()[:MAX_BYTES]
             except OSError:
-                return ""
+                # A file that cannot be read was never shown to the model, so this is NOT a model
+                # behaviour and must not be folded into "non-answer" alongside genuine refusals. It
+                # inflates the denominator and therefore deflates measured sensitivity. Found in E21:
+                # one arm-A entry (`flag.txt`) is listed in ground truth but absent from the corpus.
+                return "\x00FILE-MISSING"
             body = "\n".join(f"{i+1}: {ln}" for i, ln in enumerate(src.splitlines()))
         try:
             return llm.chat([llm.Msg("system", _BINARY_RUBRIC, llm.operator()),
