@@ -33,12 +33,29 @@ evidence in decisions 0020–0024 and `docs/ai-sast-research-log.md`.
 8. **Criterion 4 ("zero LLM veto paths") was unprovable** as written — the project's own journaled
    failure mode.
 
-## Outcome (v2 — narrowed to what is defensible)
+## Outcome (v3 — reframed at the validate gate, user decision 2026-07-26)
 
-Determine, with an **independent oracle**, whether a runtime differential prober can detect
-absence-of-control vulnerabilities on a target where the enforcement point is known — and quantify
-honestly how far the technique reaches. The **AI generates hypotheses only**; deterministic code
-executes and judges; **no LLM output may remove a finding**.
+**Validate found the v2 outcome unachievable on this target:** the enforcement point routes only 8
+endpoints, of which **2 are non-public**, and Kong protects **both correctly**. Absence-recall could
+only ever measure 0/2 — you cannot detect *missing* authorization on routes that *have* it.
+
+**Reframed outcome — the defence-in-depth posture is the finding.** Measure, per routed endpoint,
+**where authorization is actually enforced**:
+
+| gateway | app origin | verdict |
+|---|---|---|
+| 401/403 | 401/403 | defence in depth — control at both layers |
+| 401/403 | **2xx** | **gateway-only enforcement → FINDING** (single point of failure: an SSRF, a misrouted internal call, or any direct-to-app path defeats all authorization) |
+| **2xx** | 2xx | missing control entirely (the classic case; none observed here) |
+
+This is a genuine pentest report item, it is measurable **today** with the already-corrected prober,
+and it needs no new target and no change to the system under test. The **AI generates hypotheses only**;
+deterministic code executes and judges; **no LLM output may remove a finding**.
+
+**Preliminary measurement (already observed while fixing the oracle):** both non-public routed
+endpoints — `/rest/user/whoami` and `/rest/admin/application-version` — return **401 at the gateway and
+200 at the app origin**, i.e. **100% of this app's non-public routes rely solely on the gateway for
+authorization**. That is the headline result this plan must confirm rigorously and report.
 
 ## The independent oracle (replaces the circular one)
 
@@ -71,55 +88,23 @@ State-changing probes (deferred: needs a new ADR answering 0016's five prerequis
 a second application (separate plan, gated on an authorisation record + allowlist unification);
 black-box discovery; OWASP-Benchmark scores; any claim of a "0% baseline" without a re-run.
 
-## Acceptance criteria (falsifiable, and honest about the comparator)
+## Acceptance criteria (v3 — falsifiable, and achievable on this target)
 
-1. **Recall > 0 against the independent oracle** — at least one `Broken Access Control` challenge
-   flipped `solved` by the prober. If zero, the technique is falsified on this target and that is the
-   reported result.
-2. **Precision measured and reported**, not asserted. v1's ≥0.9 target is withdrawn: five verified
-   false-positive classes exist (SPA fallback, 200-with-empty-body, 500-not-404, healthcheck-invoked
-   endpoints, gateway-only enforcement). Precision is an output of this work, not a gate.
-3. **Per-identity session canary + synthetic finding canary pass in 100% of runs**; either failing exits
-   non-zero.
-4. **No LLM path can remove a finding** — hostile-reply test leaves the count unchanged.
-5. **LLM hypothesis yield** reported as a signed delta against a *frozen* deterministic baseline, with
-   the deterministic arm fixed first so it cannot be weakened to flatter the LLM. Zero is a valid result.
+1. **A defence-in-depth map** for every gateway-routed endpoint: enforcement at gateway / at app / at
+   neither, with the request-response evidence for each. Complete coverage of the routed set.
+2. **The gateway-only-enforcement count is reported** with its security consequence stated plainly
+   (single point of failure). Preliminary observation to confirm: 2/2 non-public routes.
+3. **Per-identity session canary + synthetic finding canary pass in 100% of runs**; either failing
+   exits non-zero. An unreachable enforcement origin errors, never "clean".
+4. **No LLM path can remove a finding** — hostile-reply test (`{"drop":true}`) leaves the count
+   unchanged.
+5. **Coverage bound reported honestly**: how many of the app's endpoints the gateway routes (8 of a
+   much larger surface), so the result is never read as whole-app coverage.
 6. Offline-reproducible from committed artefacts, except the live probe run.
 7. Zero regressions across W1–W11.
 
-## Phases (trimmed to the smallest honest increment)
-
-### Phase 0 — Prerequisites (BLOCKING, no detection code)
-- **Fetch the pinned Juice Shop source** (gitignored, SHA-pinned, fail-closed) — the RealVuln
-  `fetch.sh` pattern. Nothing in Phase 1 can start until this exists. *(F1)*
-- Enumerate which endpoints the **enforcement point actually routes** (Kong config): the oracle can
-  only judge those. Record the coverage bound honestly. *(new limit found while fixing F2)*
-- Provision two throwaway identities out-of-band; add per-identity session canaries + a synthetic
-  finding canary.
-- Record the authorisation/scope artefact: hosts + resolved IPs, owner, expiry, permitted classes and
-  verbs — **machine-checked and fail-closed**, not prose. *(M2)*
-
-### Phase 1 — Deterministic route + expected-auth extraction (NO LLM yet)
-Extract routes and auth guards from the fetched source; produce `expected_auth` deterministically.
-The LLM is deliberately excluded so the headline result cannot depend on it. *(T2)*
-
-### Phase 2 — Differential prober at the enforcement point
-Identity matrix (anonymous + 2 throwaway) × routed endpoints; verdicts per the corrected oracle.
-Extends the hardened prober (SPA-fallback guard, nonexistent-path control, no redirects, confidence
-gate, gateway-first judging). Non-mutating requests only; login POST is the only permitted write and
-is explicitly in scope of "read-only".
-
-### Phase 3 — Score against the independent oracle
-Run, then read `/api/Challenges` for flipped `solved` flags; report recall, precision, and the coverage
-bound. Re-run the SAST/DAST comparators **on the same endpoints** before any comparative claim, or make
-none. *(F5)*
-
-### Phase 4 — LLM hypothesis layer (AI-central, measured against the frozen baseline)
-Only after Phases 1–3 produce a frozen number: the LLM proposes `expected_auth` for ambiguous routes and
-business-logic abuse hypotheses; code tests each. Report the signed delta. *(T1/T2)*
-
-**Deferred to their own decisions:** state-changing probes (0016's five prerequisites); generalisation
-to a second app (authorisation record + allowlist unification, M1).
+**Withdrawn from v2:** absence-recall against the challenge oracle (denominator is 0 real positives
+here) and the ≥0.9 precision gate. Both are re-openable only on a target with genuinely broken authz.
 
 ## Risks & rollback
 
