@@ -1,12 +1,16 @@
 {
-  "generated_at": "2026-07-25T18:48:20.483646+00:00",
+  "generated_at": "2026-07-25T20:17:20.543470+00:00",
   "totals": {
     "repos": 63,
     "real": 1790,
     "bandit_tp": 234,
     "semgrep_tp": 212,
-    "union_tp": 336
+    "union_tp": 336,
+    "bandit_findings": 1764,
+    "semgrep_findings": 675,
+    "union_findings": 2439
   },
+  "primary_estimand": "micro-pooled recall ratio; macro per-repo agrees (+40.7%)",
   "pooled": {
     "bandit": {
       "recall": 0.13072625698324022,

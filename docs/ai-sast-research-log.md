@@ -1028,3 +1028,45 @@ the LLM beats the deterministic engines **even when required to name the ground-
 the preregistration had required and the implementation had silently dropped. Both movements are in the
 record, in order. The lesson is not that the withdrawal was wrong — it is that **a comparison is only
 as good as its comparator**, and the preregistration had named the right one before the data existed.
+
+### E15 — adversarial review (Stage 8): the +43.6% survives; the precision clause is qualified
+
+Report: `docs/plans/reports/2026-07-26-e15-adversarial-review.md`. The reviewer re-ran the instrument
+over all 63 repos and reproduced the artefact **byte-identically** except its timestamp.
+
+**Attacks that failed to break H1** (each with the reviewer's numbers):
+- **Matching order.** Reversing the union concatenation to `semgrep + bandit` gives union_tp = **336**,
+  identical; **0 of 63** repos are order-sensitive, despite **1,245** ground-truth pairs sitting within
+  ±10 lines in the same file. The claim-once matcher is order-stable here.
+- **CWE wildcard** in `match()` (a finding with `cwe is None` can match any in-file entry): only 3 of 675
+  Semgrep findings and **0 of 1764** Bandit findings. Excluding them moves the gain 0.4359 → 0.4316.
+- **Denominator.** `real` cancels exactly — `336/234 − 1 = 0.4359`. H1 is denominator-free by construction.
+- **Micro vs macro estimand** — the attack that overturned E14. Macro per-application gain is
+  **+40.7% [+26.7%, +59.2%]**. Here the two estimands **agree**; they did not for E14.
+- **The 22/63 zero-gain caveat verified**, with the honest mechanism: 17 are genuine redundancy, 3 found
+  nothing matching, 2 found nothing. **0** are artefacts of a small vulnerability denominator.
+
+**H3 "no measurable precision cost" survives only as the conservative reading — two qualifications:**
+
+1. **The union's findings denominator is a raw concatenation**, so a vulnerability caught by both engines
+   counts as 2 findings for 1 true positive. Deduplicating on `(file, cwe, line)` removes 185 duplicates,
+   loses **no** true positives, and moves the delta to **+0.0164, CI [+0.0014, +0.0274]** — an interval
+   that **excludes 0**, flipping the instrument into its own "precision measurably IMPROVES" branch. The
+   direction is favourable, but the verdict is **not robust to a defensible denominator choice**, so
+   "no measurable cost" is the claim that should be made and "improves" must not be.
+2. **The clause holds against Bandit only.** Against **Semgrep alone** (precision 0.314) the union is
+   **−0.176**. Any statement about precision must name its baseline; the Week-12 report now does.
+
+**Guard-rail defects the review found in my own tests** (protocol §10: review the tests, not the result):
+- **The abort condition was blind to the drift most able to falsify H3.** `EXPECTED` pinned true
+  positives but not **findings counts**, yet precision is `tp/findings`. A ruleset update adding findings
+  that match no ground truth leaves every TP untouched, passes the abort, and moves H3 — *downward*,
+  because it enlarges the union denominator. Fixed: all eight totals are pinned.
+- **SM7's `lo > 0` was vacuous.** A union only adds matches, so `union_tp ≥ bandit_tp` per repo and no
+  resample can be negative (the reviewer measured 0 of 2000; minimum +0.234). The preregistration had
+  committed to **+10%** as the threshold that could actually fail; the test now asserts that.
+  (`plo <= 0 <= phi` is *not* vacuous — the dedup variant fails it.)
+- **SM7 had no freshness check.** Added; it caught the stale artefact immediately on the next run.
+
+**This is the second vacuous assertion found in tests I wrote**, after SM4. Both were written by the
+author of the code they guard, and both failed in the direction that flattered the result.
