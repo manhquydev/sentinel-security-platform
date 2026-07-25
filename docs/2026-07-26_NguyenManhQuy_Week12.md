@@ -26,14 +26,19 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Và
 > em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
 > - **Có phải model chỉ "thấy code xấu là kêu"?** Không. Trên 80 file có lỗ thật nhưng
->   **không thuộc lớp thiếu-kiểm-soát**, model chỉ kêu 3/80 — ngang với file sạch
->   (p = 0.59), khác hẳn nhóm có lỗ thiếu-kiểm-soát (p = 0.010). Nó phân biệt **đúng lớp
->   lỗ**, không phải phân biệt "bẩn/sạch".
+>   **không thuộc lớp thiếu-kiểm-soát**, model kêu **0/80** — ngang với file sạch
+>   (p = 0.59), khác hẳn nhóm có lỗ thiếu-kiểm-soát (**p = 0.0003**). Nó phân biệt **đúng
+>   lớp lỗ**, không phải phân biệt "bẩn/sạch".
+> - **Có phải model chỉ đọc tên file/biến quen thuộc?** Không. Cùng một bộ file endpoint,
+>   nhóm **thiếu** kiểm soát bị kêu 9/40 còn nhóm **có** kiểm soát chỉ 2/42 (p = 0.020),
+>   và chạy lại độc lập cho kết quả lệch **0.001**.
 > - **Có phải model chỉ học thuộc corpus public?** Đổi tên toàn bộ hàm/biến/route/tên file
->   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không đổi** (10/53 → 10/53). Loại trừ được
->   khả năng "học thuộc bề mặt".
+>   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không giảm** (11/53 → 14/53). Loại trừ
+>   được "học thuộc bề mặt"; **chưa** loại trừ được mức đóng góp nhỏ.
+> - **Trên code model chắc chắn chưa từng thấy** (tự viết ngay trong phiên, có đáp án
+>   chính xác): tìm được **3/4** lỗ cài sẵn, **0/4** báo nhầm trên bản có kiểm soát.
 >
-> **Nhưng vẫn chưa bán được:** tỉ lệ trúng chỉ ~19% (bỏ sót 4/5), 1/3 lượt model không trả
+> **Nhưng vẫn chưa bán được:** tỉ lệ trúng chỉ ~19% (bỏ sót 4/5; và đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
 > bán cho khách (quyết định 0027).
