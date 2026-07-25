@@ -29,6 +29,11 @@ for p in (_ROOT, _HERE):
 import run_spike as rs  # noqa: E402  (bandit_findings / load_gt / match / _cwe_int)
 
 SEMGREP_CONFIGS = ["p/security-audit", "p/owasp-top-ten", "p/python"]
+# OpenGrep is a Semgrep fork (LGPL). Whether it is COMPLEMENTARY or largely REDUNDANT with Semgrep is
+# an open question worth measuring before adopting it — set OPENGREP_BIN to include it as a third
+# engine. It shares Semgrep's CLI/JSON shape, so the same normaliser works with a different rule dir.
+OPENGREP_BIN = os.environ.get("OPENGREP_BIN")
+OPENGREP_RULES = os.environ.get("OPENGREP_RULES")  # a local rules dir (OpenGrep has no free registry)
 
 
 def semgrep_findings(repo_path: str) -> list[dict]:

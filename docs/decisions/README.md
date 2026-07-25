@@ -135,3 +135,11 @@ documents here as real choices are accepted, then index them in this file.
   structurally cannot see; that residual is the DAST/syndicate layer's job. Adding further engines
   (OpenGrep/gosec/Brakeman/js-x-ray) is now an evidence-backed, per-language decision with a committed
   harness. The founding thesis — AI stands on a broad deterministic tool foundation — measured, not assumed.
+- [0023 SAST detects PRESENCE not ABSENCE (9.5x); the residual belongs to runtime/DAST](0023-sast-detects-presence-not-absence-the-residual-belongs-to-runtime.md)
+  — per-CWE breakdown of 0022's missed 81%: SAST recall is **43.6% on "presence of a bad pattern"**
+  (SQLi 70%, cmd-injection 89%, weak crypto 94%) but **4.6% on "absence of a required control"**
+  (CWE-284 access control 0%/187 vulns, CWE-307 no auth-attempt limit 0%/134, CWE-200 info exposure
+  0.8%/237) — a **9.5x** gap, and the absence bucket is the LARGER half (847 vs 569 real vulns). An
+  absent control has no token to match; it is observable only in behaviour, i.e. at RUNTIME. So more
+  SAST rules cannot close it — this is the measured justification for the SAST ∪ DAST architecture and
+  for the agentic syndicate. Instruments: analyze_cwe_gap.py, classify_gap.py (offline, no LLM).

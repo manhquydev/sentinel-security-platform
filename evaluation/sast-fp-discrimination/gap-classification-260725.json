@@ -1,0 +1,19 @@
+{
+  "buckets": {
+    "absence-of-control": {
+      "classes": 12,
+      "real": 847,
+      "found": 39
+    },
+    "other/unclassified": {
+      "classes": 26,
+      "real": 374,
+      "found": 49
+    },
+    "presence-of-bad-pattern": {
+      "classes": 16,
+      "real": 569,
+      "found": 248
+    }
+  }
+}
