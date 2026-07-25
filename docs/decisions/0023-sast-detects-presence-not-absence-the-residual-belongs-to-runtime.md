@@ -46,6 +46,25 @@ missing rate limit by hitting the endpoint repeatedly, and a missing authorizati
 another user's object. That is exactly what the project's DAST/agentic layer does (Nuclei, the Kong
 ACL boundary, the fuzzing + exploit syndicate, Weeks 2–10).
 
+## Cross-validation on Sentinel's own lake (2026-07-25)
+
+The law was re-tested on **independent data collected weeks earlier for an unrelated purpose** — the
+project's own DefectDojo lake, different targets, different tools:
+
+| scanner | type | target | CWE classes | bucket |
+|---|---|---|---|---|
+| Semgrep | SAST | WebGoat | 327 weak digest, 330 insecure random | 100% presence |
+| Nuclei | DAST | Juice Shop | 693 **missing** security headers, 200 public Swagger | 100% absence |
+
+**Zero class overlap.** The DAST findings are literally named *"HTTP Missing Security Headers"* — an
+absent control, which has no code token to match — while the SAST findings are dangerous constructs
+written in source. And **CWE-200, which SAST detected at 0.8% on RealVuln (237 vulns), is detected
+natively by the DAST scanner here**: the class SAST is blind to is the class DAST sees.
+
+Honest caveat: small n (11 SAST + 21 DAST findings) on different targets, so this corroborates the
+*direction*, not the 9.5× magnitude. Its weight comes from independence — none of this data was
+collected to test this hypothesis.
+
 ## Consequences
 
 - **Investment guidance, quantified.** Adding SAST engines/rules pays off inside the *presence* bucket
