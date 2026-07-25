@@ -1438,3 +1438,30 @@ of them is much less troubling when the other two are not marginal at all — an
 - **Ground-truth exhaustiveness**, noted before the run: an arm-C handler could genuinely lack a control
   the corpus never labelled, which would make one of those 3 flags a true positive scored as a false one
   — that bias runs *against* the hypothesis, so it does not threaten this direction.
+
+## E21 — PREREGISTRATION: how much of the low sensitivity is non-answers? (written before measuring)
+
+Registered 2026-07-26 04:25 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** Sensitivity is ~19–25%, low enough that the generative-role finding is a research
+  result rather than a usable capability. But **a third of all calls are non-answers** — the model asks a
+  question or returns a refactor instead of a review. A non-answer is not a negative detection; it is a
+  **missing measurement**. If those resolve on a second attempt, sensitivity has been systematically
+  **under-measured** by the instrument, and the fix is engineering rather than research.
+- **Hypothesis.** A material fraction of non-answers resolve into a substantive verdict on one retry, so
+  the effective flag rate with non-answers resolved is **higher** than the published 10/60.
+- **Method.** Take every arm-A file whose E17 verdict was `non-answer`. Retry each **exactly once**, with
+  the **frozen instrument** — same prompt, same classifier, same temperature. Take whatever comes back.
+- **The anti-p-hacking rule, committed in advance.** Retries are permitted **only** for `non-answer`
+  results, and **exactly one** per file. A file that returned a substantive `clean` is **never** retried,
+  because retrying negatives until they turn positive is precisely the manoeuvre this rule forbids.
+  Whatever the single retry returns is final, including `non-answer` again.
+- **Primary outcome.** (a) proportion of non-answers that resolve; (b) the recomputed arm-A flag rate
+  with resolved verdicts folded in, reported **alongside** the original, never replacing it.
+- **What this cannot do.** It **does not revise E17's published result.** E17's preregistered comparison
+  stands exactly as reported; this measures a property of the *instrument*, not of the hypothesis, and
+  any recomputed rate is labelled as such.
+- **Falsifying result.** Few or no non-answers resolve ⇒ the non-answer rate is a stable property of the
+  model on this task, sensitivity is genuinely ~19%, and no engineering fix is available at the prompt
+  level.
+- **Bounds carried forward:** file-level, one model, contaminated corpus (narrowed by E19).
