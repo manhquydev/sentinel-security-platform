@@ -1257,3 +1257,26 @@ Registered 2026-07-26 04:00 +07. **Nothing below was measured before this text w
   identity: a model could still recognise a distinctive control-flow shape. So this test can **weaken**
   the memorisation explanation but cannot fully eliminate it; only a genuinely unseen target can, and the
   lab does not have one.
+
+### E19 — confound identified DURING the run, before any result was read
+
+The mutation changes **two** things at once, and only one of them is memorisation:
+
+1. **identity** — identifiers and route literals (the memorisation cue this experiment targets);
+2. **filename** — the prompt shows `module.py` instead of e.g. `accounts/views.py`.
+
+A filename like `views.py` or `routes/transaction_routes.py` is not only identity; it is **semantic
+context**. It tells a reviewer this file handles requests, which is exactly where absent controls live.
+Stripping it removes a legitimate reasoning cue, not just a recall cue.
+
+**Consequence, stated before the numbers are known — the two branches are not symmetric:**
+
+- **If the mutated rate HOLDS:** the confound does not weaken the conclusion. Both an identity cue *and*
+  a semantic cue were removed and detection survived anyway, which is *stronger* evidence for reasoning
+  than the experiment was designed to produce.
+- **If the mutated rate DROPS:** the result is **ambiguous** between "memorisation was doing the work"
+  and "the filename was doing the work", and a third condition is required to separate them — the
+  **original, unmutated code shown under a generic filename**. That control is specified now so it
+  cannot be improvised later to suit whichever answer arrives.
+
+Recorded at 04:15 +07, while the run was still in flight and no output had been read.
