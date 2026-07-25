@@ -1,0 +1,65 @@
+{
+  "note": "Phase-0 COVERAGE DENOMINATOR (plan 2026-07-26 v3). The defence-in-depth map can only judge endpoints the ENFORCEMENT POINT actually routes \u2014 verdicts are taken at Kong (decision 0010: 'authorization enforcement is Kong ACL'), never at the app's direct publish port. A red-team proved that probing the app origin instead measures around the control and manufactures findings. Derived from infra/kong/kong.rendered.yml; regenerate when the gateway config changes.",
+  "enforcement_origin": "https://127.0.0.1:18443",
+  "app_origin": "http://127.0.0.1:13000",
+  "coverage_bound": "8 routed endpoints. The app's real surface is far larger, so results describe the GATEWAY-FRONTED slice only and must never be read as whole-app coverage.",
+  "routes": [
+    {
+      "name": "public-read",
+      "method": "GET",
+      "path": "/rest/products/search",
+      "expected_auth": "public"
+    },
+    {
+      "name": "public-read",
+      "method": "GET",
+      "path": "/.well-known/security.txt",
+      "expected_auth": "public"
+    },
+    {
+      "name": "public-read",
+      "method": "GET",
+      "path": "/api-docs/swagger.json",
+      "expected_auth": "public"
+    },
+    {
+      "name": "public-read",
+      "method": "GET",
+      "path": "/metrics",
+      "expected_auth": "public"
+    },
+    {
+      "name": "public-read",
+      "method": "GET",
+      "path": "/robots.txt",
+      "expected_auth": "public"
+    },
+    {
+      "name": "authenticated-read",
+      "method": "GET",
+      "path": "/rest/user/whoami",
+      "expected_auth": "authenticated"
+    },
+    {
+      "name": "admin-read",
+      "method": "GET",
+      "path": "/rest/admin/application-version",
+      "expected_auth": "administrative"
+    },
+    {
+      "name": "basket-write",
+      "method": "POST",
+      "path": "/rest/basket",
+      "expected_auth": "authenticated",
+      "skip_reason": "state-changing verb \u2014 out of scope for the read-only map (decision 0016)"
+    }
+  ],
+  "synthetic_canary": {
+    "path": "/__sentinel_probe_canary__",
+    "note": "A path the gateway does NOT route. It must classify as `not-routed` on every run. It is SYNTHETIC on purpose: a canary that is a real finding would stop firing the moment the system is fixed, permanently breaking the run (red-team F6). This canary proves the prober is reaching the enforcement point and classifying, without depending on any vulnerability existing."
+  },
+  "session_canary": {
+    "path": "/rest/products/search",
+    "note": "An endpoint the ACL is KNOWN to allow for agent-recon. It must return 2xx with a minted token before any verdict is trusted: without a live identity every gateway reply is 401 and every endpoint would look protected (red-team H1's silent-failure mode)."
+  }
+}

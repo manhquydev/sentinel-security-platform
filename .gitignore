@@ -139,3 +139,4 @@ evaluation/sast-fp-discrimination/corpus/
 # Runtime probe evidence can contain identity-bearing response bodies once probes authenticate.
 # Commit redacted summaries/decisions instead of raw artefacts (red-team B2).
 evaluation/absence-detection/*-probe-*.json
+evaluation/absence-detection/defence-in-depth-map-*.json

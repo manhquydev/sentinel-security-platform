@@ -151,3 +151,13 @@ documents here as real choices are accepted, then index them in this file.
   Explains strong AI-SAST leaderboard scores alongside low real-world recall, and makes benchmark choice
   a load-bearing decision. Also: Juice Shop's /api/Challenges carries no CWE/endpoint, so the E8/E9
   runtime probers still lack a recall denominator (hand-labelling deferred).
+- [0025 Authorization is measured at the enforcement point; the finding is the defence-in-depth posture](0025-authorization-is-measured-at-the-enforcement-point-and-the-finding-is-defence-in-depth.md)
+  — two red-team lenses found the planned "detect missing authz" outcome unachievable here (the gateway
+  routes 8 endpoints, only 2 non-public, both correctly protected) and found E8's earlier finding was an
+  artefact of probing AROUND Kong. Reframed: judge at the enforcement point with a LIVE authenticated
+  identity; the finding is WHERE authorization is enforced. Measured on Juice Shop as agent-recon:
+  **2/2 non-public routed endpoints return 403 at the gateway but 200 at the app** — 100% rely solely on
+  Kong, a single point of failure any direct-to-app path defeats. Guarded by two fail-closed canaries
+  (session = identity liveness, synthetic = prober liveness) so a vacuous "clean" run is impossible, and
+  by a structural test that no LLM surface is reachable from the verdict path. Coverage bound stated:
+  8 routed endpoints, gateway-fronted slice only.
