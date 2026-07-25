@@ -97,3 +97,22 @@ provable upgrade, exactly where the drop-verifier failed decisively.
 | `fetch.sh` | fetch pinned RealVuln subset into `corpus/` (gitignored), fail-closed on SHA drift |
 | `spike-subset.txt` | committed repo-name subset for the bounded viability spike |
 | `agent/verifier/{verify,gate}.py`, `questions/*.json` | the clean-room verifier + deterministic gate + CWE question sets |
+
+## Multi-engine detection — the real recall lever (`run_multiengine.py`, decision 0022)
+
+Ranking cannot recover a vulnerability that was never detected. Over the same corpus (63 repos, 1790
+real vulns), measured with no LLM at all:
+
+| Engine | Findings | TP | Recall | Precision |
+|---|---|---|---|---|
+| Bandit | 1764 | 234 | 0.131 | 0.133 |
+| Semgrep (security-audit + owasp-top-ten + python) | 675 | 212 | 0.118 | **0.314** |
+| **Union** | 2439 | **336** | **0.188** | 0.138 |
+
+**Union = +44% relative recall at no precision cost.** The engines are complementary (of 336 union TPs
+only ~110 overlap; Bandit uniquely ~37%, Semgrep ~30%), and Semgrep has **2.4× Bandit's precision**.
+**But 81% of real vulns are still missed by both** — the most-missed classes (CWE-200 info exposure,
+284/862/639 access control / missing authz / IDOR, 20 input validation) need application semantics and
+runtime behaviour, which pattern/AST SAST structurally cannot see. That residual is the DAST/agentic
+layer's job, not a SAST tuning problem. Reproduce:
+`rag/.venv/bin/python evaluation/sast-fp-discrimination/run_multiengine.py`.

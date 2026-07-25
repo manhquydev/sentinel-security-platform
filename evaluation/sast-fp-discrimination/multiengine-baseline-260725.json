@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-07-25T12:48:16.498085+00:00",
+  "repos": 63,
+  "real_vulns_in_corpus": 1790,
+  "semgrep_configs": [
+    "p/security-audit",
+    "p/owasp-top-ten",
+    "p/python"
+  ],
+  "engines": {
+    "bandit": {
+      "findings": 1764,
+      "tp": 234,
+      "recall": 0.1307,
+      "precision": 0.1327
+    },
+    "semgrep": {
+      "findings": 675,
+      "tp": 212,
+      "recall": 0.1184,
+      "precision": 0.3141
+    },
+    "union": {
+      "findings": 2439,
+      "tp": 336,
+      "recall": 0.1877,
+      "precision": 0.1378
+    }
+  }
+}

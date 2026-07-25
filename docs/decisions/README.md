@@ -127,3 +127,11 @@ documents here as real choices are accepted, then index them in this file.
   vs the LLM's 0.818 (paired bootstrap +0.069 [+0.045,+0.095], significant) — so where labels exist the
   deterministic prior wins and no LLM is needed; the zero-shot LLM annotator is only the cold-start
   fallback. Measured-not-trusted holds a third time on this surface.
+- [0022 Multi-engine deterministic detection is the real recall lever; the SAST ceiling is structural](0022-multi-engine-deterministic-detection-is-the-real-recall-lever-sast-ceiling-needs-dast.md)
+  — ranking can't recover an undetected vuln, so detection was measured: Bandit recall 0.131, Semgrep
+  0.118 (but 2.4x the precision), **union 0.188 = +44% relative at no precision cost**, engines strongly
+  complementary (~37%/30% unique). **81% still missed by both** — CWE-200/284/862/639/20 (info exposure,
+  access control, missing authz, IDOR, input validation) need app semantics + runtime, which pattern SAST
+  structurally cannot see; that residual is the DAST/syndicate layer's job. Adding further engines
+  (OpenGrep/gosec/Brakeman/js-x-ray) is now an evidence-backed, per-language decision with a committed
+  harness. The founding thesis — AI stands on a broad deterministic tool foundation — measured, not assumed.
