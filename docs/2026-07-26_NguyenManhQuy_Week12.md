@@ -17,10 +17,17 @@ thì **AI hoặc thua, hoặc hòa, hoặc câu hỏi không trả lời đượ
 câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự án đã bác bỏ.
 
 > **Ranh giới em phải nói rõ, kẻo chính em cũng nói quá:** kết luận trên đã đo **cho vai
-> trò chốt chặn**. Còn vai trò **đề xuất** (AI nêu giả thuyết, code tất định kiểm chứng)
-> mới đo lần đầu đêm 26/07: hướng **tích cực** (21% file có lỗ bị gắn cờ, **0/16 file sạch
-> bị gắn cờ oan**) nhưng **chưa đủ mẫu để kết luận** (Fisher p = 0.065). Vì vậy trạng thái
-> đúng là **"chưa ngã ngũ"**, không phải "AI thua ở mọi vai trò".
+> trò chốt chặn** (phán quyết / xác nhận / xếp hạng). Vai trò **đề xuất** (AI nêu giả
+> thuyết, code tất định kiểm chứng) đo lần đầu đêm 26/07 và **kết quả ngược lại**: trên
+> đúng lớp lỗ mà máy quét mù (thiếu kiểm soát — IDOR, thiếu rate-limit, thiếu authz),
+> **Bandit + Semgrep tìm được 0/60 file**, còn LLM gọi đúng tên lớp lỗ ở **6/60 file
+> (p = 0.0137)** — cùng một bộ file, nên không phải do "file này bẩn hơn".
+>
+> Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Nhưng
+> **chưa bán được**: tỉ lệ trúng chỉ ~10%, 1/3 lượt model không trả lời, chỉ ở mức file
+> chứ không ra dòng, và **corpus là public + do LLM sinh** nên **không tách được "biết
+> làm" khỏi "đã học thuộc"** — tuyệt đối không hứa điều này cho code riêng của khách
+> (quyết định 0027).
 
 Vậy Sentinel là gì, nói thẳng bằng một câu:
 

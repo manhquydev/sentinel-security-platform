@@ -184,3 +184,15 @@ documents here as real choices are accepted, then index them in this file.
   **demolished** 0021 (now +0.095 per-application / tie pooled) and **confirmed** 0022 (+43.6%
   [+31.5%,+58.4%], with the hidden caveat that 22 of 63 repos gain nothing). Also bounds the lab's
   headline: "AI loses every comparison" is established **for gate roles only**.
+- [0027 The LLM belongs in the generative role, on absence-of-control classes](0027-the-llm-belongs-in-the-generative-role-on-absence-of-control-classes.md)
+  — every AI role this project had measured (judge 0018, verifier 0020, ranker 0021) was a **verdict/gate**
+  role the architecture forbids it to hold, so "AI loses every comparison" was structurally incomplete:
+  the **generative** role had zero measurements. Measured now, on the classes 0022–0024 proved pattern
+  SAST blind to: **Bandit + Semgrep flag an absence-class CWE in 0 of 60 vulnerable files**, while the
+  LLM names the ground-truth class in **6/60 (p = 0.0137)** and flags 10/60 (p = 0.00065) — on the
+  *identical* files, so file messiness is held fixed. Preregistered, powered by simulation, replicated on
+  a **disjoint** sample, positive-control gated. **Bounds are part of the claim:** ~10% hit rate,
+  file-level only (no model would emit structure — E16a), 33% non-answers, and RealVuln is public +
+  `llm_generated_corpus: true`, so capability and memorisation are **inseparable** and transfer to client
+  code is **unproven**. The headline is now two-part: deterministic wins in gate roles; the LLM supplies
+  what deterministic tooling cannot in the generative role.
