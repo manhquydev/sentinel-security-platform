@@ -453,3 +453,31 @@ under test manufactures findings. (2) The negative controls did not catch this: 
 enforces. A control-plane sanity check belongs in every runtime oracle. (3) Three of this lab's
 strongest claims have now been corrected by adversarial review (0021's significance, 0023's magnitude,
 and now E8's finding) — the pattern is consistent: **self-review does not catch the errors that matter.**
+
+## E13 — the marginal cost and marginal yield of the LLM layer, measured on a live run (2026-07-26)
+
+- **Hypothesis:** enabling the LLM layer on the Supervisor syndicate finds vulnerabilities the
+  deterministic path misses, and the added cost is worth that yield.
+- **Method:** the same target through the same gateway, run twice per configuration via
+  `agent/supervisor.py`: once with `--no-llm` (deterministic floor) and three times with
+  `--model sast-grok45` (LLM enabled). FinOps accounting (`agent/finops.py`) reports cost, tokens,
+  latency and errors per run; findings and exploit proposals are read from the run result. No mocks —
+  real gateway, real model, real target.
+- **Data:**
+
+  | run | LLM | calls | tokens | cost (est) | latency | findings | proposals |
+  |---|---|---|---|---|---|---|---|
+  | deterministic floor | off | 0 | 0 | $0.0000 | ~0s | 11 | 5 |
+  | llm-1 | grok-4.5 | 3 | 6971 | $0.0498 | 36.2s | 11 | 5 |
+  | llm-2 | grok-4.5 | 3 | 6862 | $0.0481 | 34.4s | 11 | 5 |
+  | llm-3 | grok-4.5 | 3 | 7023 | $0.0506 | 33.8s | 11 | 5 |
+
+  LLM cost is stable at **$0.048–$0.051 per run** (~7k tokens, ~35s, 0 errors across all three).
+- **Conclusion:** on this target the LLM layer produced the **same 11 findings and 5 exploit proposals**
+  as the $0 deterministic path, for **+$0.05 and +35s per run**. Marginal yield: zero. This is the same
+  result the whole research programme keeps reaching (E7, 0020, 0021, 0022) — every clean win came from
+  adding deterministic tooling, never from adding a model. The honest business-case framing is therefore
+  not "AI finds more"; it is "AI narrates and triages at a bounded, measured cost, on top of a
+  deterministic engine that does the finding." The single-target scope is a hard limit: this measures
+  marginal yield on one app the models have memorised, not on a client's private code, where the LLM's
+  contribution is untested (and, per the cancelled Phase 3, not answerable on this target).
