@@ -1340,3 +1340,35 @@ It stays in the repo, unrun, as the record of a control prepared before the answ
 inseparable". That is now too strong: they have been **partially separated**, and the surface-recall
 explanation is excluded. The bound narrows to *structural* familiarity and to the absence of a
 genuinely unseen target — a materially smaller claim than the one the decision shipped with.
+
+## E20 — PREREGISTRATION: file ROLE or missing CONTROL? (written before measuring)
+
+Registered 2026-07-26 04:25 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E18 showed the effect is class-specific rather than a reaction to messy code, and
+  named the one confound it could not remove: **absence-of-control vulnerabilities live
+  disproportionately in request handlers**, while XSS and hardcoded credentials live in templates, models
+  and utilities. So arm A and arm B differed in **file role** as well as in vulnerability class, and part
+  of the discrimination could be the model recognising "this is an endpoint" rather than "this endpoint
+  lacks a control". This is the control that separates them, and decision 0027 already specified it.
+- **Design — hold FILE ROLE fixed, vary only the control.** Both arms are **endpoint-handler files**
+  (`views.py`, `routes/*.py`, `/api/*`, `handlers.py`, `controllers/*`, `urls.py`, `endpoints.py`,
+  `resources.py`):
+  - **Arm A′** — handler files **with** an absence-class vulnerability. Already measured in E17 with the
+    frozen instrument: **7/28 = 0.250**.
+  - **Arm C** — handler files **without** any absence-class vulnerability: **all 42** that exist in the
+    corpus (27 carry some other real vulnerability, 15 carry none). Not sampled — this is the whole
+    population, so there is no sampling choice to get wrong.
+- **Hypothesis.** The model responds to the **missing control**, not the file role: arm A′ is flagged at a
+  higher rate than arm C.
+- **Falsifying result.** Arm C's rate is statistically indistinguishable from arm A′ ⇒ the model is
+  reacting to *endpoint-ness*, and **decision 0027's mechanism claim must be narrowed to "recognises
+  request-handling code"**, which would be a far weaker and much less useful finding.
+- **Primary test.** One-sided Fisher exact, α = 0.05, on ITT counts (non-answer = not flagged).
+- **Power, stated in advance and not flattering.** With n_C = 42 against arm A′ at 0.250: **87%** power if
+  arm C truly flags at 0.02, **71%** at 0.05, **42%** at 0.10. Powered for a large gap only. **Committed:
+  a mid-range result is reported inconclusive**, as E16b was.
+- **Instrument frozen.** Prompt, prose classifier, positive control and the transport-failure-vs-negative
+  canary rule are unchanged from E16b/E17/E18/E19.
+- **Known limits carried forward:** file-level granularity, one model, and arm A′ is reused rather than
+  re-run (deterministic instrument, temperature 0), which is stated rather than hidden.
