@@ -1,5 +1,3 @@
-# Bounded viability-spike subset (repo slugs from RealVuln benchmark-manifest.json).
-# ~24 vulns + 6 FP-traps across Flask + FastAPI — enough for a dev+held-out signal without a big LLM bill.
-realvuln-intentionally-vulnerable-python-application
-realvuln-python-insecure-app
-realvuln-insecure-web
+# Full RealVuln corpus (all 66 repos) for the definitive annotator AUC — memoized annotation keeps
+# the LLM cost ~= number of unique (rule,cwe,severity) tuples, not per-finding.
+# (Empty/all-commented = fetch ALL.)

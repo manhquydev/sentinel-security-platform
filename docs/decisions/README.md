@@ -117,3 +117,9 @@ documents here as real choices are accepted, then index them in this file.
   fail-allowed) — the honest path is a broader deterministic SAST foundation + a NON-load-bearing LLM
   annotator that can never drop a finding. Also: the default agent model moved to grok-4.5
   (`sast-grok45`, gpt-5.6-sol low on quota); frozen benchmark arms untouched.
+- [0021 The non-load-bearing LLM SAST annotator is a confirmed safe upgrade (ranks, never drops)](0021-non-load-bearing-sast-annotator-is-a-confirmed-safe-upgrade.md)
+  — the safe replacement for the disproven drop-verifier (0020): the LLM assigns a review-priority over
+  code-derived facts (operator-safe, no refusal) and NEVER drops a finding, so recall stays 1.0. Measured
+  over the full RealVuln corpus (n=1764, 37 memoized LLM calls): LLM annotator AUC 0.814 [0.780,0.848] vs
+  deterministic severity 0.732 [0.694,0.770] — significantly better (non-overlapping CIs), real-vuln
+  priority 0.44 vs FP-trap 0.26. The LLM assists the human's order-of-work, never the keep/drop call.

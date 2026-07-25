@@ -60,11 +60,15 @@ def main() -> int:
     rows = [{"cwe": f["cwe"], "severity": f.get("severity"), "is_vulnerable": f["is_vulnerable"],
              "det_score": _SEV.get(f.get("severity", ""), 0.5)} for f in findings]
 
-    llm_scored, llm_ok = None, 0
+    llm_scored, llm_ok, llm_calls = None, 0, 0
     if live:
-        llm = []
+        llm, cache = [], {}
         for f, r in zip(findings, rows):
-            p = ann.annotate(f["rule_id"], f["cwe"], f.get("severity", ""), model=model)
+            key = (f["rule_id"], f["cwe"], f.get("severity", ""))
+            if key not in cache:            # memoize: annotate depends only on the code-derived facts
+                cache[key] = ann.annotate(*key, model=model)
+                llm_calls += 1
+            p = cache[key]
             r["llm_priority"] = p
             llm_ok += int(p is not None)
             llm.append((p if p is not None else 0.5, f["is_vulnerable"]))  # unparseable -> neutral
@@ -78,6 +82,7 @@ def main() -> int:
         "auc_deterministic_severity": _auc(det),
         "auc_llm_annotator": _auc(llm_scored) if llm_scored else None,
         "llm_conformance": {"ok": llm_ok, "total": len(findings)} if live else None,
+        "llm_calls_memoized": llm_calls if live else None,
     }
     with open(os.path.join(_HERE, "annotate-baseline-260725.json"), "w", encoding="utf-8") as fh:
         json.dump({**result, "rows": rows}, fh, indent=2)
