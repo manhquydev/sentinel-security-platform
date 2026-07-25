@@ -141,6 +141,33 @@ def _sentences(t: str):
     return re.split(r"(?<=[.;:!?])\s+|\n+", t)
 
 
+# Per-CWE vocabulary for CLASS ATTRIBUTION: did the model name the class ground truth actually records
+# for this file, or did it flag the file for some unrelated problem? This distinction was decisive —
+# it is what withdrew E17's mechanism claim (6 of 10 flags named the ground-truth class, 4 did not) —
+# so it lives here with a test rather than as a one-off expression in a shell session.
+_CLASS_VOCAB = {
+    307: r"rate.?limit|throttl|lockout|brute.?forc",              # no limit on auth attempts
+    639: r"idor|bola|ownership|owner check|any (?:user|one) can", # authz bypass via user-controlled key
+    200: r"disclos|leak|exposure|expose|enumerat|reveal",         # information exposure
+    862: r"authoriz|access control|no auth\b|missing auth",       # missing authorization
+    306: r"unauthenticated|no authentication|missing authentication",
+    284: r"access control|authoriz",
+    863: r"authoriz|access control",
+    285: r"authoriz|access control",
+}
+
+
+def names_ground_truth_class(text: str, gt_cwes) -> bool:
+    """True if the model's prose names a class the ground truth records for this file.
+
+    A file-level flag alone does not show the model found THE vulnerability: a file containing a missing
+    ownership check may equally be flagged for an unrelated deserialization bug. Only this stricter
+    criterion supports a claim about detecting the class.
+    """
+    return any(re.search(_CLASS_VOCAB[c], text or "", re.I)
+               for c in gt_cwes if c in _CLASS_VOCAB)
+
+
 def classify_prose(text: str) -> str:
     """flagged | clean | non-answer — decided by deterministic rules over the model's own words."""
     t = (text or "").strip()

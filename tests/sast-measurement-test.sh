@@ -185,6 +185,23 @@ PY
 then ok "recall gain carries a CI excluding 0, precision delta spans 0, and the no-gain repo count ships"
 else bad "SM7: the multi-engine claim drifted or lost its interval/caveat"; fi
 
+sect "SM8: class attribution distinguishes finding THE vuln from flagging the file"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/sast-fp-discrimination")
+from run_generative import names_ground_truth_class as named
+# This criterion withdrew E17's mechanism claim, so it is load-bearing and must not drift.
+# The decisive property: identical prose must score differently depending on the GT class.
+prose = "Register 409 leaks email existence"
+discriminates = named(prose, {200}) and not named(prose, {307})
+# a real match and a real non-match
+hit = named("IDOR: no ownership check on note_id", {639})
+miss = not named("pickle.loads RCE on cookie", {639})
+print("  discriminates_by_class=%s true_match=%s true_nonmatch=%s" % (discriminates, hit, miss))
+sys.exit(0 if (discriminates and hit and miss) else 1)
+PY
+then ok "the same prose scores differently by ground-truth class — attribution is real, not a keyword hit"
+else bad "SM8: class attribution collapsed into a generic keyword match"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
