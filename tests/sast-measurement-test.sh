@@ -202,6 +202,25 @@ PY
 then ok "the same prose scores differently by ground-truth class — attribution is real, not a keyword hit"
 else bad "SM8: class attribution collapsed into a generic keyword match"; fi
 
+sect "SM9: the mechanism control arm is published, and mess alone does not trigger flags"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/messy-control-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run run_messy_control.py"); sys.exit(1)
+d = json.load(open(p))
+# E18 is what lets decision 0027 claim DETECTION rather than "reacts to messy code". The claim needs
+# arm B to stay well below arm A (0.167). If this ever climbs to meet it, the mechanism claim dies.
+rate = d["flag_rate"]
+n_ok = d["n"] >= 60
+arm = d.get("arm") == "messy-no-absence"
+print("  arm=%s n=%s flag_rate=%.3f (arm A was 0.167; clean was 0.025)" % (d.get("arm"), d["n"], rate))
+# Must be materially below arm A. 0.10 is the midpoint between the clean rate and arm A.
+sys.exit(0 if (arm and n_ok and rate < 0.10) else 1)
+PY
+then ok "defective-but-no-absent-control files stay near the clean rate, so mess is not the driver"
+else bad "SM9: the mechanism control arm is missing or its rate rose to meet arm A"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
