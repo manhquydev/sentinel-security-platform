@@ -1169,3 +1169,54 @@ model discriminates. E18 (running) tests whether that discrimination is class-sp
 
 **Retained without change:** the ~10% hit rate, the file-level granularity, the 33% non-answer rate, and
 the contamination bound. None of those depend on this framing.
+
+## E18 — RESULT: the effect is CLASS-SPECIFIC, not a reaction to messy code (p = 0.010)
+
+Run 2026-07-26 exactly as preregistered: arm B = 80 files with real ground-truth vulnerabilities of
+**presence classes only** (XSS, hardcoded credentials, cleartext storage, insecure cookie, unrestricted
+upload…) and **no** absent control. Instrument frozen, positive control passed, arm A reused from E17
+(deterministic, temperature 0).
+
+| arm | what the files contain | absence-class flag rate |
+|---|---|---|
+| **A** (E17) | an absence-of-control vulnerability | **10/60 = 0.167** |
+| **B** (new) | real vulnerabilities, but **none** absence-class | **3/80 = 0.037** |
+| clean controls (E17) | no ground-truth vulnerability at all | 1/40 = 0.025 |
+
+| comparison | separation | one-sided Fisher |
+|---|---|---|
+| **A vs B — the preregistered primary** | **+0.129**, 95% CI [+0.029, +0.237] | **p = 0.0103 → null REJECTED** |
+| **B vs clean** — is defective code enough on its own? | +0.012 | **p = 0.59 → no difference** |
+
+**The second row is the one that settles it.** Arm B files are objectively defective — every one carries
+a real, ground-truth-confirmed vulnerability — yet the model produces absence-of-control language about
+them at **the same rate as it does for files with nothing wrong at all**. Mess does not trigger it. The
+presence of an actual missing control does.
+
+**Decision 0027's central open question is therefore resolved in favour of detection.** The rival
+explanation — "the model just reacts to code that looks bad" — predicts arm B ≈ arm A. Measured, arm B ≈
+**clean files** instead, and differs from arm A at p = 0.010.
+
+### What this does not settle
+
+- **Residual confound worth naming:** absence-of-control vulnerabilities live disproportionately in
+  request handlers and endpoint code, while XSS and hardcoded credentials live in templates, models and
+  utilities. So arm A and arm B may differ in **file role** as well as in vulnerability class, and part
+  of the discrimination could be "this is an endpoint" rather than "this endpoint lacks a control".
+  Separating those needs endpoint-handler files that are correctly protected as a third arm — the next
+  control, not a footnote to this one.
+- **Sensitivity is unchanged and low:** 16.7% of files with an absent control are flagged.
+- **File-level, one model, and the corpus is public + LLM-seeded** — capability and memorisation remain
+  inseparable, so transfer to private code is still unproven.
+
+### The three-arm picture, which is the honest summary
+
+| files | flag rate |
+|---|---|
+| absence-class vulnerability present | **0.167** |
+| defective code, no absent control | 0.037 |
+| nothing wrong | 0.025 |
+
+The model discriminates the **class**, not the **defectiveness**. That is a materially stronger statement
+than E17 could make on its own, and it is the first mechanism claim this lab has been able to support
+rather than withdraw.
