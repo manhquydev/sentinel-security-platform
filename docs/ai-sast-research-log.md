@@ -1852,3 +1852,50 @@ same *kind* as the corpus — a recently-written web application with hand-built
 lab still does not have. The preregistered falsifier ("zero flags ⇒ transfer bound hardens") is
 therefore **withdrawn as unsound**: it would have drawn a conclusion this sample cannot support.
 Withdrawn before seeing the data, not after.
+
+## E25 — RESULT: zero flags on genuinely unseen code. Specificity transfers; sensitivity is untested.
+
+Run 2026-07-26. Positive control passed. 25 files of Sentinel's own `agent/` and `evaluation/` source,
+written 2026-07-24 and pushed 2026-07-25 — one to three days before this measurement.
+
+| verdict | count |
+|---|---|
+| clean | 17 |
+| non-answer | 8 (32%, in line with every other run) |
+| **flagged** | **0** |
+
+### The reading, constrained by the limit recorded before the data was seen
+
+This is the **ambiguous branch**, and the pre-recorded analysis applies without amendment: our own
+modules are **libraries, CLIs and probers, not a web application**, and the rubric asks about endpoints,
+ownership checks on user-supplied ids, and authentication rate limits. **Most of those questions do not
+apply to this code.** Zero findings is the *correct* answer for a library with no request handlers, and
+is indistinguishable from a failure of transfer. The preregistered falsifier was withdrawn for exactly
+this reason **before** the result was read.
+
+**What may NOT be concluded:** that sensitivity transfers to unseen code. Untested here, because there
+are no known positives to find. Also **not** concluded: that our own code is secure — that would require
+ground truth this experiment does not have, and a scanner reporting nothing is not evidence of absence
+(this project's own decision 0024 exists because of that fallacy).
+
+### What it does establish: specificity transfers
+
+The model examined 25 files of code it **cannot have trained on** and **manufactured no
+absence-of-control findings at all**. That is the same behaviour measured on the corpus — 0 of 40 clean
+files flagged (E17, corrected), 0 of 80 defective-but-not-absence files flagged (E18, corrected) — now
+reproduced on genuinely unseen input.
+
+It is a modest result and it is the *cheap* half of the pair: not inventing findings is easier than
+finding real ones. But it is the half that a false-positive-averse pentest workflow cares about most,
+and it is the first behaviour of this detector confirmed on code outside the memorised corpus.
+
+### The honest scoreboard on transfer
+
+| property | on the corpus | on unseen code |
+|---|---|---|
+| specificity (does not invent findings) | 0/40, 0/80 | **0/25 — transfers** |
+| sensitivity (finds real absent controls) | ~19–22% | **untested — no ground truth** |
+
+**Closing that gap needs what the lab still does not have:** a recently-written web application with
+hand-built ground truth. Our own code was the unseen target the lab wrongly believed did not exist; it
+is simply the wrong *kind* of code to measure recall on.
