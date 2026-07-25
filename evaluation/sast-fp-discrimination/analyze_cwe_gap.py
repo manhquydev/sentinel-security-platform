@@ -50,6 +50,12 @@ def match_index(finding: dict, gt: list[dict], claimed: set[int]) -> int | None:
 
 
 def _primary(g: dict):
+    """The ground truth's OWN primary class. An earlier version used min(cwes) over
+    primary ∪ acceptable, which misattributed 61% of vulnerabilities (e.g. CWE-798 booked as 259,
+    CWE-78 as 77, CWE-639 as 284) and distorted every per-class number in decision 0023."""
+    p = g.get("primary")
+    if p is not None:
+        return p
     return min(g["cwes"]) if g["cwes"] else None
 
 

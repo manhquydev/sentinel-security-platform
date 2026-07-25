@@ -63,6 +63,26 @@ scored on the held-out half — no leakage) was compared on the same held-out da
 Paired bootstrap (n=2000): **AUC(CWE-prior) − AUC(LLM) = +0.069, 95% CI [+0.045, +0.095]** — excludes 0,
 so the deterministic prior **significantly beats the LLM**.
 
+> **CORRECTION (2026-07-25, independent instrument audit).** That "+0.069, significant" is an artefact
+> of the SPLIT, not a transferable result. `rank_baselines.py` splits **rows** 50/50; the 1764 rows come
+> from only 63 repos / 16 CWE classes / 37 unique memoised LLM scores, so held-out rows are near-
+> duplicates of dev rows from the *same repo and often the same file*. There is no label leakage (the
+> prior is fit on dev only — verified), but the split is not independent. Under the
+> **deployment-realistic protocol** — leave-one-repo-out (fit on 62 repos, score the 63rd) with a
+> repo-cluster bootstrap — the result is:
+>
+> | protocol | AUC prior | AUC LLM | difference | 95% CI |
+> |---|---|---|---|---|
+> | published (row split) | 0.886 | 0.818 | +0.069 | [+0.045, +0.095] |
+> | **leave-one-repo-out** | **0.826** | 0.814 | **+0.013** | **[−0.006, +0.035] → TIE** |
+>
+> **What falls:** "significantly beats", the +0.069 magnitude, and the phrase "no leakage" (true for
+> labels, false for structure). **What stands:** the prior is free, offline, reproducible, and **at
+> least as good** as the LLM; the LLM never drops a finding (recall 1.0 by construction); and the
+> ordering of preference is unchanged. **Restated recommendation: prefer the deterministic prior on
+> COST and reproducibility grounds — not on a significant accuracy edge, which the data does not
+> support once the split respects repository boundaries.**
+
 **Corrected conclusion (the honest, more useful one).** The LLM annotator is safe (recall 1.0) and does
 beat the scanner's raw severity — but it is NOT the best ranker available. The decisive distinction is
 **labels**:

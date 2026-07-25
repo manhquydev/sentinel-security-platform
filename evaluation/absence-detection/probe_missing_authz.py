@@ -51,6 +51,10 @@ TRIVIAL_BODY_BYTES = 32
 # NEGATIVE CONTROL: GET endpoints that genuinely require a session on this target. They must classify
 # as `control-present` (401/403); if the prober ever flags these, its oracle is broken. Read-only GETs.
 EXPECTED_PROTECTED = ["/rest/basket/1", "/api/Cards", "/api/Addresss"]
+# A path that does not exist. On an SPA target the server answers 200 with index.html, which an
+# earlier version mis-classified as "control-absent" — so this control MUST come back non-2xx or
+# be recognised as the HTML fallback, else the oracle is unsound on this target.
+NONEXISTENT_CONTROL = "/this-path-should-not-exist-sentinel-probe"
 
 
 def _assert_loopback(url: str) -> None:
@@ -74,7 +78,7 @@ def _candidates() -> list[dict]:
             continue
         if ":" in e.get("path", ""):                  # skip templated ids we cannot instantiate safely
             continue
-        out.append(e)
+        out.append(e)   # `confidence` rides along for the verdict gate
     return out
 
 
@@ -82,7 +86,7 @@ def probe(endpoint: dict) -> dict:
     """One credential-free GET; classify the control as present/absent."""
     url = TARGET.rstrip("/") + endpoint["path"]
     try:
-        r = requests.get(url, timeout=TIMEOUT)  # deliberately NO auth header
+        r = requests.get(url, timeout=TIMEOUT, allow_redirects=False)  # NO auth header; no redirects
         status, size = r.status_code, len(r.content or b"")
         body = (r.text or "")[:120]
     except Exception as exc:  # network/transport failure is not a finding
@@ -90,6 +94,12 @@ def probe(endpoint: dict) -> dict:
 
     if status in (401, 403):
         verdict, detail = "control-present", f"HTTP {status} as required"
+    elif 200 <= status < 300 and "text/html" in (r.headers.get("content-type", "").lower()):
+        # SPA fallback: the server answers 200 + index.html for ANY path, so a 200 here is no evidence.
+        verdict, detail = "inconclusive", f"HTTP {status} but HTML (SPA fallback) — not endpoint evidence"
+    elif 200 <= status < 300 and endpoint.get("confidence") not in ("observed", "high", None):
+        # The baseline label is a hypothesis, not an observation: report, do not claim a finding.
+        verdict, detail = "label-unverified", f"HTTP {status}, {size}B but baseline label is a hypothesis"
     elif 200 <= status < 300:
         # The VERDICT is the missing control; size is impact context only.
         impact = "data returned" if size > TRIVIAL_BODY_BYTES else "trivial body (low data impact)"
@@ -115,12 +125,17 @@ def main() -> int:
     for e in eps:
         e["_role"] = "baseline"
     controls_in = [{"path": p, "auth_class": "expected-protected", "state_change": "read-only",
-                    "method": "GET", "_role": "negative-control"} for p in EXPECTED_PROTECTED]
+                    "method": "GET", "confidence": "observed", "_role": "negative-control"}
+                   for p in EXPECTED_PROTECTED]
+    controls_in.append({"path": NONEXISTENT_CONTROL, "auth_class": "nonexistent-path",
+                        "state_change": "read-only", "method": "GET", "confidence": "observed",
+                        "_role": "negative-control"})
     results = [probe(e) for e in eps + controls_in]
 
     findings = [r for r in results if r["verdict"] == "control-absent" and r["role"] == "baseline"]
     neg = [r for r in results if r["role"] == "negative-control"]
-    neg_ok = [r for r in neg if r["verdict"] == "control-present"]
+    # a negative control passes if it is NOT reported as a finding
+    neg_ok = [r for r in neg if r["verdict"] in ("control-present", "inconclusive")]
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "target": TARGET,
            "probed": len(results), "findings": len(findings),
@@ -131,8 +146,8 @@ def main() -> int:
 
     print(f"target={TARGET}  probed={len(results)} read-only GET endpoints (NO credentials sent)")
     for r in results:
-        mark = {"control-absent": "FINDING ", "control-present": "ok      ",
-                "error": "error   ", "inconclusive": "?       "}[r["verdict"]]
+        mark = {"control-absent": "FINDING ", "control-present": "ok      ", "error": "error   ",
+                "inconclusive": "?       ", "label-unverified": "unverif "}[r["verdict"]]
         tag = "[neg-ctl]" if r["role"] == "negative-control" else "         "
         print(f"  {mark}{tag} {str(r['auth_class']):18s} {r['path']:36s} {r['detail']}")
     print(f"\nRESULT: {len(findings)} missing-authz finding(s) on baseline-labelled non-public endpoints; "

@@ -77,6 +77,9 @@ def load_gt(slug: str) -> list[dict]:
         cwes = {_cwe_int(c) for c in ([e.get("primary_cwe")] + (e.get("acceptable_cwes") or []))}
         gt.append({"is_vulnerable": bool(e.get("is_vulnerable")),
                    "cwes": {c for c in cwes if c is not None},
+                   # `cwes` (primary ∪ acceptable) is for MATCHING only. Attribution must use the
+                   # primary class: an audit found min(cwes) misattributed 61% of vulnerabilities.
+                   "primary": _cwe_int(e.get("primary_cwe")),
                    "file": e.get("file", ""),
                    "line": int((e.get("location") or {}).get("start_line", 0))})
     return gt
