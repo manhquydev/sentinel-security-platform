@@ -1900,3 +1900,35 @@ and it is the first behaviour of this detector confirmed on code outside the mem
 **Closing that gap needs what the lab still does not have:** a recently-written web application with
 hand-built ground truth. Our own code was the unseen target the lab wrongly believed did not exist; it
 is simply the wrong *kind* of code to measure recall on.
+
+## E26 — PREREGISTRATION: sensitivity on unseen code with known ground truth (written before measuring)
+
+Registered 2026-07-26 05:55 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E25 established that *specificity* transfers to unseen code but left *sensitivity* untested,
+  because our own source is a library with no request handlers and therefore no known positives. The
+  missing piece is a **recently-written web application with hand-built ground truth**. It can be built.
+- **Method.** A small Flask application is authored **now**, in this session, as matched pairs of route
+  modules: each pair implements the same feature, one variant **with** the required control and one
+  **without**. Ground truth is exact by construction — I know what was planted, because I planted it.
+  Provably unseen: the code will not exist until minutes before the measurement.
+- **Primary outcome.** Sensitivity (fraction of planted-defect modules flagged) **and** specificity
+  (fraction of controlled modules flagged), on code with zero possibility of memorisation.
+- **THE BIAS THAT WORRIES ME MOST, named before writing a line of it.** I am authoring the test set, and
+  an author who knows what the detector looks for can write defects in a **textbook shape** the model
+  spots easily, inflating sensitivity into meaninglessness. Three constraints against that:
+  1. **Matched pairs.** Vulnerable and controlled variants implement the *same* feature in the *same*
+     style, differing only in the control. Anything that makes a defect easy to spot also appears in its
+     control twin, where it must NOT be flagged.
+  2. **No announcements.** No comment, name, or docstring may hint at the defect — no `# vulnerable`,
+     no `unsafe_`, no `TODO: add authz`. Written as a competent developer writes code they believe is
+     fine.
+  3. **Realistic idiom.** Ordinary CRUD handlers with ORM calls, serializers and error handling — not
+     four-line demonstrations.
+- **What a high score would and would not mean.** High sensitivity here shows the model detects
+  **planted defects of the kinds I chose, written in my style** — it does **not** generalise to a real
+  client codebase, whose defects nobody designed to be findable. Stated now so it cannot be dressed up
+  later.
+- **Falsifying result.** Sensitivity near zero on planted defects ⇒ the capability does not transfer to
+  unseen code, and decision 0027's central claim is confined to the memorised corpus.
+- **Instrument frozen:** same prompt, corrected classifier, positive-control gate.
