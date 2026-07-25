@@ -251,10 +251,17 @@ of running it for real rather than reasoning about it:
    from an implicit part of Stage 5 to a hard gate: *an unverified join is worse than no analysis,
    because it looks like data.*
 
-2. **Never discard the grouping unit when writing an artefact.** The committed baseline recorded no repo
-   field, which is *why* the corrected grouped number had never been reproducible — it existed only as
-   prose. Any artefact that will be re-analysed must persist its grouping key. Cheap to add, impossible
-   to recover later without a replay.
+2. **Never discard ANYTHING re-analysis needs — and "anything" means every form of discarding.** The
+   committed baseline recorded no repo field, which is *why* the corrected grouped number had never been
+   reproducible. Any artefact that will be re-analysed must persist its grouping key.
+   **Amended (E27), because the same mistake recurred in a different shape within eight hours:** two
+   experiments stored only the first 400 characters of each model response, which 37–40% of responses
+   exceeded. Their live results are sound — classification ran on complete output — but they can never
+   be re-verified from the committed artefacts, and a naive re-score *under*-counts them badly enough to
+   erase a significant result. **Dropping a column, truncating a string, and rounding a float are the
+   same error.** This rule was written about columns and then violated with a string cap by its own
+   author the same night, which is the strongest evidence available that a narrowly-worded rule does not
+   generalise on its own.
 
 3. **Expect the first version of a test to be wrong.** Two of the six new assertions failed on first run,
    both because the *assertion* was wrong, not the code — a Laplace base rate legitimately varies per
