@@ -14,6 +14,30 @@ model_list:
       model: deepseek/deepseek-chat
       api_key: os.environ/DEEPSEEK_API_KEY
 
+  # Week-11 (decision 0019): the ON-PREM / air-gapped path. Routes to a locally-served OSS model
+  # exposing an OpenAI-compatible API — Ollama on a laptop GPU here (verified live: qwen2.5:0.5b on
+  # ~0.5 GB VRAM), or vLLM on a datacenter GPU (see infra/vllm/). `host.docker.internal` +
+  # `extra_hosts: host-gateway` in docker-compose.yml lets this container reach the host-served model;
+  # override ONPREM_API_BASE for a different host/port. No per-token billing — FinOps prices it at $0.
+  - model_name: local-onprem
+    litellm_params:
+      model: openai/qwen2.5:0.5b
+      api_base: os.environ/ONPREM_API_BASE   # e.g. http://host.docker.internal:11434/v1
+      api_key: "on-prem-local"               # dummy; the local server ignores auth
+      stream: false
+
+  # The project's DEFAULT agent model (2026-07-25): cx/gpt-5.6-sol is running low on quota, so the
+  # agents default to grok-4.5. It rides the SAME clawcmc router as the cx/* tiers (runs/
+  # spike-router-3models-260724.md) — a different family that also implements the Responses API and
+  # returns populated usage. The frozen benchmark arm `sast-sol` is left untouched (its committed
+  # scorecards are only reproducible through that alias, decision 0001).
+  - model_name: sast-grok45
+    litellm_params:
+      model: openai/gcli/grok-4.5
+      api_base: os.environ/ROUTER_API_BASE
+      api_key: os.environ/ROUTER_API_KEY
+      stream: false
+
   # Router tiers under test, on the clawcmc agent router.
   #
   # The router defaults to streaming: without an explicit stream:false it answers

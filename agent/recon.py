@@ -109,7 +109,7 @@ def build_map(use_llm: bool = True) -> AttackSurfaceMap:
             all_lake.extend(lake.findings(tgt["product"], scanner))
 
     # Resolve the model once: the analysis model when the LLM runs, else "none".
-    model = (os.environ.get("RECON_MODEL", "sast-sol") if use_llm else "none")
+    model = (os.environ.get("RECON_MODEL", "sast-grok45") if use_llm else "none")
 
     cwes = {lf.cwe for lf in all_lake if lf.cwe}
     per_cwe, all_refs = _rag_for_cwes(cwes)

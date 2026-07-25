@@ -78,6 +78,11 @@ services:
       EMBED_MODEL: "${EMBED_MODEL:-}"
       EMBED_API_KEY: "${EMBED_API_KEY:-}"
       EMBED_API_BASE: "${EMBED_API_BASE:-}"
+      # Week-11 (decision 0019): the on-prem `local-onprem` model alias reaches a model served on
+      # the HOST (Ollama/vLLM). Default points at host.docker.internal so the container can hop to it;
+      # override for a different endpoint. (In a sandbox that forbids non-loopback binds the host
+      # server can't be reached from here — see decision 0019; on real hardware this resolves.)
+      ONPREM_API_BASE: "${ONPREM_API_BASE:-http://host.docker.internal:11434/v1}"
       # Tracing. Langfuse publishes only a loopback port, which a container cannot reach,
       # so the proxy joins that stack's network and addresses it by service name.
       LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY:-}"
@@ -89,6 +94,9 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./guardrails:/app/guardrails:ro
+    # Week-11: reach a HOST-served on-prem model (Ollama/vLLM) for the `local-onprem` alias.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       # Loopback only. The gateway holds the router credential and every virtual key;
       # nothing about it should be reachable from the network.

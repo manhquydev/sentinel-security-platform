@@ -1,0 +1,43 @@
+# Week-11 (decision 0019): vLLM as the DATACENTER-GPU production path for on-prem serving.
+#
+# NOT run in this project's dev environment: vLLM targets high-throughput server GPUs, and the dev
+# box has a 4 GB laptop GPU + no docker nvidia runtime. There, the on-prem path is served by Ollama
+# (verified live — see infra/vllm/README.md and decision 0019). This compose is the reproducible
+# production target: on a real GPU host with the NVIDIA Container Toolkit, it serves an OSS model on
+# an OpenAI-compatible API that the LiteLLM gateway's `local-onprem` alias routes to.
+services:
+  vllm:
+    image: vllm/vllm-openai:v0.11.0
+    container_name: sentinel-vllm
+    # Pin a real OSS model + size to the target GPU. Example: a 7B on a 24 GB card.
+    command: >
+      --model Qwen/Qwen2.5-7B-Instruct
+      --served-model-name local-onprem
+      --max-model-len 8192
+      --gpu-memory-utilization 0.90
+    ports:
+      - "127.0.0.1:8000:8000"          # OpenAI-compatible; gateway routes here via ONPREM_API_BASE
+    volumes:
+      - vllm-hf-cache:/root/.cache/huggingface
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}          # only if pulling a gated model
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ipc: host                           # vLLM needs host IPC for tensor-parallel shared memory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  vllm-hf-cache:
+# To point the gateway at this instead of Ollama:
+#   ONPREM_API_BASE=http://host.docker.internal:8000/v1  docker compose -f infra/litellm/docker-compose.yml up -d
