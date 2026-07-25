@@ -2139,3 +2139,26 @@ re-analyse.
 
 **Unchanged limits:** n is small; one model; one corpus; the defect distribution is RealVuln's;
 structural familiarity untested; and every sensitivity figure remains a floor.
+
+## E29 — PREREGISTRATION: tighten the determinism estimate (written before measuring)
+
+Registered 2026-07-26 06:24 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** The 36% verdict-instability figure (E22) became the most load-bearing number of the session:
+  it **withdrew two preregistered experiments** (E19, E20), forced two rebuilt designs (E23, E24), and
+  produced two protocol rules. It rests on **n = 14**. A number carrying that much weight should not
+  have an interval that wide, and no one has ever reported one for it.
+- **Method.** 24 files queried **twice each in the same run**, identical input, frozen prompt and
+  classifier, `temperature=0.0` — same protocol as E22, larger sample, drawn to include **both** arms
+  (absence-class and control files) rather than arm A only, since E22 sampled only vulnerable files and
+  instability could plausibly differ by arm.
+- **Primary outcome.** Verdict disagreement rate with a **95% bootstrap interval** — the interval E22
+  never reported.
+- **Secondary.** Disagreement rate **split by arm**, to test whether instability is uniform or
+  concentrated where the model is closer to a decision boundary.
+- **Prediction, recorded in advance.** The pooled rate lands near E22's 36%, with an interval wide enough
+  that "roughly a third" is the honest phrasing rather than "36%". If it lands far from 36%, the earlier
+  figure was a small-sample artefact and every statement citing it needs the corrected number.
+- **What does NOT change either way.** The two withdrawals stand regardless: E19's and E20's designs
+  reused single verdicts as fixed values, which is invalid at *any* non-trivial instability, and both
+  have since been rebuilt and re-established (E23, E24, E28).
