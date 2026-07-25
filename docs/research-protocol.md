@@ -339,3 +339,30 @@ mutation or not. E20 compared a reused arm against a fresh one. Both are withdra
 and listed a negative control, a canary and fail-closed behaviour. It never said "and check that it
 returns the same answer twice." Three experiments were designed, preregistered and published in one
 night on top of that gap.*
+
+---
+
+## 12. A simulation is an instrument (E30, 2026-07-26)
+
+A noise model built in the final hour of this session concluded that **every** published interval
+crossed zero — that the whole generative-role finding dissolved once measurement error was honestly
+included. It was wrong. It treated a measured **disagreement rate** (0.395) as a per-verdict **flip
+probability**, and two draws disagreeing with probability 2θ(1−θ) is not the same thing at all.
+Modelling it as a flip annihilated the signal in both arms by construction, whatever the data said.
+
+It was caught by one thing: this lab had already **measured** the quantity the model was estimating.
+E28's replication put run-to-run drift of the headline difference at **0.001**; the model predicted
+~0.2. Two orders of magnitude, against a direct measurement.
+
+**Rules:**
+
+1. **A simulation is an instrument and gets the same treatment as one** — a positive control, a
+   sanity check against a known quantity, and Stage-5's question (*what would it print if the
+   hypothesis were false?*). A model that outputs the null for every input is not measuring the world.
+2. **Validate models against measurements, never the reverse.** Where a direct empirical estimate of the
+   modelled quantity exists, it wins. If the model disagrees with it by orders of magnitude, the model
+   is broken — that is not a finding about the data.
+3. **Watch for the flattering-in-reverse result.** Everything else in this protocol guards against
+   claims that flatter the author. This one would have retracted five of the author's own findings in a
+   dramatic act of apparent rigour, and it was just as false. **Self-criticism is not self-evidently
+   correct**, and a humble-sounding result deserves the same verification as a triumphant one.
