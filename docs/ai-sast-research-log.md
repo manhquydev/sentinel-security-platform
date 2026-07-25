@@ -802,3 +802,62 @@ this model shelf, **not** about LLMs in general.
 built on these models by asking for structure. The disposal layer must consume the models' **native
 output** — which is what E16 does: the model answers in prose, and a deterministic classifier over
 absence-of-control vocabulary decides. No model is ever consulted about its own output.
+
+## E16b — RESULT: the generative role points positive, but this sample cannot establish it
+
+Run 2026-07-26, 24 vulnerable files + 16 clean controls, `sast-grok45`, positive control passed.
+
+| | flagged | n | rate |
+|---|---|---|---|
+| files containing an absence-class vulnerability | 5 | 24 | **0.208** |
+| clean control files (no ground-truth vulnerability) | **0** | 16 | **0.000** |
+
+Non-answers (model asked a question or returned a refactor instead of a review): **4/24** vulnerable,
+**8/16** clean.
+
+| analysis | separation | 95% CI (bootstrap) | Fisher exact, one-sided |
+|---|---|---|---|
+| **ITT** (non-answer = not flagged; no post-selection) | **+0.208** | [+0.042, +0.375] | **p = 0.065** |
+| engaged-only (conditions on the model answering) | +0.250 | [+0.100, +0.450] | p = 0.158 |
+
+### Verdict: INCONCLUSIVE — as preregistered, not as an afterthought
+
+The preregistration committed in advance that "a near-zero or near-total result is interpretable, a
+**marginal one is not, and will be reported as inconclusive rather than spun**." This is marginal, so
+that is the verdict.
+
+The bootstrap CI excludes 0, but **it should not be trusted here**: the clean arm has a **zero cell**
+(0/16), so every bootstrap resample of that arm returns 0 and the interval reduces to the vulnerable
+arm's spread — it cannot represent the uncertainty in a 0/16 estimate. Fisher's exact test is the
+appropriate instrument for these counts, and it gives **p = 0.065**: not significant at 0.05. Reporting
+the bootstrap interval as the headline would have been exactly the "positive point estimate read as a
+win" error that produced the retracted +0.069.
+
+The engaged-only analysis is reported but is **the weaker one**, because the non-answer rate differs
+sharply by arm (17% vulnerable vs 50% clean), so conditioning on engagement is post-selection on a
+variable correlated with the outcome.
+
+### What is nevertheless worth recording
+
+1. **Specificity was perfect: 0 of 16 clean files drew a false absence-class claim.** The model never
+   invented a missing control where ground truth says there is none. That is the failure mode the
+   negative controls existed to catch, and it did not occur.
+2. **Sensitivity is low: ~21% of vulnerable files flagged.** Even taken at face value this is a weak
+   detector, not a replacement for anything.
+3. **The direction is positive** — the first AI role in this lab's history to point that way rather than
+   losing outright. But direction is not a result.
+
+### Bounds that travel with this number
+
+- **File-level, not line-level.** Line-level structured output was unobtainable (E16a), so per-line
+  precision is unmeasured.
+- **Contamination.** RealVuln is public and its repos are `llm_generated_corpus: true`. A positive
+  result mixes capability with memorisation inseparably and **cannot** be claimed to transfer to a
+  client's private code.
+- **Single model, single run, n=40.**
+
+### Consequence for the lab's headline claim
+
+The Week-12 claim "every measured AI-vs-deterministic comparison ended badly for AI" remains true **for
+gate roles**, which is where it was measured. For the generative role the honest status is now
+**"unresolved, direction positive, underpowered"** — not a win, and no longer an untested blank.
