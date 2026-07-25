@@ -125,10 +125,13 @@ documents here as real choices are accepted, then index them in this file.
   priority 0.44 vs FP-trap 0.26. The LLM assists the human's order-of-work, never the keep/drop call.
   **AMENDED, then CORRECTED**: a self-red-team reported the free deterministic CWE-class prior beating
   the LLM by +0.069 [+0.045,+0.095] — but that split was by ROW, so rows from one repo sat on both
-  sides and the prior was graded on repos it was fitted on. Under **leave-one-repo-out** the same data
-  gives **+0.012 [−0.006,+0.035] — a TIE** (E14; the leakage was worth +0.057 AUC). Prefer the
-  deterministic prior on **cost and reproducibility**, NOT on an accuracy edge. Measured-not-trusted
-  holds a third time on this surface — against our own first correction.
+  sides and the prior was graded on repos it was fitted on. Corrected twice: leave-one-repo-out **pooled**
+  gives +0.012 [−0.006,+0.035] (a tie), but pooling ranks pairs that are only **1.9% within-repository**.
+  On the **per-application** estimand — how a pentest team actually triages — the same scores give
+  **+0.095 [+0.063,+0.128], the deterministic prior WINS**. Row-splitting was worth **+0.022** at matched
+  train size (not the +0.057 briefly published). The original direction was right; its method and
+  magnitude were not. Measured-not-trusted held twice on this surface, both times against our own
+  previous answer.
 - [0022 Multi-engine deterministic detection is the real recall lever; the SAST ceiling is structural](0022-multi-engine-deterministic-detection-is-the-real-recall-lever-sast-ceiling-needs-dast.md)
   — ranking can't recover an undetected vuln, so detection was measured: Bandit recall 0.131, Semgrep
   0.118 (but 2.4x the precision), **union 0.188 = +44% relative at no precision cost**, engines strongly

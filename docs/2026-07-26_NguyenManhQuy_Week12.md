@@ -114,7 +114,7 @@ AI-với-tất-định có đo đều kết thúc bất lợi cho AI:
 |---|---|---|---|
 | LLM làm trọng tài chấm đúng/sai | AI phán quyết được | **Từ chối 12/12** dưới xuất xứ đúng | decision 0018 |
 | LLM verifier lọc false-positive | AI bỏ FP, giữ lỗ thật | **Bỏ mất 3/8 lỗ thật** (38% mất recall) | decision 0020 |
-| LLM annotator xếp hạng | AI hơn tiên nghiệm CWE | **Hòa** (+0.013, CI chồng nhau) sau leave-one-repo-out | decision 0021 |
+| LLM annotator xếp hạng | AI hơn tiên nghiệm CWE | **Thua** — xếp hạng trong từng app: tiên nghiệm CWE miễn phí **+0.095 [+0.063,+0.128]**; gộp chung mọi app thì hòa | 0021, E14 |
 | Lớp LLM trong syndicate | AI tìm ra lỗ mà tất định bỏ sót | **0 finding thêm**, +$0.05 & +35s/lần | E13 |
 | AI-SAST bên thứ ba (SAIST) | Cắm vào là chạy | **Không kết nối** qua cổng xuất xứ; **thoát mã 0 dù lỗi 500** | E11 |
 

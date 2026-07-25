@@ -60,6 +60,19 @@ scored on the held-out half — no leakage) was compared on the same held-out da
 | LLM annotator (zero-shot) | 0.818 | [0.770, 0.865] |
 | **deterministic CWE-prior (supervised)** | **0.886** | **[0.847, 0.926]** |
 
+> **SECOND CORRECTION (2026-07-26, E14 + adversarial review).** The first correction called this a
+> **tie**. That was right about the method and wrong about the *estimand*. Re-audited: the pooled AUC
+> ranks pairs of which only **1.9%** are within-repository, so it scores "does app A's true positive
+> outrank app B's false positive" — a question that matters only in one global cross-client queue. On
+> the **per-application** estimand, which is how this project's user actually triages, the same
+> leave-one-repo-out scores give **+0.095, 95% CI [+0.063, +0.128] — the deterministic prior WINS**
+> (pooled: +0.012 [−0.006, +0.035], a tie). Both are published; per-application is primary.
+>
+> Net: the original **direction** was right, the original **method** (row split) and **magnitude** were
+> not. The measured leakage from row-splitting is **+0.022** at matched train size, not the +0.057 this
+> lab briefly published. Instrument: `evaluation/sast-fp-discrimination/rank_grouped.py`; pinned by
+> `tests/sast-measurement-test.sh` SM4–SM6.
+
 Paired bootstrap (n=2000): **AUC(CWE-prior) − AUC(LLM) = +0.069, 95% CI [+0.045, +0.095]** — excludes 0,
 so the deterministic prior **significantly beats the LLM**.
 

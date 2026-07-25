@@ -250,3 +250,32 @@ of running it for real rather than reasoning about it:
 measurement stack lost its correction because nothing did. **Any code path that produces a published
 number needs the same guard as a code path that produces a verdict.** A retracted claim with no test
 against it will come back.
+
+---
+
+## 10. What Stage 8 caught that Stages 1–7 could not (2026-07-26)
+
+E14 was written specifically to demonstrate this protocol. It was preregistered, controlled, verified,
+interval-reported — and its headline conclusion was still wrong, because it fixed the **split** and
+inherited the **micro-averaging** sitting right next to it. An independent reviewer reproduced every
+number, then measured that only **1.9%** of the pairs the pooled AUC ranked were within-repository.
+
+Three rules follow, and they are the highest-value output of the whole exercise:
+
+1. **Name the estimand before measuring, and justify it from the deployment.** "AUC" is not one number.
+   Pooling across groups and averaging within groups answer different questions and here they disagreed
+   in *direction* — tie versus a clear win. Which one is right is a **product** question (does the user
+   triage one application at a time, or one global queue?), so it must be argued in the open, never
+   settled implicitly by a pooling step. Add to the Stage-2 preregistration.
+
+2. **Fixing a known flaw does not immunise you against its neighbour.** The protocol named
+   micro-averaging as half the scar (§2 Stage 7) and E14 still shipped with it. When correcting a
+   defect, enumerate the *other* defects of the same family and check each explicitly.
+
+3. **A test written by the instrument's author can be vacuous in exactly the way the instrument is
+   wrong.** SM4 recomputed the expression it was asserting and therefore could never fail; SM6's
+   file-wide search exempted any file whose docstring merely used the word "ties". Both were written by
+   the same person who wrote the code they guarded. **Stage 8 must review the tests, not only the
+   result.**
+
+**Standing consequence:** no result becomes a decision on the strength of author-written tests alone.
