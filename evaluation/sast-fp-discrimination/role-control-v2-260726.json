@@ -1,0 +1,594 @@
+{
+  "generated_at": "2026-07-26",
+  "design": "both arms fresh, same run",
+  "arm_a_prime": {
+    "flagged": 9,
+    "n": 40
+  },
+  "arm_c": {
+    "flagged": 2,
+    "n": 42
+  },
+  "difference": 0.1774,
+  "ci95": [
+    0.031,
+    0.3262
+  ],
+  "fisher_p_one_sided": 0.0195,
+  "rows": [
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-damn-vulnerable-graphql-application",
+      "file": "core/views.py",
+      "verdict": "non-answer",
+      "response": "File received. What need?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/admin/views.py",
+      "verdict": "clean",
+      "response": "**Bugs / security**\n\n1. No admin check \u2014 any authed user hits delete/update.\n2. L79 junk: `users2 = ['dsds', 'f', 'f', 'f']` \u2014 delete.\n3. L59\u201365 password broken (redaction + no hash + double-write).\n4. L28\u201331 dead: `DoesNotExist` already returned.\n5. L103 crash if empty analytics: `values[0]`.\n\n**Minimal fix path**\n\n```python\n# admin_update_user \u2014 replace body\nuser = User.objects.get(user_id=int(s"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/api/mobile/views.py",
+      "verdict": "flagged",
+      "response": "**Security:** `eval()` on `request.GET` is remote code execution. Anyone can run arbitrary Python on your server.\n\n```python\nfrom django.http import HttpResponse\nfrom django.views.decorators.http import require_http_methods\nfrom django.core import serializers\nfrom app.models import User\n\nMODELS = {\"User\": User}\n\n@require_http_methods([\"GET\"])\ndef api_index(request):\n    model = MODELS.get(request."
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/api/users/views.py",
+      "verdict": "clean",
+      "response": "File dumped. Want?\n\n- vuln audit\n- fix\n- something else"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/messages/views.py",
+      "verdict": "flagged",
+      "response": "**Bugs**\n\n1. Typo L41: `available_receipients` \u2192 `available_recipients` (template KeyError on POST fail)\n2. Authz hole: POST trusts `creator_id`/`receiver_id`/`read` \u2014 spoof any sender, mark read\n3. Authz hole: GET/DELETE any `message_id` \u2014 no owner check\n4. Bare `except Exception` swallows everything\n5. `user_id` path param unused; redirect builds URL by hand\n\n**Minimal fix**\n\n```python\n@require_"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/pay/views.py",
+      "verdict": "flagged",
+      "response": "**Critical bugs**\n\n1. **IDOR delete** \u2014 `user_pay` deletes any `pay_id`, no owner check.\n2. **IDOR create/decrypt** \u2014 `user_id` path param ignored; never verified vs `curr_user`.\n3. **No input validation** \u2014 bank/routing/percent raw from POST.\n4. **Decrypt lookup** \u2014 `get(bank_account_num=account_num)` fails if DB stores ciphertext.\n\n**Minimal fix (ownership + delete):**\n\n```python\n@require_http_m"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/work_info/views.py",
+      "verdict": "flagged",
+      "response": "IDOR. Auth only checks login. Any user reads any `user_id`.\n\n```python\nfrom django.shortcuts import get_object_or_404, render\nfrom django.core.exceptions import PermissionDenied\nfrom django.views.decorators.http import require_http_methods\nfrom app.decorators import user_is_authenticated\nfrom app.models import User\n\n\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef user_work_info_index(re"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/auth_routes.py",
+      "verdict": "flagged",
+      "response": "```python\n# backend/routes/auth_routes.py \u2014 security fixes only\n\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, LoginAttempt\nfrom datetime import datetime, timedelta\nimport jwt\nfrom auth import token_required\nimport os\nimport yaml\n\nauth_bp = Blueprint('auth', __name__)\nJWT_SECRET = os.environ['JWT_SECRET']  # fail closed if unset\n\n@auth_bp.route('/api/register', methods"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/transaction_routes.py",
+      "verdict": "flagged",
+      "response": "```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, Transaction\nfrom datetime import datetime\nfrom decimal import Decimal, InvalidOperation\nfrom auth import token_required\nfrom sqlalchemy import or_\n\ntransaction_bp = Blueprint('transaction', __name__)\n\n@transaction_bp.route('/api/transfer', methods=['POST'])\n@token_required\ndef transfer(current_user):\n    data = re"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/views.py",
+      "verdict": "clean",
+      "response": "Broken line 38. Goal?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/account.py",
+      "verdict": "flagged",
+      "response": "**Critical bugs:**\n\n1. **SQLi** `search` L33  \n`text(f\"text like '%{search_param}%'\")`  \n\u2192 bind param: `Note.text.like(f'%{search_param}%')` or `text(\"text like :q\").bindparams(q=f'%{search_param}%')`\n\n2. **Pickle RCE** cookie L105/L118  \n`loads(b64decode(preferences))`  \n\u2192 use `json` only. Never pickle untrusted input.\n\n3. **IDOR** L41\u201348  \nany user reads any `user_id` notes  \n\u2192 `Note.user_id == "
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/login.py",
+      "verdict": "clean",
+      "response": "Bug: invalid form falls through to \"Invalid Credentials\" + logout.\n\n```python\n@app.route('/login', methods=['POST'])\ndef do_login():\n    form = LoginForm(request.form)\n    if not form.validate():\n        flash(dumps(form.errors), 'error')\n        return redirect(\"/\")\n    with Session() as session:\n        user = session.query(User).filter(\n            User.email == form.email.data).first()\n       "
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/notes.py",
+      "verdict": "flagged",
+      "response": "**IDOR in delete.** Any user deletes any note. Flash always fires.\n\n```python\n@app.route('/notes/<int:note_id>/delete', methods=['POST'])\n@login_required\ndef delete_note(note_id: int):\n    with Session() as session:\n        note = session.get(Note, note_id)\n        if note is None or note.user_id != current_user.id:\n            flash('Note not found', 'warning')\n        else:\n            session.d"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/signup.py",
+      "verdict": "clean",
+      "response": "**SQLi** in `validate_token`. f-string interpolates `code`.\n\n```python\ndef validate_token(code: str, session: Session):\n    return session.query(RegistrationCode).filter_by(code=code).first()\n```\n\n```python\n@app.route('/signup', methods=['POST'])\ndef do_signup():\n    form = RegistrationForm(request.form)\n    if not form.validate():\n        flash(dumps(form.errors), 'error')\n        return redirect"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/admin/views.py",
+      "verdict": "clean",
+      "response": "Query missing `.all()`. Template iteration works; explicit safer.\n\n```python\nmessages = Message.query.filter_by(acknowledged=False).all()\n```\n\n`AdminOnlyModelView` empty \u2014 fine. `redirect` from werkzeug OK.\n\nskipped: pagination, add when message volume grows."
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/api/views.py",
+      "verdict": "clean",
+      "response": "**Bugs (crash/wrong):**\n\n`get` (Messages): `.serialize` before null-check \u2192 AttributeError on missing id.\n```python\nmessage = Message.query.filter_by(id=id).first()\nif not message:\n    return jsonify(API_STATUS_ERROR)\nresponse = {'message': message.serialize}\n```\n\n`post` (Messages): bare dict returns (no jsonify) on error paths.\n```python\nif not data or not (message := data.get('message')):\n    re"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/login/views.py",
+      "verdict": "clean",
+      "response": "**Plaintext password compare. Broken.**\n\n```python\nfrom flask import Blueprint, request, redirect, url_for, render_template\nfrom flask_login import current_user, login_user, logout_user\nfrom werkzeug.security import check_password_hash\n\nfrom app.models import User\n\nauthentication = Blueprint('authentication', __name__, template_folder='templates')\n\n\n@authentication.route('/login', methods=['POST',"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-lets-be-bad-guys",
+      "file": "badguys/vulnerable/views.py",
+      "verdict": "flagged",
+      "response": "**Intentional vulns (OWASP demo app):**\n\n| # | View | Issue |\n|---|------|-------|\n| 01 | `user_pic` | Path traversal (`filename` unsanitized into `open`) |\n| 01 | `code_execution` | RCE via `exec(base64.decodestring(...))` |\n| 03 | `xss_*` | Reflected XSS (template likely unescaped) |\n| 04 | `dor_user_profile` | IDOR \u2014 any `userid`, no auth, POST mutates shared dict |\n| 05 | `boom` | Stack trace "
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "realvuln-threatbyte",
+      "file": "server/api/v1/api_v1.py",
+      "verdict": "clean",
+      "response": "Task? File only. No ask."
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/urls.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "Broken syntax (redaction artifacts). Fix:\n\n```python\ndef invite_accept(request: HttpRequest, [redacted:secret]\n```\n\n```python\n[redacted:secret]\n```\n\n```python\nuser = authenticate(request, username=user.email, [redacted:secret]\n```\n\nRest OK. Lazy imports fine (circular). No other change needed.\n\n\u2192 skipped: rate-limit on invite/login, add when ab"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "**Bug: reset email never includes link.**\n\n`url` built L124\u2013126, unused. Body hardcodes placeholder.\n\n```python\nsend_mail(\n    \"Reset your LMS password\",\n    f\"Use this link to reset your [redacted:secret]\n    settings.DEFAULT_FROM_EMAIL,\n    [user.email],\n    fail_silently=True,\n)\n```\n\nAlso restore redaction damage:\n- L123: `[redacted:secret]\n- L279: `def i"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "assignments/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`release_grade` (L332). What need? complete / review / fix?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "courses/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`resource_upload`. What need?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "accounts/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`user_edit`. What needed?\n\n- finish function?\n- review/bugs?\n- something else?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "core/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`patient_import`. What need?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "documents/views.py",
+      "verdict": "clean",
+      "response": "`document_decide` skips `_document_visible`. Front desk can POST decide on internal clinical docs by ID.\n\n```python\nif not _document_visible(user, doc):\n    raise Http404(\"Not found\")\n```\n\nAdd after `get_object_or_404`. Keep clinician check or fold into helper.\n\nAlso: `open(resolved, \"rb\")` \u2014 FileResponse closes it; fine.\n\n\u2192 skipped: unify list/detail/decide auth into one path, add when roles grow"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "scheduling/views.py",
+      "verdict": "clean",
+      "response": "File truncated mid-line: `conflict = Appoi`.\n\nNeed: complete reschedule? review? fix bug?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid `admin_user_toggle_active`. What need?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "accounts/urls.py",
+      "verdict": "non-answer",
+      "response": "No `app_name`. reverse_lazy uses `accounts:` \u2014 include with namespace or set:\n\n```python\napp_name = \"accounts\"\n```\n\nRest fine. Std auth views + custom forms. No change needed.\n\nWhat do you want done?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/reviews.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, bug hunt, change?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, fix, or feature?\n\nObvious:\n- L153 token gen redacted \u2014 restore `secrets.token_urlsafe(32)` (or equiv)\n- Cookie `secure=False` \u2014 prod risk\n- Register 409 leaks email existence\n- `change_password` revokes sessions, leaves cookie \u2014 next req 401 until client clears\n\nSay goal."
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/leases.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n1. `create_lease`: no guard against second active lease on same unit \u2192 double-book.\n2. `create_lease` / `update` / `transition`: set `occupied=True` on active; never clear on create if non-active; race on concurrent status flips.\n3. `update_lease`: full `LeaseIn` rewrite allows status change without dedicated endpoint; transition check after setattr is OK but duplicates `transition_statu"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/tickets.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / bug / change?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/users.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "education_lms/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, delete ops routes, or fix?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/urls.py",
+      "verdict": "clean",
+      "response": "Import after `urlpatterns`. Move to top.\n\nOps routes look temp/YAGNI. Delete unless required:\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\nfrom . import patient_operations\n\nurlpatterns = [\n    path('', include('portal.urls')),\n    path('accounts/', include('django.contrib.auth.urls')),\n"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "verdict": "clean",
+      "response": "File truncated L373 (`a`). Need?\n\nWhat task?"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/urls.py",
+      "verdict": "clean",
+      "response": "Bottom import. Move top.\n\n20 mystery `/ops/*` payroll routes. Used? Delete dead.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\nfrom . import payroll_operations\n\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"accounts/\", include(\"django.contrib.auth.urls\")),\n    pat"
+    },
+    {
+      "arm": "A_prime_handlers_with_absence",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "legalcase/urls.py",
+      "verdict": "clean",
+      "response": "Import `case_operations` at top. Ops routes belong in `cases.urls` or `ops/urls.py` + `include`.\n\n```python\nfrom . import case_operations\n```\n\nMove above `urlpatterns`. Drop ops block if one-shots done.\n\n\u2192 skipped: full ops refactor, add when ops grow past ~20."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/password_resets/views.py",
+      "verdict": "clean",
+      "response": "**Critical vulns**\n\n1. `pickle.loads` on POST data \u2192 RCE  \n2. MD5(email) token forgeable  \n3. Raw password assign (no hash)  \n4. User object client-trusted  \n\n**Fix:** drop pickle/MD5. Pass `user_id` only. Sign token. `set_password`.\n\n```python\nfrom __future__ import unicode_literals\n\nfrom django.views.decorators.http import require_http_methods\nfrom django.contrib import messages\nfrom django.http"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/sessions/views.py",
+      "verdict": "clean",
+      "response": "Broken syntax L37 + bad default.\n\n```python\n@require_http_methods([\"GET\", \"POST\"])\ndef sessions_index(request, email=None, [redacted:secret]\n    if request.method == \"POST\":\n        if 'path' in request.POST:\n            path = request.POST['path']\n\n        if 'email' in request.POST:\n            email = request.POST['email']\n        elif email is None:\n       "
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/benefit_forms/views.py",
+      "verdict": "clean",
+      "response": "**Path traversal in `download`.** `name` GET param joins `BASE_DIR` raw. No sanitize.\n\n```python\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef download(request):\n    name = os.path.basename(request.GET.get('name', ''))\n    path = os.path.join(BASE_DIR, name)\n    if not os.path.isfile(path):\n        return HttpResponse(status=404)\n    with open(path, 'rb') as f:\n        response = HttpR"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/views.py",
+      "verdict": "clean",
+      "response": "**SQL injection** `user_view` POST. String-format into `raw()`.\n\n```python\n# replace lines 70-80\ntry:\n    user = User.objects.get(pk=form[\"user_id\"])\nexcept (User.DoesNotExist, KeyError, ValueError):\n    return HttpResponse(\"User \" + str(form.get(\"user_id\", user_id)) + \" NOT FOUND\")\n```\n\nDelete `table_name`, `raw()`, `ORDER BY is_admin` hack.\n\nAlso: L25 paste broken (`[redacted:secret]"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-dsvpwa",
+      "file": "dsvpwa/handlers.py",
+      "verdict": "non-answer",
+      "response": "Deliberate vuln app (`dsvpwa`). Intentional RCE in `do_BDR` (`shell=True`), XSS headers off, weak session cookie.\n\nWhat do you want done with it?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/dao/review.py",
+      "verdict": "clean",
+      "response": "Safe. Parameterized. No SQLi.\n\n`get_for_course`: `%s` + tuple.\n`create`: `%(name)s` + dict.\n\nBoth correct for aiopg/psycopg2.\n\nSkipped: return id, date default, commit \u2014 add when caller needs them."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/registration_codes.py",
+      "verdict": "flagged",
+      "response": "**Issues**\n\n1. **Dup admin gate** \u2014 extract once or use decorator.\n2. **No rate/limit** on code mint \u2014 admin can spam DB.\n3. **Flash after session** \u2014 fine with `expire_on_commit=False`; drop that flag if you flash only `code.code` string before exit.\n\n**Minimal fix (optional):**\n\n```python\ndef admin_required(f):\n    from functools import wraps\n    @wraps(f)\n    def wrapped(*a, **k):\n        if no"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/account_area/views.py",
+      "verdict": "clean",
+      "response": "Broken syntax L26. Password check/update redacted to garbage. Errors overwrite (last wins). `print` left in.\n\n```python\nfrom werkzeug.security import check_password_hash, generate_password_hash\n\n@account_area.route('/change_password', methods=['POST'])\n@login_required\ndef change_password():\n    current_password = request.form.get('current-password')\n    new_password = request.form.get('new-passwor"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/sandboxes/views.py",
+      "verdict": "clean",
+      "response": "```python\nfrom flask import Blueprint, request, render_template, current_app\n\nsandboxes = Blueprint('sandboxes', __name__, template_folder='templates')\n\n\n@sandboxes.route('/unsafe_params')\ndef unsafe_params():\n    \"\"\"Renders a page with XSS flags enabled to use browser-based defenses\"\"\"\n    title = 'Unsafe Parameters'\n    description = 'A GET parameter is unsafely handled. Try entering something i"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/xss_protection/views.py",
+      "verdict": "clean",
+      "response": "Open redirect. `next` unvalidated \u2192 external redirect.\n\n```python\nfrom flask import Blueprint, session, request, url_for, redirect\nfrom urllib.parse import urlparse, urljoin\n\nxss_protection = Blueprint('xss_protection', __name__)\n\ndef _safe_url(target):\n    if not target:\n        return False\n    ref = urlparse(request.host_url)\n    test = urlparse(urljoin(request.host_url, target))\n    return tes"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-vulnpy",
+      "file": "src/vulnpy/aiohttp/vulnerable_routes.py",
+      "verdict": "clean",
+      "response": "No task. What do?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-vulnpy",
+      "file": "src/vulnpy/bottle/vulnerable_routes.py",
+      "verdict": "clean",
+      "response": "What do with this file?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "realvuln-vulnpy",
+      "file": "src/vulnpy/pyramid/vulnerable_routes.py",
+      "verdict": "clean",
+      "response": "Need?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "apikeys/views.py",
+      "verdict": "clean",
+      "response": "What do with `apikeys/views.py`?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "notifications/views.py",
+      "verdict": "clean",
+      "response": "Views clean. Task?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "messaging/views.py",
+      "verdict": "clean",
+      "response": "Need? Review / bugfix / change?\n\nQuick scan:\n- Access + internal-only filter OK\n- 404 not 403 OK (no enum)\n- `patient is None` after `is_valid` dead if form requires it \u2014 drop\n- `subject[:200]` / `body[:4000]` belong on form `max_length`, not view\n- Unread mark: `update()` fine; no staff read tracking (YAGNI unless asked)\n\nSay goal."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "patients/views.py",
+      "verdict": "clean",
+      "response": "File: `patients/views.py`. Task?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "documents/views.py",
+      "verdict": "non-answer",
+      "response": "No ask. What need?\n\nQuick pass: visibility dual-path OK. Upload validate+audit OK. Delete payroll gate OK.\n\nPossible gaps (only if you care):\n- delete: no `_can_view`; HR deletes any doc by id (by design?)\n- employee self-upload: no category allowlist (form must clamp)\n- list employee filter: re-scope good\n\nSay: review / bug / change X."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "employees/views.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n```python\n# L98 \u2014 second filter hits unfiltered qs; use Q\nfrom django.db.models import Q\nusers = users.filter(Q(username__icontains=query) | Q(email__icontains=query))\n\n# L140 \u2014 extra query; capture before save\nprevious_role = user_obj.role\nnew_user = form.save()\n```\n\n**invitation_accept**\n- No guard: existing username/email \u2192 IntegrityError\n- Accept not atomic w/ `is_valid` recheck \u2192 do"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "integrations/api_views.py",
+      "verdict": "clean",
+      "response": "Bug: `matter_list` `int(limit)` blows on non-int \u2192 500.\n\n```python\ntry:\n    limit = min(int(request.GET.get(\"limit\") or 50), 200)\nexcept (TypeError, ValueError):\n    limit = 50\n```\n\nAlso: `@csrf_exempt` on decorator \u2014 fine while all views `@require_GET`; any future write using `api_key_required` skips CSRF. Split or drop exempt from decorator.\n\n`[redacted:secret]"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "integrations/views.py",
+      "verdict": "clean",
+      "response": "Line 31 broken syntax.\n\n```python\nobj, [redacted:secret]\n```\n\n\u2192 skipped: model method name unknown; swap `create` for actual classmethod that returns `(obj, raw_token)`."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/imports_exports.py",
+      "verdict": "non-answer",
+      "response": "Broken L59: `[redacted:secret]\n\nWhat need? Review / fix / feature?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/payments.py",
+      "verdict": "clean",
+      "response": "File received. Need? Review / fix / feature."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/properties.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, bug, change, explain?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-crm-saas-django",
+      "file": "crm/views.py",
+      "verdict": "clean",
+      "response": "Need task. Review? Fix? Continue file? What?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "lms/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`cohort_list`. Broken line 165 (`[redacted:secret]\n\nWhat needed?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "portal/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-line 377. What need?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "cases/views.py",
+      "verdict": "clean",
+      "response": "File truncated `@login_requ`. Goal?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/documents.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix / feature / delete?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/integrations.py",
+      "verdict": "clean",
+      "response": "```python\n[redacted:secret]\n    select(ApiKey).where(ApiKey.key_hash == hash_secret(x_api_key), ApiKey.is_active.is_(True))\n).first()\nif not [redacted:secret]\n```\n\nBroken lookup lines 102\u2013104. Redaction left garbage. Replace with above."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/properties.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "cases/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-line 315. What need?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "documents/views.py",
+      "verdict": "clean",
+      "response": "**Issues:**\n\n1. `request.user.profile` \u2014 `my_documents` + manager check crash if no `EmployeeProfile`.\n2. Manager download skips `visible_to_employee`. Intentional?\n3. Payroll sees all docs in center; download limited. Title leak.\n4. Upload: no type/size check at trust boundary.\n\n**Fix profile crash:**\n\n```python\n# my_documents\nprofile = getattr(request.user, 'profile', None)\nif not profile:\n    r"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "employees/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`create_user` (`las`).\n\nWhat need? Complete import? Review? Fix?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "clients/views.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "documents/views.py",
+      "verdict": "clean",
+      "response": "Dead code L60-61: clients already blocked L52.\n\nDownload loads whole file RAM. Use:\n\n```python\nfrom django.http import FileResponse\nreturn FileResponse(open(file_path, 'rb'), as_attachment=True, filename=version.file_name)\n```\n\n`upload_version` race: `current_version += 1` not atomic. Concurrent upload \u2192 same version_num. Fix: `F()` or select_for_update.\n\n`Content-Disposition` unsanitized `file_na"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "matters/views.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n`client_dashboard`: `shared_docs` built, never in context. Drop or pass it.\n\n`can_access_matter` vs list: attorney list allows `paralegals` M2M; access only `lead_attorney`. Align or dual-role breaks.\n\n```python\n# can_access_matter attorney branch \u2014 match list filter if needed:\nif user.is_attorney() and (\n    matter.lead_attorney_id == user.pk\n    or matter.paralegals.filter(pk=user.pk)."
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "reports/views.py",
+      "verdict": "clean",
+      "response": "**Bugs / security**\n\n1. Exports dump **all** rows \u2014 no firm filter. Cross-tenant leak.\n2. Imports create clients/matters with **no firm**, no FK resolve (client, attorney, practice_area).\n3. No CSV error handling \u2014 bad decode/row \u2192 500.\n4. Admin check copy-pasted 6\u00d7.\n\n**Minimal fix path**\n\n```python\n# decorator once\ndef firm_admin_required(view):\n    @login_required\n    def wrap(request, *a, **kw)"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/exports.py",
+      "verdict": "clean",
+      "response": "Need?"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/files.py",
+      "verdict": "clean",
+      "response": "**Auth holes.**\n\n`get_file`: zero auth. Any user reads any metadata.\n\n`download` DISPUTE_EVIDENCE:\n- `dispute` missing \u2192 allow\n- VENDOR_MANAGER, no `vendor` \u2192 allow\n\n`log_action` download drops `request`.\n\nFix:\n\n```python\n@router.get(\"/{file_id}/download\")\ndef download_file(file_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):\n    file_record = d"
+    },
+    {
+      "arm": "C_handlers_without_absence",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/products.py",
+      "verdict": "flagged",
+      "response": "Missing `User` import. Breaks type hints lines 16,50,103,110,152.\n\n```python\nfrom app.models.user import User\n```\n\nAlso:\n- `get_product` no publish check \u2014 any auth user sees drafts by id\n- update lets vendor set `status` freely \u2014 skips moderation\n- `__import__(\"datetime\")` line 140 \u2014 just `from datetime import datetime`\n\nWhat need?"
+    }
+  ]
+}

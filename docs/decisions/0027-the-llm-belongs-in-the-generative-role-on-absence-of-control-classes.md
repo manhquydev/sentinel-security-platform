@@ -80,10 +80,14 @@ and the model never returns identical prose (0 of 14).** Consequently:
     interval excludes even a 5-point drop, so **surface memorisation is not the primary driver**. But
     the interval is wide: **equivalence is not established** and a small memorisation contribution is
     not excluded. Nothing here may still be promised for private code.
-- **E20's "the missing control drives it, not file role" is WITHDRAWN pending a re-run.** It paired a
-  *reused* arm A′ against a *freshly measured* arm C, which is invalid under this instability, and it
-  was already one flagged file away from non-significance.
-- **The file-role confound named in E18 is therefore OPEN again**, not closed.
+- **E20's "the missing control drives it, not file role" was WITHDRAWN** — it paired a *reused* arm A′
+  against a *freshly measured* arm C, invalid under this instability, and was one flagged file from
+  non-significance.
+  - **RE-ESTABLISHED by E24 on a valid design (same day).** Both arms measured fresh in the same run,
+    file role held fixed: handlers **with** an absent control **9/40 = 0.225**, handlers **without**
+    **2/42 = 0.048**, difference **+0.177, 95% CI [+0.031, +0.326], p = 0.0195**. It tolerates two extra
+    flags before crossing α (E20 tolerated one) and its interval excludes zero. **The file-role confound
+    is closed on evidence that survives its own instrument.**
 
 **2. The prose classifier had four demonstrated defects**, all now fixed and pinned by SM13 (it
 previously had **no test at all**, despite every result scoring through it). Re-scoring the stored

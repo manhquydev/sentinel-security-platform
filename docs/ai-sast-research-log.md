@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E24 | file role, valid design | **STANDS** — both arms fresh: 9/40 vs 2/42, +0.177 [+0.031,+0.326], p = 0.020; tolerates 2 extra flags |
 | E23 | memorisation, valid design | **STANDS (bounded)** — anonymised 14/53 vs original 11/53, diff +0.057 [−0.038,+0.151]: no collapse, so surface memorisation is not the driver; equivalence NOT established |
 | E22 | is the instrument deterministic? | **STANDS** — **no**: 36% verdict flips, 0/14 identical prose at temperature 0 |
 | E19 | capability or memorisation? | **INCONCLUSIVE (withdrawn)** — the paired design assumed a deterministic instrument; E22 measured 36% verdict flips, which alone explains the null |
@@ -1725,3 +1726,44 @@ Registered 2026-07-26 05:25 +07. **Nothing below was measured before this text w
   is reported inconclusive**, and the confound stays open rather than being resolved by wishful reading.
 - **Instrument.** Frozen prompt and positive control, **corrected classifier** (SM13) — the same one E23
   used, stated as a change from E20 rather than hidden.
+
+## E24 — RESULT: the missing CONTROL drives it, not the file role (valid design this time)
+
+Run 2026-07-26. Positive control passed. **Both arms measured fresh, in the same run**, with the
+corrected classifier. File role is held fixed — every file in both arms is an endpoint handler.
+
+| arm | flagged |
+|---|---|
+| **A′** handlers **with** an absence-class vulnerability | 9/40 = **0.225** |
+| **C** handlers **without** one | 2/42 = **0.048** |
+
+**Difference +0.177, 95% CI [+0.031, +0.326]. One-sided Fisher p = 0.0195 → null rejected.**
+
+### Fragility, reported as it was for E20
+
+| arm C | p | verdict |
+|---|---|---|
+| 1/42 | 0.006 | significant |
+| **2/42 (observed)** | **0.020** | **significant** |
+| 3/42 | 0.048 | significant |
+| 4/42 | 0.095 | not significant |
+
+**E24 tolerates two additional flags before crossing α; E20 tolerated one.** The interval also excludes
+zero, which E20's presentation never established. This is a sturdier result than the one it replaces —
+not because the effect grew, but because the design stopped comparing a reused arm against a fresh one.
+
+### Why this counts and E20 did not
+
+E20 measured arm C fresh and **reused** E17's verdicts for arm A′. Under an instrument that flips 36% of
+verdicts (E22), those two arms were not on comparable footing, and the comparison was withdrawn. Here
+both arms are drawn and measured in the same run. Nothing is reused.
+
+**The file-role confound is closed again — this time on evidence that survives its own instrument.**
+The model is responding to the **absent control**, not to the file being a request handler.
+
+### Honest note on what changed between the two runs
+
+Arm A′ moved from 7/28 = 0.250 (reused) to 9/40 = 0.225 (fresh), and arm C from 3/42 = 0.071 to
+2/42 = 0.048 — the latter re-measured with the corrected classifier. Both moved modestly and in
+different directions, which is what ~36% per-file instability looks like when it is averaged into a
+rate. The conclusion is unchanged; the confidence in it is better founded.
