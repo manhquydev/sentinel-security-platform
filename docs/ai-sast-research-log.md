@@ -344,3 +344,30 @@ add a **Commons Clause** restriction that propagates to anything shipping them: 
 whose value derives substantially from that software may be sold. For a research/education capstone
 this is fine; for any commercialisation path it is a blocker that should be resolved deliberately.
 This is why Sentinel inherited the *method* clean-room rather than the code (decision 0020).
+
+### E12 result — **VHX's vendored RULESET beats the two-engine union (the real inheritable asset)**
+
+Ran Semgrep (already installed) with VHX's 334 vendored **python** rules over the same 63-repo corpus,
+same matcher, same claim-once ground truth — measurement only, nothing vendored into Sentinel:
+
+| configuration | findings | TP | recall | GT-match rate |
+|---|---|---|---|---|
+| Bandit alone | 1764 | 234 | 0.131 | 0.133 |
+| Semgrep registry packs | 675 | 212 | 0.118 | 0.314 |
+| Bandit ∪ Semgrep (2 engines, E4) | 2439 | 336 | 0.188 | 0.138 |
+| **Semgrep + VHX vendored rules (1 engine)** | **1975** | **363** | **0.203** | **0.184** |
+
+**One engine with a better ruleset beats two engines with registry packs** — +8% relative recall and
++33% relative match-rate over the union, at lower operational cost (one tool, offline, no registry).
+
+**This reframes the whole inherit-from-VulnHunterX question.** Across the arc, VHX's *LLM triage* was
+disproven (E2: refuses under correct provenance; drops real vulns when forced). Its genuinely valuable
+contribution turns out to be the unglamorous part: **a curated, pinned, offline ruleset**. The lesson
+matches every other result in this lab — the wins come from better deterministic tooling, not from
+adding model reasoning.
+
+*Caveat (per the instrument audit):* "GT-match rate" is `tp/findings` against a curated ground truth,
+not true precision — an unmatched finding is not necessarily a false positive. Recall is the sound
+comparison; both are computed identically across rows so the ranking is fair. Rules were used
+in-place from a scratch clone (Commons Clause forbids *selling*, not measuring); adopting them into
+Sentinel would need an explicit licence decision.
