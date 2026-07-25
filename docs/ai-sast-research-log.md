@@ -607,3 +607,34 @@ Registered 2026-07-26 01:45 +07. **Nothing below was measured before this text w
 - **Abort condition.** If the re-run's pooled totals do not reproduce the committed baseline
   (63 repos, 1790 real vulns, bandit tp=234, semgrep tp=212, union tp=336), the environment has drifted;
   report the drift and do **not** silently publish different numbers under the old claim's name.
+
+## E15 — RESULT: decision 0022's "+44%" SURVIVES the grouped re-audit, with one caveat it had hidden
+
+Run 2026-07-26 against the preregistration above. **All three hypotheses hold. Abort condition did not
+fire** — the per-repo run reproduced the committed baseline exactly (63 repos, 1790 real vulns,
+bandit tp=234, semgrep tp=212, union tp=336), so no environment drift.
+
+| hypothesis | result | verdict |
+|---|---|---|
+| **H1 magnitude** — gain not driven by outlier repos | relative recall gain **+43.6%**, 95% CI **[+31.5%, +58.4%]** (bootstrap over 63 repos) | **HOLDS** — lower bound far above the preregistered +10% |
+| **H2 breadth** — median repo benefits | median per-repo absolute recall gain **+0.0357** | **HOLDS** |
+| **H3 no precision cost** | precision delta **+0.0051**, 95% CI **[−0.0136, +0.0173]** | **HOLDS** — CI includes 0, so no measurable cost |
+
+**This is the first load-bearing claim to survive a grouped re-audit.** It matters that the protocol
+does not only demolish: applied to 0021 it confirmed a retraction, applied to 0022 it confirms the
+claim and now attaches an interval it never had. "+44%" was a fair summary of +43.6%.
+
+**The caveat the point estimate hid: 22 of 63 repos (35%) gain nothing at all.** The union equals
+Bandit alone on those. So the honest statement is *corpus-level*: adding a second engine raises recall
+by ~44% relative **across a portfolio**, but for **any individual application it may add exactly
+nothing**. A per-app promise was never supported by this measurement; only the portfolio-level one is.
+This is precisely the nuance micro-averaging erases, and it is now published with the claim.
+
+**H3 stated carefully.** The precision delta is positive (+0.0051) but its interval spans 0, so the
+correct reading is "**no measurable precision cost**", *not* "precision improves". Reading a positive
+point estimate as improvement is the exact error that produced the retracted +0.069 — the instrument
+prints this warning next to the number so it cannot be misread later.
+
+**Bound that travels with the number.** RealVuln's repos are `vc-*-seeded-v2-*` with
+`llm_generated_corpus: true` — an **LLM-seeded** corpus, not organic CVEs. This measures multi-engine
+complementarity on synthetic-seeded Python. Generalisation to organic code is untested.

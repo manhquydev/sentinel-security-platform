@@ -1,0 +1,669 @@
+{
+  "generated_at": "2026-07-25T18:48:20.483646+00:00",
+  "totals": {
+    "repos": 63,
+    "real": 1790,
+    "bandit_tp": 234,
+    "semgrep_tp": 212,
+    "union_tp": 336
+  },
+  "pooled": {
+    "bandit": {
+      "recall": 0.13072625698324022,
+      "precision": 0.1326530612244898
+    },
+    "semgrep": {
+      "recall": 0.11843575418994413,
+      "precision": 0.31407407407407406
+    },
+    "union": {
+      "recall": 0.1877094972067039,
+      "precision": 0.13776137761377613
+    }
+  },
+  "relative_recall_gain": 0.4359,
+  "relative_gain_ci95": [
+    0.3154,
+    0.5837
+  ],
+  "median_per_repo_gain": 0.0357,
+  "repos_with_zero_gain": 22,
+  "precision_delta": 0.0051,
+  "precision_delta_ci95": [
+    -0.0136,
+    0.0173
+  ],
+  "corpus_note": "RealVuln repos are vc-*-seeded-v2-* with llm_generated_corpus=true (LLM-seeded, not organic CVEs)",
+  "per_repo": [
+    {
+      "repo": "realvuln-damn-vulnerable-flask-application",
+      "real": 15,
+      "bandit_findings": 5,
+      "bandit_tp": 1,
+      "semgrep_findings": 16,
+      "semgrep_tp": 5,
+      "union_findings": 21,
+      "union_tp": 6
+    },
+    {
+      "repo": "realvuln-damn-vulnerable-graphql-application",
+      "real": 36,
+      "bandit_findings": 208,
+      "bandit_tp": 2,
+      "semgrep_findings": 7,
+      "semgrep_tp": 2,
+      "union_findings": 215,
+      "union_tp": 4
+    },
+    {
+      "repo": "realvuln-djangoat",
+      "real": 52,
+      "bandit_findings": 110,
+      "bandit_tp": 12,
+      "semgrep_findings": 41,
+      "semgrep_tp": 9,
+      "union_findings": 151,
+      "union_tp": 16
+    },
+    {
+      "repo": "realvuln-dsvpwa",
+      "real": 32,
+      "bandit_findings": 16,
+      "bandit_tp": 8,
+      "semgrep_findings": 10,
+      "semgrep_tp": 4,
+      "union_findings": 26,
+      "union_tp": 9
+    },
+    {
+      "repo": "realvuln-dsvw",
+      "real": 27,
+      "bandit_findings": 13,
+      "bandit_tp": 7,
+      "semgrep_findings": 7,
+      "semgrep_tp": 3,
+      "union_findings": 20,
+      "union_tp": 8
+    },
+    {
+      "repo": "realvuln-dvblab",
+      "real": 22,
+      "bandit_findings": 17,
+      "bandit_tp": 7,
+      "semgrep_findings": 21,
+      "semgrep_tp": 6,
+      "union_findings": 38,
+      "union_tp": 9
+    },
+    {
+      "repo": "realvuln-dvpwa",
+      "real": 23,
+      "bandit_findings": 2,
+      "bandit_tp": 2,
+      "semgrep_findings": 2,
+      "semgrep_tp": 1,
+      "union_findings": 4,
+      "union_tp": 2
+    },
+    {
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "real": 32,
+      "bandit_findings": 5,
+      "bandit_tp": 3,
+      "semgrep_findings": 20,
+      "semgrep_tp": 4,
+      "union_findings": 25,
+      "union_tp": 6
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "real": 30,
+      "bandit_findings": 3,
+      "bandit_tp": 2,
+      "semgrep_findings": 27,
+      "semgrep_tp": 8,
+      "union_findings": 30,
+      "union_tp": 9
+    },
+    {
+      "repo": "realvuln-insecure-web",
+      "real": 9,
+      "bandit_findings": 3,
+      "bandit_tp": 2,
+      "semgrep_findings": 12,
+      "semgrep_tp": 4,
+      "union_findings": 15,
+      "union_tp": 5
+    },
+    {
+      "repo": "realvuln-intentionally-vulnerable-python-application",
+      "real": 7,
+      "bandit_findings": 9,
+      "bandit_tp": 4,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 13,
+      "union_tp": 5
+    },
+    {
+      "repo": "realvuln-lets-be-bad-guys",
+      "real": 24,
+      "bandit_findings": 7,
+      "bandit_tp": 1,
+      "semgrep_findings": 18,
+      "semgrep_tp": 9,
+      "union_findings": 25,
+      "union_tp": 10
+    },
+    {
+      "repo": "realvuln-owasp-web-playground",
+      "real": 28,
+      "bandit_findings": 0,
+      "bandit_tp": 0,
+      "semgrep_findings": 0,
+      "semgrep_tp": 0,
+      "union_findings": 0,
+      "union_tp": 0
+    },
+    {
+      "repo": "realvuln-python-insecure-app",
+      "real": 8,
+      "bandit_findings": 9,
+      "bandit_tp": 2,
+      "semgrep_findings": 0,
+      "semgrep_tp": 0,
+      "union_findings": 9,
+      "union_tp": 2
+    },
+    {
+      "repo": "realvuln-pythonssti",
+      "real": 2,
+      "bandit_findings": 1,
+      "bandit_tp": 1,
+      "semgrep_findings": 1,
+      "semgrep_tp": 0,
+      "union_findings": 2,
+      "union_tp": 1
+    },
+    {
+      "repo": "realvuln-threatbyte",
+      "real": 26,
+      "bandit_findings": 6,
+      "bandit_tp": 3,
+      "semgrep_findings": 20,
+      "semgrep_tp": 3,
+      "union_findings": 26,
+      "union_tp": 5
+    },
+    {
+      "repo": "realvuln-vampi",
+      "real": 15,
+      "bandit_findings": 7,
+      "bandit_tp": 2,
+      "semgrep_findings": 7,
+      "semgrep_tp": 0,
+      "union_findings": 14,
+      "union_tp": 2
+    },
+    {
+      "repo": "realvuln-vfapi",
+      "real": 9,
+      "bandit_findings": 8,
+      "bandit_tp": 5,
+      "semgrep_findings": 4,
+      "semgrep_tp": 1,
+      "union_findings": 12,
+      "union_tp": 5
+    },
+    {
+      "repo": "realvuln-vulnerable-flask-app",
+      "real": 21,
+      "bandit_findings": 18,
+      "bandit_tp": 7,
+      "semgrep_findings": 20,
+      "semgrep_tp": 2,
+      "union_findings": 38,
+      "union_tp": 8
+    },
+    {
+      "repo": "realvuln-vulnerable-python-apps",
+      "real": 22,
+      "bandit_findings": 15,
+      "bandit_tp": 4,
+      "semgrep_findings": 9,
+      "semgrep_tp": 2,
+      "union_findings": 24,
+      "union_tp": 5
+    },
+    {
+      "repo": "realvuln-vulnerable-tornado-app",
+      "real": 14,
+      "bandit_findings": 0,
+      "bandit_tp": 0,
+      "semgrep_findings": 4,
+      "semgrep_tp": 0,
+      "union_findings": 4,
+      "union_tp": 0
+    },
+    {
+      "repo": "realvuln-vulnpy",
+      "real": 80,
+      "bandit_findings": 87,
+      "bandit_tp": 15,
+      "semgrep_findings": 27,
+      "semgrep_tp": 11,
+      "union_findings": 114,
+      "union_tp": 20
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "real": 57,
+      "bandit_findings": 51,
+      "bandit_tp": 13,
+      "semgrep_findings": 24,
+      "semgrep_tp": 8,
+      "union_findings": 75,
+      "union_tp": 21
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "real": 28,
+      "bandit_findings": 13,
+      "bandit_tp": 5,
+      "semgrep_findings": 23,
+      "semgrep_tp": 4,
+      "union_findings": 36,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "real": 32,
+      "bandit_findings": 13,
+      "bandit_tp": 4,
+      "semgrep_findings": 18,
+      "semgrep_tp": 5,
+      "union_findings": 31,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
+      "real": 29,
+      "bandit_findings": 81,
+      "bandit_tp": 3,
+      "semgrep_findings": 5,
+      "semgrep_tp": 2,
+      "union_findings": 86,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "real": 29,
+      "bandit_findings": 38,
+      "bandit_tp": 4,
+      "semgrep_findings": 18,
+      "semgrep_tp": 5,
+      "union_findings": 56,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "real": 27,
+      "bandit_findings": 12,
+      "bandit_tp": 3,
+      "semgrep_findings": 19,
+      "semgrep_tp": 5,
+      "union_findings": 31,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "real": 31,
+      "bandit_findings": 12,
+      "bandit_tp": 3,
+      "semgrep_findings": 21,
+      "semgrep_tp": 5,
+      "union_findings": 33,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "real": 33,
+      "bandit_findings": 15,
+      "bandit_tp": 2,
+      "semgrep_findings": 5,
+      "semgrep_tp": 2,
+      "union_findings": 20,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "real": 32,
+      "bandit_findings": 60,
+      "bandit_tp": 2,
+      "semgrep_findings": 2,
+      "semgrep_tp": 1,
+      "union_findings": 62,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "real": 33,
+      "bandit_findings": 45,
+      "bandit_tp": 4,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 49,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
+      "real": 34,
+      "bandit_findings": 95,
+      "bandit_tp": 4,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 99,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-crm-saas-django",
+      "real": 25,
+      "bandit_findings": 9,
+      "bandit_tp": 4,
+      "semgrep_findings": 18,
+      "semgrep_tp": 3,
+      "union_findings": 27,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "real": 25,
+      "bandit_findings": 7,
+      "bandit_tp": 4,
+      "semgrep_findings": 12,
+      "semgrep_tp": 4,
+      "union_findings": 19,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
+      "real": 29,
+      "bandit_findings": 44,
+      "bandit_tp": 4,
+      "semgrep_findings": 6,
+      "semgrep_tp": 3,
+      "union_findings": 50,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "real": 26,
+      "bandit_findings": 9,
+      "bandit_tp": 3,
+      "semgrep_findings": 12,
+      "semgrep_tp": 4,
+      "union_findings": 21,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "real": 25,
+      "bandit_findings": 14,
+      "bandit_tp": 2,
+      "semgrep_findings": 14,
+      "semgrep_tp": 4,
+      "union_findings": 28,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "real": 25,
+      "bandit_findings": 8,
+      "bandit_tp": 3,
+      "semgrep_findings": 12,
+      "semgrep_tp": 5,
+      "union_findings": 20,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
+      "real": 29,
+      "bandit_findings": 28,
+      "bandit_tp": 3,
+      "semgrep_findings": 5,
+      "semgrep_tp": 3,
+      "union_findings": 33,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "real": 25,
+      "bandit_findings": 28,
+      "bandit_tp": 3,
+      "semgrep_findings": 1,
+      "semgrep_tp": 1,
+      "union_findings": 29,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "real": 26,
+      "bandit_findings": 34,
+      "bandit_tp": 3,
+      "semgrep_findings": 3,
+      "semgrep_tp": 1,
+      "union_findings": 37,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "real": 28,
+      "bandit_findings": 23,
+      "bandit_tp": 3,
+      "semgrep_findings": 1,
+      "semgrep_tp": 1,
+      "union_findings": 24,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "real": 34,
+      "bandit_findings": 13,
+      "bandit_tp": 5,
+      "semgrep_findings": 18,
+      "semgrep_tp": 6,
+      "union_findings": 31,
+      "union_tp": 7
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "real": 35,
+      "bandit_findings": 9,
+      "bandit_tp": 5,
+      "semgrep_findings": 10,
+      "semgrep_tp": 4,
+      "union_findings": 19,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "real": 37,
+      "bandit_findings": 16,
+      "bandit_tp": 2,
+      "semgrep_findings": 3,
+      "semgrep_tp": 1,
+      "union_findings": 19,
+      "union_tp": 2
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "real": 41,
+      "bandit_findings": 6,
+      "bandit_tp": 2,
+      "semgrep_findings": 9,
+      "semgrep_tp": 5,
+      "union_findings": 15,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-codex-seeded-v2-hr-payroll-django",
+      "real": 39,
+      "bandit_findings": 17,
+      "bandit_tp": 3,
+      "semgrep_findings": 13,
+      "semgrep_tp": 5,
+      "union_findings": 30,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "real": 33,
+      "bandit_findings": 11,
+      "bandit_tp": 4,
+      "semgrep_findings": 23,
+      "semgrep_tp": 5,
+      "union_findings": 34,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-codex-seeded-v2-logistics-dispatch-fastapi",
+      "real": 30,
+      "bandit_findings": 14,
+      "bandit_tp": 2,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 18,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
+      "real": 29,
+      "bandit_findings": 12,
+      "bandit_tp": 2,
+      "semgrep_findings": 1,
+      "semgrep_tp": 1,
+      "union_findings": 13,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-codex-seeded-v2-property-management-fastapi",
+      "real": 31,
+      "bandit_findings": 19,
+      "bandit_tp": 4,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 23,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-codex-seeded-v2-support-desk-fastapi",
+      "real": 30,
+      "bandit_findings": 16,
+      "bandit_tp": 3,
+      "semgrep_findings": 1,
+      "semgrep_tp": 1,
+      "union_findings": 17,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "real": 27,
+      "bandit_findings": 13,
+      "bandit_tp": 5,
+      "semgrep_findings": 15,
+      "semgrep_tp": 6,
+      "union_findings": 28,
+      "union_tp": 7
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "real": 28,
+      "bandit_findings": 49,
+      "bandit_tp": 3,
+      "semgrep_findings": 14,
+      "semgrep_tp": 4,
+      "union_findings": 63,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "real": 33,
+      "bandit_findings": 29,
+      "bandit_tp": 2,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 33,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "real": 30,
+      "bandit_findings": 65,
+      "bandit_tp": 2,
+      "semgrep_findings": 13,
+      "semgrep_tp": 6,
+      "union_findings": 78,
+      "union_tp": 7
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "real": 29,
+      "bandit_findings": 61,
+      "bandit_tp": 3,
+      "semgrep_findings": 16,
+      "semgrep_tp": 5,
+      "union_findings": 77,
+      "union_tp": 6
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "real": 26,
+      "bandit_findings": 52,
+      "bandit_tp": 4,
+      "semgrep_findings": 11,
+      "semgrep_tp": 4,
+      "union_findings": 63,
+      "union_tp": 5
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "real": 31,
+      "bandit_findings": 45,
+      "bandit_tp": 3,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 49,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "real": 27,
+      "bandit_findings": 41,
+      "bandit_tp": 3,
+      "semgrep_findings": 1,
+      "semgrep_tp": 1,
+      "union_findings": 42,
+      "union_tp": 3
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "real": 30,
+      "bandit_findings": 14,
+      "bandit_tp": 4,
+      "semgrep_findings": 4,
+      "semgrep_tp": 2,
+      "union_findings": 18,
+      "union_tp": 4
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "real": 28,
+      "bandit_findings": 74,
+      "bandit_tp": 4,
+      "semgrep_findings": 3,
+      "semgrep_tp": 2,
+      "union_findings": 77,
+      "union_tp": 4
+    }
+  ]
+}
