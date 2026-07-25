@@ -1220,3 +1220,40 @@ explanation — "the model just reacts to code that looks bad" — predicts arm 
 The model discriminates the **class**, not the **defectiveness**. That is a materially stronger statement
 than E17 could make on its own, and it is the first mechanism claim this lab has been able to support
 rather than withdraw.
+
+## E19 — PREREGISTRATION: capability or memorisation? (written before measuring)
+
+Registered 2026-07-26 04:00 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** Every generative-role result (E16b, E17, E18) rests on RealVuln, which is **public**
+  and `llm_generated_corpus: true`. Decision 0027 therefore carries a bound it cannot currently discharge:
+  capability and **memorisation** are inseparable, so nothing may be promised for a client's private code.
+  This is the single largest limit on the most important finding this lab has produced. It is testable.
+- **Method — semantics-preserving mutation, the standard contamination mitigation.** The **same** files
+  are re-presented with every surface cue a memoriser keys on replaced, and the semantics untouched:
+  user-defined function/class/argument/local names → `fn_N`/`Cls_N`/`v_N`; route literals → same shape,
+  generic segments; the filename shown in the prompt → `module.py`. **Unchanged:** control flow, calls,
+  decorators, imports, framework APIs, and the *absence* of any authorization/ownership/rate-limit check
+  — nothing is added or removed, so the ground truth is preserved by construction.
+- **Instrument validation, done before preregistering.** 53 of 60 arm-A files mutate with **structure and
+  imports provably preserved** (AST node-type profile identical **and** every import byte-identical). A
+  validation run caught the mutator renaming a module path — `from django.core.paginator import Paginator`
+  → `django.core.v_21` — which the node-count check could not see; imports are now protected and asserted
+  separately. The 7 files that fail to mutate are excluded, not forced.
+- **Design: PAIRED.** The comparison is the **same 53 files**, original vs mutated. The original verdicts
+  are already measured (E17, frozen instrument, temperature 0): **10/53 = 0.189** flagged. Only the
+  mutated arm is new. Pairing removes file-to-file variation entirely.
+- **Hypothesis.** Detection is **reasoning**, not recall: the flag rate **survives** mutation.
+- **Primary test.** **McNemar exact, one-sided**, on the 53 discordant/concordant pairs, α = 0.05, testing
+  whether mutation **reduces** detection. A significant drop ⇒ memorisation contributes materially, and
+  decision 0027 must be narrowed hard.
+- **Honest statement about a null result, made in advance.** Failing to detect a drop is **not** proof of
+  equivalence. If no significant drop is found, the reportable claim is bounded by the **confidence
+  interval on the paired difference**: only if that interval excludes a large drop is this evidence
+  against pure memorisation. If the interval is wide, the verdict is **inconclusive**, exactly as E16b
+  was, and decision 0027's contamination bound stays in force unchanged.
+- **Instrument frozen.** Prompt, prose classifier and positive control unchanged from E16b/E17/E18.
+- **Residual limits acknowledged in advance.** Mutation removes *surface* identity, not *structural*
+  identity: a model could still recognise a distinctive control-flow shape. So this test can **weaken**
+  the memorisation explanation but cannot fully eliminate it; only a genuinely unseen target can, and the
+  lab does not have one.
