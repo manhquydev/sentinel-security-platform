@@ -1701,3 +1701,27 @@ change: rates are measurable on this instrument, labels are not.
 and on evidence that survives its own instrument. *Surface* memorisation is not driving the effect;
 *structural* familiarity remains untested; and no genuinely unseen target exists, so transfer to
 private code is still unproven.
+
+## E24 — PREREGISTRATION: file role, re-done under the determinism rule (written before measuring)
+
+Registered 2026-07-26 05:25 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E20's conclusion was withdrawn: it compared a **reused** arm A′ (7/28, taken from E17) against
+  a **freshly measured** arm C, which is invalid once E22 measured the instrument flipping 36% of
+  verdicts. The question it asked is still open and still matters — it is the last confound standing
+  between decision 0027 and a clean mechanism claim.
+- **The design change, identical to the one that rescued E23.** **Both arms measured fresh, in the same
+  run**, compared as **aggregate rates**. Nothing reused. Per-file verdicts never compared.
+- **Arms** (file role held fixed — every file is an endpoint handler):
+  - **A′** — handler files **with** an absence-class vulnerability, sampled fresh from the corpus.
+  - **C** — handler files **without** one: all 42 that exist.
+- **Hypothesis.** The model responds to the **missing control**, not to endpoint-ness: arm A′'s aggregate
+  flag rate exceeds arm C's.
+- **Falsifying result.** Comparable rates ⇒ the model is reacting to *endpoint-ness*, and decision 0027's
+  mechanism claim narrows to "recognises request-handling code" — a much weaker and less useful finding.
+- **Primary test.** One-sided Fisher exact on ITT counts, α = 0.05, plus a bootstrap interval on the
+  difference so the result is not read from a p-value alone.
+- **Power, stated in advance.** Comparable to E20's: powered for a large gap only. **A mid-range result
+  is reported inconclusive**, and the confound stays open rather than being resolved by wishful reading.
+- **Instrument.** Frozen prompt and positive control, **corrected classifier** (SM13) — the same one E23
+  used, stated as a change from E20 rather than hidden.
