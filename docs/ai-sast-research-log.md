@@ -305,3 +305,42 @@ the instrument. Two of my conclusions were wrong in ways I could not see from in
 - **Status:** SAIST executed end-to-end (rc=0, SARIF written) but produced 0 findings because its LLM
   stage never completed. A provenance-declaring run would require patching SAIST's request builder —
   deferred as an explicit decision (it is a fork of a third-party Apache-2.0 tool).
+
+## E12 — Cloning VulnHunterX for real (it had only ever been web-researched)
+
+- **Motivation:** the honest audit showed VHX — the *primary inheritance source* and the user's own
+  project — had never been cloned. Every claim about it came from web research.
+- **Clean-room boundary kept:** structure, config and DATA were inspected; the verification engine's
+  source and prompt templates were deliberately **not** read, so `agent/verifier/`'s clean-room
+  provenance (built from the published method description) stays intact.
+- **Structural claims VERIFIED:** `src/vuln_hunter_x/{codeql,semgrep,opengrep,questions,context,fuzz,
+  llm,sarif,reporting}`; `benchmarks/{datasets.yaml,adapters,approaches,metrics}` with the 3-arm design
+  (`raw_sast.py` / `vulnhunterx.py` / `ablation.py`) exactly as researched; 921 yaml/json under `config/`.
+- **NEW — VHX also evaluates on RealVuln** (`datasets.yaml`), the same corpus this lab measured on, so
+  the Bandit/Semgrep baselines here are directly comparable to VHX's published numbers.
+- **NEW — VHX vendors 881 OpenGrep rule files across 9 languages** (`config/opengrep-rules`, python
+  alone: 334), pinned to upstream `opengrep/opengrep-rules@f1d2b56`, imported 2026-06-14, explicitly so
+  the engine runs **offline without contacting `registry.semgrep.dev`**.
+
+### Correction to E6's "OpenGrep is not viable" conclusion
+
+The earlier research agent concluded *"official ruleset archived Nov 2025 → not viable, skip"*.
+Verified via the GitHub API: `opengrep/opengrep-rules` **is** archived (`archived=true`, last push
+2025-11-28) — so the *maintenance* objection stands. But "unusable" was too strong: an archived repo is
+still cloneable, and **VHX demonstrates a working offline vendored-snapshot approach**. Honest synthesis:
+**frozen ≠ unusable**; adopting it is a maintenance decision, not a feasibility one.
+
+### LICENSING — four conflicting signals in VulnHunterX (actionable for its owner)
+
+| Signal | Says |
+|---|---|
+| `README.md` badge + text | "MIT — see LICENSE" |
+| `LICENSE` file (actual) | **LGPL-2.1** |
+| `pyproject.toml` classifier | "License :: OSI Approved :: MIT License" |
+| `config/opengrep-rules/LICENSE` | **Commons Clause** — grants no right to **Sell** |
+
+The README's *"MIT — see LICENSE"* is self-contradicting (LICENSE is LGPL-2.1), and the vendored rules
+add a **Commons Clause** restriction that propagates to anything shipping them: no product or service
+whose value derives substantially from that software may be sold. For a research/education capstone
+this is fine; for any commercialisation path it is a blocker that should be resolved deliberately.
+This is why Sentinel inherited the *method* clean-room rather than the code (decision 0020).
