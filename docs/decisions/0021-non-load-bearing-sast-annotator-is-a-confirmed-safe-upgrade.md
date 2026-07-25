@@ -4,9 +4,11 @@ Date: 2026-07-25
 
 ## Status
 
-Accepted. The AI-SAST inherit-and-upgrade arc concludes: the LLM-triage-that-DROPS verifier was
-disproven (decision 0020); its safe replacement — an LLM that RANKS findings and never drops one — is
-**confirmed at scale** to significantly beat deterministic ranking while preserving recall.
+Accepted **as amended 2026-07-25 by the self-red-team in §Amendment** — the original "LLM beats
+deterministic ranking" headline was INCOMPLETE and is corrected below. Standing conclusions: the
+LLM-triage-that-DROPS verifier is disproven (0020); the RANK-never-drop annotator is safe and beats the
+scanner's own severity; but a **free supervised deterministic CWE-prior significantly beats the LLM**
+where labels exist, so the LLM's value is narrowed to the **zero-shot / no-labels** case.
 
 ## Context
 
@@ -44,6 +46,37 @@ makes the *keep/drop* call.
 (Honest caveat: the earlier n=21 subset was unrepresentative — it made severity look anti-correlated;
 at scale severity is informative and the LLM advantage is real and larger. The full-corpus numbers are
 the committed result.)
+
+## Amendment (2026-07-25) — self-red-team: a free deterministic CWE-prior beats the LLM where labels exist
+
+Before building on the positive above, the obvious challenge was tested: is the LLM's advantage merely
+"it knows CWE-703/259 are noisy classes" — something a trivial deterministic lookup could replicate for
+free? **Yes.** A **CWE-class base-rate prior** (Laplace-smoothed `P(real|CWE)`, fit on a random dev half,
+scored on the held-out half — no leakage) was compared on the same held-out data (n=882, 120 TP/762 FP):
+
+| Ranker | AUC (held-out) | 95% CI |
+|---|---|---|
+| deterministic severity | 0.750 | [0.697, 0.803] |
+| LLM annotator (zero-shot) | 0.818 | [0.770, 0.865] |
+| **deterministic CWE-prior (supervised)** | **0.886** | **[0.847, 0.926]** |
+
+Paired bootstrap (n=2000): **AUC(CWE-prior) − AUC(LLM) = +0.069, 95% CI [+0.045, +0.095]** — excludes 0,
+so the deterministic prior **significantly beats the LLM**.
+
+**Corrected conclusion (the honest, more useful one).** The LLM annotator is safe (recall 1.0) and does
+beat the scanner's raw severity — but it is NOT the best ranker available. The decisive distinction is
+**labels**:
+
+- **Labels available →** use the free, offline, reproducible **CWE-prior**. It is significantly better
+  and costs no LLM call. Adding an LLM here would be paying for a worse ranker.
+- **No labels (new codebase / unseen rule classes / cold start) →** the prior cannot be fit, and the
+  **zero-shot LLM annotator** is the better-than-severity fallback.
+
+This is the measured-not-trusted ethos holding a THIRD time on this surface (after 0018's judge and
+0020's drop-verifier): whenever a deterministic mechanism can be measured against the LLM, it wins or
+ties — so the LLM belongs only where no deterministic mechanism exists. Both baselines are cheap to
+compute, so the honest product shape is: **deterministic prior first, LLM annotator only as the
+cold-start fallback.**
 
 ## Consequences
 

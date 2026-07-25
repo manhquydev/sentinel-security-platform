@@ -123,3 +123,7 @@ documents here as real choices are accepted, then index them in this file.
   over the full RealVuln corpus (n=1764, 37 memoized LLM calls): LLM annotator AUC 0.814 [0.780,0.848] vs
   deterministic severity 0.732 [0.694,0.770] — significantly better (non-overlapping CIs), real-vuln
   priority 0.44 vs FP-trap 0.26. The LLM assists the human's order-of-work, never the keep/drop call.
+  **AMENDED**: a self-red-team found a free supervised deterministic CWE-class prior scores AUC 0.886
+  vs the LLM's 0.818 (paired bootstrap +0.069 [+0.045,+0.095], significant) — so where labels exist the
+  deterministic prior wins and no LLM is needed; the zero-shot LLM annotator is only the cold-start
+  fallback. Measured-not-trusted holds a third time on this surface.

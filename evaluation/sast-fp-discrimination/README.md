@@ -67,9 +67,24 @@ calls** — annotation depends only on rule/CWE/severity; conformance 1764/1764,
 | deterministic severity | 0.732 | [0.694, 0.770] |
 | **LLM annotator** | **0.814** | **[0.780, 0.848]** |
 
-**Confirmed POSITIVE, significant.** The annotator's CI does NOT overlap the deterministic ranker's, so
-it is significantly better (real-vuln priority mean 0.44 vs FP-trap 0.26), **while recall stays 1.0 —
-nothing is ever dropped**. (The earlier n=21 subset was unrepresentative — it made severity look
+**AMENDED by the self-red-team (`rank_baselines.py`, decision 0021 amendment) — read this first.** The
+LLM beats the scanner's *severity*, but a trivial **deterministic CWE-class prior** (Laplace-smoothed
+`P(real|CWE)`, fit on a dev half, scored held-out) beats the **LLM**:
+
+| Ranker (held-out n=882) | AUC |
+|---|---|
+| deterministic severity | 0.750 |
+| LLM annotator (zero-shot) | 0.818 |
+| **deterministic CWE-prior (supervised)** | **0.886** |
+
+Paired bootstrap: **prior − LLM = +0.069, 95% CI [+0.045, +0.095]** (excludes 0 → significant). So:
+**labels available → use the free CWE-prior** (better and no LLM cost); **no labels (cold start) → the
+zero-shot LLM annotator** is the better-than-severity fallback. Reproduce offline:
+`rag/.venv/bin/python evaluation/sast-fp-discrimination/rank_baselines.py`.
+
+Original (superseded) headline: the annotator's CI does not overlap *severity*'s, so it is significantly
+better than severity (real-vuln priority mean 0.44 vs FP-trap 0.26), **while recall stays 1.0 — nothing
+is ever dropped**. (The earlier n=21 subset was unrepresentative — it made severity look
 anti-correlated; at scale severity is informative and the LLM advantage is real and larger.) So the SAFE
 direction — LLM as a non-load-bearing ranking annotator, never a keep/drop decider — is the measured,
 provable upgrade, exactly where the drop-verifier failed decisively.
