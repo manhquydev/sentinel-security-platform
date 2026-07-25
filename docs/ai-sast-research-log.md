@@ -1280,3 +1280,62 @@ Stripping it removes a legitimate reasoning cue, not just a recall cue.
   cannot be improvised later to suit whichever answer arrives.
 
 Recorded at 04:15 +07, while the run was still in flight and no output had been read.
+
+## E19 — RESULT: detection survives full surface anonymisation (paired difference exactly 0.000)
+
+Run 2026-07-26. Positive control passed. 53 paired files, same instrument, temperature 0.
+
+| condition | flagged |
+|---|---|
+| original source, real filename (E17) | **10/53 = 0.189** |
+| identifiers + routes + filename anonymised | **10/53 = 0.189** |
+
+| statistic | value |
+|---|---|
+| paired difference (mutated − original) | **+0.0000** |
+| 95% CI (bootstrap over the 53 pairs) | **[−0.094, +0.094]** |
+| discordant pairs | **3 lost, 3 gained** |
+| McNemar exact, one-sided | **p = 0.656 — no significant drop** |
+
+### Read against the preregistered rule, not against hope
+
+The preregistration stated in advance that a null result is **not** proof of equivalence and that the
+claim would be **bounded by the interval**. Applying that rule:
+
+- **Excludes a 10-point drop** (a >50% relative collapse of a 0.189 base rate). **Pure surface
+  memorisation is ruled out**: had the model been recalling these files, replacing every identifier,
+  route literal and the filename should have destroyed most detections. It moved the rate **not at all**.
+- **Does not exclude a 5-point drop** (~26% relative). A *moderate* memorisation contribution remains
+  possible and is **not** claimed to be absent.
+
+### The flip pattern is the qualitative evidence
+
+Mutation **lost 3** detections and **gained 3** — on **different files** (`bad_mvc.py`, `auth.py`, `auth.py`
+lost; `main.py`, `partner_console.py`, `patient_operations.py` gained). Recall-driven detection predicts
+something else entirely: the memorised files should have gone dark, systematically, with nothing
+appearing to replace them. An even trade across different files is what a **noisy detector operating on
+semantics** looks like — it also shows detection sits near a decision threshold, which is consistent with
+the low 19% sensitivity.
+
+### The confound named before the result now works in our favour
+
+E19 stripped the **filename** as well as the identifiers, and a name like `views.py` is semantic context,
+not just identity. The pre-recorded branch analysis said: *if the rate holds, the confound strengthens
+the conclusion.* It held. Detection survived the removal of an identity cue **and** a legitimate
+reasoning cue simultaneously. **The filename-only control (`run_filename_control.py`, built before this
+result was read) is therefore not required** — it was specified for the drop branch, which did not occur.
+It stays in the repo, unrun, as the record of a control prepared before the answer was known.
+
+### What is now established, and what is still not
+
+- **Established:** the generative-role effect is **not surface memorisation**. It survives complete
+  anonymisation of identifiers, route literals and filename with the paired difference at exactly zero.
+- **Not established — and explicitly preregistered as beyond this design:** *structural* memorisation.
+  Mutation changes names, not shapes; a model could still recognise a distinctive control-flow topology.
+  Only a genuinely unseen target settles that, and this lab does not have one.
+- **Unchanged:** 19% sensitivity, file-level granularity, one model, one language.
+
+**Consequence for decision 0027.** Its contamination bound was "capability and memorisation are
+inseparable". That is now too strong: they have been **partially separated**, and the surface-recall
+explanation is excluded. The bound narrows to *structural* familiarity and to the absence of a
+genuinely unseen target — a materially smaller claim than the one the decision shipped with.
