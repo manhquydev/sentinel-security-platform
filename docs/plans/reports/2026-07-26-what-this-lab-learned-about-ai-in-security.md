@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 23 experiments (E1–E23). Written 2026-07-26 at the close of the research session that
+Synthesis across 24 experiments (E1–E24). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -50,13 +50,14 @@ Three preregistered controls, each removing a different rival explanation:
 |---|---|---|
 | "it reacts to messy code" | E18 — defective files with no absent control | **0/80** vs 9/60, **p = 0.0003** (corrected classifier) |
 | "it recalls a public corpus" | ~~E19~~ → **E23** — both arms measured fresh, aggregate rates | anonymised **14/53** vs original 11/53, +0.057 [−0.038, +0.151] — **no collapse**; equivalence not established |
-| "it recognises endpoint code" | ~~E20~~ | **WITHDRAWN** — reused one arm's verdicts under a 36%-unstable instrument; **open again** |
+| "it recognises endpoint code" | ~~E20~~ → **E24** — both arms fresh, file role held fixed | handlers **with** an absent control 9/40 vs **without** 2/42, +0.177 [+0.031,+0.326], **p = 0.020** |
 
 **A Stage-8 review of this entire chain, plus the determinism check it prompted, cost two of these
 controls.** E19 and E20 were withdrawn because they treated single LLM verdicts as fixed values;
 **E22 measured the instrument flipping 36% of verdicts on identical input at `temperature=0`, with the
-model never returning identical prose (0/14)**. E23 rebuilt the memorisation control on a design that
-survives that noise; the file-role question is open again.
+model never returning identical prose (0/14)**. E23 and E24 rebuilt both controls on designs that
+survive that noise — measuring every arm fresh in the same run and comparing aggregate rates rather than
+per-file labels. Both re-established their conclusions; E24's is sturdier than the one it replaced.
 
 The same review found the prose classifier — the single point of failure for every result here — had
 **four demonstrated defects and no test**. Fixing them moved the survivors *toward* the finding: E17 to

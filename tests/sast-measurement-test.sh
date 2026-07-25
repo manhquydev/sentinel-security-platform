@@ -311,6 +311,30 @@ PY
 then ok "instrument instability is measured and published, not assumed away"
 else bad "SM14: the determinism measurement is missing or claims perfect stability"; fi
 
+sect "SM15: the rebuilt controls measure both arms fresh (no reused verdicts)"
+if run_py <<'PY'
+import json, os, sys
+ok = True
+# E19 and E20 were withdrawn for reusing one arm's verdicts under a 36%-unstable instrument. Their
+# replacements must record that both arms were measured fresh, and must still show the effect.
+p1 = "evaluation/sast-fp-discrimination/memorisation-v2-260726.json"
+p2 = "evaluation/sast-fp-discrimination/role-control-v2-260726.json"
+for p in (p1, p2):
+    if not os.path.exists(p):
+        print("  SKIP-AS-FAIL: missing %s" % p); sys.exit(1)
+a = json.load(open(p1)); b = json.load(open(p2))
+# memorisation: anonymisation must NOT collapse detection (lower bound above a 5-point drop)
+mem_ok = a["ci95"][0] > -0.05
+# file role: the interval on the difference must exclude zero
+role_ok = b["ci95"][0] > 0 and b["fisher_p_one_sided"] < 0.05
+fresh = "fresh" in (a.get("design_note", "") + b.get("design", "")).lower()
+print("  memorisation CI=%s ok=%s | role CI=%s p=%s ok=%s | fresh-design recorded=%s"
+      % (a["ci95"], mem_ok, b["ci95"], b["fisher_p_one_sided"], role_ok, fresh))
+sys.exit(0 if (mem_ok and role_ok and fresh) else 1)
+PY
+then ok "both rebuilt controls hold, and both record measuring their arms fresh"
+else bad "SM15: a rebuilt control weakened or reverted to reusing verdicts"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
