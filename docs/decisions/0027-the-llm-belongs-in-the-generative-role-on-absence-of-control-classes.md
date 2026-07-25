@@ -68,7 +68,7 @@ against synthetic cases before any data was seen.
 An independent adversarial review of E17–E21, followed by a preregistered determinism check (E22),
 forced three changes. All are against this decision's own interests and are recorded in full.
 
-**1. The instrument is NOT deterministic — ~40% of verdicts flip on identical input (95% CI [21%,63%], n=38) at `temperature=0`,
+**1. The instrument is NOT deterministic — ~40% of raw verdicts differ on identical input (n=38) — but E31 shows most of that is clean<->non-answer churn; FLAG decisions churn on ~1 file in 12 at `temperature=0`,
 and the model never returns identical prose (0 of 14).** Consequently:
 
 - **E19's "surface memorisation is excluded" is WITHDRAWN.** Its paired difference of exactly 0.000
