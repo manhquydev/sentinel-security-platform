@@ -140,3 +140,4 @@ evaluation/sast-fp-discrimination/corpus/
 # Commit redacted summaries/decisions instead of raw artefacts (red-team B2).
 evaluation/absence-detection/*-probe-*.json
 evaluation/absence-detection/defence-in-depth-map-*.json
+evaluation/absence-detection/exposure-gap-*.json
