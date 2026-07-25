@@ -173,3 +173,31 @@ Harness: `evaluation/sast-fp-discrimination/` (all scripts reproducible offline 
 - **Conclusion:** the differential oracle closes a class that neither SAST nor template-DAST reaches.
   Scope caveat: only 2 baseline endpoints qualified — the corpus of labelled non-public endpoints is the
   limiting factor, not the technique.
+
+## E9 — Read-only probes for two more ABSENCE classes → **2 findings, and an instrument lesson**
+
+- **Hypothesis:** more of the absence bucket is reachable with strictly read-only, credential-free
+  probes — no state change, so no HITL gate needed (decision 0016 stays respected).
+- **Method:** `evaluation/absence-detection/probe_missing_limits.py`.
+  * **CWE-770/400 no rate limit** — bounded burst of identical GETs to a public read-only endpoint;
+    any throttling signal (429 / `Retry-After` / rate-limit header) = control present.
+  * **CWE-200 verbose-error info exposure** — malformed GET values; a `stack_trace`/`server_error`
+    signal = the generic-error-handling control is absent.
+- **Data (Juice Shop, read-only, nothing mutated):**
+
+  | class | endpoint | result |
+  |---|---|---|
+  | CWE-770/400 no rate limit | `/.well-known/security.txt` | **FINDING** — 25 identical requests, no 429, no rate-limit header |
+  | CWE-200 verbose error | `/rest/products/search` | **FINDING** — 3/18 corpus payloads leaked `server_error` |
+
+- **Instrument lesson (the important part):** v1 used **five hand-invented payloads** and reported
+  "handled generically" on `/rest/products/search` — while the project's OWN fuzzer had already
+  recorded `stack_trace` on that exact endpoint. The instrument was weaker than the tool sitting next
+  to it. Fixed by **reusing `agent/fuzz_payloads.CORPUS` + `agent/fuzz_signals.detect`** instead of
+  reinventing them; the finding then appeared. *The project's own "inherit, don't rebuild" rule applies
+  to its internal tooling too* — and a disagreement between two instruments is a bug signal, not noise.
+- **Conclusion:** the read-only absence surface is larger than E8 alone suggested (missing rate limits
+  and verbose errors are both detectable with zero credentials and zero state change). The remaining
+  big class — **IDOR / broken object-level authz (CWE-639/862)** — needs TWO authenticated identities,
+  i.e. login/registration = state change → decision 0016's HITL gate. That is a user decision, not
+  something to slip past the boundary.

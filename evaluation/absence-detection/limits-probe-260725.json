@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-07-25T13:39:48.220406+00:00",
+  "target": "http://127.0.0.1:13000",
+  "rate_burst": 25,
+  "probes": 6,
+  "findings": 2,
+  "control_present": 0,
+  "results": [
+    {
+      "class": "CWE-770/400 no-rate-limit",
+      "path": "/.well-known/security.txt",
+      "verdict": "control-absent",
+      "requests": 25,
+      "detail": "25 identical requests, no 429 and no rate-limit header"
+    },
+    {
+      "class": "CWE-200 verbose-error",
+      "path": "/.well-known/security.txt",
+      "verdict": "skipped",
+      "detail": "no query parameter to malform"
+    },
+    {
+      "class": "CWE-200 verbose-error",
+      "path": "/api-docs/swagger.json",
+      "verdict": "skipped",
+      "detail": "no query parameter to malform"
+    },
+    {
+      "class": "CWE-200 verbose-error",
+      "path": "/metrics",
+      "verdict": "skipped",
+      "detail": "no query parameter to malform"
+    },
+    {
+      "class": "CWE-200 verbose-error",
+      "path": "/rest/products/search",
+      "param": "q",
+      "verdict": "control-absent",
+      "payloads_sent": 18,
+      "leaks": [
+        {
+          "payload_class": "boundary",
+          "signal": "server_error",
+          "status": 500,
+          "reason": "HTTP 500"
+        },
+        {
+          "payload_class": "sqli",
+          "signal": "server_error",
+          "status": 500,
+          "reason": "HTTP 500"
+        },
+        {
+          "payload_class": "sqli",
+          "signal": "server_error",
+          "status": 500,
+          "reason": "HTTP 500"
+        }
+      ],
+      "detail": "3/18 payloads leaked internal detail (server_error)"
+    },
+    {
+      "class": "CWE-200 verbose-error",
+      "path": "/robots.txt",
+      "verdict": "skipped",
+      "detail": "no query parameter to malform"
+    }
+  ]
+}
