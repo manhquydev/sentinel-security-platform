@@ -2077,3 +2077,24 @@ recurred as a character limit, and I did not recognise it as the same mistake wh
 **The lesson, which is the same one twice:** a rule against discarding re-analysis inputs has to name
 *every* form of discarding — dropping a column, truncating a string, rounding a float. I wrote the rule
 about columns and then truncated a string eight hours later.
+
+## E28 — PREREGISTRATION: re-run E24 with full storage (written before measuring)
+
+Registered 2026-07-26 06:06 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E27 established that E24's committed artefact truncates responses at 400 characters, which
+  37% of them exceed, so its published result — sound as a live measurement — **cannot be re-verified**.
+  That was recorded as owed work rather than skipped. This pays it.
+- **Second purpose, which makes this more than bookkeeping.** The instrument flips 36% of verdicts
+  (E22). A second independent run of the *same* comparison measures something no single run can: whether
+  the **conclusion** is stable across runs even though individual verdicts are not. That is the property
+  the whole chain implicitly assumes, and it has never been tested directly.
+- **Method.** Identical design to E24 — both arms measured fresh in the same run, same populations, same
+  frozen prompt, same corrected classifier, positive-control gated — with responses now stored in full.
+- **Primary outcome.** Arm A′ and arm C flag rates, and the Fisher p, compared against E24's
+  (9/40 = 0.225 vs 2/42 = 0.048, p = 0.0195).
+- **Prediction, recorded in advance.** Rates will differ from E24's by a few files, because that is what
+  36% per-file instability does. **The conclusion — arm A′ materially above arm C — should hold.**
+- **Falsifying result.** If the conclusion flips (arm C comparable to arm A′), then E24 was a lucky draw,
+  the file-role confound is open again, and decision 0027 loses that support for a second time. That
+  outcome is published if it occurs.
