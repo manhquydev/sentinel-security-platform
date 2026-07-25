@@ -56,7 +56,10 @@ No result points the other way. The convergence is the evidence; no single p-val
 
 ## 3. What is still not true
 
-- **It is a weak detector.** ~19–25% of vulnerable files flagged. Four in five missed.
+- **It is a weak detector, and this is not fixable at the prompt/retry level.** ~19–25% of vulnerable
+  files flagged; four in five missed. E21 tested whether the 33% non-answer rate was hiding detections:
+  53% of non-answers do resolve on a retry, but **9 of 10 resolve to `clean`**, moving sensitivity only
+  0.167 → 0.183. The low sensitivity is a **genuine property of the model on this task**.
 - **File-level only.** Five model aliases × three output formats × an assistant prefill produced **zero**
   machine-readable structure (E16a), while correctly identifying planted defects. The models will not be
   told what shape to answer in; the disposal layer has to consume prose.
@@ -116,6 +119,8 @@ Concrete failures, each now guarded:
    model's cutoff, or a private codebase with hand-built ground truth.
 3. **Line-level attribution** — blocked by E16a's conformance failure; would need an extraction layer
    over prose, or a model that follows format instructions.
-4. **Sensitivity** — 19% is too low to rely on. Is it a prompt ceiling, a model ceiling, or a
-   file-level-granularity artefact?
+4. ~~**Sensitivity** — is it an instrument artefact?~~ **ANSWERED (E21): no.** Recovering non-answers
+   adds 1.6 points. It is a model/prompt ceiling, not a measurement gap. **Now open instead:** is it a
+   *prompt* ceiling or a *model* ceiling? Separating those needs a prompt tuned on held-out files and a
+   second model family — neither of which this session had the budget to do without overfitting.
 5. **Generalisation beyond one pinned application** for every runtime finding (0025).
