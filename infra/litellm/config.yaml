@@ -31,6 +31,18 @@ model_list:
   # spike-router-3models-260724.md) — a different family that also implements the Responses API and
   # returns populated usage. The frozen benchmark arm `sast-sol` is left untouched (its committed
   # scorecards are only reproducible through that alias, decision 0001).
+  # ADAPTER for external tools with a HARDCODED model vocabulary. Datadog SAIST validates its
+  # -detection-model/-validation-model against a fixed list and sends that name verbatim to the
+  # OpenAI-compatible endpoint, so running it through Sentinel's provenance gateway requires an alias
+  # under the name it expects. It resolves to the project's current default model (grok-4.5); the name
+  # is SAIST's vocabulary, not a claim about which model answers.
+  - model_name: openai-gpt5-mini
+    litellm_params:
+      model: openai/gcli/grok-4.5
+      api_base: os.environ/ROUTER_API_BASE
+      api_key: os.environ/ROUTER_API_KEY
+      stream: false
+
   - model_name: sast-grok45
     litellm_params:
       model: openai/gcli/grok-4.5

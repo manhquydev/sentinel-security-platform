@@ -276,3 +276,32 @@ earlier self-caught bugs were already recorded rather than hidden.
 
 **Lesson for the lab:** every published number needs an adversarial re-run by someone who did not write
 the instrument. Two of my conclusions were wrong in ways I could not see from inside.
+
+## E11 — Running Datadog SAIST (AI-native SAST) through Sentinel's gateway → **two hard findings**
+
+- **Motivation:** an honest audit of this lab showed only 2 of ~19 surveyed tools had actually been
+  EXECUTED (Bandit, Semgrep); the rest was research. Datadog SAIST was already vendored in-repo
+  (`benchmark/tools/datadog-saist`, a 60 MB prebuilt Go binary) and had never been run.
+- **Method:** ran the real binary on a corpus repo, pointing `-openai-base-url` at Sentinel's own
+  provenance-hardened gateway. SAIST validates `-detection-model` against a fixed vocabulary and sends
+  that name verbatim, so a documented adapter alias (`openai-gpt5-mini` → grok-4.5) was added to the
+  gateway config. Flags: `-local-prompts -skip-indexing` (no Datadog API/JWT dependency).
+- **Finding 1 — the hardened gateway REJECTS off-the-shelf AI-SAST.** Every LLM call returned:
+  `500 "request carries no sentinel_provenance declaration; the gateway cannot distinguish operator
+  instructions from target-derived data, so the request fails closed"`. SAIST sends plain OpenAI
+  requests with no provenance labels, because no external tool speaks Sentinel's contract. This is the
+  **third** independent time provenance discipline has blocked LLM-SAST integration (E1 judge refused,
+  E2 verifier refused, E11 tool cannot even connect) — and the first where the blocker is the
+  *protocol*, not the model. Any external LLM-security tool must either be modified to declare
+  provenance or bypass the control that makes the gateway a security boundary.
+- **Finding 2 — SAIST fails SILENTLY (the more serious one).** With every LLM call failing it still
+  printed `Analysis completed successfully … 0 violations found across 3 files using 12 rules` and
+  **exited 0**. A blocked/misconfigured/quota-exhausted LLM is therefore indistinguishable from a
+  genuinely clean scan. This is precisely the failure mode this project journaled in
+  `2026-07-23-checks-that-passed-because-they-checked-nothing.md` — here observed in a third-party
+  AI-native SAST product, not in our own code. Any CI adopting an AI-SAST tool needs an independent
+  liveness assertion (e.g. a canary file with a known vulnerability that MUST be reported), or a green
+  build proves nothing.
+- **Status:** SAIST executed end-to-end (rc=0, SARIF written) but produced 0 findings because its LLM
+  stage never completed. A provenance-declaring run would require patching SAIST's request builder —
+  deferred as an explicit decision (it is a fork of a third-party Apache-2.0 tool).
