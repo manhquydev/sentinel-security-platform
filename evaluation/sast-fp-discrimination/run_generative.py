@@ -195,6 +195,21 @@ def _load_gt_index() -> dict:
     return index
 
 
+def _already_used() -> set:
+    """Files consumed by a previous run, so a replication can be run on a DISJOINT sample.
+
+    Re-testing the same files would extend an exploratory result rather than replicate it
+    independently, and would silently reuse whatever idiosyncrasies that sample had.
+    """
+    prev = os.environ.get("E16_EXCLUDE_ARTEFACT", "")
+    if not prev or not os.path.exists(prev):
+        return set()
+    try:
+        return {(r["repo"], r["file"]) for r in json.load(open(prev, encoding="utf-8"))["rows"]}
+    except Exception:
+        return set()
+
+
 def pick_files(seed: int = 5) -> tuple[list[tuple], list[tuple]]:
     """Sample positive files (hold an absence-class vuln) and negative controls (hold nothing)."""
     index = _load_gt_index()
@@ -226,6 +241,10 @@ def pick_files(seed: int = 5) -> tuple[list[tuple], list[tuple]]:
                     continue
                 negatives.append((slug, rel))
 
+    used = _already_used()
+    if used:
+        positives = [x for x in positives if x not in used]
+        negatives = [x for x in negatives if x not in used]
     rnd = random.Random(seed)
     rnd.shuffle(positives)
     rnd.shuffle(negatives)
