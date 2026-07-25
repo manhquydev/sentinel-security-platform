@@ -140,8 +140,8 @@ Concrete failures, each now guarded:
    same fact, and only publishing both is honest.
 6. **`temperature=0` is not determinism — measure it, then design around it.** The payoff is concrete:
    two independent runs of the same comparison gave differences of **+0.177 and +0.176** while each arm
-   moved by a file. Labels churn at 36%; the aggregate difference reproduced to 0.001.
-   The original rule, stated fully: This instrument flips **36% of verdicts** on
+   moved by a file. Labels churn at ~40%; the aggregate difference reproduced to 0.001.
+   The original rule, stated fully: This instrument flips **~40% of verdicts** (95% CI [21%,63%]) on
    identical input and never returned identical prose (0/14). Two preregistered experiments were
    withdrawn for treating a single verdict as a fixed value. On a noisy instrument, **rates are
    measurable and labels are not**: the same 53 files scored 10, 10, 11 across three runs — individual

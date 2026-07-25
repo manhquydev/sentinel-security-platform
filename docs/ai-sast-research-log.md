@@ -2162,3 +2162,45 @@ Registered 2026-07-26 06:24 +07. **Nothing below was measured before this text w
 - **What does NOT change either way.** The two withdrawals stand regardless: E19's and E20's designs
   reused single verdicts as fixed values, which is invalid at *any* non-trivial instability, and both
   have since been rebuilt and re-established (E23, E24, E28).
+
+## E29 — RESULT: instability confirmed at ~40%, and the interval is wide enough to change the phrasing
+
+Run 2026-07-26. 24 files (12 absence-class, 12 control) queried twice each in the same run, identical
+input, frozen instrument, `temperature=0.0`.
+
+| | disagreement | identical prose |
+|---|---|---|
+| **E22** (n = 14, absence arm only) | 5/14 = **0.357** | 0/14 |
+| **E29** (n = 24, both arms) | 10/24 = **0.417**, 95% CI **[0.208, 0.625]** | **0/24** |
+| **pooled** (n = 38) | **15/38 = 0.395** | **0/38** |
+
+**E22's 0.36 sits comfortably inside E29's interval**, so the earlier figure was not a small-sample
+artefact — but the interval is **[0.21, 0.63]**, which is far too wide to keep quoting a two-significant-
+figure number.
+
+**Correction to how this has been stated all session:** "36% of verdicts flip" is replaced by
+**"roughly 40% of verdicts flip, 95% CI [21%, 63%]"**, or in prose, **"between a fifth and two-thirds,
+best estimate around two in five."** Every place citing the precise figure is updated. Nothing else
+changes — every conclusion drawn from it required only that instability be *materially non-zero*, and
+0.21 at the interval's floor is still catastrophic for any design reusing single verdicts as labels.
+
+**In 38 paired calls the model never once returned identical text.** That is the more striking number
+and it needs no interval.
+
+### Secondary: instability may be higher on control files, but this cannot tell
+
+| arm | disagreement |
+|---|---|
+| absence-class | 4/12 = 0.333 |
+| control | 6/12 = 0.500 |
+
+Suggestive — a model closer to a decision boundary on files with nothing to find would behave this way —
+but **n = 12 per arm**, and no test on that would be worth reporting. Recorded as an observation to
+follow up, explicitly **not** as a finding.
+
+### What does not change
+
+Both withdrawals stand. E19 and E20 reused single verdicts as fixed values, which is invalid at any
+instability in this range — and both were rebuilt and re-established on valid designs (E23, E24, and
+E28's replication to within 0.001). The rule adopted after E22 — **measure rates, never reuse labels** —
+is unaffected, and E28 demonstrated its payoff directly.
