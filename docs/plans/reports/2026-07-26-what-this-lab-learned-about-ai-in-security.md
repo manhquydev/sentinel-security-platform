@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 26 experiments (E1–E26). Written 2026-07-26 at the close of the research session that
+Synthesis across 28 experiments (E1–E28). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -50,7 +50,7 @@ Three preregistered controls, each removing a different rival explanation:
 |---|---|---|
 | "it reacts to messy code" | E18 — defective files with no absent control | **0/80** vs 9/60, **p = 0.0003** (corrected classifier) |
 | "it recalls a public corpus" | ~~E19~~ → **E23** — both arms measured fresh, aggregate rates | anonymised **14/53** vs original 11/53, +0.057 [−0.038, +0.151] — **no collapse**; equivalence not established |
-| "it recognises endpoint code" | ~~E20~~ → **E24** — both arms fresh, file role held fixed | handlers **with** an absent control 9/40 vs **without** 2/42, +0.177 [+0.031,+0.326], **p = 0.020** |
+| "it recognises endpoint code" | ~~E20~~ → **E24 + E28** — both arms fresh, file role held fixed, **replicated** | 9/40 vs 2/42 (+0.177, p = 0.020); re-run 8/40 vs 1/42 (**+0.176**, p = 0.012) — the difference reproduced to **0.001** |
 
 **A Stage-8 review of this entire chain, plus the determinism check it prompted, cost two of these
 controls.** E19 and E20 were withdrawn because they treated single LLM verdicts as fixed values;
@@ -138,7 +138,10 @@ Concrete failures, each now guarded:
    result. Both vacuous assertions were written by the author of the code they guarded.
 5. **Report the fragility next to the number.** "p = 0.042" and "one observation would flip it" are the
    same fact, and only publishing both is honest.
-6. **`temperature=0` is not determinism — measure it.** This instrument flips **36% of verdicts** on
+6. **`temperature=0` is not determinism — measure it, then design around it.** The payoff is concrete:
+   two independent runs of the same comparison gave differences of **+0.177 and +0.176** while each arm
+   moved by a file. Labels churn at 36%; the aggregate difference reproduced to 0.001.
+   The original rule, stated fully: This instrument flips **36% of verdicts** on
    identical input and never returned identical prose (0/14). Two preregistered experiments were
    withdrawn for treating a single verdict as a fixed value. On a noisy instrument, **rates are
    measurable and labels are not**: the same 53 files scored 10, 10, 11 across three runs — individual

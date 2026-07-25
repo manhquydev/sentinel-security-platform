@@ -335,6 +335,28 @@ PY
 then ok "both rebuilt controls hold, and both record measuring their arms fresh"
 else bad "SM15: a rebuilt control weakened or reverted to reusing verdicts"; fi
 
+sect "SM16: the file-role conclusion replicates across independent runs"
+if run_py <<'PY'
+import json, os, sys
+a = "evaluation/sast-fp-discrimination/role-control-v2-260726.json"
+b = "evaluation/sast-fp-discrimination/role-control-v3-260726.json"
+for p in (a, b):
+    if not os.path.exists(p):
+        print("  SKIP-AS-FAIL: missing %s" % p); sys.exit(1)
+A, B = json.load(open(a)), json.load(open(b))
+# The instrument flips 36% of individual verdicts (E22). What must hold is that the aggregate
+# DIFFERENCE is stable across runs -- that is the assumption every experiment here rests on.
+dA, dB = A["difference"], B["difference"]
+drift = abs(dA - dB)
+both_sig = A["fisher_p_one_sided"] < 0.05 and B["fisher_p_one_sided"] < 0.05
+print("  E24 diff=%+.3f (p=%s) | E28 diff=%+.3f (p=%s) | drift=%.4f"
+      % (dA, A["fisher_p_one_sided"], dB, B["fisher_p_one_sided"], drift))
+# Two independent runs must agree in direction, both significant, and not drift wildly.
+sys.exit(0 if (both_sig and dA > 0 and dB > 0 and drift < 0.08) else 1)
+PY
+then ok "two independent runs agree: labels churn, the aggregate difference does not"
+else bad "SM16: the file-role conclusion did not replicate across runs"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
