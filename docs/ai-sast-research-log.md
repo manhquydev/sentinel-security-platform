@@ -1537,3 +1537,58 @@ Registered 2026-07-26 04:50 +07. **Nothing below was measured before this text w
   and E20's reuse of E17 verdicts is invalid**, both are downgraded to **inconclusive**, and the
   research log and decision 0027 are corrected accordingly — regardless of how much that costs the
   night's conclusions.
+
+## E22 — RESULT: the instrument is NOT deterministic (36% of verdicts flip). E19 and E20 are DOWNGRADED
+
+Run 2026-07-26. 14 arm-A files, each queried **twice in the same run**, identical input, frozen prompt
+and classifier, `temperature=0.0`.
+
+| measure | result |
+|---|---|
+| **verdict disagreement on identical input** | **5 of 14 = 36%** |
+| **identical raw prose across the two calls** | **0 of 14 = 0%** |
+
+Flips observed: `non-answer→flagged`, `non-answer→clean`, `clean→non-answer`, `flagged→clean`,
+`clean→flagged`. The model never once returned the same text twice at temperature 0.
+
+### Executing the preregistered decision rule
+
+The preregistration committed, before the data existed: *"If the disagreement rate is materially above
+0, then E19's and E20's reuse of E17 verdicts is invalid, both are downgraded to inconclusive, and the
+research log and decision 0027 are corrected accordingly — regardless of how much that costs the night's
+conclusions."* 36% is materially above 0.
+
+**E19 (memorisation) → INCONCLUSIVE.** It paired *newly measured mutated* verdicts against *reused
+original* verdicts, on the stated assumption that the instrument is deterministic. It is not. Its
+headline "3 lost, 3 gained, paired difference exactly 0.000" is **precisely what a ~36% flip rate
+produces on 53 files at a 0.19 base rate — with or without mutation**. The observation is fully
+explained by instrument noise, so it cannot evidence anything about memorisation. **The claim "surface
+memorisation is excluded" is WITHDRAWN.**
+
+**E20 (file role) → INCONCLUSIVE.** Its arm A′ (7/28) is reused E17 verdicts, not a fresh measurement,
+against a freshly measured arm C. With a 36% flip rate the two arms are not measured on comparable
+footing, and the result was already fragile (one flag flips the p-value). **The claim "the missing
+control drives it, not file role" is WITHDRAWN pending a re-run.**
+
+### What survives, and why
+
+**E17 and E18 are affected but not invalidated.** Both compare **two arms measured the same way in the
+same run**; per-file noise inflates variance but does not systematically bias a between-arm comparison.
+Re-scored with the corrected classifier they are *stronger* than published — E17 9/60 vs **0/40**
+(p = 0.0078), E18 arm B **0/80** vs 9/60 (p = 0.0003). But their true intervals are **wider than
+reported**, because every single-shot verdict carries a ~36% chance of differing on a re-run, and none
+of the published intervals model that.
+
+**E21 is corroborated rather than threatened**: 53% of non-answers changing on retry is the same
+phenomenon measured from a different angle.
+
+### The methodological lesson, which is bigger than these experiments
+
+**`temperature=0` does not mean deterministic**, and this lab assumed it did — in a preregistration,
+in two experimental designs, and in a protocol section on freezing instruments. Nothing in the
+protocol required *measuring* run-to-run stability before building a paired design on top of it.
+
+A single-shot LLM verdict is a **noisy measurement**, not an observation. Any design that reuses one
+run's verdicts as fixed values is invalid. Repeated sampling — the same file queried k times, with the
+verdict taken as a rate rather than a label — is mandatory for anything paired, and the protocol is
+amended accordingly.
