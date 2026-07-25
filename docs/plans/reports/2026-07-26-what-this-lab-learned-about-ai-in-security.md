@@ -126,7 +126,7 @@ Concrete failures, each now guarded:
 | a **mutator that renamed a module path**, breaking imports invisibly to an AST node-count check | validation before measuring | imports asserted byte-identical |
 | a **preregistered control arm silently dropped** during a redesign | caught before publication | run, and the claim it restored recorded in order |
 
-**The five rules worth keeping:**
+**The seven rules worth keeping:**
 
 1. **Preregister, and name the estimand in it.** Pooling across groups and averaging within them answered
    the same question in *opposite directions* here.
@@ -138,6 +138,17 @@ Concrete failures, each now guarded:
    result. Both vacuous assertions were written by the author of the code they guarded.
 5. **Report the fragility next to the number.** "p = 0.042" and "one observation would flip it" are the
    same fact, and only publishing both is honest.
+6. **`temperature=0` is not determinism — measure it.** This instrument flips **36% of verdicts** on
+   identical input and never returned identical prose (0/14). Two preregistered experiments were
+   withdrawn for treating a single verdict as a fixed value. On a noisy instrument, **rates are
+   measurable and labels are not**: the same 53 files scored 10, 10, 11 across three runs — individual
+   verdicts churn, the aggregate holds to ~2 points. Never reuse one run's verdicts in a paired design.
+7. **"Don't discard what re-analysis needs" must name every form of discarding.** The rule was written
+   about a dropped grouping column. Eight hours later the same author truncated model responses at 400
+   characters — which 37–40% exceeded — making two experiments permanently non-re-verifiable and causing
+   a naive re-score to erase a significant result. **Dropping a column, truncating a string and rounding
+   a float are one error.** A narrowly-worded rule does not generalise on its own; the strongest evidence
+   is that its own author violated it the same night.
 
 ## 6. Open questions, in priority order
 
