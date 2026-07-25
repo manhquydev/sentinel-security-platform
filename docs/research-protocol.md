@@ -301,3 +301,34 @@ Three rules follow, and they are the highest-value output of the whole exercise:
    result.**
 
 **Standing consequence:** no result becomes a decision on the strength of author-written tests alone.
+
+---
+
+## 11. `temperature=0` is not determinism (E22, 2026-07-26)
+
+The night this protocol was written, three of its own experiments were built on an assumption nobody
+tested: that a frozen prompt at `temperature=0.0` returns a stable verdict. **Measured: 36% of verdicts
+flip on identical input, and the model never returned identical prose once (0 of 14.)**
+
+Two experiments died of it. E19 paired freshly measured mutated verdicts against *reused* original ones;
+its perfect null — 3 lost, 3 gained, difference exactly 0.000 — is what that flip rate alone produces,
+mutation or not. E20 compared a reused arm against a fresh one. Both are withdrawn.
+
+**The rules that follow, now mandatory:**
+
+1. **Measure instrument stability before designing around it.** Query the same input *k* times and
+   report the disagreement rate. This is a Stage-4 obligation alongside the negative control and the
+   canary, not an optional refinement.
+2. **A single LLM verdict is a noisy measurement, not an observation.** Where the verdict matters, take
+   it as a **rate over k runs**, not a label from one.
+3. **Never reuse one run's verdicts as fixed values in a paired design.** If arm A was measured
+   yesterday and arm B today, they are not paired — they are two samples from a noisy process, and the
+   difference between them carries the noise of both.
+4. **A null result is only informative if the instrument is stable enough to have shown the effect.**
+   Before concluding "X changed nothing", check whether the instrument could have detected a change of
+   that size at all.
+
+*The uncomfortable part: the protocol's own §2 Stage 4 said "build the instrument, with its controls"
+and listed a negative control, a canary and fail-closed behaviour. It never said "and check that it
+returns the same answer twice." Three experiments were designed, preregistered and published in one
+night on top of that gap.*
