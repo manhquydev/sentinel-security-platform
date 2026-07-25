@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 20 experiments (E1–E20). Written 2026-07-26 at the close of the research session that
+Synthesis across 21 experiments (E1–E21). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -63,7 +63,8 @@ No result points the other way. The convergence is the evidence; no single p-val
 - **File-level only.** Five model aliases × three output formats × an assistant prefill produced **zero**
   machine-readable structure (E16a), while correctly identifying planted defects. The models will not be
   told what shape to answer in; the disposal layer has to consume prose.
-- **A third of calls are non-answers.**
+- **A third of calls are non-answers**, and roughly half of those are a *stable* refusal on those
+  particular files rather than transient noise (E21: 9 of 19 persisted through a retry).
 - **Structural familiarity is untested** — mutation changed names, not control-flow shapes.
 - **No genuinely unseen target exists** for this lab, so full transfer remains unproven.
 - **One model, one language, one corpus** — and that corpus is synthetic-seeded, not organic CVEs.
