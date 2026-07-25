@@ -119,22 +119,45 @@ _NO = re.compile(r"^\W*(no|none)\b", re.I)
 
 # Terms that are themselves a defect - no qualifier needed.
 _INHERENT = re.compile(
-    r"\b(idor|bola|broken (?:object level )?access control|unauthenticated|privilege escalation|"
+    r"\b(idor|bola|broken (?:object level )?access control|privilege escalation|"
     r"brute.?force|information disclosure|excessive data exposure|"
     r"any(?:one| user| caller)? can (?:read|access|view|modify|delete))\b", re.I)
 
+# "unauthenticated" used to sit in _INHERENT, which made "AES-CBC unauthenticated" — a CRYPTO
+# property, i.e. presence-class — score as an absent control. It now needs absence language like
+# any other concept.
+# Presence-class vocabulary: the class pattern SAST already covers. A sentence about these must never
+# count as an absent control merely because it also contains an auth word.
+_PRESENCE_CLASS = re.compile(r"\b(aes|cbc|gcm|cipher|crypto|hash|md5|sha1|xss|sql ?injection|sqli|"
+                             r"deserial|pickle|command injection|path traversal|hardcoded|"
+                             r"ephemeral key|iv)\b", re.I)
+
 # Security concepts that indicate a defect only when something is said to be MISSING.
-_CONCEPT = re.compile(r"(access control|authoriz\w*|ownership check|owner check|authentication|"
-                      r"rate.?limit\w*|throttl\w*|lockout|auth\b)", re.I)
+_CONCEPT = re.compile(r"(access control|authoriz\w*|authz|ownership check|owner check|authentication|"
+                      r"authn|rate.?limit\w*|throttl\w*|lockout|auth\b|"
+                      r"role check|permission check|permission|scope check|tenant (?:check|scope))", re.I)
 _ABSENCE = re.compile(r"(lack\w*|missing|absent|no\s|not\s|without|none|fails? to|does ?n[o\u2019']t|"
                       r"unprotected|unchecked|unenforced|never|any(?:one| user)?\s+can)", re.I)
 # Explicitly reassuring language: the control is present and correct.
-_PRESENT_OK = re.compile(r"(correctly|properly|is enforced|are enforced|looks (?:fine|good|ok)|"
+_PRESENT_OK = re.compile(r"(\bcorrect\w*|\bproperly\b|\bproper\s|is enforced|are enforced|defen[sc]e|"
+                         r"sole entry point|"
+                         r"looks (?:fine|good|ok)|"
                          r"already (?:enforced|checked)|no issues?|seems (?:fine|ok)|appears (?:fine|ok))",
                          re.I)
 
 _QUESTION_BACK = re.compile(r"(what (?:need|do you want)|state task|send goal|missing ask|"
                             r"which (?:file|task))", re.I)
+
+
+# Inline code spans and fenced blocks are the model QUOTING source, not the model asserting anything.
+# Two confirmed misclassifications came from exactly this: `add \`if not user.is_authenticated\`` and
+# `flash("Not authorized", "error")` both supplied the absence word from code the model was suggesting
+# or citing, not from its own prose. Absence language must come from what the model SAYS.
+_CODE_SPAN = re.compile(r"```.*?```|`[^`]*`|\"[^\"]*\"|'[^']*'", re.S)
+
+
+def _strip_code(t: str) -> str:
+    return _CODE_SPAN.sub(" ", t or "")
 
 
 def _sentences(t: str):
@@ -177,11 +200,23 @@ def classify_prose(text: str) -> str:
         return "non-answer"
     if _QUESTION_BACK.search(t[:200]):
         return "non-answer"
-    for sent in _sentences(t):
+    sents = _sentences(_strip_code(t))
+    # Terse model prose splits a single thought across sentences — "Authz hole. No property scope."
+    # puts the concept in one and the absence word in the next, and a per-sentence scan scored it clean.
+    # Adjacent pairs are therefore evaluated as well as single sentences.
+    windows = sents + [f"{a} {b}" for a, b in zip(sents, sents[1:])]
+    for sent in windows:
+        # The reassurance test runs FIRST for every branch. A review found _INHERENT short-circuiting
+        # ahead of it, so "correct IDOR defense" — prose saying the control IS present — scored as a
+        # finding. That single error was the whole of E17's 1/40 clean-arm flag.
+        if _PRESENT_OK.search(sent):
+            continue
         if _INHERENT.search(sent):
             return "flagged"
-        # A concept counts only with absence language and without a reassurance that it is present.
-        if _CONCEPT.search(sent) and _ABSENCE.search(sent) and not _PRESENT_OK.search(sent):
+        # A concept counts only with absence language, and never when the window is really about a
+        # presence-class defect (crypto, injection, traversal) that merely mentions an auth word.
+        if (_CONCEPT.search(sent) and _ABSENCE.search(sent)
+                and not _PRESENCE_CLASS.search(sent)):
             return "flagged"
     return "clean"
 
