@@ -236,6 +236,27 @@ lack — and states its ten unmeasured gaps out loud rather than claiming past t
 ([Week‑12 report](docs/2026-07-26_NguyenManhQuy_Week12.md), VI). ROI is framed as *frequency to close the
 gap between costly manual pentests*, never as replacing human judgment.
 
+**Built (research programme):** a written [research protocol](docs/research-protocol.md) governing any
+claim that leaves this repo — preregister before measuring, name the *estimand* in the preregistration,
+never a bare point estimate, **measure instrument stability before designing around it**, adversarial
+review that reproduces before it attacks, and a **correction‑propagation law**: a correction is not done
+until the *instrument* is fixed and a test pins it
+([decision 0026](docs/decisions/0026-research-claims-are-governed-by-a-written-protocol-and-corrections-must-reach-the-instrument.md)).
+Adopted after the branch caught a **retracted claim still executing in committed code**, and immediately
+turned on its own results: it demolished one load‑bearing claim, confirmed another, and withdrew two
+experiments of its own once `temperature=0` was measured **not** to mean deterministic.
+
+It also produced the first measured place for the model
+([decision 0027](docs/decisions/0027-the-llm-belongs-in-the-generative-role-on-absence-of-control-classes.md)):
+in the **generative** role on absence‑of‑control classes — where the deterministic engines emit 33 CWE
+classes and **none** can express an absent control — the model discriminates those files from clean ones
+(p = 0.0078), from merely‑defective ones (p = 0.0003), and from same‑role handlers lacking the defect
+(p = 0.020, replicated to 0.001), with transfer confirmed on code written days before measurement.
+**Bounds are part of the claim:** sensitivity ~19–22% is a *floor*, file‑level only, one model, one
+corpus. The 31 experiments and every correction are in
+[`docs/ai-sast-research-log.md`](docs/ai-sast-research-log.md); the synthesis is
+[here](docs/plans/reports/2026-07-26-what-this-lab-learned-about-ai-in-security.md).
+
 **Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
 decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
 license); GraphRAG (deferred per decision 0011); a second, non‑memorised target to test whether the
