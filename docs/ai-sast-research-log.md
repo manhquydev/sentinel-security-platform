@@ -372,6 +372,55 @@ comparison; both are computed identically across rows so the ranking is fair. Ru
 in-place from a scratch clone (Commons Clause forbids *selling*, not measuring); adopting them into
 Sentinel would need an explicit licence decision.
 
+## Exposure-gap measurement (gateway routing coverage vs. app-side enforcement) — **INVALIDATES-THE-CLAIM**
+
+- **Hypothesis:** Kong routes only 8 endpoints; the application exposes far more. Measuring both what the
+  gateway knows about and what the app defends will show how much surface area sits with no enforcement
+  control in front of it.
+- **Method:** `evaluation/absence-detection/measure_exposure_gap.py`. Deterministically discover paths from
+  the Angular client bundle (`/main.js`) and attack-surface baseline; probe both the gateway and the app
+  origin as the live agent identity. Classify endpoints on two independent axes: **(1) routing** — does the
+  gateway's config route this path? (status != 404); **(2) app posture** — what does the app itself do
+  when reached directly (401/403 vs 2xx vs 500 vs SPA fallback)?
+- **Published claim:** "**EXPOSURE GAP: 7 of 16 real endpoints have NO control in front of them.**"
+  Breakdown: unprotected 7 · routed 6 · app-enforced 2 · not-an-endpoint 12 · inconclusive 1.
+- **Three defects (found by code review + re-execution):**
+  * **Ordering bias in branch logic.** Original script checked "is the response HTML?" before checking
+    "is the status 401/403". This app renders 401 as `text/html`, so app-enforced endpoints were
+    silently miscounted as "not an endpoint". This under-counted app-side controls (2 reported; actual 7).
+  * **Regex misses Angular template-literal paths.** Pattern matched only quote-delimited literals
+    (`"…"`, `'…'`), missing paths like `${host}/rest/languages` (backtick and template syntax). The
+    denominator of 16 was an artifact of the regex, not the true application surface.
+  * **Unauthorized claim on the "unprotected" label.** Original framing: "7 endpoints have NO control in
+    front of them" = an authorization finding. Code review read all 7 response bodies (scope: unrouted +
+    openly answering): every one is public-by-design content (product catalogue, delivery tiers, CAPTCHA,
+    security-question text, photo wall, CTF hints). **Zero authorization gaps were found.** The measurable
+    property is gateway routing coverage, not protection.
+- **Data (re-measured with corrected instrument):**
+  Deterministically discovered 33 paths; 32 are real routes (one SPA fallback discarded).
+
+  | | count |
+  |---|---|
+  | real endpoints (app proved they exist) | **32** |
+  | traverse gateway (`routed=true`) | 6 |
+  | app-enforced (return 401/403 directly) | **7** |
+  | open (answer 2xx, non-HTML) | 14 |
+  | undetermined (HTTP 500 — route exists but GET-without-params errors) | 11 |
+  | absent (404 or SPA fallback) | 1 |
+  | **crossing: unrouted AND openly answering** | **8** |
+
+  No authorization gaps. Routed-vs-unrouted crossing: 8 routes accept connections directly without
+  traversing the gateway — a statement about **gateway coverage** (no logging, ACL, rate-limiting applies),
+  explicitly NOT an authorization finding.
+
+- **Conclusion (corrected):** The instrument defects combined to produce both a false denominator (16
+  vs. 32) and a mislabeled bucket (public content claimed as unprotected auth gaps). The corrected
+  measurement shows: **zero authorization gaps found; the measurable property is gateway routing coverage
+  (6 of 32 real routes traverse it), not protection.** Decision 0025 captures the posture of the 6 routed
+  non-public endpoints (1 gateway-only-enforcement + 1 app-withholds-payload + rest in scope). This
+  measurement captures the coverage bound and proves the application does enforce authorization itself on
+  7 of the 26 unrouted endpoints.
+
 ## CORRECTION to E8 (2026-07-26) — **the "missing authz finding" was a measurement artefact**
 
 A red-team of the follow-on plan tested the same endpoint against two origins and found:

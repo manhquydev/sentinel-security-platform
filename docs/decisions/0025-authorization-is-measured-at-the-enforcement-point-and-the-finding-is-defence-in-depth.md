@@ -56,12 +56,16 @@ Against the pinned Juice Shop through Kong, as `agent-recon`, both canaries pass
 - 4 public routes: gateway **200** — the ACL permits the identity, as intended.
 - 1 route (`/api-docs/swagger.json`): HTML/SPA fallback → **inconclusive**, never counted as evidence.
 - **2 of 2 non-public routes** (`/rest/user/whoami`, `/rest/admin/application-version`): gateway **403**
-  (the ACL correctly denies a live identity) but the app answers **200** directly →
-  **gateway-only enforcement**.
+  (the ACL correctly denies a live identity) but the app answers **200** directly. On direct-to-app inspection:
+  * `/rest/admin/application-version` discloses a real value (`{"version":"20.1.1"}`) → **gateway-only enforcement** (**FINDING**)
+  * `/rest/user/whoami` discloses an empty structure (`{"user":{}}`, 11 bytes, no protected data) → **app-withholds-payload** (not a bypass; control exists)
 
-**Finding: 100% of this application's non-public gateway-routed endpoints have no authorization of
-their own.** Kong is a single point of failure for authorization; any path that reaches the app
-directly — SSRF, a container-network foothold, a misconfigured route — bypasses it entirely.
+**Finding: 1 of 2 non-public gateway-routed endpoints discloses protected data without authorization of
+its own.** `/rest/admin/application-version` is a real gateway-only enforcement gap; `/rest/user/whoami`
+is protected by the gateway but the app withholds sensitive data if reached directly, so no bypass exists
+on that path. Kong is a single point of failure for the one genuine case; any path that reaches the app
+directly — SSRF, a container-network foothold, a misconfigured route — on that endpoint bypasses all
+authorization.
 
 **Coverage bound (stated, not buried):** 8 routed endpoints out of a much larger application surface.
 This result describes the gateway-fronted slice only and must never be read as whole-app coverage.
@@ -92,6 +96,34 @@ Two consequences, both corrected rather than argued away:
 The mapper now **measures** this instead of denying it: the solved-set is captured before and after
 every run and the diff published (`target_state_change.flipped_by_this_run`). The latest run flipped
 nothing new and reported the 3 pre-existing flags on entry.
+
+## Correction (2026-07-26) — the "100% disclose" claim overstated by not measuring response substance
+
+An independent code review + re-measurement revealed the classifier had measured response *status* alone,
+never checking whether a 2xx response actually *carried* protected data or was an empty shell:
+
+**Original claim:** "100% of this application's non-public gateway-routed endpoints have no authorization
+of their own."
+
+**What was actually measured:** Two endpoints both answered 200 when the gateway answered 403:
+- `/rest/admin/application-version` → `{"version":"20.1.1"}` (real data disclosed)
+- `/rest/user/whoami` → `{"user":{}}` (empty structure; no protected data in the payload)
+
+**Why the instrument produced the wrong claim:** the classification logic treated any non-HTML 2xx response
+as "app open", without checking whether the response body had any substance. Empty responses were counted
+as bypasses when they should have counted as "app withholds by returning emptiness instead of 401".
+
+**Corrected finding:** 1 of 2 non-public routed endpoints discloses protected data to a direct-to-app
+path. The second is defended at *both* layers — the gateway denies it and the app itself returns nothing —
+so it is the opposite of the single-point-of-failure the original claim asserted. The
+`gateway-only-enforcement` verdict for `/rest/admin/application-version` stands and is a genuine finding.
+`/rest/user/whoami` is now correctly classified as `app-withholds-payload`: the control is real, it just
+signals refusal through emptiness rather than through a 401 status.
+
+**Instrument fix:** The mapper now applies the `_has_substance()` structural check (parse JSON, search for
+any non-empty leaf value) before classifying a 2xx response as disclosure — see `_has_substance` in
+`evaluation/absence-detection/map_defence_in_depth.py`, with the empty-shell and real-payload cases both
+asserted by `tests/defence-in-depth-test.sh` (DD9) so this cannot silently regress.
 
 ## Consequences
 

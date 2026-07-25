@@ -104,6 +104,77 @@ PY
 then ok "session canary (identity liveness) + synthetic canary (prober liveness, not a real finding) both committed"
 else bad "DD6: a canary is missing or the synthetic canary depends on a real vulnerability"; fi
 
+sect "DD7: a 401 rendered as text/html is app-enforced, NOT 'no such endpoint'"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/absence-detection")
+from measure_exposure_gap import classify
+gw = {"status": 404, "bytes": 0, "html": False, "body": ""}
+# This target renders 401 as text/html. An HTML-before-status branch order classified these as
+# "absent" and under-counted app-side controls 6->2 — in the direction that enlarged the reported gap.
+routed, posture, _ = classify(gw, {"status": 401, "bytes": 900, "html": True, "body": "<html>401</html>"})
+# negative control: a genuine SPA fallback (200 + HTML) must still be discarded
+_, absent_posture, _ = classify(gw, {"status": 200, "bytes": 900, "html": True, "body": "<html>app</html>"})
+print(f"  401+html -> {posture}   200+html -> {absent_posture}")
+sys.exit(0 if posture == "app-enforced" and absent_posture == "absent" else 1)
+PY
+then ok "401+text/html classifies app-enforced while 200+text/html is still discarded (ordering bug cannot recur)"
+else bad "DD7: content-type is still able to mask an app-side control"; fi
+
+sect "DD8: routing coverage is independent of the app's response"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/absence-detection")
+from measure_exposure_gap import classify
+# The routing axis must answer identically no matter what the app says — that independence is what
+# stops a branch order from biasing the coverage count again.
+gw_routed = {"status": 403, "bytes": 0, "html": False, "body": ""}
+apps = [{"status": 200, "bytes": 10, "html": False, "body": "{}"},
+        {"status": 401, "bytes": 10, "html": True, "body": "x"},
+        {"status": 500, "bytes": 10, "html": False, "body": "x"},
+        {"status": 404, "bytes": 0, "html": False, "body": ""}]
+routed_flags = {classify(gw_routed, a)[0] for a in apps}
+unrouted_flags = {classify({"status": 404, "bytes": 0, "html": False, "body": ""}, a)[0] for a in apps}
+print(f"  routed axis across 4 app responses={routed_flags}  unrouted={unrouted_flags}")
+sys.exit(0 if routed_flags == {True} and unrouted_flags == {False} else 1)
+PY
+then ok "the routed axis is constant across every app posture — no app response can shift the coverage count"
+else bad "DD8: the routing verdict changes with the app's response"; fi
+
+sect "DD9: a 2xx with an empty payload is not counted as a bypass"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/absence-detection")
+from map_defence_in_depth import _has_substance
+# /rest/user/whoami answers 200 {"user":{}} — the app IS withholding the protected data. Counting that
+# as "no authorization of its own" overstated decision 0025's finding from 1 of 2 to 2 of 2.
+empty = _has_substance('{"user":{}}')
+# negative control: the endpoint that really does disclose must still register as substance
+real = _has_substance('{"version":"20.1.1"}')
+nested = _has_substance('{"a":{"b":[]}}')
+print(f"  empty-shell={empty}  real-payload={real}  nested-empty={nested}")
+sys.exit(0 if not empty and real and not nested else 1)
+PY
+then ok "empty JSON shells register as no-disclosure while a real payload still does (finding stays 1 of 2)"
+else bad "DD9: payload substance is not measured — a withholding app looks like a bypass"; fi
+
+sect "DD10: both probers share one loopback guard and it fails closed"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/absence-detection")
+from probe_safety import assert_local
+mdd = open("evaluation/absence-detection/map_defence_in_depth.py").read()
+meg = open("evaluation/absence-detection/measure_exposure_gap.py").read()
+shared = all("from probe_safety import assert_local" in s and "assert_local(gw_origin, app_origin)" in s
+             for s in (mdd, meg))
+assert_local("http://127.0.0.1:13000")            # must not exit
+try:
+    assert_local("http://198.51.100.7")           # must exit 2
+    blocked = False
+except SystemExit as e:
+    blocked = e.code == 2
+print(f"  both probers use the shared guard={shared}  non-loopback blocked={blocked}")
+sys.exit(0 if shared and blocked else 1)
+PY
+then ok "one guard, both probers, and a non-loopback origin exits 2 (no copy that can drift)"
+else bad "DD10: a prober can target a non-loopback origin"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

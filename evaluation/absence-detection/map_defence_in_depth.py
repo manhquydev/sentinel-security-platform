@@ -49,8 +49,11 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
 
-from agent import gateway, trace  # noqa: E402  canonical scrub (0017) + the agent OAuth2 identity
+from agent import gateway, trace  # noqa: E402  canonical scrub (0017) + OAuth2 identity
+from probe_safety import assert_local  # noqa: E402
 
 SURFACE = os.path.join(_HERE, "routed-surface.json")
 TIMEOUT = 6
@@ -69,15 +72,6 @@ def challenge_state(app_origin: str) -> set:
         return set()
 
 
-def _assert_local(*urls: str) -> None:
-    """Fail closed: only the local harness is ever probed."""
-    for u in urls:
-        host = (urlparse(u).hostname or "").lower()
-        if host not in ("127.0.0.1", "localhost", "::1"):
-            print(f"FAIL: refusing non-loopback origin {u!r}")
-            sys.exit(2)
-
-
 def _get(base: str, path: str, token: str | None = None):
     """Non-redirect-following GET, optionally as the authenticated agent identity."""
     headers = {"Authorization": f"Bearer {token}"} if token else {}
@@ -89,6 +83,28 @@ def _get(base: str, path: str, token: str | None = None):
                 "body": (r.text or "")[:160]}
     except Exception:
         return None
+
+
+def _has_substance(body: str) -> bool:
+    """Does this response actually carry protected data, or is it an empty shell?
+
+    Structural, not heuristic: parse the JSON and look for any non-empty leaf. `{"user":{}}` has none;
+    `{"version":"20.1.1"}` has one. A non-JSON body counts as substance if it has any non-whitespace
+    content, because we cannot prove emptiness for a format we did not parse.
+    """
+    try:
+        doc = json.loads(body)
+    except Exception:
+        return bool((body or "").strip())
+
+    def leaves(node) -> bool:
+        if isinstance(node, dict):
+            return any(leaves(v) for v in node.values())
+        if isinstance(node, list):
+            return any(leaves(v) for v in node) if node else False
+        return node not in (None, "", {}, [])
+
+    return leaves(doc)
 
 
 def classify(route: dict, gw, app) -> dict:
@@ -109,6 +125,11 @@ def classify(route: dict, gw, app) -> dict:
 
     protected_at_gw = gw["status"] in (401, 403)
     app_open = app is not None and 200 <= app["status"] < 300 and "text/html" not in (app["ctype"] or "")
+    # A 2xx is not by itself a bypass. `/rest/user/whoami` answers 200 with `{"user":{}}` — the app is
+    # WITHHOLDING the protected data, it just signals that by emptiness rather than by 401. Counting
+    # that as "no authorization of its own" overstated the finding, so substance is now measured: does
+    # the response carry any non-empty value at all?
+    app_discloses = app_open and _has_substance(app["body"])
 
     if route["expected_auth"] == "public":
         if 200 <= gw["status"] < 300:
@@ -117,7 +138,13 @@ def classify(route: dict, gw, app) -> dict:
         return {**ev, "verdict": "inconclusive",
                 "detail": f"gateway {gw['status']} on a public endpoint with a live identity — "
                           "the ACL denies a route it should permit (config issue, not an app finding)"}
-    if protected_at_gw and app_open:
+    if protected_at_gw and app_open and not app_discloses:
+        return {**ev, "verdict": "app-withholds-payload",
+                "detail": (f"gateway {gw['status']} (control present) and the app answers "
+                           f"{app['status']} directly but discloses NOTHING ({app['bytes']}B, no "
+                           "non-empty value) — a direct-to-app path leaks no protected data here"),
+                "evidence": trace.redact_persisted(app["body"])}
+    if protected_at_gw and app_discloses:
         return {**ev, "verdict": "gateway-only-enforcement",
                 "detail": (f"gateway {gw['status']} (control present) but the app answers "
                            f"{app['status']} directly — NO defence in depth; any path reaching the app "
@@ -136,7 +163,7 @@ def classify(route: dict, gw, app) -> dict:
 def main() -> int:
     surface = json.load(open(SURFACE, encoding="utf-8"))
     gw_origin, app_origin = surface["enforcement_origin"], surface["app_origin"]
-    _assert_local(gw_origin, app_origin)
+    assert_local(gw_origin, app_origin)
 
     # IDENTITY. Without a live token every gateway reply is 401 and every endpoint LOOKS protected —
     # the silent failure red-team H1 demanded a guard for. Mint the agent identity, then prove it is
@@ -188,10 +215,12 @@ def main() -> int:
         json.dump(out, fh, indent=2)
 
     print(f"enforcement={gw_origin}  app={app_origin}  probed={len(results)} routed GET endpoints "
-          "(no credentials, nothing mutated)")
+          "(no deliberate writes; GET is NOT side-effect-free here — state change is measured below, "
+          "not assumed away)")
     for r in results:
         mark = {"gateway-only-enforcement": "FINDING ", "control-absent": "FINDING ",
                 "defence-in-depth": "ok      ", "public-by-design": "public  ",
+                "app-withholds-payload": "partial ",
                 "not-routed": "n/a     ", "inconclusive": "?       ", "error": "error   "}[r["verdict"]]
         print(f"  {mark} {str(r['expected_auth']):14s} {r['path']:34s} {r['detail']}")
     flipped = sorted(solved_after - solved_before)
