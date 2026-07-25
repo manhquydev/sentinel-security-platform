@@ -1387,3 +1387,53 @@ so a handler here could genuinely lack an authorization check that the corpus si
 that happens, the model flagging it is a **true** positive being scored as a false one — which biases
 **against** the hypothesis. A positive result is therefore safe from this; a null result would be
 partially explainable by it.
+
+## E20 — RESULT: the missing CONTROL drives it, not the file role — but the test is fragile
+
+Run 2026-07-26. Positive control passed. Both arms are endpoint-handler files; only the presence of an
+absent control differs.
+
+| arm | files | flagged |
+|---|---|---|
+| **A′** handlers **with** an absence-class vulnerability (E17, same instrument) | 28 | **7 = 0.250** |
+| **C** handlers **without** one (whole population, not a sample) | 42 | **3 = 0.071** |
+
+One-sided Fisher exact: **p = 0.0418 → null rejected at the preregistered α = 0.05.** Non-answers 14/42
+(33%), in line with every other arm.
+
+### The fragility, stated before anything is concluded from it
+
+| arm C | rate | p | verdict |
+|---|---|---|---|
+| 2/42 | 0.048 | 0.018 | significant |
+| **3/42 (observed)** | **0.071** | **0.042** | **significant** |
+| 4/42 | 0.095 | 0.081 | **not** significant |
+
+**One additional flagged file would flip this result.** It clears the preregistered threshold and is
+reported as clearing it — moving the goalposts after seeing p = 0.042 would be exactly the manoeuvre
+preregistration exists to prevent — but a single-observation margin is not a sturdy finding, and quoting
+"p < 0.05" without this table would misrepresent how much weight it can carry.
+
+### Why the conclusion is nevertheless reasonably held
+
+The weight is not in this p-value. It is in **three independent controls converging**, each removing a
+different rival explanation, each preregistered, each with its own comparator:
+
+| rival explanation | control | result |
+|---|---|---|
+| "it reacts to messy code" | E18 — defective files, no absent control | 3/80 = 0.037, indistinguishable from clean (p = 0.59) |
+| "it recalls a public corpus" | E19 — full surface anonymisation, paired | rate **unchanged**, 10/53 → 10/53, diff 0.000 |
+| "it recognises endpoint code" | E20 — handlers in both arms | 0.250 vs 0.071, p = 0.042 |
+
+Three different confounds, three different designs, no result pointing the other way. A marginal p in one
+of them is much less troubling when the other two are not marginal at all — and the effect size here
+(3.5×) is consistent with E18's, not a knife-edge artefact of one test.
+
+### What is still not closed
+
+- **Structural familiarity.** E19 changed names, not control-flow shapes. Untested.
+- **A genuinely unseen target.** Still does not exist for this lab, so full transfer stays unproven.
+- **Sensitivity is unchanged and low** (~19–25%), and a third of calls are non-answers.
+- **Ground-truth exhaustiveness**, noted before the run: an arm-C handler could genuinely lack a control
+  the corpus never labelled, which would make one of those 3 flags a true positive scored as a false one
+  — that bias runs *against* the hypothesis, so it does not threaten this direction.
