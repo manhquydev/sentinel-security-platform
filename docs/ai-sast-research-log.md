@@ -1932,3 +1932,65 @@ Registered 2026-07-26 05:55 +07. **Nothing below was measured before this text w
 - **Falsifying result.** Sensitivity near zero on planted defects ⇒ the capability does not transfer to
   unseen code, and decision 0027's central claim is confined to the memorised corpus.
 - **Instrument frozen:** same prompt, corrected classifier, positive-control gate.
+
+## E26 — RESULT: sensitivity DOES transfer to unseen code. The bottleneck is my classifier, not the model.
+
+Run 2026-07-26 on four matched pairs authored minutes earlier (`evaluation/authored-unseen/`), shown
+blind under shuffled `module_N.py` names. Positive control passed.
+
+**Automated scoring: sensitivity 2/4, false positives 1/4.** Hand-adjudication — required by the
+preregistration, and decisive here — gives a different and better-supported picture.
+
+| file | truth | model's own words | automated | **adjudicated** |
+|---|---|---|---|---|
+| `invoices_a` | CWE-639 planted | *"IDOR in `detail`. Auth only. No org check. Any user reads any invoice by id."* | flagged | **HIT** |
+| `exports_a` | CWE-862 planted | *"Authz hole. Any logged-in user dumps full org payroll + national_id + salary. Only checks auth, not role."* | flagged | **HIT** |
+| `webhooks_a` | CWE-306 planted | *"**Missing webhook signature verify.** Trust boundary open. Anyone POST fake `invoice.paid` → free active status."* | **clean** | **HIT — classifier miss** |
+| `reset_a` | CWE-307 planted | echoed the file back as a code block; no finding stated | clean | **MISS (genuine)** |
+| `invoices_b` | control present | *"`page` unvalidated → 500; unbounded OFFSET DoS via slow SQL"* | **flagged** | **not an absence claim — classifier FP** |
+| `exports_b` | control present | CSV-injection note | clean | ok |
+| `reset_b` | control present | code-quality notes | clean | ok |
+| `webhooks_b` | control present | error-handling note | clean | ok |
+
+### The classifier, not the model, is the limiting factor
+
+**`webhooks_a` is the important row.** The model detected the planted defect *precisely* — named the
+missing signature verification, the trust boundary, and the exploit path. My classifier scored it
+**clean**, because `_CONCEPT` has no term for **signature verification / HMAC / webhook authenticity**.
+Verified directly: `_ABSENCE` matches ("Missing"), `_CONCEPT` does not.
+
+**`invoices_b` is the mirror image.** The model made *no* absence-of-control claim — it reported a
+validation/DoS issue — and the classifier counted it as a flag anyway.
+
+**Adjudicated: model sensitivity 3/4, model false positives 0/4.** The model neither missed three
+defects nor invented a finding on a control; the instrument mis-scored one in each direction.
+
+### Consequence, and it reaches backwards
+
+**Every sensitivity figure this lab has published is a floor, under-counted by an unknown margin.** The
+~19–22% measured in E17/E23/E24 was scored by this same vocabulary, which demonstrably fails to
+recognise a correctly-worded finding when the model uses a security term outside its list. The
+*comparisons* survive — the same classifier scored every arm, so its blind spots apply equally to both
+sides and cannot manufacture a between-arm difference — but the *absolute rates* are too low, and by an
+amount nobody has measured.
+
+This compounds the gateway-redaction confound, which pushes the same direction. Two independent reasons
+the published sensitivity understates the model.
+
+### What this establishes about transfer
+
+- **Sensitivity transfers.** On code written minutes before measurement, with exact ground truth and no
+  possibility of memorisation, the model found **3 of 4** planted absence-of-control defects and
+  described each correctly.
+- **Specificity holds.** **0 of 4** controls drew an absence claim from the model.
+- Combined with E25 (0 findings on 25 unseen library files), **both halves of the behaviour now have
+  evidence outside the memorised corpus.**
+
+### Limits, unchanged and stated plainly
+
+- **n = 8.** A demonstration, not a rate. No p-value is quoted because none would be meaningful.
+- **I authored the defects.** They are of classes I chose, in my style. The matched-pair design stops
+  conspicuousness from inflating the score — anything obvious appears in the twin too, where the model
+  correctly stayed silent — but it cannot make my defects representative of a real client codebase.
+- **`reset_a` is a genuine miss**, and rate-limiting absence is exactly the class CWE-307 covers, the
+  most common absence class in the corpus.
