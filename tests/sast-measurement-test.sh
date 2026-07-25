@@ -292,6 +292,25 @@ PY
 then ok "every demonstrated classifier failure mode stays fixed (reassurance, presence-class, quoted code)"
 else bad "SM13: a classifier failure mode regressed — every generative result scores through this"; fi
 
+sect "SM14: the instrument's measured instability is on record"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/determinism-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: determinism artefact missing"); sys.exit(1)
+d = json.load(open(p))
+# E22 measured 36% verdict flips at temperature 0. Two experiments were withdrawn because they had
+# assumed determinism. This keeps the number visible so no future design quietly assumes it again.
+rate = d["disagreements"] / d["n"]
+print("  n=%d disagreements=%d (%.0f%%) identical_prose=%d/%d"
+      % (d["n"], d["disagreements"], rate * 100, d["identical_prose"], d["n"]))
+# The artefact must exist and record a NON-zero instability; if it ever reads zero, re-measure before
+# trusting it, because 0/14 identical prose says the model is not deterministic.
+sys.exit(0 if (d["n"] >= 10 and d["disagreements"] > 0) else 1)
+PY
+then ok "instrument instability is measured and published, not assumed away"
+else bad "SM14: the determinism measurement is missing or claims perfect stability"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

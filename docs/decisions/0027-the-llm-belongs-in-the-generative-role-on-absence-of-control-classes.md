@@ -73,8 +73,13 @@ and the model never returns identical prose (0 of 14).** Consequently:
 
 - **E19's "surface memorisation is excluded" is WITHDRAWN.** Its paired difference of exactly 0.000
   (3 lost, 3 gained) is *precisely what 36% instrument noise produces* on 53 files at this base rate,
-  mutation or no mutation. **The contamination bound reverts to its original width:** capability and
-  memorisation are once again **not separated**, and nothing here may be promised for private code.
+  mutation or no mutation.
+  - **RE-ESTABLISHED, more weakly, by E23 on a valid design (same day).** Both arms measured fresh in
+    the same run, aggregate rates compared: original **11/53 = 0.208**, anonymised **14/53 = 0.264**,
+    difference **+0.057, 95% CI [−0.038, +0.151]**. Anonymisation does **not** reduce detection and the
+    interval excludes even a 5-point drop, so **surface memorisation is not the primary driver**. But
+    the interval is wide: **equivalence is not established** and a small memorisation contribution is
+    not excluded. Nothing here may still be promised for private code.
 - **E20's "the missing control drives it, not file role" is WITHDRAWN pending a re-run.** It paired a
   *reused* arm A′ against a *freshly measured* arm C, which is invalid under this instability, and it
   was already one flagged file away from non-significance.
