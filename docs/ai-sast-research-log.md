@@ -1658,3 +1658,45 @@ Any future run that needs intact source must either measure through a path exemp
 or report this handicap alongside the numbers. Reported here rather than quietly fixed, because
 silently disabling a security control to improve a research number is precisely the trade this project
 exists to refuse.
+
+## E23 — RESULT: anonymisation does not reduce detection (valid design this time)
+
+Run 2026-07-26. Positive control passed. 53 files, **both conditions measured fresh in the same run**,
+aggregate rates compared — the design E19 should have had.
+
+| condition | flagged |
+|---|---|
+| original source | 11/53 = **0.208** |
+| identifiers + routes + filename anonymised | 14/53 = **0.264** |
+
+**Aggregate difference (anonymised − original) = +0.057, 95% CI [−0.038, +0.151].**
+
+### What this supports, stated at the strength the power allows
+
+- **A collapse is excluded.** Surface memorisation predicts anonymisation *reducing* detection. It did
+  not reduce it at all; the point estimate is slightly *higher*, and the interval's lower bound
+  (−0.038) rules out even a 5-point drop. **Memorisation is not the primary driver.**
+- **Equivalence is NOT established.** The interval is wide. A small memorisation contribution remains
+  entirely possible and is not claimed to be absent. This is exactly the limit the preregistration
+  named in advance, and it is not being quietly dropped now that the direction is favourable.
+
+### Why this one counts and E19 did not
+
+E19 asked the same question and got a suspiciously perfect null (paired difference exactly 0.000). That
+null was an artefact: it compared *freshly measured* mutated verdicts against *reused* originals, and
+E22 then measured the instrument flipping **36%** of verdicts on identical input — enough to produce
+E19's entire result by itself. E23 measures **both arms fresh, in the same run**, and compares
+**aggregate rates**, where identical noise applies to both arms and cannot bias their difference.
+Per-file verdicts are never compared, because at this flip rate a single verdict carries no information.
+
+### A free stability check fell out of it
+
+The same 53 files have now been measured in the original condition three times across three runs:
+**10, 10, 11 flagged** (0.189, 0.189, 0.208). Individual verdicts churn heavily — 36% flip — but the
+**aggregate rate is stable to within ~2 points**. That is the empirical justification for the design
+change: rates are measurable on this instrument, labels are not.
+
+**Consequence for decision 0027:** the contamination bound narrows again, but by less than E19 claimed
+and on evidence that survives its own instrument. *Surface* memorisation is not driving the effect;
+*structural* familiarity remains untested; and no genuinely unseen target exists, so transfer to
+private code is still unproven.
