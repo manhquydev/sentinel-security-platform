@@ -215,3 +215,38 @@ Set by measurement, not preference:
    pinned Juice Shop build.
 3. **What is the absence-class recall?** Unmeasurable without a target with genuinely broken
    authorization behind an enforcement point.
+
+---
+
+## 9. What the first trial changed (E14, 2026-07-26)
+
+The protocol was trialled end-to-end on the lab's own withdrawn +0.069 claim. Four amendments came out
+of running it for real rather than reasoning about it:
+
+1. **A joined or reconstructed dataset must be verified element-for-element, or the run aborts.**
+   E14 had to recover a discarded grouping unit by replaying a deterministic pipeline. The run was
+   allowed to proceed only because the replay matched the committed rows position-for-position. Promoted
+   from an implicit part of Stage 5 to a hard gate: *an unverified join is worse than no analysis,
+   because it looks like data.*
+
+2. **Never discard the grouping unit when writing an artefact.** The committed baseline recorded no repo
+   field, which is *why* the corrected grouped number had never been reproducible — it existed only as
+   prose. Any artefact that will be re-analysed must persist its grouping key. Cheap to add, impossible
+   to recover later without a replay.
+
+3. **Expect the first version of a test to be wrong.** Two of the six new assertions failed on first run,
+   both because the *assertion* was wrong, not the code — a Laplace base rate legitimately varies per
+   held-out group, and a conditional verdict string is not a stale claim. The negative control is what
+   distinguished "my code is broken" from "my expectation was broken". A test that passes first try on a
+   subtle invariant deserves suspicion, not confidence.
+
+4. **Correction propagation is a search, not an edit.** §4 step 4 found the decisions index still
+   advertising *both* retracted figures as live findings, 0023's headline contradicting its own
+   correction table two paragraphs above it, and 0024's title resting on a withdrawn size claim. The
+   originating document had been corrected months of work earlier; the copies had not. Grep is mandatory,
+   and the index is the highest-risk surface because it is the most read and the least re-read.
+
+**Generalised lesson.** The runtime stack held its corrections because DD1–DD10 pinned them; the
+measurement stack lost its correction because nothing did. **Any code path that produces a published
+number needs the same guard as a code path that produces a verdict.** A retracted claim with no test
+against it will come back.
