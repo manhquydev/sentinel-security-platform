@@ -481,3 +481,39 @@ and now E8's finding) — the pattern is consistent: **self-review does not catc
   deterministic engine that does the finding." The single-target scope is a hard limit: this measures
   marginal yield on one app the models have memorised, not on a client's private code, where the LLM's
   contribution is untested (and, per the cancelled Phase 3, not answerable on this target).
+
+## E14 — PREREGISTRATION (written before measuring, per `docs/research-protocol.md` Stage 2)
+
+Registered 2026-07-26 01:35 +07. **Nothing below was measured before this text was committed.**
+
+- **Why this experiment (Stage 1).** Decision 0021's "+0.069, deterministic prior WINS" was withdrawn in
+  prose and amended to a tie (+0.013 [−0.006, +0.035]) under leave-one-repo-out. But on 2026-07-26 the
+  committed instrument `rank_baselines.py` still printed
+  `+0.069 95%CI=[+0.045,+0.095] -> deterministic prior WINS`. The repo's reproducibility artifact
+  contradicts the repo's own published correction. Either the withdrawal or the instrument is wrong, and
+  the business case depends on knowing which.
+- **Hypothesis (falsifiable).** The +0.069 is a **leakage artifact of splitting by row**. Under a split
+  grouped by repository, the deterministic CWE prior does **not** reliably beat the LLM annotator: the
+  95% CI of ΔAUC will **include 0**.
+- **Falsifying result.** If the grouped 95% CI **excludes 0 in favour of the prior**, the hypothesis is
+  wrong, 0021's original claim stands, and the withdrawal must itself be retracted.
+- **Primary outcome.** ΔAUC = AUC(cwe_prior) − AUC(llm), evaluated **leave-one-repo-out**, with a 95% CI
+  **bootstrapped over repositories** (the grouping unit), 2000 resamples, seed fixed.
+- **Secondary (exploratory, labelled as such).** The row-split ΔAUC recomputed on identical data, to
+  quantify the leakage gap directly.
+- **Method.** The committed baseline `annotate-baseline-260725.json` records **no repo field** — the
+  grouping unit was discarded when it was written, which is why no grouped analysis was ever
+  reproducible from it. Repo labels are reconstructed deterministically: `run_annotate.py` appends one
+  row per Bandit finding in strict `sorted(os.listdir(REPOS))` order and drops nothing (`recall: 1.0`),
+  so replaying Bandit per repo yields per-repo offsets into the row list.
+- **Validity check (abort condition).** The reconstruction is accepted **only if** the replay produces
+  exactly 1764 rows AND the `(cwe, severity)` sequence matches the committed rows position-for-position.
+  If it does not match, the run is **aborted and reported as failed** — no analysis proceeds on an
+  unverified join.
+- **Power / limits stated in advance.** n = 1764 findings (234 TP / 1530 FP) across ~63 repos. The
+  bootstrap is over repos, so the effective n is the **repo count, not the row count** — intervals will
+  be materially wider than the row-split ones, which is the entire point.
+- **Note on what the scores are.** The LLM annotation is memoized on `(rule_id, cwe, severity)`, so both
+  the LLM score and the CWE prior are functions of code-derived facts, not of the repo. The leakage
+  under test is therefore specifically in **fitting the prior** on rows sharing a repo with the held-out
+  rows.
