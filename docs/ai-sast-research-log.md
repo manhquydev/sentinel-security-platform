@@ -946,3 +946,42 @@ After E14/E15/E16/E17 the honest statement is two-part:
 
 That is a materially different and more useful claim than "AI loses", and it is the first time this
 project has been able to say where AI *does* belong on evidence rather than on architecture alone.
+
+### E17 — SELF-AUDIT, same day: the mechanism is NOT established
+
+Before publishing E17 anywhere, its stored prose was checked against ground truth to answer a question
+the preregistration did not ask: when the model flagged a vulnerable file, **did it name the class the
+ground truth actually records for that file?**
+
+**Of the 10 flagged vulnerable files, 6 named the ground-truth class and 4 flagged the file for
+something else entirely** — a `pickle.loads` RCE, an undefined `encrypt`, a broken session cookie, an
+email-existence leak. Real problems, in files that do contain an absence-class vulnerability, but **not
+that vulnerability**.
+
+| criterion | rate (vulnerable vs clean) | one-sided Fisher |
+|---|---|---|
+| **file flagged at all — the PREREGISTERED primary** | 10/60 = 0.167 vs 1/40 = 0.025 | **p = 0.024, significant** |
+| **model named the ground-truth class** (post-hoc, exploratory) | 6/60 = 0.100 vs 1/40 = 0.025 | **p = 0.149, NOT significant** |
+
+**Both are reported, and neither is discarded.** The preregistered test was committed before the data
+existed and stands as the primary; a post-hoc criterion that happens to fail does not get to retract it,
+or preregistration would mean nothing. But an exploratory analysis that **undercuts** the primary must be
+reported with equal prominence, or the reporting is selective — which is the same sin as p-hacking
+wearing better clothes.
+
+**What this forces the conclusion to become:**
+
+- **Established:** the model flags files containing absence-class vulnerabilities **more often than clean
+  control files**, significantly, with strong specificity (1 of 40 clean files).
+- **NOT established:** that it is detecting *the absence-of-control vulnerability itself*. The effect is
+  consistent with the model reacting to files that are **generally messier** — and 4 of 10 flags
+  demonstrably did exactly that.
+
+The earlier sentence "the LLM carries real signal **about absence-of-control vulnerabilities**" is
+therefore **too strong and is withdrawn**. The supported claim is narrower: *it discriminates files that
+contain them from files that do not; the mechanism is unresolved.*
+
+Resolving it needs a design this experiment did not have: either line-level attribution (blocked by
+E16a — no model would emit structure), or a control arm of files that are **messy but contain no
+absence-class vulnerability**, which would separate "reacts to mess" from "detects absent controls".
+That is the next experiment, not a footnote to this one.
