@@ -46,6 +46,18 @@ def arm_c() -> list[tuple]:
     return sorted(k for k in idx if ROLE.search(k[1]) and k not in absence)
 
 
+def arm_a_prime(limit: int = 40) -> list[tuple]:
+    """Endpoint-handler files WITH an absence-class vulnerability, measured FRESH.
+
+    E20 reused E17's verdicts for this arm. Under a 36%-unstable instrument (E22) that makes the two
+    arms incomparable, which is why E20 was withdrawn. Both arms are now measured in the same run.
+    """
+    idx = _load_gt_index()
+    out = sorted(k for k, v in idx.items()
+                 if ROLE.search(k[1]) and any(e["is_vulnerable"] and e["primary"] in BLIND for e in v))
+    return out[:limit]
+
+
 def main() -> int:
     if not os.environ.get("LITELLM_MASTER_KEY"):
         print("FAIL: no gateway credential.")
