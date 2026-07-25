@@ -11,10 +11,16 @@
 
 ## 0. Tóm tắt cho lãnh đạo (một trang)
 
-Sentinel **không phải** là "AI tự tìm ra nhiều lỗ hổng hơn con người". Suốt 13 thí nghiệm
-có đo đạc, mỗi lần em so AI với phương pháp tất định (deterministic) thì **AI hoặc thua,
-hoặc hòa, hoặc câu hỏi không trả lời được** — chi tiết ở mục 4. Bán một câu chuyện "AI
-tìm giỏi hơn" là bán thứ dữ liệu của chính dự án đã bác bỏ.
+Sentinel **không phải** là "AI tự tìm ra nhiều lỗ hổng hơn con người". Qua 17 thí nghiệm
+có đo đạc, mỗi lần em cho AI giữ **vai trò chốt chặn** (phán quyết, xác nhận, xếp hạng)
+thì **AI hoặc thua, hoặc hòa, hoặc câu hỏi không trả lời được** — chi tiết ở mục 4. Bán
+câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự án đã bác bỏ.
+
+> **Ranh giới em phải nói rõ, kẻo chính em cũng nói quá:** kết luận trên đã đo **cho vai
+> trò chốt chặn**. Còn vai trò **đề xuất** (AI nêu giả thuyết, code tất định kiểm chứng)
+> mới đo lần đầu đêm 26/07: hướng **tích cực** (21% file có lỗ bị gắn cờ, **0/16 file sạch
+> bị gắn cờ oan**) nhưng **chưa đủ mẫu để kết luận** (Fisher p = 0.065). Vì vậy trạng thái
+> đúng là **"chưa ngã ngũ"**, không phải "AI thua ở mọi vai trò".
 
 Vậy Sentinel là gì, nói thẳng bằng một câu:
 
@@ -107,8 +113,8 @@ lời AI chỉ để kể. Đường phán quyết **không có LLM** — một 
 
 ## 4. Định vị trung thực — vì sao KHÔNG bán "AI tìm giỏi hơn"
 
-Đây là phần quan trọng nhất và là phần dễ bị bỏ qua nhất. Suốt dự án, **mọi** so sánh
-AI-với-tất-định có đo đều kết thúc bất lợi cho AI:
+Đây là phần quan trọng nhất và là phần dễ bị bỏ qua nhất. Mọi so sánh AI-với-tất-định mà
+dự án đã đo **ở vai trò chốt chặn** đều kết thúc bất lợi cho AI:
 
 | Thí nghiệm | Giả thuyết "AI thắng" | Kết quả đo | Nguồn |
 |---|---|---|---|
@@ -119,7 +125,8 @@ AI-với-tất-định có đo đều kết thúc bất lợi cho AI:
 | AI-SAST bên thứ ba (SAIST) | Cắm vào là chạy | **Không kết nối** qua cổng xuất xứ; **thoát mã 0 dù lỗi 500** | E11 |
 
 **Bài học một câu:** mọi chiến thắng sạch trong dự án đến từ **thêm công cụ tất định**,
-chưa lần nào đến từ **thêm một model**.
+chưa lần nào đến từ **thêm một model** — *ở vai trò chốt chặn*. Vai trò **đề xuất** còn để ngỏ
+(E16/E17), và đó là hướng nghiên cứu tiếp theo chứ không phải điều đã chứng minh.
 
 Và luật đo được về khoảng mù: SAST phát hiện **sự hiện diện** của mẫu xấu tốt hơn **sự
 vắng mặt** của kiểm soát khoảng **6.2×** (decision 0023 — *đã sửa từ 9.5× sau khi tự tìm
