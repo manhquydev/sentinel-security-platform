@@ -2226,3 +2226,62 @@ Registered 2026-07-26 06:36 +07. **Nothing below was measured before this text w
 - **What this cannot fix.** Widening an interval after the fact is a correction to *reporting*, not to
   *design*. The right design is repeated measurement per file (k runs, verdict as a rate), which this
   lab has not done and which is recorded as owed work rather than simulated away.
+
+## E30 — RESULT: my noise model was wrong, and my own data caught it before it was published
+
+Run 2026-07-26. Pure simulation, no model calls.
+
+**The simulation said every published interval crosses zero:**
+
+| comparison | published CI | naive noise-propagated CI |
+|---|---|---|
+| E17 absence vs clean | [+0.067, +0.250] | [−0.167, +0.225] |
+| E18 absence vs defective | [+0.067, +0.250] | [−0.133, +0.196] |
+| E24 handlers with vs without | [+0.030, +0.326] | [−0.175, +0.246] |
+| E28 replication | [+0.051, +0.302] | [−0.174, +0.243] |
+
+Published unexamined, that reads as *"the entire generative-role finding dissolves once measurement
+noise is honestly modelled"* — a dramatic, self-flagellating headline, and **wrong**.
+
+### The model is falsified by a direct measurement this lab already has
+
+The simulation implies the between-arm difference should vary by roughly **±0.2** between runs.
+**E28 measured that variation directly: +0.177 vs +0.176 — a drift of 0.0012.** The model is off by more
+than two orders of magnitude against an empirical replication of exactly the quantity it is modelling.
+
+**The error:** I treated the measured **0.395 as a per-verdict flip probability**. It is not. It is the
+probability that **two independent draws disagree**, which for a file with latent propensity θ is
+2θ(1−θ). Modelling it as a flip means a genuinely-flagged file reports "flagged" only 60% of the time
+**regardless of its true state** — which annihilates the signal by construction, in both arms, no matter
+what the data says. The simulation was not measuring the finding's fragility; it was measuring my own
+mis-specification.
+
+Note also that **0.5 is the maximum disagreement rate achievable by any single θ**. Observing 0.395
+pooled therefore implies a **mixture** — most files stable near θ≈0, a minority churning near θ≈0.5 —
+not a uniform 40% corruption of every verdict.
+
+### What is actually true about the intervals
+
+The published intervals **are** too narrow — they bootstrap over files and ignore per-file measurement
+variance, which is a real omission. But the correct magnitude of that widening is **not** derivable from
+the disagreement rate alone without a per-file propensity model, and **the direct empirical estimate
+already exists**: E28's replication puts run-to-run drift of the headline difference at **0.001**, which
+is negligible beside the file-sampling intervals of ±0.15–0.30.
+
+**No conclusion changes.** The published intervals stand as the dominant source of uncertainty.
+
+### The lesson, and it is the sharpest of the session
+
+**A simulation is an instrument, and instruments get validated against measurements — not the reverse.**
+I built a noise model, it produced a dramatic result that would have retracted five findings, and the
+only thing that stopped it was that this lab had already *measured* the quantity the model was
+estimating. Without E28's replication, this would have been published as a devastating self-correction
+and been entirely spurious.
+
+Worth stating plainly because the failure mode is seductive: **the wrong result was the humble-looking
+one.** Every safeguard in this protocol is aimed at claims that flatter the author, and this one would
+have passed all of them while being just as false.
+
+**Owed work, recorded not simulated away:** the right fix is repeated measurement per file — k runs, the
+verdict taken as a rate — which converts per-file noise into a quantity that can be propagated honestly
+instead of assumed.
