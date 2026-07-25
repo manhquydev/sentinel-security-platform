@@ -60,7 +60,8 @@ def bandit_findings(repo_path: str) -> list[dict]:
         cwe = _cwe_int((r.get("issue_cwe") or {}).get("id"))
         rel = os.path.relpath(r["filename"], repo_path)
         findings.append({"rule_id": r.get("test_id", "bandit"), "cwe": cwe, "file": rel,
-                         "line": int(r.get("line_number", 0)), "code_slice": r.get("code", "")})
+                         "line": int(r.get("line_number", 0)), "code_slice": r.get("code", ""),
+                         "severity": (r.get("issue_severity") or "").upper()})
     return findings
 
 

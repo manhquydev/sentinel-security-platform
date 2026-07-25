@@ -53,6 +53,21 @@ non-load-bearing LLM annotator that can never drop a finding. Committed scorecar
 `baseline-260725-{sast-sol,grok45}.json`, `captured/verdicts-{sast-sol,grok45}.json`. This is a measured
 negative result (like Week-10's judge), not a failure to build.
 
+### Follow-on: the SAFE direction — non-load-bearing annotator (`run_annotate.py`, `agent/verifier/annotate.py`)
+
+Instead of dropping, the LLM RANKS findings by review-priority over their code-derived facts (rule/CWE/
+severity — operator-safe, so grok answers **21/21**, no refusal) and **never drops one** — recall stays
+1.0 by construction. Measured as AUC (does it rank real vulns above FP-traps?) vs a deterministic
+severity ranking, on the same bounded RealVuln subset (`annotate-baseline-260725.json`):
+
+- deterministic severity AUC = **0.42** (worse than random — Bandit over-rates its noisy classes)
+- LLM annotator AUC = **0.61** (better than severity and than random; demotes the CWE-703/259 noise)
+
+**Honest read: a WEAK POSITIVE, not proof.** The safe direction is reachable and safe and beats the
+deterministic baseline here, but n=21 and the mean priorities barely separate (0.29 vs 0.28) — it needs
+the full 66-repo corpus to confirm. Contrast the drop-verifier (decisive negative): the safe annotator
+is the direction worth confirming at scale.
+
 ## Files
 
 | File | What |

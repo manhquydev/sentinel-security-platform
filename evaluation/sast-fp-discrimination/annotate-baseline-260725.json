@@ -1,0 +1,164 @@
+{
+  "generated_at": "2026-07-25T04:26:42.650287+00:00",
+  "live": true,
+  "model": "sast-grok45",
+  "n_findings": 21,
+  "tp": 8,
+  "fp": 13,
+  "recall": 1.0,
+  "auc_deterministic_severity": 0.4231,
+  "auc_llm_annotator": 0.6058,
+  "llm_conformance": {
+    "ok": 21,
+    "total": 21
+  },
+  "rows": [
+    {
+      "cwe": 259,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.25
+    },
+    {
+      "cwe": 89,
+      "severity": "MEDIUM",
+      "is_vulnerable": true,
+      "det_score": 0.6,
+      "llm_priority": 0.45
+    },
+    {
+      "cwe": 605,
+      "severity": "MEDIUM",
+      "is_vulnerable": false,
+      "det_score": 0.6,
+      "llm_priority": 0.3
+    },
+    {
+      "cwe": 78,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.2
+    },
+    {
+      "cwe": 78,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.25
+    },
+    {
+      "cwe": 78,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.3
+    },
+    {
+      "cwe": 259,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.25
+    },
+    {
+      "cwe": 502,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.35
+    },
+    {
+      "cwe": 502,
+      "severity": "MEDIUM",
+      "is_vulnerable": false,
+      "det_score": 0.6,
+      "llm_priority": 0.4
+    },
+    {
+      "cwe": 400,
+      "severity": "MEDIUM",
+      "is_vulnerable": false,
+      "det_score": 0.6,
+      "llm_priority": 0.45
+    },
+    {
+      "cwe": 89,
+      "severity": "MEDIUM",
+      "is_vulnerable": true,
+      "det_score": 0.6,
+      "llm_priority": 0.4
+    },
+    {
+      "cwe": 94,
+      "severity": "HIGH",
+      "is_vulnerable": false,
+      "det_score": 1.0,
+      "llm_priority": 0.72
+    },
+    {
+      "cwe": 259,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.2
+    },
+    {
+      "cwe": 259,
+      "severity": "LOW",
+      "is_vulnerable": true,
+      "det_score": 0.3,
+      "llm_priority": 0.25
+    },
+    {
+      "cwe": 400,
+      "severity": "MEDIUM",
+      "is_vulnerable": false,
+      "det_score": 0.6,
+      "llm_priority": 0.35
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    },
+    {
+      "cwe": 703,
+      "severity": "LOW",
+      "is_vulnerable": false,
+      "det_score": 0.3,
+      "llm_priority": 0.15
+    }
+  ]
+}
