@@ -1,42 +1,10 @@
 {
-  "generated_at": "2026-07-25T13:13:57.275940+00:00",
+  "generated_at": "2026-07-25T14:02:18.067797+00:00",
   "total_real": 1790,
-  "classes": 54,
-  "blind_classes": 35,
-  "blind_real_vulns": 547,
+  "classes": 78,
+  "blind_classes": 51,
+  "blind_real_vulns": 877,
   "per_cwe": [
-    {
-      "cwe": 200,
-      "real": 237,
-      "bandit": 0,
-      "semgrep": 2,
-      "union": 2,
-      "recall": 0.008
-    },
-    {
-      "cwe": 20,
-      "real": 197,
-      "bandit": 21,
-      "semgrep": 28,
-      "union": 28,
-      "recall": 0.142
-    },
-    {
-      "cwe": 284,
-      "real": 187,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 16,
-      "real": 179,
-      "bandit": 29,
-      "semgrep": 36,
-      "union": 36,
-      "recall": 0.201
-    },
     {
       "cwe": 307,
       "real": 134,
@@ -47,167 +15,23 @@
     },
     {
       "cwe": 79,
-      "real": 102,
+      "real": 99,
       "bandit": 2,
       "semgrep": 31,
       "union": 31,
-      "recall": 0.304
+      "recall": 0.313
     },
     {
-      "cwe": 94,
-      "real": 87,
-      "bandit": 10,
-      "semgrep": 40,
-      "union": 41,
-      "recall": 0.471
-    },
-    {
-      "cwe": 259,
-      "real": 57,
-      "bandit": 31,
-      "semgrep": 2,
-      "union": 32,
-      "recall": 0.561
-    },
-    {
-      "cwe": 614,
-      "real": 48,
-      "bandit": 0,
-      "semgrep": 15,
-      "union": 15,
-      "recall": 0.312
-    },
-    {
-      "cwe": 77,
-      "real": 46,
-      "bandit": 41,
-      "semgrep": 17,
-      "union": 41,
-      "recall": 0.891
-    },
-    {
-      "cwe": 89,
-      "real": 43,
-      "bandit": 28,
-      "semgrep": 6,
-      "union": 30,
-      "recall": 0.698
-    },
-    {
-      "cwe": 330,
-      "real": 42,
-      "bandit": 40,
-      "semgrep": 0,
-      "union": 40,
-      "recall": 0.952
-    },
-    {
-      "cwe": 22,
-      "real": 37,
-      "bandit": 2,
-      "semgrep": 0,
-      "union": 2,
-      "recall": 0.054
-    },
-    {
-      "cwe": 611,
-      "real": 35,
-      "bandit": 0,
-      "semgrep": 2,
-      "union": 2,
-      "recall": 0.057
-    },
-    {
-      "cwe": 321,
-      "real": 32,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 441,
-      "real": 31,
+      "cwe": 434,
+      "real": 75,
       "bandit": 0,
       "semgrep": 1,
       "union": 1,
-      "recall": 0.032
-    },
-    {
-      "cwe": 327,
-      "real": 31,
-      "bandit": 29,
-      "semgrep": 27,
-      "union": 29,
-      "recall": 0.935
-    },
-    {
-      "cwe": 352,
-      "real": 30,
-      "bandit": 0,
-      "semgrep": 1,
-      "union": 1,
-      "recall": 0.033
+      "recall": 0.013
     },
     {
       "cwe": 312,
-      "real": 30,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 400,
-      "real": 27,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 256,
-      "real": 20,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 287,
-      "real": 19,
-      "bandit": 0,
-      "semgrep": 1,
-      "union": 1,
-      "recall": 0.053
-    },
-    {
-      "cwe": 185,
-      "real": 17,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 306,
-      "real": 16,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 311,
-      "real": 16,
-      "bandit": 0,
-      "semgrep": 1,
-      "union": 1,
-      "recall": 0.062
-    },
-    {
-      "cwe": 269,
-      "real": 14,
+      "real": 63,
       "bandit": 0,
       "semgrep": 0,
       "union": 0,
@@ -215,30 +39,310 @@
     },
     {
       "cwe": 639,
-      "real": 13,
+      "real": 60,
       "bandit": 0,
       "semgrep": 0,
       "union": 0,
       "recall": 0.0
     },
     {
-      "cwe": 117,
-      "real": 8,
+      "cwe": 798,
+      "real": 55,
+      "bandit": 28,
+      "semgrep": 1,
+      "union": 29,
+      "recall": 0.527
+    },
+    {
+      "cwe": 200,
+      "real": 54,
       "bandit": 0,
       "semgrep": 0,
       "union": 0,
       "recall": 0.0
     },
     {
-      "cwe": 601,
-      "real": 5,
+      "cwe": 532,
+      "real": 54,
       "bandit": 0,
-      "semgrep": 2,
-      "union": 2,
-      "recall": 0.4
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
     },
     {
       "cwe": 215,
+      "real": 49,
+      "bandit": 0,
+      "semgrep": 4,
+      "union": 4,
+      "recall": 0.082
+    },
+    {
+      "cwe": 78,
+      "real": 46,
+      "bandit": 41,
+      "semgrep": 17,
+      "union": 41,
+      "recall": 0.891
+    },
+    {
+      "cwe": 400,
+      "real": 43,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 16,
+      "real": 43,
+      "bandit": 29,
+      "semgrep": 30,
+      "union": 30,
+      "recall": 0.698
+    },
+    {
+      "cwe": 1336,
+      "real": 42,
+      "bandit": 1,
+      "semgrep": 0,
+      "union": 1,
+      "recall": 0.024
+    },
+    {
+      "cwe": 89,
+      "real": 42,
+      "bandit": 28,
+      "semgrep": 6,
+      "union": 30,
+      "recall": 0.714
+    },
+    {
+      "cwe": 614,
+      "real": 42,
+      "bandit": 0,
+      "semgrep": 4,
+      "union": 4,
+      "recall": 0.095
+    },
+    {
+      "cwe": 330,
+      "real": 40,
+      "bandit": 39,
+      "semgrep": 0,
+      "union": 39,
+      "recall": 0.975
+    },
+    {
+      "cwe": 601,
+      "real": 40,
+      "bandit": 0,
+      "semgrep": 6,
+      "union": 6,
+      "recall": 0.15
+    },
+    {
+      "cwe": 204,
+      "real": 40,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 915,
+      "real": 40,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 22,
+      "real": 39,
+      "bandit": 2,
+      "semgrep": 0,
+      "union": 2,
+      "recall": 0.051
+    },
+    {
+      "cwe": 918,
+      "real": 38,
+      "bandit": 0,
+      "semgrep": 2,
+      "union": 2,
+      "recall": 0.053
+    },
+    {
+      "cwe": 862,
+      "real": 38,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 1021,
+      "real": 38,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 209,
+      "real": 37,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 942,
+      "real": 37,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 840,
+      "real": 37,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 611,
+      "real": 36,
+      "bandit": 0,
+      "semgrep": 2,
+      "union": 2,
+      "recall": 0.056
+    },
+    {
+      "cwe": 321,
+      "real": 36,
+      "bandit": 2,
+      "semgrep": 0,
+      "union": 2,
+      "recall": 0.056
+    },
+    {
+      "cwe": 502,
+      "real": 35,
+      "bandit": 30,
+      "semgrep": 33,
+      "union": 33,
+      "recall": 0.943
+    },
+    {
+      "cwe": 306,
+      "real": 33,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 352,
+      "real": 33,
+      "bandit": 0,
+      "semgrep": 1,
+      "union": 1,
+      "recall": 0.03
+    },
+    {
+      "cwe": 943,
+      "real": 32,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 94,
+      "real": 30,
+      "bandit": 0,
+      "semgrep": 28,
+      "union": 28,
+      "recall": 0.933
+    },
+    {
+      "cwe": 807,
+      "real": 30,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 1236,
+      "real": 29,
+      "bandit": 0,
+      "semgrep": 2,
+      "union": 2,
+      "recall": 0.069
+    },
+    {
+      "cwe": 328,
+      "real": 28,
+      "bandit": 26,
+      "semgrep": 25,
+      "union": 26,
+      "recall": 0.929
+    },
+    {
+      "cwe": 1004,
+      "real": 24,
+      "bandit": 0,
+      "semgrep": 13,
+      "union": 13,
+      "recall": 0.542
+    },
+    {
+      "cwe": 863,
+      "real": 17,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 640,
+      "real": 10,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 256,
+      "real": 9,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 384,
+      "real": 6,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 613,
+      "real": 6,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 269,
       "real": 5,
       "bandit": 0,
       "semgrep": 0,
@@ -246,7 +350,15 @@
       "recall": 0.0
     },
     {
-      "cwe": 91,
+      "cwe": 916,
+      "real": 4,
+      "bandit": 2,
+      "semgrep": 2,
+      "union": 2,
+      "recall": 0.5
+    },
+    {
+      "cwe": 643,
       "real": 4,
       "bandit": 0,
       "semgrep": 0,
@@ -254,7 +366,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 113,
+      "cwe": 319,
       "real": 4,
       "bandit": 0,
       "semgrep": 0,
@@ -262,7 +374,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 285,
+      "cwe": 522,
       "real": 4,
       "bandit": 0,
       "semgrep": 0,
@@ -271,6 +383,22 @@
     },
     {
       "cwe": 203,
+      "real": 4,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 552,
+      "real": 4,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 284,
       "real": 3,
       "bandit": 0,
       "semgrep": 0,
@@ -278,7 +406,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 384,
+      "cwe": 287,
       "real": 3,
       "bandit": 0,
       "semgrep": 0,
@@ -286,7 +414,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 319,
+      "cwe": 598,
       "real": 3,
       "bandit": 0,
       "semgrep": 0,
@@ -294,56 +422,16 @@
       "recall": 0.0
     },
     {
-      "cwe": 862,
+      "cwe": 489,
       "real": 3,
       "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
+      "semgrep": 2,
+      "union": 2,
+      "recall": 0.667
     },
     {
-      "cwe": 74,
+      "cwe": 117,
       "real": 2,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 362,
-      "real": 2,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 732,
-      "real": 2,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 209,
-      "real": 2,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 78,
-      "real": 1,
-      "bandit": 0,
-      "semgrep": 0,
-      "union": 0,
-      "recall": 0.0
-    },
-    {
-      "cwe": 184,
-      "real": 1,
       "bandit": 0,
       "semgrep": 0,
       "union": 0,
@@ -351,6 +439,46 @@
     },
     {
       "cwe": 295,
+      "real": 2,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 354,
+      "real": 2,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 338,
+      "real": 2,
+      "bandit": 2,
+      "semgrep": 0,
+      "union": 2,
+      "recall": 1.0
+    },
+    {
+      "cwe": 521,
+      "real": 2,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 347,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 1,
+      "union": 1,
+      "recall": 1.0
+    },
+    {
+      "cwe": 674,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -358,7 +486,23 @@
       "recall": 0.0
     },
     {
-      "cwe": 640,
+      "cwe": 693,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 327,
+      "real": 1,
+      "bandit": 1,
+      "semgrep": 0,
+      "union": 1,
+      "recall": 1.0
+    },
+    {
+      "cwe": 329,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -374,12 +518,12 @@
       "recall": 0.0
     },
     {
-      "cwe": 6,
+      "cwe": 113,
       "real": 1,
-      "bandit": 1,
+      "bandit": 0,
       "semgrep": 0,
-      "union": 1,
-      "recall": 1.0
+      "union": 0,
+      "recall": 0.0
     },
     {
       "cwe": 235,
@@ -390,7 +534,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 93,
+      "cwe": 20,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -398,7 +542,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 434,
+      "cwe": 362,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -406,7 +550,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 494,
+      "cwe": 1395,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -414,7 +558,15 @@
       "recall": 0.0
     },
     {
-      "cwe": 521,
+      "cwe": 259,
+      "real": 1,
+      "bandit": 1,
+      "semgrep": 1,
+      "union": 1,
+      "recall": 1.0
+    },
+    {
+      "cwe": 829,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -422,7 +574,7 @@
       "recall": 0.0
     },
     {
-      "cwe": 328,
+      "cwe": 1333,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,
@@ -430,7 +582,47 @@
       "recall": 0.0
     },
     {
-      "cwe": 257,
+      "cwe": 770,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 345,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 525,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 565,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 620,
+      "real": 1,
+      "bandit": 0,
+      "semgrep": 0,
+      "union": 0,
+      "recall": 0.0
+    },
+    {
+      "cwe": 285,
       "real": 1,
       "bandit": 0,
       "semgrep": 0,

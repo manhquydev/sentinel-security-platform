@@ -232,3 +232,47 @@ Harness: `evaluation/sast-fp-discrimination/` (all scripts reproducible offline 
 - **Side finding:** Juice Shop's `/api/Challenges` exposes `category/difficulty/tags/description` but
   **no CWE and no endpoint**, so it is not machine-readable ground truth for scoring a scanner without
   hand-labelling — which is why the E8/E9 probers still have no recall denominator.
+
+## AUDIT (2026-07-25) — an independent review invalidated two published conclusions; both corrected
+
+An independent audit re-executed the whole measurement stack (both engines over all 63 repos) and
+reproduced every published number exactly *before* challenging it. It found two real defects:
+
+1. **CWE attribution bug (affects E5/0023, and 0022's narrative).** Hits were attributed by
+   `min(cwes)` over *primary ∪ acceptable* instead of the ground truth's `primary_cwe` —
+   **61% of vulnerabilities were booked under the wrong class**. Corrected:
+
+   | | published (buggy) | corrected |
+   |---|---|---|
+   | classes | 54 | **78** |
+   | presence | 43.6% (248/569) | **42.1% (268/637)** |
+   | absence | 4.6% (39/847) | **6.8% (35/513)** |
+   | ratio | 9.5× | **6.2×** |
+   | "absence is larger half" | yes | **NO — withdrawn** |
+   | blind | 547 (31%) | **877 (49%)** |
+
+   The **direction survives** (ratio ≥3.5× under every alternative bucketing tested, never inverted);
+   the magnitude and the size claim do not. 640 vulns (36%) remain unclassified, so bucket size is
+   explicitly unresolved.
+
+2. **E3/0021's "+0.069, significantly beats the LLM" is a split artefact.** Rows come from 63 repos /
+   16 CWE classes / 37 unique memoised scores, so held-out rows are near-duplicates of dev rows. Under
+   **leave-one-repo-out + repo-cluster bootstrap: +0.013 [−0.006, +0.035] — a TIE.** Restated: prefer
+   the deterministic prior on **cost and reproducibility**, not on an accuracy edge.
+
+3. **E8's oracle had a real false-positive mode.** A path that does not exist returns `200 + index.html`
+   on this SPA and was classified `control-absent`. Added a nonexistent-path negative control, an
+   HTML-fallback guard, `allow_redirects=False`, and a baseline-`confidence` gate (hypothesis-labelled
+   endpoints now report `label-unverified`, so `/rest/user/whoami` is no longer claimed as a finding).
+   Negative controls 4/4; one defensible finding remains (`/rest/admin/application-version`).
+
+4. **A hardcoded claim in output.** `classify_gap.py` printed "the absence bucket is the LARGER half"
+   unconditionally — it survived into a run where it was false (513 vs 637). Now derived from the data.
+
+**What held up under attack:** 0022's recall numbers reproduced exactly and survived order,
+engine-order, null-CWE and canonical-semantics challenges (union 336 either way; overlap 110/124/102
+verified); the bootstrap is correctly paired; the dev/held-out split has no *label* leakage; and E8's
+earlier self-caught bugs were already recorded rather than hidden.
+
+**Lesson for the lab:** every published number needs an adversarial re-run by someone who did not write
+the instrument. Two of my conclusions were wrong in ways I could not see from inside.

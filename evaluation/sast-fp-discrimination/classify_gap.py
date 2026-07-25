@@ -79,8 +79,16 @@ def main() -> int:
     ab = agg.get("absence-of-control")
     if p and ab and ab["found"]:
         ratio = (p["found"] / p["real"]) / (ab["found"] / ab["real"])
-        print(f"\nSAST detects PRESENCE {ratio:.1f}x better than ABSENCE — and the absence bucket is the "
-              f"LARGER half ({ab['real']} vs {p['real']} real vulns).")
+        # Compute the size comparison — do NOT assert it. An earlier version hardcoded "the absence
+        # bucket is the LARGER half", which stayed in the output even after corrected CWE attribution
+        # made it false (513 vs 637). A printed claim must be derived from the data it prints.
+        bigger = "absence" if ab["real"] > p["real"] else "presence"
+        other = agg.get("other/unclassified", {"real": 0})
+        print(f"\nSAST detects PRESENCE {ratio:.1f}x better than ABSENCE "
+              f"({p['found']}/{p['real']} vs {ab['found']}/{ab['real']}).")
+        print(f"   larger bucket: {bigger} ({max(ab['real'], p['real'])} vs "
+              f"{min(ab['real'], p['real'])}); {other['real']} vulns are UNCLASSIFIED and could move "
+              f"this comparison — so bucket SIZE is not a settled result, only the ratio direction is.")
         print("=> the residual is not a SAST tuning problem; missing controls are found at RUNTIME.")
     json.dump({"buckets": agg}, open(os.path.join(_HERE, "gap-classification-260725.json"), "w"), indent=2)
     return 0

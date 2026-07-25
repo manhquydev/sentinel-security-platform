@@ -16,7 +16,40 @@ residual actually sits. An aggregate number cannot tell you whether the gap is a
 broke the corpus down per CWE class; `classify_gap.py` then bucketed each class by a property taken
 from the **CWE definition itself**, independent of the results.
 
-## Decision (the measured law)
+## CORRECTION (2026-07-25, independent instrument audit) — read before the table below
+
+An audit found that `analyze_cwe_gap.py` attributed each detection to `min(cwes)` over
+*primary ∪ acceptable* CWEs instead of the ground truth's own `primary_cwe`, **misattributing 61% of
+vulnerabilities** (CWE-798 booked as 259, CWE-78 as 77, CWE-639 as 284, CWE-434 as 20…). The bug is
+fixed (`run_spike.load_gt` now carries `primary`, attribution uses it) and everything was re-measured:
+
+| claim | as published (buggy `min`) | **corrected (`primary_cwe`)** |
+|---|---|---|
+| CWE classes in corpus | 54 | **78** |
+| presence bucket | 248/569 = 43.6% | **268/637 = 42.1%** |
+| absence bucket | 39/847 = 4.6% | **35/513 = 6.8%** |
+| **presence-vs-absence ratio** | 9.5× | **6.2×** |
+| "absence is the LARGER half" | 847 vs 569 → yes | **513 vs 637 → NO, WITHDRAWN** |
+| blind classes (union detects 0) | 547 vulns (31%) | **877 vulns (49%)** |
+| largest single class | CWE-200 "237 vulns" | CWE-307 (134); CWE-200 is **54** |
+
+**What is withdrawn:** the 9.5× magnitude, the specific per-class figures quoted below, and the claim
+that the absence bucket is the larger half. A further **640 vulns (36%) are unclassified** (CWE-434,
+532, 614, 601, 204, 915, 918, 1021, 209, 942…), and how they are bucketed can move the size comparison
+either way — so bucket SIZE is not a settled result and is reported as unresolved.
+
+**What survives, and is the load-bearing point:** SAST detects *presence* far better than *absence*
+(**6.2×** corrected; the audit's sensitivity sweep found the ratio stayed ≥3.5× and **never inverted**
+under any defensible alternative bucketing or attribution). The absence bucket is large (513–877 vulns
+depending on classification) and its recall is 6.8%. **The architectural consequence is unchanged:
+the residual is not a SAST tuning problem and belongs to runtime/DAST.**
+
+Corrected per-class evidence (primary-CWE attribution): CWE-307 no auth-attempt limit **0%** (134
+vulns), CWE-312 cleartext storage **0%** (63), CWE-639 IDOR **0%** (60), CWE-200 info exposure **0%**
+(54), CWE-532 log exposure **0%** (54) — versus CWE-330 **97.5%** (40), CWE-78 **89%** (46), CWE-89
+**71%** (42), CWE-798 **53%** (55).
+
+## Decision (the measured law — figures below are the SUPERSEDED originals; see the correction above)
 
 Two structurally different kinds of vulnerability, over 1790 real vulns / 54 CWE classes:
 
