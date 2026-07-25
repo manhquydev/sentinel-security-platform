@@ -83,3 +83,37 @@ documents here as real choices are accepted, then index them in this file.
   security vocabulary) — so the SQLi/XSS/hash workload passes untouched; the unsalted-MD5 password
   value is removed via the credential pass while the finding survives; residual is MEASURED (recall
   vs FP) with a guard that fails closed on an absent corpus. Egress PII leg + bare-PAN + NER deferred.
+- [0018 Week-10 eval is a deterministic oracle over an observable subset; the LLM judge is measured, not trusted](0018-week10-eval-is-a-deterministic-oracle-over-an-observable-subset-judge-measured-not-trusted.md)
+  — a red-team showed the read-only fuzzer's observable surface is exactly one endpoint, so a naive
+  recall/FP over "the observable subset" is vacuous. Week-10 is a deterministic code oracle over two
+  labelled corpora: a `synthetic:true` corpus with a KNOWN confusion matrix (asserted as independent
+  ground truth) that exercises the matcher exhaustively, and an enriched real corpus (the known SQLi
+  search + four benign read paths, labelled from public sources) scored over a committed, redacted
+  live capture. Recall is honest COVERAGE (the syndicate does identify the observable SQLi, 1/1);
+  FP=0 on benign endpoints is the load-bearing gate (the syndicate false-positives on none);
+  unobservable auth/state-change vulns are deferred (0016), never faked. The guard fails closed +
+  non-vacuous by construction; a re-redaction leak guard protects the first committed live capture.
+  The LLM narrative judge is built only to be MEASURED — under the security-correct target-derived
+  provenance the hardened models refuse the grading role (0/12), and only a forbidden trust downgrade
+  gets them to respond — so it is demonstrated unfit to be load-bearing; the oracle stays the verdict.
+- [0019 Week-11 production is a containerised syndicate + per-run FinOps + an on-prem serving path](0019-week11-production-is-a-containerised-syndicate-per-run-finops-and-an-on-prem-serving-path.md)
+  — scouting corrected the literal charter (4 GB laptop GPU, no docker NVIDIA runtime). Week-11 ships
+  the three real things: per-run FinOps (`agent/finops.py`) that MEASURES exact tokens+latency and
+  labels cost an estimate (on-prem = $0), with a deterministic cost/token/latency/error budget guard
+  for spike alerting, opt-in and non-invasive; a slim digest-pinned syndicate container
+  (`infra/agent/`, RAG degrades gracefully so no ML stack) verified running the full pipeline against
+  the live planes; and an on-prem serving path as a gateway alias (`local-onprem`) verified LIVE via
+  Ollama (`qwen2.5:0.5b` on the GPU, agent call + FinOps $0), with vLLM (`infra/vllm/`) committed as
+  the datacenter path. Honestly deferred + named: vLLM production throughput/autoscaling; the
+  gateway-container→host-model hop (sandbox forbids non-loopback binds); output/version drift beyond
+  the budget guard.
+- [0020 The inherited LLM-SAST-triage verifier is measured unsafe; the deterministic ethos holds; default model → grok-4.5](0020-ai-sast-llm-triage-verifier-is-measured-unsafe-deterministic-ethos-holds-default-model-grok.md)
+  — the AI-SAST inherit-and-upgrade spike (clean-room guided-question verifier, inheriting VulnHunterX's
+  method) ran on real RealVuln FP-traps (Bandit → match → verify → score) and DISPROVED the thesis
+  across two models × two provenance conditions: under the security-correct target-derived provenance
+  BOTH sast-sol and grok-4.5 refuse the grading role (FP-reduction 0, reproducing the Week-10 judge on
+  the SAST surface); under the forbidden operator downgrade both grade but breach the hard recall floor
+  (silently drop real SQLi/cmd-injection/hardcoded-cred). So no verifier module ships (measure-first,
+  fail-allowed) — the honest path is a broader deterministic SAST foundation + a NON-load-bearing LLM
+  annotator that can never drop a finding. Also: the default agent model moved to grok-4.5
+  (`sast-grok45`, gpt-5.6-sol low on quota); frozen benchmark arms untouched.

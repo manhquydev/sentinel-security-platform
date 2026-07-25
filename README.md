@@ -201,6 +201,30 @@ residual is **measured** (recall on planted PII, false‑positive on security co
 CI regression guard that fails closed on an absent corpus
 ([decision 0017](docs/decisions/0017-week9-pii-redaction-is-structural-at-capture-measured-not-trusted.md)).
 
+**Built (Week‑10):** a [pentest‑eval pipeline](evaluation/pentest-eval/) whose verdict is a
+**deterministic code oracle**, never an LLM. A red‑team found the read‑only fuzzer's observable surface
+is exactly one endpoint, so recall over it alone would be vacuous; Week‑10 splits into a `synthetic:true`
+oracle corpus with a KNOWN confusion matrix (asserted as independent ground truth) and an enriched real
+corpus (the known SQLi search + benign read paths, labelled from public sources) scored over a committed,
+**redacted** live capture. The syndicate does identify the observable SQLi (recall 1/1 coverage) and
+false‑positives on **zero** benign endpoints (the load‑bearing FP=0 gate); unobservable auth/state‑change
+vulns are deferred (0016), never faked. A narrow narrative LLM judge is built only to be **measured** —
+under the security‑correct provenance the hardened models refuse the grading role (0/12), so it is
+demonstrated unfit to be load‑bearing
+([decision 0018](docs/decisions/0018-week10-eval-is-a-deterministic-oracle-over-an-observable-subset-judge-measured-not-trusted.md)).
+
+**Built (Week‑11):** production‑ization scoped honestly to the hardware. Per‑run **FinOps**
+([agent/finops.py](agent/finops.py)) MEASURES exact tokens + latency per pentest run and labels cost a
+derived estimate (on‑prem = $0), with a deterministic cost/token/latency/error budget guard for
+spike alerting — opt‑in and non‑invasive, so Weeks 1–10 are untouched. The syndicate ships as a slim,
+digest‑pinned [container](infra/agent/) (RAG degrades gracefully, so no ML stack) verified running the
+full pipeline against the live planes. The **on‑prem / air‑gapped** serving path is a gateway alias
+(`local‑onprem`) verified **live via Ollama** (`qwen2.5:0.5b` on the 4 GB GPU; an agent provenance‑labelled
+call + FinOps at $0), with [vLLM](infra/vllm/) committed as the datacenter path. vLLM production throughput,
+autoscaling, and the gateway‑container→host‑model hop (sandbox forbids non‑loopback binds) are deferred
+with the constraint named
+([decision 0019](docs/decisions/0019-week11-production-is-a-containerised-syndicate-per-run-finops-and-an-on-prem-serving-path.md)).
+
 **Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
 decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
 license); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG (deferred per decision
