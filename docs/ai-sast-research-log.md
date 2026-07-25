@@ -12,6 +12,41 @@ Harness: `evaluation/sast-fp-discrimination/` (all scripts reproducible offline 
 
 ---
 
+## Ledger — what still stands
+
+Navigation aid, not authority: **the entries below are authoritative**, and where one contradicts this
+table the entry wins. Statuses for E1–E13 come from the meta-analysis in
+`docs/plans/reports/2026-07-26-sentinel-implicit-protocol-meta-analysis.md`; E14–E18 were run and
+audited on 2026-07-26.
+
+| # | question | status |
+|---|---|---|
+| E1 | LLM as judge of findings | **STANDS (negative)** — refuses under correct provenance, 0/12 |
+| E2 | LLM verifier drops false positives | **STANDS (negative)** — hides 3 of 8 real vulns; unsafe |
+| E3 | LLM annotator beats a CWE prior | **CORRECTED ×2** — "+0.069 significant" → tie → **per-application +0.095 [+0.063,+0.128], prior wins** (E14) |
+| E4 | non-load-bearing annotator is safe | STANDS |
+| E5 | presence vs absence detection gap | **CORRECTED** — 9.5× → **6.2×**; "absence is the larger half" **WITHDRAWN** (61% CWE misattribution) |
+| E6 | (no entry; exists only as the target of E12's correction) | — |
+| E7 | cross-validation on our own lake | STANDS, **direction only** (small n) |
+| E8 | runtime missing-authz prober | **WITHDRAWN** — probed *around* Kong; found zero real vulnerabilities |
+| E9 | rate-limit / verbose-error probes | findings STAND; the "read-only" safety claim **RETRACTED** |
+| E10 | does the standard benchmark cover absence? | **STANDS** — 0 of 2740 cases |
+| E11 | third-party AI-SAST through our gateway | **STANDS** — cannot connect; exits 0 while every call 500s |
+| E12 | VulnHunterX vendored ruleset | STANDS |
+| E13 | marginal cost/yield of the LLM layer | **STANDS** — +$0.05, +35s, **zero extra findings** |
+| — | exposure-gap measurement | **WITHDRAWN** — "7 of 16 unprotected" → 32 real routes, **zero** authorization gaps |
+| E14 | re-audit of E3 under a grouped split | **STANDS as corrected** — and exposed that the retraction had never reached the code |
+| E15 | re-audit of 0022's "+44%" | **STANDS** — +43.6% [+31.5%,+58.4%]; survived Stage-8 review byte-identically; precision clause qualified |
+| E16a | can models emit machine-readable findings? | **STANDS (negative)** — 5 models × 3 formats × prefill = zero conformance, while correctly finding planted defects |
+| E16b | generative role, first look | **INCONCLUSIVE** by preregistration (p = 0.065) |
+| E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
+| E18 | is it detection, or reaction to messy code? | **in progress** |
+
+**The pattern worth reading this table for:** of the corrections above, **every quantified one moved a
+claim against this lab's own headline**. None ever found an understatement.
+
+---
+
 ## E1 — LLM-as-judge for evaluation verdicts (Week-10) → **NEGATIVE**
 
 - **Hypothesis:** an LLM can judge whether the pentest agents' findings are correct.
