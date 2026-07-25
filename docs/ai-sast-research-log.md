@@ -144,3 +144,32 @@ Harness: `evaluation/sast-fp-discrimination/` (all scripts reproducible offline 
 - Is OpenGrep complementary to Semgrep or largely redundant (it is a Semgrep fork)? Worth measuring
   before adopting it as a third engine.
 - Do gosec/Brakeman/js-x-ray show the same ~30% unique-contribution pattern in their languages?
+
+## E8 — Runtime differential prober for the ABSENCE bucket → **WORKS (detects what SAST+Nuclei both missed)**
+
+- **Hypothesis:** absence-of-control vulns (CWE-306/284/862), which SAST detects at 4.6% and Nuclei's
+  stateless templates cannot reach at all, are detectable by a **differential runtime oracle**.
+- **Method:** `evaluation/absence-detection/probe_missing_authz.py`. The attack-surface baseline already
+  labels each endpoint's `auth_class`; request every **non-public, read-only, GET** endpoint with **no
+  credentials**. Oracle: `401/403` = control present; `2xx` = control ABSENT (response size recorded as
+  *impact*, never as the verdict). A committed set of expected-protected endpoints is probed identically
+  as the **negative control**. Safety: GET only, read-only paths only, loopback fail-closed, no
+  credentials, no account creation, nothing mutated — inside decision 0013's read-only bound, no HITL.
+- **Data (Juice Shop, 5 endpoints, 1 request each):**
+
+  | endpoint | label | no-credential response | verdict |
+  |---|---|---|---|
+  | `/rest/admin/application-version` | administrative | 200, 20B | **FINDING** — admin data unauthenticated |
+  | `/rest/user/whoami` | authenticated | 200, 11B | **FINDING** — control absent (minimal impact) |
+  | `/rest/basket/1`, `/api/Cards`, `/api/Addresss` | expected-protected | **401** | ok — negative control |
+
+  **Negative controls 3/3 correctly protected → the oracle discriminates**, it does not rubber-stamp.
+- **Comparison:** on this same target, Nuclei (DAST) reported missing-headers + Swagger and **zero**
+  missing-authz; SAST reported none. The prober found what both missed — the predicted gap.
+- **Instrument-design lesson (recorded honestly):** the first version used response SIZE as the verdict
+  and wrongly downgraded `{"version":"20.1.1"}` from an *administrative* endpoint to "no data". Size
+  measures **impact**; the missing control is the finding. Fixed, and the negative control was added
+  after the first run had none (templated paths had been filtered out).
+- **Conclusion:** the differential oracle closes a class that neither SAST nor template-DAST reaches.
+  Scope caveat: only 2 baseline endpoints qualified — the corpus of labelled non-public endpoints is the
+  limiting factor, not the technique.

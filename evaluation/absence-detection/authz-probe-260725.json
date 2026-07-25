@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-07-25T13:32:25.020502+00:00",
+  "target": "http://127.0.0.1:13000",
+  "probed": 5,
+  "findings": 2,
+  "negative_controls": {
+    "total": 3,
+    "correctly_protected": 3
+  },
+  "results": [
+    {
+      "path": "/rest/admin/application-version",
+      "auth_class": "administrative",
+      "cwe_class": "306/284/862",
+      "role": "baseline",
+      "verdict": "control-absent",
+      "status": 200,
+      "bytes": 20,
+      "impact": "minimal",
+      "detail": "HTTP 200, 20B without credentials \u2014 trivial body (low data impact)",
+      "sample": "{\"version\":\"20.1.1\"}"
+    },
+    {
+      "path": "/rest/user/whoami",
+      "auth_class": "authenticated",
+      "cwe_class": "306/284/862",
+      "role": "baseline",
+      "verdict": "control-absent",
+      "status": 200,
+      "bytes": 11,
+      "impact": "minimal",
+      "detail": "HTTP 200, 11B without credentials \u2014 trivial body (low data impact)",
+      "sample": "{\"user\":{}}"
+    },
+    {
+      "path": "/rest/basket/1",
+      "auth_class": "expected-protected",
+      "cwe_class": "306/284/862",
+      "role": "negative-control",
+      "verdict": "control-present",
+      "status": 401,
+      "bytes": 972,
+      "impact": null,
+      "detail": "HTTP 401 as required",
+      "sample": ""
+    },
+    {
+      "path": "/api/Cards",
+      "auth_class": "expected-protected",
+      "cwe_class": "306/284/862",
+      "role": "negative-control",
+      "verdict": "control-present",
+      "status": 401,
+      "bytes": 83,
+      "impact": null,
+      "detail": "HTTP 401 as required",
+      "sample": ""
+    },
+    {
+      "path": "/api/Addresss",
+      "auth_class": "expected-protected",
+      "cwe_class": "306/284/862",
+      "role": "negative-control",
+      "verdict": "control-present",
+      "status": 401,
+      "bytes": 83,
+      "impact": null,
+      "detail": "HTTP 401 as required",
+      "sample": ""
+    }
+  ]
+}
