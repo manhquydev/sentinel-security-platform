@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 24 experiments (E1–E24). Written 2026-07-26 at the close of the research session that
+Synthesis across 25 experiments (E1–E25). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -80,7 +80,13 @@ hold despite a handicap and the ~15–19% sensitivity is a **floor**.
 - **A third of calls are non-answers**, and roughly half of those are a *stable* refusal on those
   particular files rather than transient noise (E21: 9 of 19 persisted through a retry).
 - **Structural familiarity is untested** — mutation changed names, not control-flow shapes.
-- **No genuinely unseen target exists** for this lab, so full transfer remains unproven.
+- **Transfer is HALF answered (E25).** The lab spent the session recording that no genuinely unseen
+  target existed. It was wrong — this project's own source, written 1–3 days before the measurement, is
+  provably outside any deployed model's training set. Run over 25 of those files the model produced
+  **zero** absence-class findings, reproducing its perfect corpus specificity on unseen input. So
+  **specificity transfers; sensitivity is untested**, because our own code is a library rather than a
+  web application and offers no known positives to find. Closing that half needs a recently-written web
+  application with hand-built ground truth.
 - **One model, one language, one corpus** — and that corpus is synthetic-seeded, not organic CVEs.
 
 **Therefore: a research result and a roadmap item, not a shippable feature.** The business case sells the

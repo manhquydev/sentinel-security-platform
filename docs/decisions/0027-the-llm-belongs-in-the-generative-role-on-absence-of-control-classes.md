@@ -159,10 +159,13 @@ file-role recognition. Both are open questions again.
   single test is marginal. The conclusion rests on **three independent preregistered controls
   converging** — messiness (E18), memorisation (E19) and file role (E20) — with no result pointing the
   other way.
-- **Transfer — partially addressed (E19).** Surface memorisation is excluded by semantics-preserving
-  mutation. **Still outstanding:** structural familiarity, and a genuinely unseen target. Until one
-  exists, full generalisation remains unproven — but "unproven by construction" is no longer accurate,
-  because the construction now admits a partial answer and that answer came back favourable.
+- **Transfer — half answered (E23 + E25).** Surface memorisation is not the driver (E23, rebuilt design:
+  anonymisation does not reduce detection, interval excludes a 5-point drop). And on **genuinely unseen
+  code** — this project's own source, written 1–3 days before measurement and therefore outside any
+  deployed model's training corpus — the model produced **0 findings on 25 files**, reproducing its
+  perfect specificity. **Specificity transfers. Sensitivity does not yet have an answer**, because our
+  own code is a library with no request handlers and therefore no known positives. **Still outstanding:**
+  structural familiarity, and a recently-written *web application* with hand-built ground truth.
 - **Recorded process failure:** the deterministic control arm was preregistered and the implementation
   silently dropped it during a redesign. It was caught before publication and run. The mechanism claim
   was withdrawn on a weaker comparison and then partially restored by the correct one — both movements

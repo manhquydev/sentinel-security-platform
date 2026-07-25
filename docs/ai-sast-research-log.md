@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E25 | transfer to unseen code | **STANDS (bounded)** — 0 flags on 25 files of our own code (written days before): **specificity transfers**; sensitivity untested, no ground truth |
 | E24 | file role, valid design | **STANDS** — both arms fresh: 9/40 vs 2/42, +0.177 [+0.031,+0.326], p = 0.020; tolerates 2 extra flags |
 | E23 | memorisation, valid design | **STANDS (bounded)** — anonymised 14/53 vs original 11/53, diff +0.057 [−0.038,+0.151]: no collapse, so surface memorisation is not the driver; equivalence NOT established |
 | E22 | is the instrument deterministic? | **STANDS** — **no**: 36% verdict flips, 0/14 identical prose at temperature 0 |
