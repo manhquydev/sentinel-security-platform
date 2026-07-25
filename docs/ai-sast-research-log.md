@@ -1465,3 +1465,52 @@ Registered 2026-07-26 04:25 +07. **Nothing below was measured before this text w
   model on this task, sensitivity is genuinely ~19%, and no engineering fix is available at the prompt
   level.
 - **Bounds carried forward:** file-level, one model, contaminated corpus (narrowed by E19).
+
+## E21 — RESULT: the low sensitivity is REAL, not an artefact of non-answers
+
+Run 2026-07-26. Every arm-A file whose E17 verdict was `non-answer`, retried **exactly once** with the
+frozen instrument, taking whatever came back.
+
+| | count |
+|---|---|
+| arm-A non-answers | 20 of 60 (33%) |
+| of those, **file missing on disk** — never shown to the model | **1** |
+| genuinely asked and unanswered | 19 |
+| **resolved on one retry** | **10 of 19 = 53%** |
+| …resolved to `clean` | **9** |
+| …resolved to `flagged` | **1** |
+| still `non-answer` after retry | 9 |
+
+| rate | value |
+|---|---|
+| published arm-A (unchanged, still the result of record) | 10/60 = **0.167** |
+| with non-answers resolved once | 11/60 = **0.183** |
+
+### The hypothesis was half right and practically wrong
+
+The preregistered hypothesis was that sensitivity had been **under-measured** because non-answers are
+missing measurements rather than negative detections. Half of that is true: **53% of non-answers do
+resolve on a single retry**, so the instrument was leaving real verdicts on the table.
+
+But the recovered verdicts are almost entirely **`clean`** — 9 of 10. Folding them in moves sensitivity
+by **1.6 percentage points**, from 0.167 to 0.183. There is no meaningful sensitivity hiding in the
+non-answer bucket.
+
+**Conclusion: ~19% sensitivity is a genuine property of the model on this task, not an instrument
+artefact.** When the model does answer about a file containing an absent control, it usually says the
+file is fine. Four in five are missed for real, and **no retry-level engineering fix recovers them**.
+This closes the open question in the direction that constrains the finding rather than flattering it.
+
+### Two secondary observations
+
+- **9 of 19 non-answers persisted through the retry**, so roughly half the non-answer rate is a *stable*
+  behaviour on those particular files, not transient noise. The model repeatedly declines to review
+  certain files, which is a usability property worth knowing before anyone builds on this.
+- **One arm-A entry was never shown to the model at all** — `flag.txt`, listed in ground truth but absent
+  from the corpus, and a text file rather than source. E17's harness caught the `OSError` and scored it
+  as a non-answer, conflating "the file could not be read" with "the model declined". Fixed in the
+  instrument; magnitude is 1 file in 60 (published rate 0.167 → 0.169 on the corrected denominator), so
+  **no conclusion changes** — but the buckets now mean what their names say.
+
+**E17's published result is unchanged and remains the result of record.** This measured a property of
+the instrument, not of the hypothesis, exactly as the preregistration committed.
