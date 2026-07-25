@@ -1515,3 +1515,25 @@ This closes the open question in the direction that constrains the finding rathe
 
 **E17's published result is unchanged and remains the result of record.** This measured a property of
 the instrument, not of the hypothesis, exactly as the preregistration committed.
+
+## E22 — PREREGISTRATION: is the instrument deterministic? (written before measuring)
+
+Registered 2026-07-26 04:50 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** A Stage-8 review of the E17–E21 chain measured **3 of 10 verdicts flipping** on identical
+  inputs at `temperature=0.0`, and observed that **E19's "3 lost / 3 gained" is exactly what a ~30% flip
+  rate predicts on 53 files at a 0.189 base rate — with or without mutation**. E19 and E20 both **reuse**
+  E17 verdicts on an explicit determinism assumption. If that assumption is false, both are
+  uninterpretable, and two claims published tonight must be withdrawn.
+- **Hypothesis (the one being tested, not hoped for).** The instrument is **not** stable: repeated calls
+  on identical input produce different verdicts at a materially non-zero rate.
+- **Method.** 15 arm-A files, each queried **twice** in the same run with the frozen instrument
+  (same prompt, same classifier, `temperature=0.0`). Compare verdicts **and** raw prose.
+- **Primary outcome.** Verdict disagreement rate across the 15 pairs, with a 95% interval.
+- **Secondary.** Whether the raw prose differs even when the verdict agrees — separating *model*
+  non-determinism from *classifier* boundary effects (the classifier is a pure function, so any verdict
+  flip must originate in the model).
+- **Decision rule, committed in advance.** If the disagreement rate is materially above 0, then **E19's
+  and E20's reuse of E17 verdicts is invalid**, both are downgraded to **inconclusive**, and the
+  research log and decision 0027 are corrected accordingly — regardless of how much that costs the
+  night's conclusions.
