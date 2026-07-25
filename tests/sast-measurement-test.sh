@@ -306,7 +306,14 @@ print("  n=%d disagreements=%d (%.0f%%) identical_prose=%d/%d"
       % (d["n"], d["disagreements"], rate * 100, d["identical_prose"], d["n"]))
 # The artefact must exist and record a NON-zero instability; if it ever reads zero, re-measure before
 # trusting it, because 0/14 identical prose says the model is not deterministic.
-sys.exit(0 if (d["n"] >= 10 and d["disagreements"] > 0) else 1)
+import glob
+# E29 re-measured on a larger sample spanning both arms; the pooled figure is what is cited.
+v2 = "evaluation/sast-fp-discrimination/determinism-v2-260726.json"
+pooled_n, pooled_d = d["n"], d["disagreements"]
+if os.path.exists(v2):
+    e = json.load(open(v2)); pooled_n += e["n"]; pooled_d += e["disagreements"]
+    print("  pooled: %d/%d = %.3f across both determinism runs" % (pooled_d, pooled_n, pooled_d/pooled_n))
+sys.exit(0 if (pooled_n >= 30 and pooled_d > 0) else 1)
 PY
 then ok "instrument instability is measured and published, not assumed away"
 else bad "SM14: the determinism measurement is missing or claims perfect stability"; fi

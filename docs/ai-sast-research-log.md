@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E29 | how unstable is the instrument, really? | **STANDS** — pooled **15/38 = 40%** verdict flips, 95% CI [21%,63%]; **0/38 identical prose**. Replaces the bare "36%" |
 | E28 | does the conclusion replicate? | **STANDS** — 8/40 vs 1/42, diff **+0.176** against E24's **+0.177**, p = 0.012; individual verdicts churn, the difference does not |
 | E27 | how much did the classifier under-count? | **STANDS** — narrow (~1 file in 53 on this corpus); and E23/E24 found **non-re-analysable** (responses truncated at 400 chars) |
 | E26 | sensitivity on authored unseen code | **STANDS (demonstration)** — 3/4 planted defects found, 0/4 false claims on controls; classifier under-counted 2/4, so published sensitivity is a **floor** |
