@@ -2205,3 +2205,24 @@ Both withdrawals stand. E19 and E20 reused single verdicts as fixed values, whic
 instability in this range — and both were rebuilt and re-established on valid designs (E23, E24, and
 E28's replication to within 0.001). The rule adopted after E22 — **measure rates, never reuse labels** —
 is unaffected, and E28 demonstrated its payoff directly.
+
+## E30 — PREREGISTRATION: propagate measurement noise into the published intervals (written before measuring)
+
+Registered 2026-07-26 06:36 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E22/E29 measured the instrument flipping **~40%** of verdicts (95% CI [21%, 63%], n = 38).
+  **Every interval this lab published is a bootstrap over FILES only** — it models which files were
+  sampled, and not at all the fact that each file's verdict is itself a noisy draw. So every published
+  interval is **too narrow**, by an amount nobody has computed. This computes it.
+- **Method.** Pure simulation, no model calls. For each published comparison, resample files *and*
+  re-draw each verdict under the measured flip probability, then re-derive the interval. Compare against
+  the published one.
+- **Primary outcome.** The widened interval for each headline comparison, and **whether any conclusion
+  changes sign or loses significance** once measurement noise is honestly included.
+- **Prediction, recorded in advance.** Intervals widen materially. The strongest results (E18, p = 0.0003;
+  E17, p = 0.0078) should survive. **The marginal ones (E24/E28 at p ≈ 0.012–0.02) are the ones at risk**,
+  and if they cross into non-significance under honest noise propagation, that is reported as the result
+  and decision 0027's file-role support weakens accordingly.
+- **What this cannot fix.** Widening an interval after the fact is a correction to *reporting*, not to
+  *design*. The right design is repeated measurement per file (k runs, verdict as a rate), which this
+  lab has not done and which is recorded as owed work rather than simulated away.
