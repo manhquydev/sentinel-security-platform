@@ -225,10 +225,21 @@ autoscaling, and the gateway‑container→host‑model hop (sandbox forbids non
 with the constraint named
 ([decision 0019](docs/decisions/0019-week11-production-is-a-containerised-syndicate-per-run-finops-and-an-on-prem-serving-path.md)).
 
+**Built (Week‑12):** the PRD, business case, and stakeholder handover — scoped to what the project
+actually **measured**, not to a pitch. The one honest positioning: Sentinel is **not** "AI finds more"
+(every measured AI‑vs‑deterministic contest in the research log ended in the deterministic method winning,
+tying, or the question being unanswerable — E13's live run added **zero** findings over the $0 deterministic
+path for +$0.05 and +35s). The business case rests on three measured pillars instead — cheap continuous
+deterministic detection (+44% recall, free), a bounded, metered AI cost (~$0.05/run), and the
+**Security‑FOR‑AI** layer (Agent IAM, provenance gateway, PII redaction, HITL) that offense‑only competitors
+lack — and states its ten unmeasured gaps out loud rather than claiming past them
+([Week‑12 report](docs/2026-07-26_NguyenManhQuy_Week12.md), VI). ROI is framed as *frequency to close the
+gap between costly manual pentests*, never as replacing human judgment.
+
 **Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
 decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
-license); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG (deferred per decision
-0011).
+license); GraphRAG (deferred per decision 0011); a second, non‑memorised target to test whether the
+findings generalise beyond the pinned Juice Shop build.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)
