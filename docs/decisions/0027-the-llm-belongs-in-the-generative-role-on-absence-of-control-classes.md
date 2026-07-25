@@ -40,6 +40,8 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** | the model **discriminates** — both arms could have scored |
 | specificity | **1 of 40** clean files drew a false absence-class claim | it is not flagging indiscriminately |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
+| **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
+| same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
 | capability gap vs deterministic engines, identical files | model 6/60 · **engines 0/60** | the engines emit 33 CWE classes, **none absence-class** — a *capability statement*, not a contest (see below) |
 
 The p-values against the deterministic arm (0.0137 / 0.00065) are **not quoted as the headline**: that
@@ -85,10 +87,17 @@ against synthetic cases before any data was seen.
 - **The business case may cite this only with the contamination bound attached**, and must not promise
   per-client transfer. What is sellable today is the deterministic layer plus the bounded AI cost; this
   finding is a **research result and a roadmap item**, not a shipped capability.
-- **Next experiment, already specified:** a control arm of files that are **messy but contain no
-  absence-class vulnerability**, to separate "reacts to mess" from "detects absent controls"; and a
-  target the model cannot have memorised, to test transfer. Until the latter exists, generalisation is
-  unproven by construction.
+- **The mechanism question is RESOLVED (E18, same day).** The control arm this decision specified was
+  run: 80 files with real vulnerabilities of presence classes only. The model produced absence-of-control
+  language about them at **3/80 — indistinguishable from files with nothing wrong (p = 0.59)** — and far
+  below the absence-class arm (p = 0.010). The "reacts to messy code" explanation predicts the opposite
+  and is refuted. **The model discriminates the class, not the defectiveness.**
+- **Residual confound now named:** absent controls live disproportionately in request handlers, while
+  XSS and hardcoded credentials live in templates, models and utilities — so arm A and arm B may differ
+  in **file role** as well as class. A third arm of *correctly protected endpoint handlers* would
+  separate those. Specified, not yet run.
+- **Still outstanding:** a target the model cannot have memorised, to test transfer. Until one exists,
+  generalisation is unproven by construction.
 - **Recorded process failure:** the deterministic control arm was preregistered and the implementation
   silently dropped it during a redesign. It was caught before publication and run. The mechanism claim
   was withdrawn on a weaker comparison and then partially restored by the correct one — both movements

@@ -222,9 +222,12 @@ Set by measurement, not preference:
    deterministic tooling is blind to, the model wins against a deterministic arm that scores exactly
    zero. The claim is now two-part: deterministic wins or ties in **gate** roles; the model supplies
    what deterministic tooling cannot in the **generative** role.
-   **The successor question:** is the effect *detection*, or reaction to generally messier files? Four
-   of ten flags named a different issue than ground truth. Resolving it needs a control arm of files
-   that are messy but contain **no** absence-class vulnerability.
+   **Successor question — also ANSWERED (E18):** the effect is *detection*, not reaction to messy code.
+   Files that are objectively defective but carry no absent control draw absence-class language at
+   3/80, indistinguishable from files with nothing wrong (p = 0.59) and far below the absence-class arm
+   (p = 0.010). **Now open instead:** absent controls cluster in request handlers, so part of the
+   discrimination may be *file role* rather than *missing control* — needs a third arm of correctly
+   protected endpoint handlers.
 2. **Does anything here generalize past one memorized target?** Every runtime finding rests on a single
    pinned Juice Shop build.
 3. **What is the absence-class recall?** Unmeasurable without a target with genuinely broken
