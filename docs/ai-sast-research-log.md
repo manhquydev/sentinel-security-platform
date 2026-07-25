@@ -1828,3 +1828,27 @@ not have consumed, code this recent.
 
 This makes E25 the transfer test the lab kept recording as impossible — with the caveat that it can
 demonstrate **capability on unseen code**, never **recall**, because no ground truth exists for it.
+
+### E25 — a construct-validity limit identified DURING the run, before any result was read
+
+Sentinel's own `agent/` and `evaluation/` modules are **libraries, CLIs and probers — not a web
+application**. The corpus files that produced every prior result are Django/Flask **request handlers**,
+and the rubric asks specifically about *endpoints* with no authorization check, *objects fetched by
+user-supplied id*, *authentication endpoints* with no rate limit.
+
+**Most of those questions do not apply to this code**, because there are barely any endpoints in it.
+
+**Consequence: the two outcomes are not symmetric, and that asymmetry is recorded now, not after.**
+
+- **If it flags something and the flag survives adjudication:** that is a genuine capability
+  demonstration on code the model provably cannot have seen. Informative, and the stronger branch.
+- **If it flags nothing:** the result is **ambiguous and must not be read as a failure of transfer**.
+  "No absence-of-control findings" is the *correct* answer for a library with no request handlers. It
+  would be indistinguishable from "the capability does not transfer", and this design cannot separate
+  them.
+
+So E25 can **support** transfer but cannot **refute** it. A refutation would need unseen code of the
+same *kind* as the corpus — a recently-written web application with hand-built ground truth, which this
+lab still does not have. The preregistered falsifier ("zero flags ⇒ transfer bound hardens") is
+therefore **withdrawn as unsound**: it would have drawn a conclusion this sample cannot support.
+Withdrawn before seeing the data, not after.
