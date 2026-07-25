@@ -1620,3 +1620,41 @@ Registered 2026-07-26 05:20 +07. **Nothing below was measured before this text w
   invalidated by instrument noise.
 - **Instrument.** Frozen prompt and positive control, with the **corrected classifier** (SM13) — which
   is a change from E19 and is stated as one, not hidden.
+
+## Confound disclosed and quantified: our own gateway corrupts the source before the model sees it
+
+Found by the Stage-8 review of the generative chain, verified and measured here. It applies to **every**
+experiment in that chain and had been disclosed nowhere.
+
+The egress guardrail's `_ASSIGNMENT` rule (`infra/litellm/guardrails/egress_redaction.py:107`) redacts
+the value after any of `token|secret|password|passwd|api_key|client_secret|access_token|refresh_token|
+private_key|access_key|authorization|cookie` followed by `:` or `=`. In a security corpus of web
+application code, those are not secrets — they are **ordinary identifiers**. `password = request.form[...]`,
+`token = ...`, `authorization: ...` are exactly what this code is made of.
+
+**Measured on the experiment's own files:**
+
+| arm | files containing redactable assignments | total occurrences |
+|---|---|---|
+| absence-class (arm A) | **22 of 59 = 37%** | **68** |
+| clean controls | 13 of 40 = 32% | 33 |
+
+The model's replies corroborate it directly — several say things like *"Redaction broke syntax"*.
+
+**Direction of the bias, which is the part that matters:** roughly a third of files in both arms arrive
+damaged, but arm A carries **twice the occurrences** (68 vs 33) because it *is* authentication and
+authorization code. The arm expected to contain findings is the arm most corrupted. That biases
+**against** every positive result in the chain, so:
+
+- the surviving findings (E17 p = 0.0078, E18 p = 0.0003) hold **despite** a handicap, not because of a
+  helpful artefact;
+- the measured sensitivity (~15–19%) is an **underestimate** of what the model could do on intact
+  source, and should be quoted as a floor rather than an estimate.
+
+**This is a design tension, not a bug.** The gateway redacts on the egress path by policy (decision
+0006, 0017) and that policy is correct for its purpose: preventing secret leakage to a third-party
+model. It simply was never designed for a workload whose *legitimate content* is authentication code.
+Any future run that needs intact source must either measure through a path exempt from `_ASSIGNMENT`
+or report this handicap alongside the numbers. Reported here rather than quietly fixed, because
+silently disabling a security control to improve a research number is precisely the trade this project
+exists to refuse.
