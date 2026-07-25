@@ -260,6 +260,38 @@ PY
 then ok "handlers with an absent control still flag multiples more often than handlers without"
 else bad "SM11: the role control weakened; 0027 would collapse to 'recognises endpoint code'"; fi
 
+sect "SM13: the prose classifier — single point of failure for the whole generative chain"
+if run_py <<'PY'
+import sys; sys.path.insert(0, "evaluation/sast-fp-discrimination")
+from run_generative import classify_prose as c
+# A Stage-8 review noted that NO test exercised classify_prose, though E17-E21 all score through it.
+# Each case below is a failure mode that was demonstrated on real model output, not invented.
+cases = [
+    # reassurance must beat inherent terms (this exact prose was E17's only clean-arm flag)
+    ("visible_employees_for as sole entry point - correct IDOR defense", "clean"),
+    ("Access control looks properly implemented here.", "clean"),
+    # presence-class defects must never count as an absent control
+    ("AES-CBC unauthenticated + ephemeral KEY.", "clean"),
+    ("SQL injection on line 7.", "clean"),
+    # code the model QUOTES must not supply the absence word
+    ("Call after login middleware or add `if not user.is_authenticated`", "clean"),
+    ('flash("Not authorized", "error") is used here', "clean"),
+    # real absence findings must still fire, including across a sentence break
+    ("IDOR: no ownership check on note_id", "flagged"),
+    ("Authz hole. No property scope.", "flagged"),
+    ("Role check missing on this endpoint.", "flagged"),
+    ("Login lacks rate limiting and lockout.", "flagged"),
+    ("No authorization check on this endpoint.", "flagged"),
+    ("What need? State task.", "non-answer"),
+]
+bad = [(t, c(t), e) for t, e in cases if c(t) != e]
+print("  %d/%d cases correct" % (len(cases) - len(bad), len(cases)))
+for t, got, exp in bad: print("    BAD got=%s exp=%s | %s" % (got, exp, t[:50]))
+sys.exit(0 if not bad else 1)
+PY
+then ok "every demonstrated classifier failure mode stays fixed (reassurance, presence-class, quoted code)"
+else bad "SM13: a classifier failure mode regressed — every generative result scores through this"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** | the model **discriminates** — both arms could have scored |
-| specificity | **1 of 40** clean files drew a false absence-class claim | it is not flagging indiscriminately |
+| specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive) | it is not flagging indiscriminately |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
@@ -62,6 +62,47 @@ supply at all.
 The result was preregistered, powered in advance by simulation (83%), replicated on a sample **disjoint**
 from the exploratory run, gated by a positive control, and scored by a deterministic classifier audited
 against synthetic cases before any data was seen.
+
+## CORRECTION (2026-07-26, same day) — a Stage-8 review of the whole chain
+
+An independent adversarial review of E17–E21, followed by a preregistered determinism check (E22),
+forced three changes. All are against this decision's own interests and are recorded in full.
+
+**1. The instrument is NOT deterministic — 36% of verdicts flip on identical input at `temperature=0`,
+and the model never returns identical prose (0 of 14).** Consequently:
+
+- **E19's "surface memorisation is excluded" is WITHDRAWN.** Its paired difference of exactly 0.000
+  (3 lost, 3 gained) is *precisely what 36% instrument noise produces* on 53 files at this base rate,
+  mutation or no mutation. **The contamination bound reverts to its original width:** capability and
+  memorisation are once again **not separated**, and nothing here may be promised for private code.
+- **E20's "the missing control drives it, not file role" is WITHDRAWN pending a re-run.** It paired a
+  *reused* arm A′ against a *freshly measured* arm C, which is invalid under this instability, and it
+  was already one flagged file away from non-significance.
+- **The file-role confound named in E18 is therefore OPEN again**, not closed.
+
+**2. The prose classifier had four demonstrated defects**, all now fixed and pinned by SM13 (it
+previously had **no test at all**, despite every result scoring through it). Re-scoring the stored
+responses moves the surviving results *in this decision's favour*:
+
+| | published | corrected |
+|---|---|---|
+| E17, absence-class vs clean | 10/60 vs 1/40, p = 0.024 | **9/60 vs 0/40, p = 0.0078** |
+| E18, absence-class vs defective-no-absence | 10/60 vs 3/80, p = 0.010 | **9/60 vs 0/80, p = 0.0003** |
+
+**Specificity is 0 of 40, not 1 of 40** — the single clean-arm flag was a classifier false positive on
+prose that actually said the control was *correctly* implemented. The evidence table above is corrected.
+
+**3. An undisclosed confound: the gateway rewrites the source before the model sees it.** The egress
+guardrail's redaction rules rewrite `token=`, `password=` and `authorization:` — ordinary identifiers
+in web application code. The model's own replies mention it ("Redaction broke syntax"). Arm A, being
+authentication-related code, takes the most damage, which biases **against** this decision's finding —
+but it was never disclosed and is a real limit on every number in the chain.
+
+**What still stands after all three:** the model discriminates files containing absence-of-control
+vulnerabilities from both clean files and defective-but-not-absence files, at p = 0.0078 and p = 0.0003
+respectively, with perfect specificity, against a deterministic layer that has no rule capable of
+expressing this class. **What no longer stands:** that this is not memorisation, and that it is not
+file-role recognition. Both are open questions again.
 
 ## The bounds are part of the claim
 
