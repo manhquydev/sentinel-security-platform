@@ -102,7 +102,7 @@ def main() -> int:
         v = classify_prose(raw)
         counts[v] = counts.get(v, 0) + 1
         rows.append({"repo": slug, "file": rel, "verdict": v,
-                     "response": trace.redact_persisted(raw[:600])})
+                     "response": trace.redact_persisted(raw[:4000])})
 
     n = len(rows)
     flagged = counts.get("flagged", 0)
