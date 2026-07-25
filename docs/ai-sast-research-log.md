@@ -561,3 +561,49 @@ carried both retracted figures as live findings; 0023's headline contradicted it
 LLM. On cost and reproducibility the prior remains preferable; on accuracy there is no measured
 difference. And this is a ranking task — a role the architecture already forbids the LLM to hold as a
 gate, so it adds no evidence about the unmeasured generative role (protocol §8, open question 1).
+
+## E15 — PREREGISTRATION (written before measuring, per `docs/research-protocol.md` Stage 2)
+
+Registered 2026-07-26 01:45 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** Decision 0022's "**union recall +44% relative, at no precision cost**" is the
+  load-bearing *positive* claim in the Week-12 business case (pillar 1: cheap continuous detection). It
+  has the same structure as the claim E14 just demolished: a **bare micro-averaged point estimate,
+  pooled over all rows, with no interval and no grouping**. If it is fragile, the business case must be
+  restated *before* it is presented, not after.
+
+- **Stage 5 check changes the hypothesis.** Asking the protocol's mandated question — *what would this
+  instrument print if my hypothesis were false?* — exposes that the obvious test is a **tautology**:
+  union recall is **monotonically ≥** single-engine recall, because taking the union of two finding sets
+  can only add matches, never remove them. "Is the gain > 0" therefore **cannot** come out negative and
+  is not a hypothesis at all. Testing it would be measurement theatre. The honest questions are about
+  **magnitude, stability and cost**:
+
+- **H1 (magnitude).** The +44% relative gain is **not** driven by a small number of outlier repositories:
+  bootstrapped over repositories, the 95% CI on the relative gain **excludes +10%** (i.e. the gain is
+  robustly more than marginal).
+  *Falsified if* the lower bound falls below +10%, which would make "+44%" an artefact of pooling.
+
+- **H2 (breadth).** The **median repository** shows a positive absolute recall gain, i.e. the benefit is
+  broad rather than concentrated.
+  *Falsified if* the median per-repo gain is 0 — which would mean most repos get nothing and a few
+  carry the headline.
+
+- **H3 (the "no precision cost" clause).** Published precision moved 0.1327 → 0.1378. The claim is that
+  adding an engine costs no precision. *Falsified if* the repo-bootstrapped CI on the precision delta
+  excludes 0 **in the negative direction**. Note in advance: a *positive* point estimate here is
+  **not** evidence of improvement unless its CI also excludes 0 — the same error E14 punished.
+
+- **Primary outcomes.** (a) relative recall gain (union vs bandit) with 95% CI bootstrapped over
+  **repositories**; (b) median per-repo absolute recall gain; (c) precision delta with repo-bootstrapped
+  CI.
+- **Secondary (exploratory).** Per-engine unique contribution; how many repos gain nothing.
+- **Power / limits stated in advance.** 63 repos, 1790 real vulnerabilities. Bootstrap is over repos, so
+  effective n is the **repo count**. Repos contribute very unequally (some hold many vulns, some few), so
+  intervals are expected to be wide — that is the honest picture, not a defect.
+- **Corpus caveat, recorded now, not after.** RealVuln's repos are `vc-*-seeded-v2-*` with
+  `llm_generated_corpus: true` — an **LLM-seeded** corpus, not organic CVEs. Whatever this measures, it
+  measures on synthetic-seeded code; that bound travels with the number (protocol §5).
+- **Abort condition.** If the re-run's pooled totals do not reproduce the committed baseline
+  (63 repos, 1790 real vulns, bandit tp=234, semgrep tp=212, union tp=336), the environment has drifted;
+  report the drift and do **not** silently publish different numbers under the old claim's name.
