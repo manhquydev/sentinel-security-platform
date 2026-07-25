@@ -117,9 +117,11 @@ def main() -> int:
     median_gain = gains[len(gains) // 2]
     zero_gain = sum(1 for s in stats if s["union_tp"] == s["bandit_tp"])
 
-    # H1/H3: bootstrap over REPOSITORIES.
+    # H1/H2/H3: bootstrap over REPOSITORIES. H2's median shipped as a bare point estimate in the first
+    # version — a Stage-7 violation ("never a bare point estimate") in the very experiment written to
+    # enforce Stage 7. It carries an interval now.
     random.seed(7)
-    rels, precs = [], []
+    rels, precs, meds = [], [], []
     for _ in range(2000):
         sample = [random.choice(stats) for _ in stats]
         p = _pooled(sample)
@@ -128,17 +130,21 @@ def main() -> int:
         rels.append((p["union"]["recall"] - p["bandit"]["recall"]) / p["bandit"]["recall"])
         if p["union"]["precision"] is not None and p["bandit"]["precision"] is not None:
             precs.append(p["union"]["precision"] - p["bandit"]["precision"])
-    rels.sort(); precs.sort()
+        g = sorted((x["union_tp"] - x["bandit_tp"]) / x["real"] for x in sample if x["real"])
+        if g:
+            meds.append(g[len(g) // 2])
+    rels.sort(); precs.sort(); meds.sort()
     r_lo, r_hi = rels[int(.025 * len(rels))], rels[int(.975 * len(rels))]
     p_lo, p_hi = precs[int(.025 * len(precs))], precs[int(.975 * len(precs))]
+    m_lo, m_hi = meds[int(.025 * len(meds))], meds[int(.975 * len(meds))]
 
     print(f"\npooled point estimates (reproducing 0022): "
           f"bandit recall={point['bandit']['recall']:.4f}  union recall={point['union']['recall']:.4f}")
     print(f"\nH1 magnitude — relative recall gain = {rel_gain*100:+.1f}%  "
           f"95%CI=[{r_lo*100:+.1f}%,{r_hi*100:+.1f}%] (bootstrap over {len(stats)} repos)")
     print(f"   H1 {'HOLDS' if r_lo > 0.10 else 'FALSIFIED'} (predicted lower bound > +10%)")
-    print(f"\nH2 breadth — median per-repo absolute recall gain = {median_gain:+.4f}; "
-          f"{zero_gain}/{len(stats)} repos gain nothing")
+    print(f"\nH2 breadth — median per-repo absolute recall gain = {median_gain:+.4f} "
+          f"95%CI=[{m_lo:+.4f},{m_hi:+.4f}]; {zero_gain}/{len(stats)} repos gain nothing")
     print(f"   H2 {'HOLDS' if median_gain > 0 else 'FALSIFIED'} (predicted median > 0)")
     print(f"\nH3 precision clause — delta = {prec_delta:+.4f}  95%CI=[{p_lo:+.4f},{p_hi:+.4f}]")
     if p_hi < 0:
@@ -154,6 +160,7 @@ def main() -> int:
            "pooled": point, "relative_recall_gain": round(rel_gain, 4),
            "relative_gain_ci95": [round(r_lo, 4), round(r_hi, 4)],
            "median_per_repo_gain": round(median_gain, 4),
+           "median_gain_ci95": [round(m_lo, 4), round(m_hi, 4)],
            "repos_with_zero_gain": zero_gain,
            "precision_delta": round(prec_delta, 4),
            "precision_delta_ci95": [round(p_lo, 4), round(p_hi, 4)],
