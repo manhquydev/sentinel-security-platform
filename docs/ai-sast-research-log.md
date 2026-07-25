@@ -371,3 +371,36 @@ not true precision — an unmatched finding is not necessarily a false positive.
 comparison; both are computed identically across rows so the ranking is fair. Rules were used
 in-place from a scratch clone (Commons Clause forbids *selling*, not measuring); adopting them into
 Sentinel would need an explicit licence decision.
+
+## CORRECTION to E8 (2026-07-26) — **the "missing authz finding" was a measurement artefact**
+
+A red-team of the follow-on plan tested the same endpoint against two origins and found:
+
+```
+http://127.0.0.1:13000/rest/admin/application-version   -> 200   (app, direct publish)
+https://127.0.0.1:18443/rest/admin/application-version  -> 401   (Kong, the enforcement point)
+```
+
+**Kong enforces the ACL. The prober was hitting the app's direct publish port and therefore probing
+AROUND this project's own authorization layer** (decision 0010: "authorization enforcement is Kong
+ACL"). E8's reported finding was not a vulnerability — it was the wrong origin.
+
+**Corrected result: E8 found ZERO real missing-authz vulnerabilities.**
+
+Fixed: the oracle now judges at the **enforcement point** and uses the app origin only to refine
+severity —
+`gateway 401/403` → control present; `gateway 401/403 + app 2xx` → **gateway-only-enforcement**
+(informational: no defence in depth, a direct-to-app bypass would work, but the control exists);
+`gateway 2xx` → the real finding. If the gateway is unreachable the run **errors** rather than judging
+from the app origin, so this class of mistake cannot silently recur.
+
+**Newly visible limitation (honest):** Kong only routes a narrow configured set, so most baseline
+endpoints return 404 through it — the enforcement-point oracle can only judge endpoints the gateway
+actually knows about. That bounds the technique far more tightly than E8 implied.
+
+**Lessons.** (1) *Probe at the enforcement point, never around it* — a prober that bypasses the control
+under test manufactures findings. (2) The negative controls did not catch this: they were all
+"expected-protected" endpoints, and none tested whether the prober was even talking to the layer that
+enforces. A control-plane sanity check belongs in every runtime oracle. (3) Three of this lab's
+strongest claims have now been corrected by adversarial review (0021's significance, 0023's magnitude,
+and now E8's finding) — the pattern is consistent: **self-review does not catch the errors that matter.**

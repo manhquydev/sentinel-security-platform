@@ -50,7 +50,12 @@ if _ROOT not in sys.path:
 # email/JWT/PII heading into a committed artefact.
 from agent import trace  # noqa: E402
 BASELINE = os.path.join(_ROOT, "attack-surface", "baselines", "juice-shop-df1b6bbd8bce.json")
-TARGET = os.environ.get("TARGET_URL", "http://127.0.0.1:13000")
+# The APP origin (harness publishes it for testing) and the ENFORCEMENT origin (Kong, decision
+# 0010: "authorization enforcement is Kong ACL"). A red-team proved that probing only the app origin
+# manufactures findings: /rest/admin/application-version answers 200 direct but 401 through Kong, so
+# the control exists and the earlier "missing authz" finding was an artefact of the wrong origin.
+TARGET = os.environ.get("TARGET_URL", "http://127.0.0.1:13000")            # app, direct
+GATEWAY = os.environ.get("GATEWAY_URL", "https://127.0.0.1:18443")        # Kong, the enforcement point
 TIMEOUT = 6
 # Bodies at or below this size carry no real data (e.g. `{"user":{}}`) — recorded as IMPACT context on
 # a finding, never as the verdict itself.
@@ -90,19 +95,44 @@ def _candidates() -> list[dict]:
     return out
 
 
-def probe(endpoint: dict) -> dict:
-    """One credential-free GET; classify the control as present/absent."""
-    url = TARGET.rstrip("/") + endpoint["path"]
+def _get(base: str, path: str):
+    """One credential-free, non-redirect-following GET. Returns (status, size, body, ctype) or None."""
     try:
-        r = requests.get(url, timeout=TIMEOUT, allow_redirects=False)  # NO auth header; no redirects
-        status, size = r.status_code, len(r.content or b"")
-        body = (r.text or "")[:120]
-    except Exception as exc:  # network/transport failure is not a finding
-        return {**_base(endpoint), "verdict": "error", "detail": str(exc)[:120]}
+        r = requests.get(base.rstrip("/") + path, timeout=TIMEOUT, allow_redirects=False, verify=False)
+        return r.status_code, len(r.content or b""), (r.text or "")[:120], r.headers.get("content-type", "")
+    except Exception:
+        return None
+
+
+def probe(endpoint: dict) -> dict:
+    """Credential-free GET against BOTH the enforcement origin and the app origin.
+
+    Verdict is decided at the ENFORCEMENT point, because that is where the control is supposed to
+    live (decision 0010). The app-origin answer only refines severity:
+      gateway 401/403                      -> control-present (and if the app also refuses: defence in depth)
+      gateway 401/403 + app 2xx            -> gateway-only-enforcement (informational: no defence in depth,
+                                              a bypass to the app origin would work — NOT a missing control)
+      gateway 2xx                          -> control-absent (the real finding)
+    """
+    gw = _get(GATEWAY, endpoint["path"])
+    app = _get(TARGET, endpoint["path"])
+    if gw is None and app is None:
+        return {**_base(endpoint), "verdict": "error", "detail": "both origins unreachable"}
+    # If the gateway is unreachable we cannot judge the control at all — fail loudly, never "clean".
+    if gw is None:
+        return {**_base(endpoint), "verdict": "error",
+                "detail": f"enforcement origin {GATEWAY} unreachable — refusing to judge from the app origin"}
+    status, size, body, ctype = gw
+    app_status = app[0] if app else None
 
     if status in (401, 403):
-        verdict, detail = "control-present", f"HTTP {status} as required"
-    elif 200 <= status < 300 and "text/html" in (r.headers.get("content-type", "").lower()):
+        if app_status is not None and 200 <= app_status < 300:
+            verdict = "gateway-only-enforcement"
+            detail = (f"gateway HTTP {status} (control present) but app origin answers {app_status} — "
+                      "no defence in depth; informational, not a missing control")
+        else:
+            verdict, detail = "control-present", f"HTTP {status} at the enforcement point as required"
+    elif 200 <= status < 300 and "text/html" in (ctype or "").lower():
         # SPA fallback: the server answers 200 + index.html for ANY path, so a 200 here is no evidence.
         verdict, detail = "inconclusive", f"HTTP {status} but HTML (SPA fallback) — not endpoint evidence"
     elif 200 <= status < 300 and endpoint.get("confidence") not in ("observed", "high", None):
@@ -144,7 +174,7 @@ def main() -> int:
     findings = [r for r in results if r["verdict"] == "control-absent" and r["role"] == "baseline"]
     neg = [r for r in results if r["role"] == "negative-control"]
     # a negative control passes if it is NOT reported as a finding
-    neg_ok = [r for r in neg if r["verdict"] in ("control-present", "inconclusive")]
+    neg_ok = [r for r in neg if r["verdict"] in ("control-present", "inconclusive", "gateway-only-enforcement")]
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "target": TARGET,
            "probed": len(results), "findings": len(findings),
@@ -156,7 +186,8 @@ def main() -> int:
     print(f"target={TARGET}  probed={len(results)} read-only GET endpoints (NO credentials sent)")
     for r in results:
         mark = {"control-absent": "FINDING ", "control-present": "ok      ", "error": "error   ",
-                "inconclusive": "?       ", "label-unverified": "unverif "}[r["verdict"]]
+                "inconclusive": "?       ", "label-unverified": "unverif ",
+                "gateway-only-enforcement": "info    "}[r["verdict"]]
         tag = "[neg-ctl]" if r["role"] == "negative-control" else "         "
         print(f"  {mark}{tag} {str(r['auth_class']):18s} {r['path']:36s} {r['detail']}")
     print(f"\nRESULT: {len(findings)} missing-authz finding(s) on baseline-labelled non-public endpoints; "
