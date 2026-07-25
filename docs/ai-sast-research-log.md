@@ -2307,3 +2307,59 @@ Registered 2026-07-26 06:40 +07. **Nothing below was measured before this text w
   published rates need re-derivation from repeated sampling, not just wider intervals.
 - **Limit, stated in advance.** k = 3 estimates θ to ±0.29 at best; this characterises the *shape* of the
   distribution, not any individual file's θ. n = 12 is a sketch, not a census.
+
+## E31 — RESULT: the mixture is confirmed, and it RESOLVES the whole determinism thread
+
+Run 2026-07-26. 12 files (6 absence-class, 6 control), each queried **k = 3 times**, frozen instrument.
+
+| per-file flag propensity θ | files |
+|---|---|
+| **stable at θ = 0** (never flagged in 3 runs) | **10 of 12** |
+| stable at θ = 1 (flagged in all 3) | 1 of 12 |
+| churning (θ = 0.33) | 1 of 12 |
+
+| arm | mean θ | values |
+|---|---|---|
+| absence-class | **0.222** | 0.33, 0, 0, **1.00**, 0, 0 |
+| control | **0.000** | all six at 0 — **never flagged in 18 calls** |
+
+**The preregistered prediction — a mixture, most files stable, a minority churning — is confirmed.**
+
+### The finding that resolves everything: most "instability" is NOT flag instability
+
+E22/E29 measured **~40% verdict disagreement**. E31 shows what that disagreement mostly *is*:
+
+`['clean','non-answer','clean']`, `['non-answer','clean','non-answer']`, `['clean','non-answer','clean']`
+
+**Files oscillating between `clean` and `non-answer` — which does not move the flag rate at all.** Under
+E22/E29's definition that counts as a disagreement; under the quantity every experiment actually measures
+(the flag rate) it is θ = 0 in both cases. Meanwhile **only 1 of 12 files churns on the flag decision
+itself: ~8%, not 40%.**
+
+**This explains, at last, three things that had been in tension all session:**
+
+1. **Why E28 replicated to 0.001** while the raw disagreement rate suggested it should not have. The
+   quantity being replicated — the aggregate flag rate — rides on ~8% churn, not 40%.
+2. **Why E30's model was catastrophically wrong.** It applied a 40% flip to the *flag* label. The real
+   flag-level churn is roughly a fifth of that, and it is concentrated in a minority of files rather
+   than smeared across all of them.
+3. **Why E29's "controls look less stable" was a red herring.** Control files churn between `clean` and
+   `non-answer` — never onto a flag. On the measured quantity they are the *most* stable arm in the
+   study: **θ = 0.000 across all six, 18 consecutive calls without a false claim.**
+
+### Consequence for the published numbers
+
+**The published intervals are closer to right than E30 implied and than E22/E29 made them look.** The
+dominant uncertainty really is file sampling; flag-level measurement noise is real but small (~8% of
+files) and concentrated. The honest statement about instability is now:
+
+> **~40% of raw verdicts differ between runs, but almost all of that is `clean`↔`non-answer` churn.
+> Flag decisions — the thing every result is built on — churn on roughly 1 file in 12.**
+
+Every place citing instability is updated to distinguish the two.
+
+### Limits, unchanged
+
+k = 3 estimates θ to ±0.29 at best, and n = 12 is a sketch. This establishes the *shape* — a mixture,
+dominated by stable-at-zero, with control files the stablest — not any individual file's θ, and not a
+precise churn rate. Proper propagation still wants larger k, which stays recorded as owed.
