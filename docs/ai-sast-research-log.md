@@ -683,3 +683,69 @@ Registered 2026-07-26 01:55 +07. **Nothing below was measured before this text w
 - **Abort condition.** If the deterministic control arm finds a *non-trivial* number of absence-class
   vulns on these files, the premise ("deterministic baseline ≈ 0 here") is wrong and the experiment is
   reframed before any LLM comparison is published.
+
+## E14 — REVISED after independent adversarial review (protocol Stage 8)
+
+The Stage-8 reviewer reproduced every E14 number exactly, then broke the conclusion. **The review was
+right, and it was right about my work, not someone else's.** Report:
+`docs/plans/reports/2026-07-26-e14-adversarial-review.md`.
+
+### What was wrong: E14 fixed the split and inherited the micro-averaging
+
+E14 corrected 0021's row-level split — but then pooled every scored row into **one** ranking and took a
+single AUC, which is exactly the micro-averaging the protocol names as the *other* half of the scar. I
+verified the reviewer's measurement independently: **only 1.9%** (6,862 of 358,020) of the TP/FP pairs
+that pooled AUC ranks are **within-repository**. 98% of the "result" was answering *"is repo A's true
+positive scored above repo B's false positive?"* — a question that only matters if every client's
+findings land in one shared queue.
+
+**Both estimands, same data, same LOSO scores:**
+
+| estimand | question it answers | prior | LLM | delta | 95% CI | verdict |
+|---|---|---|---|---|---|---|
+| **MACRO (per application)** — **PRIMARY** | rank findings *within* one app | 0.820 | 0.725 | **+0.095** | **[+0.063, +0.128]** | **prior WINS** |
+| micro (pooled) — secondary | one global cross-client queue | 0.826 | 0.814 | +0.012 | [−0.006, +0.035] | tie |
+
+**Why macro is primary:** the stated user is a pentest team working **one client application at a
+time** (Week-12 §1). Nobody triages client A's SQL injection against client B's false positive in a
+single queue. The deployment-realistic ranking is *within* an application. Choosing the estimand is a
+product decision, so it is stated in the open rather than buried in a pooling step.
+
+### The corrected story — three revisions deep
+
+1. **Published:** +0.069, "prior WINS" — **invalid method** (row split leaks repo identity).
+2. **E14:** tie — **valid method, wrong estimand** (pooled, 98% cross-repo pairs).
+3. **Now:** **+0.095 [+0.063, +0.128], prior WINS on the per-application estimand**, and a tie on the
+   pooled one.
+
+So 0021's *original direction* was right — **for the wrong reason and with the wrong magnitude**. That
+is not vindication of the original work: a row-split result that happens to point the same way as a
+correct analysis is still an invalid result. But the honest conclusion today is that **where labels
+exist, the free deterministic prior does beat the LLM annotator at per-application triage.**
+
+### Two further corrections from the same review
+
+- **The "+0.057 leakage" was ~2.5× overstated.** It subtracted a 61-fold grouped run from a 50/50 row
+  split, confounding **grouping** with **training-set size** (882 vs ~1735 rows) and evaluation set. At
+  matched fold count and train size, with only grouping differing: **+0.022**. The instrument now
+  computes it this way (`matched_grouping_effect`).
+- **The bootstrap understates both intervals.** It resamples pre-computed LOSO scores without refitting
+  the prior per resample. A fully nested procedure widens the pooled interval to roughly [−0.015,
+  +0.056] — still spanning 0, so the *micro* tie survives. Recorded as a stated caveat in the artefact
+  rather than silently left in.
+
+### Test-quality defects the review found in my own guards
+
+- **SM4 was tautological** — it recomputed `lo <= 0 <= hi` and asserted it equalled `verdict`, which the
+  code *defines* as that expression. It could not fail. Replaced with empirical assertions: both
+  estimands must be published, the primary must be the per-application one, macro must exclude 0, micro
+  must span 0, and the artefact must not be older than the instrument (a freshness check that did not
+  exist).
+- **SM6's guard was file-wide** — it exempted any file whose text contained the word "ties", which a
+  docstring in `rank_baselines.py` did. Now line-scoped: a win verdict must be interval-guarded **on its
+  own line**, or explicitly marked as a historical/retracted quotation.
+
+**Lesson for the protocol.** Stage 8 caught what Stages 1–7 could not, including in an experiment
+written specifically to demonstrate the protocol. Fixing a known flaw (the split) does not immunise an
+analysis against the *neighbouring* flaw (the estimand). And a test written by the same person who
+wrote the instrument can be vacuous in exactly the way the instrument is wrong.

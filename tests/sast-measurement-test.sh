@@ -88,36 +88,47 @@ PY
 then ok "the row-split instrument labels its number retracted and defers to the grouped one"
 else bad "SM3: the withdrawn claim is still presented as a finding"; fi
 
-sect "SM4: the grouped verdict is a tie, and says so"
+sect "SM4: both estimands are published, and the primary is the deployment-realistic one"
 if run_py <<'PY'
-import json, os, sys
+import json, os, sys, time
 p = "evaluation/sast-fp-discrimination/rank-grouped-260726.json"
+src = "evaluation/sast-fp-discrimination/rank_grouped.py"
 if not os.path.exists(p):
-    print("  SKIP-AS-FAIL: run rank_grouped.py to produce the artefact"); sys.exit(1)
+    print("  SKIP-AS-FAIL: run rank_grouped.py"); sys.exit(1)
+# Freshness: an artefact older than the instrument that produced it is stale, and every assertion
+# below would then be checking a number no current code produces.
+stale = os.path.getmtime(p) < os.path.getmtime(src)
 d = json.load(open(p))
-lo, hi = d["ci95"]
-spans_zero = lo <= 0 <= hi
-print(f"  delta={d['primary_delta']:+.3f} CI=[{lo:+.3f},{hi:+.3f}] verdict={d['verdict']} n_repos={d['n_repos']}")
-# The verdict string must follow the interval, not the point estimate.
-sys.exit(0 if (spans_zero and d["verdict"] == "tie") else 1)
+# A review found the original SM4 tautological: it recomputed lo<=0<=hi and compared it to a verdict
+# the code defines as exactly that expression. These are empirical claims instead — they fail if the
+# data changes, if an estimand is silently dropped, or if the primary is switched.
+has_both = "macro" in d and "micro" in d
+primary_ok = d.get("primary_estimand") == "macro-per-repo"
+macro_wins = d["macro"]["ci95"][0] > 0
+micro_ties = d["micro"]["ci95"][0] <= 0 <= d["micro"]["ci95"][1]
+shape_ok = d["n_rows"] == 1764 and d["n_repos"] == 61
+print("  stale=%s both=%s primary=%s macro_wins=%s micro_ties=%s shape=%s"
+      % (stale, has_both, d.get("primary_estimand"), macro_wins, micro_ties, shape_ok))
+sys.exit(0 if (not stale and has_both and primary_ok and macro_wins and micro_ties and shape_ok) else 1)
 PY
-then ok "the published verdict follows the confidence interval (tie), not the point estimate"
-else bad "SM4: the verdict does not follow its own interval"; fi
+then ok "macro (per-app) is primary and wins; micro is published, ties, and is not headlined"
+else bad "SM4: an estimand was dropped, the primary changed, or the artefact is stale"; fi
 
-sect "SM5: splitting by row measurably inflates the delta (the leakage is real, not asserted)"
+sect "SM5: the leakage figure is the MATCHED one, not the confounded subtraction"
 if run_py <<'PY'
 import json, os, sys
 p = "evaluation/sast-fp-discrimination/rank-grouped-260726.json"
 if not os.path.exists(p):
     print("  SKIP-AS-FAIL: artefact missing"); sys.exit(1)
 d = json.load(open(p))
-gap = d["exploratory_row_split_delta"] - d["primary_delta"]
-print(f"  row-split={d['exploratory_row_split_delta']:+.3f} grouped={d['primary_delta']:+.3f} gap={gap:+.3f}")
-# The whole point of decision 0021's correction: the leak is large and positive.
-sys.exit(0 if gap > 0.03 else 1)
+g = d["matched_grouping_effect"]
+# The published +0.057 confounded grouping with train size and eval set. The matched estimate is
+# materially smaller; if this ever climbs back toward 0.057 the confound has returned.
+print("  matched grouping effect=%+.4f (must be >0 and well below the retracted 0.057)" % g)
+sys.exit(0 if 0 < g < 0.04 else 1)
 PY
-then ok "the row-split delta exceeds the grouped delta — the leakage channel is measured, not claimed"
-else bad "SM5: the measured leakage gap vanished; re-check the correction"; fi
+then ok "leakage is reported from a matched design and stays far below the confounded +0.057"
+else bad "SM5: the leakage figure is missing or the confound returned"; fi
 
 sect "SM6: no superseded figure, and any win verdict is interval-guarded"
 if run_py <<'PY'
@@ -128,8 +139,16 @@ for f in glob.glob("evaluation/sast-fp-discrimination/*.py"):
     if re.search(r"9\.5\s*[x\u00d7]", src):
         bad.append((f, "9.5x superseded by 6.2x"))
     # A win may only be printed when the INTERVAL decides it, never the point estimate.
-    if "prior WINS" in src and not re.search(r"lo\s*<=\s*0\s*<=\s*hi|ties", src):
-        bad.append((f, "win verdict not guarded by the interval"))
+    # Line-scoped: a review found a file-wide search exempted any file whose docstring merely used
+    # the word "ties". The verdict string must sit on a line that also tests the interval.
+    for line in src.splitlines():
+        if "prior WINS" not in line:
+            continue
+        guarded = "<= 0 <=" in line                      # a live verdict decided by the interval
+        historical = any(w in line.lower() for w in
+                         ("withdrew", "retract", "first published", "superseded"))
+        if not (guarded or historical):
+            bad.append((f, "win verdict neither interval-guarded nor marked as history"))
 print("  stale/unguarded claims: %s" % (bad if bad else "none"))
 sys.exit(0 if not bad else 1)
 PY
