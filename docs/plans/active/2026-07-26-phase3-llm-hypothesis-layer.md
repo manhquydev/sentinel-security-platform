@@ -4,7 +4,41 @@ Date: 2026-07-26
 
 ## Status
 
-**Draft (v1, pre-red-team).** Continues
+**CANCELLED at the red-team gate (2026-07-26) — do not implement 3a-3d.** An adversarial
+measurement-validity review returned **CANCEL-THIS-PHASE**, and its findings were independently
+reproduced. What replaced it: a deterministic exposure-gap measurement
+(`evaluation/absence-detection/measure_exposure_gap.py`), committed and green.
+
+**Why it was cancelled (all confirmed against the live harness):**
+
+1. **Condition B was never blind.** The evidence set this plan mandates giving the model names the
+   target four independent ways: the `X-Recruiting` header on every routed response; `security.txt`
+   containing `owasp`/`juice`/`bkimminich`; `/metrics` emitting `juiceshop_*` series; and
+   `robots.txt: Disallow: /ftp`. B therefore measured memorisation exactly as much as A, so the A-B
+   gap measured nothing.
+2. **Even fully sanitised, A/B is undecidable** — the residual evidence is verbatim Juice Shop route
+   names on an Express+Angular stack every model has memorised. Answering the question needs a target
+   the model cannot know, not this one.
+3. **The finding class is a tautology.** Independently verified: 7 of 8 sampled app endpoints already
+   classify as "unrouted-and-reachable". Kong routes 8; the class is the whole app minus 8 — decision
+   0025's coverage bound restated once per endpoint, not a discovery.
+4. **The frozen baseline was hobbled.** A single grep of the publicly served `main.js` yields ~28
+   routes; the plan's comparator deliberately excluded that extractor and then forbade strengthening
+   it, so any positive delta would have been a baseline-selection artefact.
+5. **"Sensitive" is not deterministically decidable**, so the thesis either collapses into (3) or
+   readmits a judgement call into the verdict path — violating this project's core invariant.
+6. **The premise was also wrong.** The draft asserted "the app enforces nothing itself", over-
+   generalising decision 0025 (scoped to 2 routed endpoints). Measured: `/api/Users` answers 401 and
+   the exposure-gap run found 2 app-enforced endpoints. The app defends some paths.
+
+**Kept deferred:** the LLM hypothesis layer stays deferred exactly as decision 0025 left it, now with
+the reason recorded — *this target cannot answer the question*. The one salvageable datum (refusal rate
+under target-derived provenance) is already measured three times over (0018, 0020, E11) and needs none
+of this scaffolding.
+
+---
+
+Original draft below, retained as the record of what was proposed and rejected. Continues
 `docs/plans/active/2026-07-26-absence-coverage-ai-proposes-tools-dispose.md` (v3, Phase 3) after
 Phases 0–2 shipped (decision 0025). Requires four-lens-style red-team + validate before cook.
 
