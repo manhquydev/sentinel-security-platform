@@ -1593,3 +1593,30 @@ A single-shot LLM verdict is a **noisy measurement**, not an observation. Any de
 run's verdicts as fixed values is invalid. Repeated sampling — the same file queried k times, with the
 verdict taken as a rate rather than a label — is mandatory for anything paired, and the protocol is
 amended accordingly.
+
+## E23 — PREREGISTRATION: memorisation, re-done under the determinism rule (written before measuring)
+
+Registered 2026-07-26 05:20 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E19's conclusion was withdrawn because it paired *freshly measured* mutated verdicts against
+  *reused* original ones, and E22 then measured the instrument flipping **36%** of verdicts on identical
+  input. The question it asked — is the effect memorisation? — is still the most important open question
+  about decision 0027, and it is still answerable. It just needs a design that survives a noisy
+  instrument.
+- **The design change.** Both arms are measured **fresh, in the same run, on the same files**: each file
+  is queried once as **original source** and once as **anonymised source** (identifiers, route literals
+  and filename replaced; semantics untouched). Nothing is reused from any earlier run.
+- **The statistic changes too.** Per-file verdicts are **not** compared, because at a 36% flip rate an
+  individual verdict carries no information. The comparison is between **aggregate flag rates**, where
+  the same noise applies to both arms and therefore does not bias the difference. Reported with a
+  bootstrap interval that reflects the observed instability rather than pretending to precision.
+- **Hypothesis.** If detection were surface memorisation, anonymisation should **reduce** the aggregate
+  flag rate. If it is reasoning, the two rates should be comparable.
+- **Falsifying result.** A materially lower aggregate rate on the anonymised arm.
+- **Power, stated honestly in advance.** ~53 files per arm at a ~0.17 base rate detects only a **large**
+  reduction. A null result therefore **cannot** establish equivalence — it can only fail to find a
+  collapse. If the interval is wide the verdict is **inconclusive**, and the contamination bound on 0027
+  stays at full width. This is the same limit E19 had; the difference is that this design is not also
+  invalidated by instrument noise.
+- **Instrument.** Frozen prompt and positive control, with the **corrected classifier** (SM13) — which
+  is a change from E19 and is stated as one, not hidden.
