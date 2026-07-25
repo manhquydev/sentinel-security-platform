@@ -196,7 +196,7 @@ Set by measurement, not preference:
 | Verdict / gate / judge | **No** | LLM judge refused the role 12/12 under correct provenance (0018); LLM verifier dropped 3 of 8 real vulnerabilities (0020). A structural test (DD1) asserts no model is reachable from the verdict path. |
 | Ranking / triage where labels exist | **No advantage** | Ties a free deterministic CWE prior (0021, corrected). |
 | Narration / summarization | **Yes, bounded** | Costs a measured $0.048–0.051 per run and adds zero findings (E13). Sold as convenience, never as detection. |
-| Hypothesis generation | **Unmeasured** | Every measured AI role to date is a verdict-type role the architecture forbids it to hold. The generative role has **zero** measurements. This asymmetry is the lab's biggest open question — see §8. |
+| **Generation / proposing** (model proposes, deterministic code disposes) | **Yes — measured, bounded** | On absence-of-control classes, deterministic engines flag **0 of 60** vulnerable files while the model names the ground-truth class in **6/60 (p = 0.0137)** on identical files (E17, decision 0027). First capability measured here that deterministic tooling cannot supply. Bounds are part of the claim: ~10% hit rate, file-level only, 33% non-answers, and a public LLM-seeded corpus makes capability and memorisation **inseparable**, so transfer to private code is unproven. |
 
 ---
 
@@ -216,10 +216,15 @@ Set by measurement, not preference:
 
 ## 8. Standing open questions
 
-1. **Is the AI-loses pattern real, or an artifact of our design?** Every measured comparison put AI in a
-   verdict-type role the architecture forbids it to hold, and the one generative role was cancelled
-   before measurement. Until a generative-role experiment runs, "deterministic beats AI" is only
-   established *for gate roles*. Stating it more broadly overclaims.
+1. ~~**Is the AI-loses pattern real, or an artifact of our design?**~~ **ANSWERED (E17, decision 0027):
+   it was partly an artifact of role selection.** Every comparison had put the model in a verdict-type
+   role the architecture forbids it to hold. Measured in the *generative* role on the classes
+   deterministic tooling is blind to, the model wins against a deterministic arm that scores exactly
+   zero. The claim is now two-part: deterministic wins or ties in **gate** roles; the model supplies
+   what deterministic tooling cannot in the **generative** role.
+   **The successor question:** is the effect *detection*, or reaction to generally messier files? Four
+   of ten flags named a different issue than ground truth. Resolving it needs a control arm of files
+   that are messy but contain **no** absence-class vulnerability.
 2. **Does anything here generalize past one memorized target?** Every runtime finding rests on a single
    pinned Juice Shop build.
 3. **What is the absence-class recall?** Unmeasurable without a target with genuinely broken
