@@ -1767,3 +1767,33 @@ Arm A′ moved from 7/28 = 0.250 (reused) to 9/40 = 0.225 (fresh), and arm C fro
 2/42 = 0.048 — the latter re-measured with the corrected classifier. Both moved modestly and in
 different directions, which is what ~36% per-file instability looks like when it is averaged into a
 rate. The conclusion is unchanged; the confidence in it is better founded.
+
+## E25 — PREREGISTRATION: turn the detector on our OWN code (written before measuring)
+
+Registered 2026-07-26 05:47 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** Every generative-role result rests on RealVuln, which is public and LLM-seeded. The lab has
+  repeatedly recorded "no genuinely unseen target exists" as the reason transfer is unproven. **That was
+  wrong.** Sentinel's own source is real Python, written over the past weeks, and first pushed to a
+  remote hours ago — comfortably after any plausible training cutoff for the model in use. It is the
+  unseen target the lab kept saying it did not have.
+- **What this can and cannot establish, stated first.** There is **no ground truth** for our own code, so
+  **recall is unmeasurable** and no rate here is comparable to E17/E23/E24. What *is* measurable:
+  1. does the detector produce **any** absence-class flags on genuinely unseen code, and
+  2. when it does, are those flags **real** on manual adjudication?
+  A finding here is a *capability demonstration on unseen code*, **not** a recall measurement, and it
+  will be labelled that way.
+- **Method.** Run the frozen instrument (corrected classifier, positive control gated) over Python files
+  from `agent/` and `evaluation/` — the request-handling and probing surfaces most analogous to the
+  corpus. Report every flag with its prose.
+- **Adjudication.** Each flag is checked **by hand against the actual source**, and recorded as TRUE
+  (a real missing control), FALSE (the control exists or the claim is wrong), or N/A (not applicable —
+  e.g. the file is a test harness where the "missing" control is intentional). **Adjudications are
+  written with the evidence, so a reader can disagree.**
+- **The obvious bias, named in advance.** I am adjudicating findings on code this project wrote, which
+  is the worst possible position from which to judge them fairly. Every adjudication therefore quotes
+  the specific lines it rests on, and any flag I mark FALSE must be accompanied by the control that
+  makes it false. If I cannot point at the control, it is not FALSE.
+- **Falsifying result.** Zero flags on unseen code, or flags that are uniformly false on adjudication ⇒
+  the capability does not appear outside the memorised corpus, and decision 0027's transfer bound
+  hardens rather than narrows.
