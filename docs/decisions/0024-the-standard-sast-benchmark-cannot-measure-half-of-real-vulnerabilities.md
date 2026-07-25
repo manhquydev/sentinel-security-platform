@@ -1,4 +1,11 @@
-# 0024 The industry-standard SAST benchmark contains 0% absence-of-control cases — it cannot measure the larger half of real vulnerabilities
+# 0024 The industry-standard SAST benchmark contains 0% absence-of-control cases — an entire vulnerability class is unmeasured
+
+> **CORRECTION (2026-07-26).** This decision was published as "cannot measure the **larger half**". That
+> phrasing inherited 0023's size claim, which 0023 has since **withdrawn**: under corrected CWE
+> attribution the split is 513 vs 637 with 36% unclassified, so which bucket is larger is **unresolved**.
+> The load-bearing fact is unaffected and needs no size claim — the benchmark contains **0%** of the
+> class, verified from OWASP Benchmark's own `expectedresults` CSV across all 2740 cases. The title and
+> the claims below are narrowed accordingly.
 
 Date: 2026-07-25
 
@@ -10,9 +17,11 @@ under-invests in the detection gap that decisions 0022/0023 measured.
 
 ## Context
 
-Decision 0023 measured that SAST detects "presence of a bad pattern" 9.5× better than "absence of a
-required control", and that absence is the **larger half** of real vulnerabilities. The obvious
-follow-up question is why an entire industry would leave the larger half under-served. The answer is a
+Decision 0023 measured that SAST detects "presence of a bad pattern" 6.2× better (corrected from a
+buggy 9.5×) than "absence of a
+required control". (0023's companion claim that absence is the *larger* half is **withdrawn**; relative
+size is unresolved.) The obvious follow-up question is why an entire industry would leave a whole class
+under-served. The answer is a
 measurement artefact, and it is verifiable in one command.
 
 ## Decision (the measured contrast)
@@ -39,8 +48,8 @@ Compare the absence-class share across three independent sources:
 | **OWASP Juice Shop** | a real deliberately-vulnerable app, live `/api/Challenges` (113) | **26–53%** (strict: Broken Access Control 12 + Broken Authentication 9 + Broken Anti Automation 4 + Security Misconfiguration 4 = 29; broad adds Sensitive Data Exposure 16 + Improper Input Validation 12 + Security through Obscurity 3 = 60) |
 
 **Conclusion: the benchmark's category list *is* the presence bucket, by construction.** A tool that
-maximises its OWASP Benchmark score is optimising exactly the half of the vulnerability space that
-static analysis can see — and is neither rewarded nor penalised for the half it cannot. What is not
+maximises its OWASP Benchmark score is optimising exactly the part of the vulnerability space that
+static analysis can see — and is neither rewarded nor penalised for the part it cannot. What is not
 measured is not built.
 
 This also explains a pattern observed earlier in this project: AI-SAST efforts (including
@@ -53,7 +62,7 @@ recall stays low, because both the tools and their benchmarks live inside the pr
   benchmark (`benchmark/`, OWASP Benchmark Java) measures only presence-class detection; that is fine
   for what it was built for (choosing a SAST engine/model) but it must never be read as evidence of
   overall vulnerability-finding capability. The `evaluation/absence-detection/` probes and RealVuln
-  measurements cover the other half and are reported separately.
+  measurements cover the absence class and are reported separately.
 - **The gap is an opportunity, not just a caveat.** Because no standard benchmark measures
   absence-of-control detection, there is no established leaderboard to beat — and Sentinel already has
   the infrastructure that the class requires (multi-identity Kong OAuth2, a HITL gate for state

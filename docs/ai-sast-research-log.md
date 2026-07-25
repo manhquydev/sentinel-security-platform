@@ -517,3 +517,47 @@ Registered 2026-07-26 01:35 +07. **Nothing below was measured before this text w
   the LLM score and the CWE prior are functions of code-derived facts, not of the repo. The leakage
   under test is therefore specifically in **fitting the prior** on rows sharing a repo with the held-out
   rows.
+
+## E14 — RESULT: the withdrawal was right, and the correction had never reached the code
+
+Run 2026-07-26 against the preregistration above. **Hypothesis confirmed. Abort condition did not fire.**
+
+- **Reconstruction validity:** the replay reproduced **1764 rows across 61 repos** and matched the
+  committed `(cwe, severity)` sequence position-for-position, so the row→repo join is verified, not
+  assumed.
+- **PRIMARY (leave-one-repo-out, bootstrap over 61 repos):**
+  AUC(cwe_prior) = 0.826, AUC(llm) = 0.814 →
+  **ΔAUC = +0.012, 95% CI [−0.006, +0.035] — a TIE.** The CI includes 0, so the hypothesis that the
+  original result was a leakage artefact stands.
+- **EXPLORATORY (row split, the withdrawn method, identical data):** +0.069.
+- **The leakage was worth +0.057 AUC.** That is the measured price of splitting by row instead of by
+  repository — the prior learns a repo's answer key and is then graded on that same repo.
+
+This independently reproduces decision 0021's corrected value (+0.013 [−0.006, +0.035]) — and does so
+**from committed artefacts for the first time**.
+
+### Two defects this experiment exposed
+
+1. **The correction had never reached the instrument.** `rank_baselines.py` kept its row-level
+   `random.shuffle` split and, on 2026-07-26, still printed
+   `+0.069 95%CI=[+0.045,+0.095] -> deterministic prior WINS` — the exact claim 0021 withdrew. For a
+   day the repo's reproducibility artefact contradicted the repo's own published correction, and
+   anyone re-running it would have reproduced the retracted claim with a confident verdict.
+2. **The grouping unit had been discarded.** `annotate-baseline-260725.json` records no repo field, so
+   the corrected leave-one-repo-out number was **not reproducible from committed data at all** — it
+   existed only as prose. E14 recovers the labels deterministically and now commits the grouped result.
+
+**Root cause of both:** the runtime stack has DD1–DD10 pinning every correction with a negative
+control; the SAST measurement stack had **zero test coverage**, so nothing held its corrections in
+place. Fixed: `tests/sast-measurement-test.sh` (SM1–SM6, 7/0) now pins the grouped split, the abort-on-
+unverified-join, the retraction label, the interval-driven verdict, the measured leakage gap, and a
+repo-wide check that no superseded figure survives in the measurement stack.
+
+**Propagated (correction-propagation law, `docs/research-protocol.md` §4):** the decisions index
+carried both retracted figures as live findings; 0023's headline contradicted its own correction table;
+0024's title rested on the withdrawn "larger half". All four corrected in this commit.
+
+**What this does NOT show.** The tie is between a *supervised* prior (needs labels) and a *zero-shot*
+LLM. On cost and reproducibility the prior remains preferable; on accuracy there is no measured
+difference. And this is a ranking task — a role the architecture already forbids the LLM to hold as a
+gate, so it adds no evidence about the unmeasured generative role (protocol §8, open question 1).

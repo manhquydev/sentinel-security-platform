@@ -1,0 +1,16 @@
+{
+  "n_rows": 1764,
+  "n_repos": 61,
+  "loso_auc": {
+    "cwe_prior": 0.8260208926875594,
+    "llm": 0.8139056477291772,
+    "severity": 0.7320205575107536
+  },
+  "primary_delta": 0.0121,
+  "ci95": [
+    -0.006,
+    0.0351
+  ],
+  "verdict": "tie",
+  "exploratory_row_split_delta": 0.0689
+}

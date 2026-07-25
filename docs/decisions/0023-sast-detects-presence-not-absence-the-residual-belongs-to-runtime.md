@@ -59,8 +59,17 @@ Two structurally different kinds of vulnerability, over 1790 real vulns / 54 CWE
 | **absence** of a required control (no authz, no rate limit, IDOR, missing authn) | 12 | **847** | 39 | **4.6%** |
 | other / unclassified | 26 | 374 | 49 | 13.1% |
 
-**SAST detects PRESENCE 9.5× better than ABSENCE — and the absence bucket is the LARGER half of real
-vulnerabilities (847 vs 569).**
+> **CORRECTED — the table above is the ORIGINAL, buggy attribution.** Hits were booked by `min(cwes)`
+> over *primary ∪ acceptable* rather than the ground truth's `primary_cwe`, misfiling **61%** of
+> vulnerabilities. The corrected figures are **presence 42.1% (268/637)**, **absence 6.8% (35/513)**,
+> **78 classes**, and **877 (49%) blind**. See the correction table earlier in this decision.
+
+**SAST detects PRESENCE 6.2× better than ABSENCE.** The direction is robust (≥3.5× under every
+alternative bucketing tested, never inverted); the original 9.5× magnitude is superseded.
+
+**WITHDRAWN: "the absence bucket is the larger half."** Under corrected attribution it is 513 vs 637 —
+the reverse of the published claim — and 640 vulnerabilities (36%) remain unclassified, so relative
+bucket size is **unresolved**, not merely smaller. No claim about which half is larger is supported.
 
 Per-class evidence (union of both engines):
 

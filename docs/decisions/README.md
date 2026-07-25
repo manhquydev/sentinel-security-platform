@@ -123,10 +123,12 @@ documents here as real choices are accepted, then index them in this file.
   over the full RealVuln corpus (n=1764, 37 memoized LLM calls): LLM annotator AUC 0.814 [0.780,0.848] vs
   deterministic severity 0.732 [0.694,0.770] — significantly better (non-overlapping CIs), real-vuln
   priority 0.44 vs FP-trap 0.26. The LLM assists the human's order-of-work, never the keep/drop call.
-  **AMENDED**: a self-red-team found a free supervised deterministic CWE-class prior scores AUC 0.886
-  vs the LLM's 0.818 (paired bootstrap +0.069 [+0.045,+0.095], significant) — so where labels exist the
-  deterministic prior wins and no LLM is needed; the zero-shot LLM annotator is only the cold-start
-  fallback. Measured-not-trusted holds a third time on this surface.
+  **AMENDED, then CORRECTED**: a self-red-team reported the free deterministic CWE-class prior beating
+  the LLM by +0.069 [+0.045,+0.095] — but that split was by ROW, so rows from one repo sat on both
+  sides and the prior was graded on repos it was fitted on. Under **leave-one-repo-out** the same data
+  gives **+0.012 [−0.006,+0.035] — a TIE** (E14; the leakage was worth +0.057 AUC). Prefer the
+  deterministic prior on **cost and reproducibility**, NOT on an accuracy edge. Measured-not-trusted
+  holds a third time on this surface — against our own first correction.
 - [0022 Multi-engine deterministic detection is the real recall lever; the SAST ceiling is structural](0022-multi-engine-deterministic-detection-is-the-real-recall-lever-sast-ceiling-needs-dast.md)
   — ranking can't recover an undetected vuln, so detection was measured: Bandit recall 0.131, Semgrep
   0.118 (but 2.4x the precision), **union 0.188 = +44% relative at no precision cost**, engines strongly
@@ -135,19 +137,23 @@ documents here as real choices are accepted, then index them in this file.
   structurally cannot see; that residual is the DAST/syndicate layer's job. Adding further engines
   (OpenGrep/gosec/Brakeman/js-x-ray) is now an evidence-backed, per-language decision with a committed
   harness. The founding thesis — AI stands on a broad deterministic tool foundation — measured, not assumed.
-- [0023 SAST detects PRESENCE not ABSENCE (9.5x); the residual belongs to runtime/DAST](0023-sast-detects-presence-not-absence-the-residual-belongs-to-runtime.md)
-  — per-CWE breakdown of 0022's missed 81%: SAST recall is **43.6% on "presence of a bad pattern"**
-  (SQLi 70%, cmd-injection 89%, weak crypto 94%) but **4.6% on "absence of a required control"**
-  (CWE-284 access control 0%/187 vulns, CWE-307 no auth-attempt limit 0%/134, CWE-200 info exposure
-  0.8%/237) — a **9.5x** gap, and the absence bucket is the LARGER half (847 vs 569 real vulns). An
+- [0023 SAST detects PRESENCE not ABSENCE (6.2x, corrected from 9.5x); the residual belongs to runtime/DAST](0023-sast-detects-presence-not-absence-the-residual-belongs-to-runtime.md)
+  — per-CWE breakdown of 0022's missed 81%: SAST recall is **42.1% on "presence of a bad pattern"**
+  but **6.8% on "absence of a required control"** (CWE-284 access control, CWE-307 no auth-attempt
+  limit, CWE-200 info exposure all at or near 0%) — a **6.2x** gap. Both figures are the CORRECTED
+  ones: a `min(cwes)` attribution bug had misfiled 61% of vulnerabilities and inflated the gap to 9.5x.
+  The claim that absence is the LARGER half is **WITHDRAWN** (513 vs 637 corrected, with 36%
+  unclassified — relative size is unresolved). The direction survives every alternative bucketing. An
   absent control has no token to match; it is observable only in behaviour, i.e. at RUNTIME. So more
   SAST rules cannot close it — this is the measured justification for the SAST ∪ DAST architecture and
   for the agentic syndicate. Instruments: analyze_cwe_gap.py, classify_gap.py (offline, no LLM).
 - [0024 The standard SAST benchmark contains 0% absence-of-control cases](0024-the-standard-sast-benchmark-cannot-measure-half-of-real-vulnerabilities.md)
   — self-verified from OWASP Benchmark's own expectedresults CSV: all 2740 cases fall in 11 presence-type
   categories (sqli/xss/weakrand/crypto/cmdi/pathtraver/...), with **zero** CWE-284/639/862/863/306/307.
-  Against 47% absence-class in RealVuln and 26-53% in Juice Shop, the benchmark that drives SAST tool
-  development cannot measure the larger half of real vulnerabilities — what is not measured is not built.
+  Against a substantial absence-class share in RealVuln and Juice Shop, the benchmark that drives SAST
+  tool development cannot measure this class **at all** — what is not measured is not built. (The
+  stronger "larger half" phrasing depends on 0023's withdrawn size claim and is not asserted here; the
+  0% coverage stands on its own and is the load-bearing fact.)
   Explains strong AI-SAST leaderboard scores alongside low real-world recall, and makes benchmark choice
   a load-bearing decision. Also: Juice Shop's /api/Challenges carries no CWE/endpoint, so the E8/E9
   runtime probers still lack a recall denominator (hand-labelling deferred).

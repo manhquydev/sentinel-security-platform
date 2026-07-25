@@ -71,7 +71,11 @@ def main() -> int:
     random.shuffle(rs)
     half = len(rs) // 2
     dev, held = rs[:half], rs[half:]
-    prior, base = fit_cwe_prior(dev)          # fit on dev ONLY — no leakage into held-out scoring
+    # NOTE: this split is BY ROW, and rows from one repo land on both sides. It prevents row leakage
+    # but not REPO leakage, which is the leakage that matters: the prior learns a repo's answer key and
+    # is then graded on that same repo. Measured cost of this mistake: +0.057 AUC (E14). Kept only to
+    # demonstrate the artefact; the verdict now comes from rank_grouped.py.
+    prior, base = fit_cwe_prior(dev)
 
     res = {k: auc(score_rows(held, k, prior, base)) for k in ("severity", "cwe_prior", "llm")}
     ntp = sum(bool(r["is_vulnerable"]) for r in held)
@@ -90,9 +94,12 @@ def main() -> int:
             diffs.append(a - b)
     diffs.sort()
     lo, hi = diffs[int(0.025 * len(diffs))], diffs[int(0.975 * len(diffs))]
-    print(f"\npaired bootstrap AUC(cwe_prior) - AUC(llm) = {sum(diffs)/len(diffs):+.3f} "
-          f"95%CI=[{lo:+.3f},{hi:+.3f}] -> "
-          f"{'deterministic prior WINS' if lo > 0 else 'tie (CI crosses 0)'}")
+    print(f"\n[ROW-SPLIT — LEAKY, NOT A VERDICT] AUC(cwe_prior) - AUC(llm) = "
+          f"{sum(diffs)/len(diffs):+.3f} 95%CI=[{lo:+.3f},{hi:+.3f}]")
+    print("This number is RETRACTED as a finding. The split above is by ROW, so rows from one repo sit\n"
+          "on both sides and the prior is graded on repos it was fitted on. Under leave-one-repo-out the\n"
+          "SAME data gives +0.012 [-0.006,+0.035] — a TIE (E14; decision 0021 as amended).\n"
+          "For the verdict run: rank_grouped.py")
     print("NOTE: the prior is SUPERVISED (needs labels); the LLM is ZERO-SHOT. Use the prior where "
           "labels exist; the LLM only for cold start (decision 0021 amendment).")
     return 0
