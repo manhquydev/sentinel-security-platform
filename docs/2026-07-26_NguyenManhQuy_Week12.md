@@ -19,7 +19,7 @@ tìm giỏi hơn" là bán thứ dữ liệu của chính dự án đã bác b�
 Vậy Sentinel là gì, nói thẳng bằng một câu:
 
 > Một **cỗ máy quét tất định** làm phần "tìm" (đo được: gộp nhiều engine nâng recall
-> **+44%, miễn phí**), cộng một **lớp bảo vệ cho chính con AI** (Agent IAM, cổng xuất
+> **+43.6%, KTC [+31.5%,+58.4%], miễn phí**), cộng một **lớp bảo vệ cho chính con AI** (Agent IAM, cổng xuất
 > xứ, che PII, chốt người-duyệt) mà các đối thủ chỉ-tấn-công **không có**, và AI chỉ
 > làm phần **kể lại + phân loại** với chi phí đo được **~$0.05/lần chạy**.
 
@@ -27,16 +27,20 @@ Giá trị kinh doanh nằm ở ba chỗ, tất cả đều có số:
 
 | Trụ cột | Số đo được | Nguồn |
 |---|---|---|
-| **Tìm lỗ rẻ và liên tục** | Gộp 2 engine → recall +44% tương đối (0.131→0.188), **không mất precision, $0** | decision 0022 |
+| **Tìm lỗ rẻ và liên tục** | Gộp 2 engine → recall **+43.6%** tương đối, **KTC 95% [+31.5%, +58.4%]** (bootstrap trên 63 repo), **không đo được tổn thất precision, $0** | decision 0022, E15 |
 | **Chi phí lớp AI có trần** | 3 lần chạy live: **$0.048–0.051/lần**, ~7k token, ~35s, 0 lỗi | E13, `agent/finops.py` |
 | **Lớp Security-FOR-AI** | Che PII: **6/6** payload injection bị chặn, **0** false-positive rõ ràng (corpus 375 tài liệu); IAM fail-closed | decision 0017, 0025 |
+
+> **Giới hạn phải nói kèm con số +43.6%:** đó là mức trung bình **trên cả danh mục 63 repo**.
+> **22/63 repo (35%) không được lợi gì cả** — thêm engine thứ hai ra kết quả đúng bằng engine thứ nhất.
+> Vì vậy chỉ được hứa ở mức **danh mục**, **không** được hứa "app nào của anh cũng tăng 44%".
 
 So với một đợt pentest thủ công (thị trường 2025–2026: **$10.000–35.000**, **5–15 ngày
 công**, **1–4 tuần** lịch — nguồn có dẫn ở mục 5), Sentinel **không thay thế** người
 kiểm thử. Nó **gánh phần lặp đi lặp lại** (lớp "presence" — mẫu xấu có thật trong code)
 chạy liên tục với chi phí gần như bằng compute, để **dồn giờ người** cho lớp mà máy đo
 được là mình **bỏ sót** (lớp "absence" — thiếu kiểm soát; khoảng cách **6.2×**, và
-benchmark chuẩn **bỏ trắng nửa này** — mục 4).
+benchmark SAST chuẩn **chứa 0% ca thuộc lớp này** — mục 4).
 
 **Ba điều em muốn lãnh đạo chú ý nhất:**
 1. Con số bán hàng trung thực ở đây là **chi phí và trần**, không phải "độ giỏi của AI".
@@ -70,7 +74,7 @@ kế hoạch.
 | # | Năng lực | Trạng thái | Bằng chứng đo được |
 |---|---|---|---|
 | P1 | **Kho lỗ hổng đa nguồn** (SAST/DAST về một chỗ, không đếm trùng) | Đã build (Tuần 1) | 3 công cụ, 36 lỗ, 7 bước kiểm tra khớp |
-| P2 | **Gộp nhiều engine tất định** | Đã build & đo | recall +44% tương đối, precision không đổi, $0 (decision 0022) |
+| P2 | **Gộp nhiều engine tất định** | Đã build & đo | recall **+43.6%** [+31.5%,+58.4%], không đo được tổn thất precision, $0; **22/63 repo không lợi gì** (0022, E15) |
 | P3 | **Cổng xuất xứ LiteLLM** (mọi lời gọi model gắn nhãn `operator`/`target-derived`, fail-closed nếu thiếu) | Đã build | test cổng 30/31 pass; SAIST bên thứ ba **không** kết nối qua được (E11) |
 | P4 | **Kong Agent IAM** (OAuth2 + ACL fail-closed cho agent) | Đã build & đo | 29/29 test authz; 1 finding gateway-only-enforcement (decision 0025) |
 | P5 | **Che PII lúc thu thập** | Đã build & đo | 6/6 payload tấn công bị chặn; 0 FP rõ ràng; 37/371 tài liệu WebGoat bị che (84 chỗ) (decision 0017) |
@@ -120,8 +124,9 @@ chưa lần nào đến từ **thêm một model**.
 Và luật đo được về khoảng mù: SAST phát hiện **sự hiện diện** của mẫu xấu tốt hơn **sự
 vắng mặt** của kiểm soát khoảng **6.2×** (decision 0023 — *đã sửa từ 9.5× sau khi tự tìm
 ra lỗi gán CWE sai 61%*), và benchmark SAST chuẩn **chứa 0% ca thuộc lớp vắng-mặt**
-(decision 0024). Nghĩa là nửa "absence" không phải bị đo kém — nó **không được đo**. Đó
-đúng là chỗ giờ-người phải vào.
+(decision 0024). Nghĩa là lớp "absence" không phải bị đo kém — nó **không được đo**. Đó
+đúng là chỗ giờ-người phải vào. (Câu "absence là nửa LỚN hơn" đã bị **rút lại** ở 0023 sau khi sửa
+lỗi gán CWE — tỷ lệ hai nửa hiện **chưa xác định**; điều đứng vững là con số **0%**.)
 
 > ⚠️ Ghi chú cho người viết slide: nghiên cứu ngoài (arxiv) có bảng "LLM F1 0.75 vs SAST
 > 0.26". **Không trích** con số đó như thành tựu của Sentinel — nó **mâu thuẫn** với dữ

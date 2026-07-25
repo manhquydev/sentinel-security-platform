@@ -136,6 +136,29 @@ PY
 then ok "no superseded ratio survives, and every win verdict is decided by its interval"
 else bad "SM6: a corrected number or an unguarded verdict still lives in code"; fi
 
+sect "SM7: the multi-engine gain is published with an interval and its portfolio caveat"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/multiengine-grouped-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run run_multiengine_grouped.py"); sys.exit(1)
+d = json.load(open(p))
+# The totals must still reproduce decision 0022, or the number is a different measurement.
+t = d["totals"]
+drift = t != {"repos": 63, "real": 1790, "bandit_tp": 234, "semgrep_tp": 212, "union_tp": 336}
+lo, hi = d["relative_gain_ci95"]
+plo, phi = d["precision_delta_ci95"]
+# The recall gain must be reported with an interval that excludes 0 (it is a real effect), while the
+# precision delta interval must SPAN 0 -- that is what makes "no measurable cost" the honest reading
+# rather than "precision improves". Reading a positive point estimate as a win is the E14 error.
+zero_gain_published = d.get("repos_with_zero_gain", 0) > 0
+print("  drift=%s gain_ci=[%.3f,%.3f] prec_ci=[%.4f,%.4f] zero_gain_repos=%s"
+      % (drift, lo, hi, plo, phi, d.get("repos_with_zero_gain")))
+sys.exit(0 if (not drift and lo > 0 and plo <= 0 <= phi and zero_gain_published) else 1)
+PY
+then ok "recall gain carries a CI excluding 0, precision delta spans 0, and the no-gain repo count ships"
+else bad "SM7: the multi-engine claim drifted or lost its interval/caveat"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

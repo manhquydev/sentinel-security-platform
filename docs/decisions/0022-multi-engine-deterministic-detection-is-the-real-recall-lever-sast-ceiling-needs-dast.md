@@ -29,6 +29,16 @@ corpus with the same RealVuln matching (file + CWE + line ±10, claim-once):
 
 **Findings:**
 
+> **CONFIRMED WITH AN INTERVAL (E15, 2026-07-26).** This decision originally published a bare
+> micro-averaged point estimate — the same structure that turned 0021's headline into a tie. Re-audited
+> under repo-grouped bootstrapping it **survives**: relative gain **+43.6%, 95% CI [+31.5%, +58.4%]**
+> over 63 repos, median per-repo gain **+0.0357**, precision delta **+0.0051 [−0.0136, +0.0173]** (interval
+> spans 0, so "no measurable precision cost" is right and "precision improves" would not be). The per-repo
+> run reproduced the committed totals exactly.
+>
+> **Caveat the point estimate hid: 22 of 63 repos (35%) gain nothing** — the union equals Bandit alone
+> there. The supported claim is therefore **portfolio-level**, not a per-application promise.
+
 1. **Multi-engine union raises recall +44% relative (0.131 → 0.188) at NO precision cost** (0.133 →
    0.138, marginally better). This is a free, deterministic, reproducible win — the opposite of the LLM
    experiments, where the deterministic baseline kept winning.
