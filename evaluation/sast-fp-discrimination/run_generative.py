@@ -133,9 +133,22 @@ _PRESENCE_CLASS = re.compile(r"\b(aes|cbc|gcm|cipher|crypto|hash|md5|sha1|xss|sq
                              r"ephemeral key|iv)\b", re.I)
 
 # Security concepts that indicate a defect only when something is said to be MISSING.
-_CONCEPT = re.compile(r"(access control|authoriz\w*|authz|ownership check|owner check|authentication|"
-                      r"authn|rate.?limit\w*|throttl\w*|lockout|auth\b|"
-                      r"role check|permission check|permission|scope check|tenant (?:check|scope))", re.I)
+# Vocabulary derived from the CWE DEFINITIONS of the eight classes under test, not from observed
+# misses. E26 showed the model can describe a defect correctly in terms this list did not contain
+# (a missing webhook signature verification — CWE-306 "Missing Authentication for Critical Function"),
+# so every published sensitivity figure scored by the old list is a floor.
+_CONCEPT = re.compile(
+    # CWE-284/285/862/863 improper / missing authorization
+    r"(access control|authoriz\w*|authz|permission|role check|entitlement|"
+    # CWE-306/287 missing authentication for a critical function
+    r"authentication|authn|auth\b|signature (?:verif|check|validat)\w*|hmac|signed request|"
+    r"webhook (?:secret|signature)|api key check|bearer token check|"
+    # CWE-639/IDOR authorization bypass through a user-controlled key
+    r"ownership check|owner check|tenant (?:check|scope|isolation)|scope check|object level|"
+    # CWE-307 improper restriction of excessive authentication attempts
+    r"rate.?limit\w*|throttl\w*|lockout|attempt limit|captcha|"
+    # CWE-200 exposure of sensitive information
+    r"sensitive (?:data|field|information)|pii\b)", re.I)
 _ABSENCE = re.compile(r"(lack\w*|missing|absent|no\s|not\s|without|none|fails? to|does ?n[o\u2019']t|"
                       r"unprotected|unchecked|unenforced|never|any(?:one| user)?\s+can)", re.I)
 # Explicitly reassuring language: the control is present and correct.
@@ -414,7 +427,7 @@ def main() -> int:
             # re-score would be wasteful and non-reproducible (protocol section 9: never discard what
             # re-analysis needs).
             rows.append({"arm": arm, "repo": slug, "file": relpath, "verdict": verdict,
-                         "response": trace.redact_persisted(raw[:600])})
+                         "response": trace.redact_persisted(raw[:4000])})
 
     def rate(arm):
         c = counts[arm]

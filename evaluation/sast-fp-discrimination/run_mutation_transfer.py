@@ -83,7 +83,7 @@ def main() -> int:
         mut_verdict = classify_prose(raw)
         pairs.append((orig_verdict, mut_verdict))
         rows.append({"repo": slug, "file": rel, "original": orig_verdict, "mutated": mut_verdict,
-                     "response": trace.redact_persisted(raw[:600])})
+                     "response": trace.redact_persisted(raw[:4000])})
 
     n = len(pairs)
     o_flag = sum(1 for o, _ in pairs if o == "flagged")

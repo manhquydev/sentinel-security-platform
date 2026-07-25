@@ -2020,3 +2020,59 @@ Registered 2026-07-26 06:02 +07. **Nothing below was measured before this text w
 - **Falsifying result for the mitigation.** If the new vocabulary raises the *vulnerable* arm while
   leaving *control* arms untouched, that asymmetry is evidence the terms were tuned to the answer rather
   than to the CWE definitions, and the expansion must be reverted.
+
+## E27 — RESULT: the under-count is narrow; and I broke my own re-analysis rule
+
+Run 2026-07-26. `_CONCEPT` extended from the CWE definitions of the eight classes under test, then every
+stored response re-scored with old and new vocabulary.
+
+### Finding 1 — the vocabulary gap was real but narrow
+
+| measurement | old vocabulary | new vocabulary |
+|---|---|---|
+| E17 vulnerable / clean | 9/60 · 0/40 (p = 0.0078) | **9/60 · 0/40 (p = 0.0078)** |
+| E18 messy control | 0/80 (p = 0.0003) | **0/80 (p = 0.0003)** |
+| E23 original / anonymised | 8/53 · 8/53 | **9/53 · 8/53** |
+| E25 our own code | 0/25 | **0/25** |
+
+**Almost nothing moved.** The gap E26 exposed — no term for signature verification — mattered there
+because that test set contains a *webhook*; the RealVuln corpus files do not. So the published
+sensitivity figures are floors, as stated, but the margin on **this corpus** is **~1 file in 53**, not
+the wide unknown E26 implied. That is a materially smaller correction than the one I flagged, and it is
+reported as smaller.
+
+**The mitigation passed its own falsifier.** The preregistration said that if the expansion lifted only
+the *vulnerable* arms while leaving controls untouched, the terms were tuned to the answer and must be
+reverted. It lifted one vulnerable file and no controls — but it lifted essentially nothing anywhere,
+which is the outcome consistent with terms derived from CWE definitions rather than from observed
+misses.
+
+### Finding 2 — E23 and E24 CANNOT be faithfully re-scored, because I truncated their storage
+
+Re-scoring E24 from its stored responses gives **6/40 vs 2/42 (p = 0.117)**, against the live run's
+**9/40 vs 2/42 (p = 0.0195)**. The difference is not the vocabulary. It is truncation:
+
+| artefact | stored cap | responses hitting the cap |
+|---|---|---|
+| E17 / E18 | ~600 chars | 1 of 99 · 1 of 80 — negligible |
+| **E23 / E24** | **400 chars** | **21 of 53 (40%) · 30 of 82 (37%)** |
+
+The live runs classified the **full** model output; the artefacts kept only the first 400 characters, so
+any finding stated past that point is invisible to a re-score.
+
+**This breaks protocol §9 rule 2 — "never discard what re-analysis needs" — written by me, last night,
+after E14 lost its grouping unit the same way.** The rule was about a grouping key; the same mistake
+recurred as a character limit, and I did not recognise it as the same mistake while writing the code.
+
+**Consequences, stated precisely:**
+
+- **E17, E18, E25 are re-analysable** and their published numbers are confirmed by independent re-scoring.
+- **E23 and E24 are NOT re-analysable.** Their **live results stand as published** — the classification
+  happened on complete output — but they cannot be re-verified from the committed artefacts, and any
+  future re-score of them will *under*-count. Marked accordingly in the ledger.
+- Storage is raised to capture the full response going forward. That does not recover E23 and E24; only
+  re-running them would, and that is recorded as owed work rather than quietly skipped.
+
+**The lesson, which is the same one twice:** a rule against discarding re-analysis inputs has to name
+*every* form of discarding — dropping a column, truncating a string, rounding a float. I wrote the rule
+about columns and then truncated a string eight hours later.
