@@ -2285,3 +2285,25 @@ have passed all of them while being just as false.
 **Owed work, recorded not simulated away:** the right fix is repeated measurement per file — k runs, the
 verdict taken as a rate — which converts per-file noise into a quantity that can be propagated honestly
 instead of assumed.
+
+## E31 — PREREGISTRATION: measure per-file propensities directly (written before measuring)
+
+Registered 2026-07-26 06:40 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E30 failed because it inferred a per-verdict flip probability from an aggregate disagreement
+  rate, which is not recoverable that way: 0.395 disagreement is consistent with many different mixtures
+  of per-file propensity θ. E30 recorded the fix as owed work — **measure θ per file directly** — rather
+  than simulating around it. This does that.
+- **Method.** 12 files (6 absence-class, 6 control), each queried **k = 3 times** in the same run,
+  identical input, frozen instrument. Per-file flag rate is the estimate of θ.
+- **Primary outcome.** The **distribution** of θ across files — specifically whether it is a mixture
+  (most files near 0 or 1, a minority near 0.5) or broadly uniform. That distinction is exactly what E30
+  got wrong by assumption.
+- **Secondary.** Whether θ separates the arms: absence-class files should concentrate at higher θ than
+  controls if the detector carries signal, and the *shape* of that separation is more informative than
+  any single-run rate.
+- **Prediction, recorded in advance.** A mixture — most files stable at θ ≈ 0, a minority churning.
+  If instead θ is broadly spread, then single-run measurement is worse than this lab has assumed and the
+  published rates need re-derivation from repeated sampling, not just wider intervals.
+- **Limit, stated in advance.** k = 3 estimates θ to ±0.29 at best; this characterises the *shape* of the
+  distribution, not any individual file's θ. n = 12 is a sketch, not a census.
