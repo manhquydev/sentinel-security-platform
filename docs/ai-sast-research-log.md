@@ -861,3 +861,31 @@ variable correlated with the outcome.
 The Week-12 claim "every measured AI-vs-deterministic comparison ended badly for AI" remains true **for
 gate roles**, which is where it was measured. For the generative role the honest status is now
 **"unresolved, direction positive, underpowered"** — not a win, and no longer an untested blank.
+
+## E17 — PREREGISTRATION: powered confirmatory replication of E16b (written before measuring)
+
+Registered 2026-07-26 02:50 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E16b was underpowered (Fisher p = 0.065) and is therefore recorded as inconclusive. An
+  underpowered result must be either powered up or abandoned — not quoted. This is the powered version.
+- **Status of E16b.** Treated as **exploratory**. It supplied the effect-size estimate used to size this
+  run and **its files are excluded from this one**, so E17 is an independent replication on a disjoint
+  sample rather than an extension of the same data.
+- **Sample size, fixed in advance by simulation, not by looking at results.** Assuming p(flag |
+  vulnerable) = 0.21 and a conservative p(flag | clean) = 0.03, one-sided Fisher at α = 0.05:
+  n = 60 vulnerable + 40 clean gives **83% power** (40/25 gives 59%; 80/50 gives 92%). **60 + 40 is the
+  committed sample.**
+- **Hypothesis.** The model flags absence-class vulnerable files at a higher rate than clean control
+  files. **Primary test: one-sided Fisher exact on the ITT table** (a non-answer counts as *not
+  flagged*, so nothing is post-selected). **α = 0.05.**
+- **Falsifying result.** p ≥ 0.05, or a clean-file flag rate that rises to meet the vulnerable rate.
+- **Committed in advance, to foreclose optional stopping:** the run happens **once**, at the stated
+  size, and the outcome is published **whatever it is**. The sample will not be extended if the result
+  lands just above 0.05, and it will not be truncated if it lands below.
+- **Secondary (exploratory, labelled):** engaged-only rates; per-CWE breakdown; non-answer rates by arm.
+- **Instrument frozen.** The prompt, the prose classifier and the positive control are **unchanged**
+  from E16b and are not to be touched during this run. The classifier was audited against synthetic
+  cases before E16b was read; touching it now, after seeing E16b's numbers, would be tuning on results.
+- **Bounds unchanged and restated:** file-level only (E16a); one model; and RealVuln is public and
+  `llm_generated_corpus: true`, so any positive mixes capability with memorisation and does not
+  transfer to private code.
