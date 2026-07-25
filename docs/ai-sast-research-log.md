@@ -1797,3 +1797,34 @@ Registered 2026-07-26 05:47 +07. **Nothing below was measured before this text w
 - **Falsifying result.** Zero flags on unseen code, or flags that are uniformly false on adjudication ⇒
   the capability does not appear outside the memorised corpus, and decision 0027's transfer bound
   hardens rather than narrows.
+
+### E25 — why this target is genuinely unseen (checked before reading any result)
+
+The claim needs to be exact, because "our own code" is not automatically unseen.
+
+| fact | value |
+|---|---|
+| repository visibility | **public** (not private — so privacy is *not* the argument) |
+| repository created | 2026-07-23 |
+| `agent/` source first committed | 2026-07-24 |
+| first push to any remote | 2026-07-25 |
+
+**The argument is timing, not secrecy.** The scanned files were written on 2026-07-24 and reached a
+remote on 2026-07-25 — **one to three days** before this measurement. A model already deployed and
+answering requests cannot have trained on source that did not exist when its training ran. Public
+visibility is irrelevant at this timescale; a crawler could not have collected, and a training run could
+not have consumed, code this recent.
+
+**Stated limits of that argument:**
+
+- The exact training cutoff of the model in use is **not published**, so this rests on the general fact
+  that a deployed model's corpus predates its deployment, not on a specific date.
+- The model has **no retrieval or tool access** through this gateway — it receives only the message
+  content — so it cannot fetch the repository at inference time.
+- **Framework idioms are of course familiar.** Django, Flask and `requests` patterns are everywhere in
+  training data. What cannot be familiar is *this code*: these functions, this structure, these controls.
+  That is precisely the distinction E23 could not make (it removed *surface* identity from memorised
+  files) and this target can: the code itself is new.
+
+This makes E25 the transfer test the lab kept recording as impossible — with the caveat that it can
+demonstrate **capability on unseen code**, never **recall**, because no ground truth exists for it.
