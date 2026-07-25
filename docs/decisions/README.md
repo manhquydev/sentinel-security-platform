@@ -170,3 +170,17 @@ documents here as real choices are accepted, then index them in this file.
   (session = identity liveness, synthetic = prober liveness) so a vacuous "clean" run is impossible, and
   by a structural test that no LLM surface is reachable from the verdict path. Coverage bound stated:
   8 routed endpoints, gateway-fronted slice only.
+- [0026 Research claims are governed by a written protocol; a correction must reach the instrument](0026-research-claims-are-governed-by-a-written-protocol-and-corrections-must-reach-the-instrument.md)
+  — 13 experiments had run with no written process, and a meta-analysis found 15 self-corrections of
+  which **every quantified one moved a claim against this lab's own headline**. Two live defects forced
+  the issue: 0021's retracted "+0.069, prior WINS" was **still being printed by the committed
+  instrument**, and the corrected number was not reproducible from committed data because the grouping
+  unit had been discarded. Root cause was structural — the runtime stack had DD1–DD10 pinning every
+  correction, the measurement stack had **zero tests**. Establishes `docs/research-protocol.md`
+  (preregister before measuring; the **estimand** is part of the preregistration; effect size and
+  interval, never a bare point estimate; adversarial review that reproduces before it attacks) and the
+  **correction-propagation law**: fix the instrument, pin it with a test carrying a negative control,
+  update decision + log, then grep the repo for surviving copies. Trialled on our own claims — it
+  **demolished** 0021 (now +0.095 per-application / tie pooled) and **confirmed** 0022 (+43.6%
+  [+31.5%,+58.4%], with the hidden caveat that 22 of 63 repos gain nothing). Also bounds the lab's
+  headline: "AI loses every comparison" is established **for gate roles only**.
