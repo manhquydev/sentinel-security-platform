@@ -66,6 +66,33 @@ directly — SSRF, a container-network foothold, a misconfigured route — bypas
 **Coverage bound (stated, not buried):** 8 routed endpoints out of a much larger application surface.
 This result describes the gateway-fronted slice only and must never be read as whole-app coverage.
 
+## Correction (2026-07-26, same day) — "read-only" was false, and the reserved oracle is contaminated
+
+A second red-team lens proved that **GET is not side-effect-free on this target**. Juice Shop writes a
+`solved` flag to its database when certain endpoints are merely fetched, and this project's own probes
+had already flipped three:
+
+| challenge flipped | triggered by |
+|---|---|
+| `securityPolicyChallenge` | our GET `/.well-known/security.txt` (in the routed surface) |
+| `exposedMetricsChallenge` | our GET `/metrics` (in the routed surface) |
+| `errorHandlingChallenge` | the E9 verbose-error probe |
+
+Two consequences, both corrected rather than argued away:
+
+1. **The "read-only, nothing mutated" claim in the probers was false** and is retracted in the source.
+   The honest statement: the runs are **state-perturbing**, bounded by the target's *disposability*,
+   not by the HTTP verb. HEAD-first is explicitly rejected as a mitigation — Express runs the same
+   handler for HEAD, so it would be safety theatre.
+2. **The `/api/Challenges` oracle this decision reserved for future absence-recall work is already
+   contaminated** — it is ground truth the prober did not author, but not one it cannot influence. Any
+   future use must restart the container first (Juice Shop re-seeds on start) and snapshot the
+   solved-set around each run.
+
+The mapper now **measures** this instead of denying it: the solved-set is captured before and after
+every run and the diff published (`target_state_change.flipped_by_this_run`). The latest run flipped
+nothing new and reported the 3 pre-existing flags on entry.
+
 ## Consequences
 
 - The project has a genuine, reproducible pentest finding produced by its own tooling, with the

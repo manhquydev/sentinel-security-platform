@@ -22,7 +22,15 @@ nothing itself", over-generalising 0025 (which was scoped to the 2 routed non-pu
 `/api/Users` answers 401 — the app does defend some endpoints. This script measures that instead of
 assuming it.
 
-Read-only: GET only, loopback only, bounded, nothing mutated (decision 0013). Evidence redacted at
+STATE-PERTURBING, not "read-only". GET is NOT side-effect-free on this target: a red-team
+proved this project's own "read-only" probes flipped three Juice Shop challenge `solved` flags
+(`/.well-known/security.txt` -> securityPolicyChallenge, `/metrics` -> exposedMetricsChallenge,
+error-provoking requests -> errorHandlingChallenge) — each a database write. Express also runs the
+same handler for HEAD, so HEAD-first would be safety theatre, not a mitigation. The run is bounded by
+the target's DISPOSABILITY, not by the verb; contamination is MEASURED (challenge `solved` set is
+snapshotted before/after and the diff published) rather than denied. No writes are ever sent
+deliberately, and the agent token goes only to the enforcement origin, never to the app origin.
+Bounded, loopback only. Evidence redacted at
 capture; artefact gitignored.
 
     rag/.venv/bin/python -W ignore evaluation/absence-detection/measure_exposure_gap.py

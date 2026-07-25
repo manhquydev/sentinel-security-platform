@@ -61,7 +61,10 @@ authorization**. That is the headline result this plan must confirm rigorously a
 
 Juice Shop **self-reports** challenge completion: `/api/Challenges` exposes a `solved` boolean the
 application itself flips, including **12 `Broken Access Control` challenges** (verified live). That is
-ground truth **the prober cannot influence and did not author** — it breaks the circularity that
+ground truth the prober did not author — but **NOT** one it cannot influence: a red-team proved this
+project's own "read-only" probes had already flipped three flags (`/.well-known/security.txt`,
+`/metrics`, and an error-provoking request), so the oracle is **already contaminated** and any future
+use must reset the container first and snapshot the solved-set around every run — it breaks the circularity that
 invalidated v1. **Not used in v3:** with 2 routed non-public endpoints and zero real positives, there is
 nothing for it to score here. It is the right oracle the moment a target with genuinely broken authz is
 adopted — recorded so that work does not have to rediscover it.

@@ -23,7 +23,14 @@ Fail-closed guards (all from red-team findings):
   * SPA HTML fallback (this app answers 200 + index.html for unknown paths) is never evidence;
   * evidence is redacted on write through the project's canonical seam and the artefact is gitignored.
 
-Read-only: GET only, no credentials, nothing mutated. Inside decision 0013's bound; no HITL needed.
+STATE-PERTURBING, not "read-only". GET is NOT side-effect-free on this target: a red-team
+proved this project's own "read-only" probes flipped three Juice Shop challenge `solved` flags
+(`/.well-known/security.txt` -> securityPolicyChallenge, `/metrics` -> exposedMetricsChallenge,
+error-provoking requests -> errorHandlingChallenge) — each a database write. Express also runs the
+same handler for HEAD, so HEAD-first would be safety theatre, not a mitigation. The run is bounded by
+the target's DISPOSABILITY, not by the verb; contamination is MEASURED (challenge `solved` set is
+snapshotted before/after and the diff published) rather than denied. No writes are ever sent
+deliberately, and the agent token goes only to the enforcement origin, never to the app origin.
 
     rag/.venv/bin/python -W ignore evaluation/absence-detection/map_defence_in_depth.py
 """
@@ -47,6 +54,19 @@ from agent import gateway, trace  # noqa: E402  canonical scrub (0017) + the age
 
 SURFACE = os.path.join(_HERE, "routed-surface.json")
 TIMEOUT = 6
+
+
+def challenge_state(app_origin: str) -> set:
+    """The target's self-reported solved-challenge set. Snapshotted before and after every run so
+    probe-induced state change is MEASURED. A red-team found this project's own probes had already
+    flipped three flags while claiming to mutate nothing — and decision 0025 reserved this same
+    endpoint as an oracle 'the prober cannot influence', which was therefore false."""
+    try:
+        r = requests.get(app_origin.rstrip("/") + "/api/Challenges/", timeout=TIMEOUT)
+        items = r.json().get("data") or []
+        return {i["key"] for i in items if i.get("solved")}
+    except Exception:
+        return set()
 
 
 def _assert_local(*urls: str) -> None:
@@ -135,6 +155,7 @@ def main() -> int:
               "so every 401/403 below would be meaningless. Refusing to report.")
         return 2
 
+    solved_before = challenge_state(app_origin)
     routes = [r for r in surface["routes"] if r["method"] == "GET" and "skip_reason" not in r]
     results = [classify(r, _get(gw_origin, r["path"], token), _get(app_origin, r["path"]))
                for r in routes]
@@ -151,8 +172,12 @@ def main() -> int:
     for r in results:
         counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
 
+    solved_after = challenge_state(app_origin)
     out = {"generated_at": datetime.now(timezone.utc).isoformat(),
            "identity": "agent-recon (OAuth2 via Kong)",
+           "target_state_change": {"solved_before": sorted(solved_before),
+                                    "solved_after": sorted(solved_after),
+                                    "flipped_by_this_run": sorted(solved_after - solved_before)},
            "session_canary": {"path": session_canary["path"], "status": sc["status"], "ok": True},
            "enforcement_origin": gw_origin, "app_origin": app_origin,
            "coverage_bound": surface["coverage_bound"],
@@ -169,7 +194,10 @@ def main() -> int:
                 "defence-in-depth": "ok      ", "public-by-design": "public  ",
                 "not-routed": "n/a     ", "inconclusive": "?       ", "error": "error   "}[r["verdict"]]
         print(f"  {mark} {str(r['expected_auth']):14s} {r['path']:34s} {r['detail']}")
+    flipped = sorted(solved_after - solved_before)
     print(f"\ncanary {canary['path']} -> {c_res['verdict']} ({'OK' if canary_ok else 'FAILED'})")
+    print(f"target state change by this run: {flipped if flipped else 'none'} "
+          f"(target had {len(solved_before)} challenge(s) already flipped on entry)")
     print(f"RESULT: {len(findings)} finding(s); counts={counts}")
     print(f"COVERAGE: {surface['coverage_bound']}")
     if not canary_ok:
