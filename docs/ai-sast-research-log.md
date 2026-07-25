@@ -1070,3 +1070,37 @@ over all 63 repos and reproduced the artefact **byte-identically** except its ti
 
 **This is the second vacuous assertion found in tests I wrote**, after SM4. Both were written by the
 author of the code they guard, and both failed in the direction that flattered the result.
+
+## E18 — PREREGISTRATION: is it detection, or reaction to messy code? (written before measuring)
+
+Registered 2026-07-26 03:25 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E17 established that the model flags files containing absence-of-control
+  vulnerabilities more than clean files, and beats a deterministic arm that scores 0/60. Decision 0027
+  records the mechanism as **unresolved**: the effect is equally consistent with the model reacting to
+  code that is **generally messier**, and 4 of 10 flags demonstrably named a different issue than ground
+  truth. This experiment is the control arm that separates the two, and it is the one 0027 specified.
+- **The discriminating control.** Arm B = files whose ground truth records **real vulnerabilities, but
+  exclusively of PRESENCE classes** (CWE-79 XSS, 798 hardcoded credentials, 312 cleartext storage, 321
+  hardcoded key, 434 unrestricted upload…). 249 such files exist. They are **objectively defective code**
+  — as messy as arm A — while containing **none** of the class under test. Clean files could not
+  separate these hypotheses; these files can.
+- **Hypothesis.** The model's absence-class flagging is **class-specific**, not mess-driven: it flags
+  arm A (absence-class vulnerable) at a higher rate than arm B (messy, no absence-class vulnerability).
+- **Falsifying result.** Arm B's absence-class flag rate is statistically indistinguishable from arm A's
+  → the effect is reaction to mess, and decision 0027's central claim must be narrowed again.
+- **Primary test.** One-sided Fisher exact, α = 0.05, on ITT counts (non-answer = not flagged).
+  **Arm A is E17's already-measured 10/60** — the instrument is deterministic (temperature 0) and
+  **frozen**, so re-running it would only consume budget. **Arm B: n = 80, sampled fresh.**
+- **Power, stated honestly in advance.** By simulation: if arm B truly flags at 0.03 → **84% power**; at
+  0.05 → 69%; at **0.08 → only 41%**. So this run is powered to detect a **large** specificity gap and is
+  **underpowered for a moderate one**. Committed in advance: if the result lands in the middle it is
+  reported **inconclusive**, exactly as E16b was, and not spun either way.
+- **What makes the classifier fair here.** It counts **only absence-of-control vocabulary** and
+  deliberately excludes presence-class terms. So if the model looks at an arm-B file and correctly says
+  "XSS on line 5", that scores **clean** — which is the correct behaviour, not a miss. Arm B therefore
+  tests exactly what it should: does the model *manufacture* absence-class language when shown defective
+  code that has no absent control?
+- **Instrument frozen.** Prompt, classifier and positive control unchanged from E16b/E17.
+- **Bounds unchanged:** file-level; one model; public LLM-seeded corpus, so contamination applies to both
+  arms equally (which is a reason this *internal* comparison is more trustworthy than any absolute rate).
