@@ -41,6 +41,14 @@ import requests
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+# Persisted evidence goes through the project's canonical secrets->target-raw->PII scrub (0017).
+# A red-team found this path wrote RAW response bodies with no redaction: harmless while probing
+# unauthenticated endpoints, but the moment probes carry identities the body is another user's
+# email/JWT/PII heading into a committed artefact.
+from agent import trace  # noqa: E402
 BASELINE = os.path.join(_ROOT, "attack-surface", "baselines", "juice-shop-df1b6bbd8bce.json")
 TARGET = os.environ.get("TARGET_URL", "http://127.0.0.1:13000")
 TIMEOUT = 6
@@ -108,7 +116,8 @@ def probe(endpoint: dict) -> dict:
         verdict, detail = "inconclusive", f"HTTP {status}"
     return {**_base(endpoint), "verdict": verdict, "status": status, "bytes": size,
             "impact": ("data" if size > TRIVIAL_BODY_BYTES else "minimal") if verdict == "control-absent" else None,
-            "detail": detail, "sample": body if verdict == "control-absent" else ""}
+            "detail": detail,
+            "sample": trace.redact_persisted(body) if verdict == "control-absent" else ""}
 
 
 def _base(e: dict) -> dict:
