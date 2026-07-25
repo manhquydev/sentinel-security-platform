@@ -46,6 +46,14 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 zero — zero. This is the first capability measured in this project that deterministic tooling cannot
 supply at all.
 
+> **How to state this correctly (framing correction, same day).** That zero is **structural, not
+> sampled**: across 12 corpus repositories these engines emit **33 distinct CWE classes and not one is
+> absence-class** — the rulesets have no rule that can express an absent control. A Fisher test between
+> the two arms is therefore arithmetically valid but rhetorically misleading, because it implies a
+> contest one side could never enter. **The supported claim is capability addition, not superiority:**
+> the deterministic layer cannot express this class; the model names it in 10% of files. The genuinely
+> two-sided result is the preregistered primary — vulnerable vs clean control files, p = 0.024.
+
 The result was preregistered, powered in advance by simulation (83%), replicated on a sample **disjoint**
 from the exploratory run, gated by a positive control, and scored by a deterministic classifier audited
 against synthetic cases before any data was seen.

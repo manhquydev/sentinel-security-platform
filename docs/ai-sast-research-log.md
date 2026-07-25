@@ -1104,3 +1104,33 @@ Registered 2026-07-26 03:25 +07. **Nothing below was measured before this text w
 - **Instrument frozen.** Prompt, classifier and positive control unchanged from E16b/E17.
 - **Bounds unchanged:** file-level; one model; public LLM-seeded corpus, so contamination applies to both
   arms equally (which is a reason this *internal* comparison is more trustworthy than any absolute rate).
+
+### E17 — framing correction: the deterministic zero is STRUCTURAL, so it is not a horse race
+
+A Stage-5 check on my own headline comparison, run after publishing it: **can these engines emit an
+absence-class CWE at all?**
+
+Across 12 corpus repositories Bandit + Semgrep emit **33 distinct CWE classes** — CWE-703, 259, 79, 327,
+502, 78, 89, 400, 330 and others. **Not one is absence-class.** The 0/60 is therefore **not a sampling
+outcome**; it is the configured rulesets having **no rule for this class in the first place**, which is
+precisely what decisions 0022–0024 measured and named "structurally blind".
+
+**Consequence for how E17 must be stated.** Fisher's exact test assumes two arms that could each have
+scored. Quoting "6/60 vs 0/60, p = 0.0137" implies a **contest between two detectors**, and it is not
+one: the deterministic arm cannot produce a positive under any sample. The p-value is arithmetically
+valid but rhetorically inflated, and reporting it as a head-to-head win would be the kind of framing
+this lab keeps having to retract.
+
+**The honest claim is a capability statement, not a superiority statement:**
+
+> The deterministic layer has **no rule that can express** an absent control. The LLM, given the same
+> file, names the ground-truth absence class in **6 of 60 files (10%)**. This is **capability addition
+> where the deterministic layer has none**, not a better score on a shared task.
+
+That is a *cleaner* finding than the horse-race framing, and it is the one decision 0027 should rest on.
+The genuinely two-sided comparison in this experiment remains **E17's preregistered primary** — vulnerable
+files vs clean control files, 10/60 vs 1/40, **p = 0.024** — where both arms could have scored and the
+model discriminates. E18 (running) tests whether that discrimination is class-specific or mess-driven.
+
+**Retained without change:** the ~10% hit rate, the file-level granularity, the 33% non-answer rate, and
+the contamination bound. None of those depend on this framing.
