@@ -749,3 +749,56 @@ exist, the free deterministic prior does beat the LLM annotator at per-applicati
 written specifically to demonstrate the protocol. Fixing a known flaw (the split) does not immunise an
 analysis against the *neighbouring* flaw (the estimand). And a test written by the same person who
 wrote the instrument can be vacuous in exactly the way the instrument is wrong.
+
+## E16a — RESULT: capability is present; machine-readable conformance is absent (5 models, 3 formats)
+
+Measured 2026-07-26 while building E16's instrument. Reported separately because it is a finding in its
+own right, and because it **forced a redesign** of the experiment that produced it.
+
+**Method.** A synthetic canary file with two blatant, textbook absence-of-control defects (an
+`/api/account/<id>` endpoint with no authentication and no ownership check; an `/api/login` with no rate
+limit or lockout) was sent through the provenance gateway with the source labelled `target-derived`, as
+the contract requires. Three output formats were requested, and one assistant-prefill trick tried:
+
+| output format requested | result |
+|---|---|
+| `FINDING: line=<n> cwe=<n>` | never emitted |
+| JSON array `[{"line":…,"cwe":…}]`, "no prose, no code" | never emitted |
+| "reply must BEGIN with exactly one word: YES or NO" | never emitted |
+| assistant-prefill with `[` to force JSON continuation | ignored |
+
+| model alias | behaviour | found the planted defects? |
+|---|---|---|
+| `sast-grok45` | emits a remediation patch | **yes** (IDOR + brute force) |
+| `sast-sol` | emits prose findings | **yes** |
+| `sast-terra` | emits prose findings | **yes** |
+| `sast-gpt55` | asks what is wanted ("Send goal: review, fix patch, tests…") | n/a — did not engage |
+| `openai-gpt5-mini` | prose + remediation patch | **yes** |
+
+**Finding: 5 model aliases × 3 output formats × 1 prefill = zero format compliance, while every model
+that engaged identified both planted defects correctly.** The models are not refusing on provenance
+grounds — the earlier prediction — and they are not incapable. They will not be told what shape to
+answer in.
+
+**This is decision 0018's non-conformance, now confirmed in the generative role.** 0018 measured that
+SAST-tuned models emit prose instead of a verdict tag when asked to *judge*. The same holds when asked
+to *propose*. It generalises across the whole model shelf available to this project.
+
+**Instrument-validity note (the important part).** The very first E16 smoke run reported
+`RECALL=0.000`. That was **not** a result: the harness had truncated a file mid-function, the model
+replied *"File truncated mid-`serialize_dispute`. What needed?"*, and the parser scored the
+clarification as a non-answer. Published unexamined, it would have become "the generative role fails" —
+a false negative caused entirely by my own harness. What caught it was asking the protocol's Stage-5
+question (*what would this instrument print if the hypothesis were false?* — the answer was "0.000,
+same as if it were true") and then adding the positive control the protocol mandates and I had omitted.
+**A canary is not paperwork; it is the difference between a finding and an artefact.**
+
+**Scope bound.** This is measured through *this* deployment: five aliases on the configured router. Our
+own gateway injects no style directive (verified in `infra/litellm/config.yaml` — only redaction and
+spotlighting callbacks at `pre_call`), so the terseness originates upstream. The honest claim is about
+this model shelf, **not** about LLMs in general.
+
+**Consequence for the architecture.** A structured "AI proposes, tools dispose" pipeline cannot be
+built on these models by asking for structure. The disposal layer must consume the models' **native
+output** — which is what E16 does: the model answers in prose, and a deterministic classifier over
+absence-of-control vocabulary decides. No model is ever consulted about its own output.

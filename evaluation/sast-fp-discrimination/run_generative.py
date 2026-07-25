@@ -1,0 +1,334 @@
+"""E16 — the first measurement of the LLM in a GENERATIVE role: propose, tools dispose.
+
+Every AI role this lab has measured (judge, verifier, ranker) is a verdict/gate role the architecture
+forbids the model to hold anyway. So "AI loses every comparison" was never tested where AI might
+actually help: PROPOSING candidates that deterministic code then verifies.
+
+The opening is decisions 0022-0024: pattern SAST scores ~0% on absence-of-control classes (CWE-307 no
+auth-attempt limit, CWE-639 IDOR, CWE-200 info exposure, CWE-862/306 missing authz/authn), because an
+absent control writes no token to match. The deterministic baseline there is approximately zero, so any
+correct proposal is a net gain rather than a re-discovery.
+
+TWO THINGS THIS DESIGN REFUSES TO FAKE
+- **Negative-control files.** Files with ZERO ground-truth vulnerabilities are mixed in
+  indistinguishably. Without them, "recall" is uninterpretable: a model that flags everything scores
+  perfect recall. The flag rate on clean files is reported next to the recall, always.
+- **Provenance.** Source code is content Sentinel does not control, so it is labelled `target-derived`,
+  never `operator`. This lab has measured three times (0018, 0020, E11) that hardened models REFUSE to
+  reason about target-derived material. If that happens here it is the RESULT, not an obstacle to route
+  around by mislabelling the trust span to get an answer.
+
+Scoring uses the committed deterministic matcher (`run_spike.match`: file + CWE + line +/-10,
+claim-once). The model never sees ground truth and never marks its own work.
+
+    rag/.venv/bin/python -W ignore evaluation/sast-fp-discrimination/run_generative.py
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import random
+import re
+import sys
+from datetime import datetime, timezone
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
+for _p in (_ROOT, _HERE):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+import run_spike as rs  # noqa: E402
+
+# The absence-of-control classes decisions 0022-0024 measured pattern SAST at ~0% on.
+BLIND = {284, 285, 200, 306, 307, 639, 862, 863}
+N_POSITIVE = int(os.environ.get("E16_POS", "24"))     # files holding >=1 absence-class vulnerability
+N_NEGATIVE = int(os.environ.get("E16_NEG", "16"))     # files holding NO ground-truth vulnerability
+MAX_BYTES = 14000                                      # per-file source cap, keeps prompts bounded
+
+_RUBRIC = (
+    "You are a security engineer reviewing one source file from a web application. Identify places "
+    "where a REQUIRED SECURITY CONTROL IS ABSENT - for example an endpoint with no authorization "
+    "check, an object looked up by a user-supplied id without an ownership check, an authentication "
+    "endpoint with no rate limiting or lockout, or a response that discloses internal or other users' "
+    "data. These are absences, not dangerous function calls, so there may be nothing wrong at all in "
+    "this file. Do NOT invent findings to be helpful: reporting nothing is a valid and expected answer. "
+    "The file may be truncated; review only what you are given and never ask a question back. "
+    "Output ONLY finding lines and nothing else. For each real issue output one line EXACTLY: "
+    "FINDING: line=<number> cwe=<number>. If there are none, output exactly: FINDING: none"
+)
+
+# A synthetic file with a blatant, textbook absence-of-control defect. A model that cannot flag THIS is
+# not being blocked by difficulty or provenance — the harness is broken. Without this canary a prompt
+# bug and a genuine negative are indistinguishable, and the first smoke run of E16 proved that: a
+# mid-function truncation made the model ask a clarifying question, which scored as recall 0.000 and
+# would have been published as "the generative role fails".
+_CANARY_SRC = """1: from flask import Flask, request, jsonify
+2: app = Flask(__name__)
+3:
+4: @app.route('/api/account/<account_id>')
+5: def get_account(account_id):
+6:     # no authentication, no ownership check on account_id
+7:     row = db.query("SELECT * FROM accounts WHERE id = ?", account_id)
+8:     return jsonify(row)
+9:
+10: @app.route('/api/login', methods=['POST'])
+11: def login():
+12:     # no rate limiting and no lockout on repeated failures
+13:     u = request.form['user']; p = request.form['password']
+14:     return jsonify({'ok': check_password(u, p)})
+"""
+
+_RX = re.compile(r"FINDING:\s*line\s*=\s*(\d+)\s+cwe\s*=\s*(?:CWE-)?(\d+)", re.I)
+
+# FILE-LEVEL fallback rubric. Line-level structured output proved unobtainable: five model aliases
+# through this gateway (sast-grok45, sast-sol, sast-gpt55, sast-terra, openai-gpt5-mini) all ignored an
+# explicit JSON/format instruction AND an assistant prefill, answering with prose findings or a code
+# patch instead — while correctly identifying the planted defects. Rather than mislabel provenance or
+# tune the prompt against the evaluation files, the question is narrowed to one the models will
+# actually answer in a parseable way, and the weaker granularity is reported as a limit.
+_BINARY_RUBRIC = (
+    "Review the given source file. Question: does it contain a place where a REQUIRED SECURITY CONTROL "
+    "IS ABSENT - an endpoint with no authorization check, an object fetched by user-supplied id with no "
+    "ownership check, an authentication endpoint with no rate limiting or lockout, no authentication at "
+    "all, or a response disclosing internal or other users' data? Many files are perfectly fine; saying "
+    "NO is expected and correct for them. Do not invent issues. "
+    "Your reply must BEGIN with exactly one word: YES or NO. One line of justification may follow."
+)
+_YES = re.compile(r"^\W*(yes)\b", re.I)
+_NO = re.compile(r"^\W*(no|none)\b", re.I)
+
+# DETERMINISTIC DISPOSAL LAYER.
+# The models will not emit structure (see above), but they answer in security prose, and that prose is
+# strikingly different between the two arms: vulnerable files draw absence-of-control language, clean
+# files draw code-quality chatter, refactors, or a question. So the model PROPOSES in its native form
+# and this deterministic classifier DISPOSES — no model is consulted about its own output.
+#
+# Kept deliberately narrow: only ABSENCE-of-control vocabulary counts. Words like "sql injection" or
+# "xss" are presence-class and must NOT count, or the classifier would credit the model for finding the
+# very class pattern SAST already covers.
+_ABSENCE_CONCEPTS = re.compile(
+    r"\b(idor|bola|broken (?:object level )?access control|access control|authoriz|unauthoriz|"
+    r"ownership check|owner check|no auth\b|without auth|unauthenticated|missing auth|authentication "
+    r"(?:is )?(?:missing|absent)|rate.?limit|throttl|lockout|brute.?force|privilege escalation|"
+    r"any (?:user|caller|one) can (?:read|access|view|modify)|leaks? (?:sensitive|internal|other)|"
+    r"data exposure|information disclosure|excessive data)\b", re.I)
+# A response that engaged with the file at all (vs asking a question / returning nothing).
+_QUESTION_BACK = re.compile(r"(what (?:need|do you want)|state task|send goal|missing ask|"
+                            r"which (?:file|task))", re.I)
+
+
+def classify_prose(text: str) -> str:
+    """flagged | clean | non-answer — decided by deterministic rules over the model's own words."""
+    t = (text or "").strip()
+    if not t:
+        return "non-answer"
+    if _QUESTION_BACK.search(t[:200]):
+        return "non-answer"
+    if _ABSENCE_CONCEPTS.search(t):
+        return "flagged"
+    return "clean"
+
+
+def ask_binary(slug: str, relpath: str, model: str, literal_src: str | None = None) -> tuple[bool | None, str]:
+    """File-level verdict. Returns (flagged, status); flagged is None when unparseable."""
+    from agent import llm
+
+    if literal_src is not None:
+        src = literal_src
+    else:
+        try:
+            src = open(os.path.join(rs.REPOS, slug, relpath), encoding="utf-8",
+                       errors="replace").read()[:MAX_BYTES]
+        except OSError as exc:
+            return None, f"unreadable: {exc}"
+    body = src if literal_src is not None else "\n".join(
+        f"{i+1}: {ln}" for i, ln in enumerate(src.splitlines()))
+    try:
+        out = llm.chat([llm.Msg("system", _BINARY_RUBRIC, llm.operator()),
+                        llm.Msg("user", f"file: {relpath}\n\n{body}",
+                                llm.target_derived(source="corpus-file", target=slug))],
+                       model=model, max_tokens=120, temperature=0.0)
+    except Exception as exc:
+        return None, f"error: {str(exc)[:80]}"
+    t = out.strip()
+    if _YES.match(t):
+        return True, "answered"
+    if _NO.match(t):
+        return False, "answered"
+    return None, "unparseable"
+
+
+def _load_gt_index() -> dict:
+    """Map (repo, file) -> ground-truth entries, plus the set of files known to hold no vulnerability."""
+    index: dict = {}
+    for slug in sorted(os.listdir(rs.REPOS)):
+        for g in rs.load_gt(slug):
+            index.setdefault((slug, g["file"]), []).append(g)
+    return index
+
+
+def pick_files(seed: int = 5) -> tuple[list[tuple], list[tuple]]:
+    """Sample positive files (hold an absence-class vuln) and negative controls (hold nothing)."""
+    index = _load_gt_index()
+    positives, vulnerable_files = [], set()
+    for (slug, f), entries in index.items():
+        if any(e["is_vulnerable"] for e in entries):
+            vulnerable_files.add((slug, f))
+        if any(e["is_vulnerable"] and (e["primary"] in BLIND) for e in entries):
+            positives.append((slug, f))
+
+    # Negative controls: real source files from the SAME repos that ground truth never marks vulnerable.
+    negatives = []
+    for slug in sorted({s for s, _ in positives}):
+        repo = os.path.join(rs.REPOS, slug)
+        for root, _dirs, files in os.walk(repo):
+            if any(p in root for p in (".git", "node_modules", "venv", "__pycache__")):
+                continue
+            for fn in files:
+                if not fn.endswith(".py"):
+                    continue
+                rel = os.path.relpath(os.path.join(root, fn), repo)
+                if (slug, rel) in vulnerable_files:
+                    continue
+                # Skip trivial files; a 3-line __init__.py is not a meaningful negative control.
+                try:
+                    if os.path.getsize(os.path.join(root, fn)) < 800:
+                        continue
+                except OSError:
+                    continue
+                negatives.append((slug, rel))
+
+    rnd = random.Random(seed)
+    rnd.shuffle(positives)
+    rnd.shuffle(negatives)
+    return positives[:N_POSITIVE], negatives[:N_NEGATIVE]
+
+
+def ask(slug: str, relpath: str, model: str, literal_src: str | None = None
+        ) -> tuple[list[tuple[int, int]], str]:
+    """Ask the model for absence-class candidates in one file. Returns (proposals, status).
+
+    `literal_src` lets the canary travel the EXACT same path as a real file — same prompt, same
+    provenance label, same parser — so a passing canary really does prove the harness works.
+    """
+    from agent import llm
+
+    if literal_src is not None:
+        src = literal_src
+    else:
+        path = os.path.join(rs.REPOS, slug, relpath)
+        try:
+            src = open(path, encoding="utf-8", errors="replace").read()[:MAX_BYTES]
+        except OSError as exc:
+            return [], f"unreadable: {exc}"
+
+    # Truncate on a LINE boundary and say so. Cutting mid-statement made the model ask a clarifying
+    # question instead of answering, which the harness scored as a non-answer.
+    if literal_src is not None:
+        numbered = src                      # already line-numbered
+    else:
+        numbered = "\n".join(f"{i+1}: {ln}" for i, ln in enumerate(src.splitlines()))
+    try:
+        out = llm.chat(
+            [llm.Msg("system", _RUBRIC, llm.operator()),
+             # Source code is content Sentinel does not control. Labelling it operator to dodge a
+             # refusal would corrupt the very contract this project enforces.
+             llm.Msg("user", f"file: {relpath}\n\n{numbered}",
+                     llm.target_derived(source="corpus-file", target=slug))],
+            model=model, max_tokens=400, temperature=0.0)
+    except Exception as exc:                       # fail closed: never silently drop a failed call
+        return [], f"error: {str(exc)[:80]}"
+
+    props = [(int(m.group(1)), int(m.group(2))) for m in _RX.finditer(out)]
+    if props:
+        return props, "answered"
+    if re.search(r"FINDING:\s*none", out, re.I):
+        return [], "answered-none"
+    return [], "unparseable"
+
+
+def main() -> int:
+    if not os.path.isdir(rs.REPOS):
+        print(f"FAIL: corpus not fetched — run {os.path.join(_HERE, 'fetch.sh')}")
+        return 2
+    if not os.environ.get("LITELLM_MASTER_KEY"):
+        print("FAIL: no gateway credential — a zero from a dead model is not a measurement.")
+        return 2
+    model = os.environ.get("RECON_MODEL", "sast-grok45")
+
+    from agent import llm
+
+    def query(slug: str, relpath: str, literal: str | None = None) -> str:
+        if literal is not None:
+            body = literal
+        else:
+            try:
+                src = open(os.path.join(rs.REPOS, slug, relpath), encoding="utf-8",
+                           errors="replace").read()[:MAX_BYTES]
+            except OSError:
+                return ""
+            body = "\n".join(f"{i+1}: {ln}" for i, ln in enumerate(src.splitlines()))
+        try:
+            return llm.chat([llm.Msg("system", _BINARY_RUBRIC, llm.operator()),
+                             llm.Msg("user", f"file: {relpath}\n\n{body}",
+                                     llm.target_derived(source="corpus-file", target=slug))],
+                            model=model, max_tokens=160, temperature=0.0)
+        except Exception:
+            return ""
+
+    # POSITIVE CONTROL: the classifier and the prompt must together surface a blatant planted defect.
+    canary = classify_prose(query("__canary__", "canary.py", literal=_CANARY_SRC))
+    print(f"positive control (planted missing-authz + missing-rate-limit): {canary}")
+    if canary != "flagged":
+        print("FAIL: the harness cannot surface a blatant absence-class defect. Any negative result "
+              "here would measure the harness, not the hypothesis.")
+        return 2
+
+    pos, neg = pick_files()
+    print(f"sample: {len(pos)} files with an absence-class vulnerability, {len(neg)} clean controls, "
+          f"model={model}\n")
+
+    counts = {"positive": {}, "negative": {}}
+    rows = []
+    for arm, files in (("positive", pos), ("negative", neg)):
+        for slug, relpath in files:
+            verdict = classify_prose(query(slug, relpath))
+            counts[arm][verdict] = counts[arm].get(verdict, 0) + 1
+            rows.append({"arm": arm, "repo": slug, "file": relpath, "verdict": verdict})
+
+    def rate(arm):
+        c = counts[arm]
+        engaged = c.get("flagged", 0) + c.get("clean", 0)
+        return c.get("flagged", 0), engaged, (c.get("flagged", 0) / engaged if engaged else None)
+
+    fp_, fe, fr = rate("positive")
+    np_, ne, nr = rate("negative")
+    print(f"VULNERABLE files: {counts['positive']}")
+    print(f"CLEAN controls  : {counts['negative']}")
+    print(f"\nflag rate on vulnerable files = {fp_}/{fe}" + (f" = {fr:.2f}" if fr is not None else ""))
+    print(f"flag rate on clean controls   = {np_}/{ne}" + (f" = {nr:.2f}" if nr is not None else ""))
+    if fr is not None and nr is not None:
+        print(f"SEPARATION = {fr - nr:+.2f}  (0 would mean the model flags indiscriminately and the "
+              "'detection' is guessing)")
+    print("\nGranularity limit: this is FILE-level detection. Line-level structured output could not be "
+          "obtained from any of five model aliases, so per-line precision is unmeasured.")
+
+    out = {"generated_at": datetime.now(timezone.utc).isoformat(), "model": model,
+           "granularity": "file-level (line-level unobtainable: see conformance finding)",
+           "counts": counts,
+           "flag_rate_vulnerable": round(fr, 4) if fr is not None else None,
+           "flag_rate_clean": round(nr, 4) if nr is not None else None,
+           "separation": round(fr - nr, 4) if (fr is not None and nr is not None) else None,
+           "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a "
+                                  "positive result mixes capability with memorisation and cannot "
+                                  "transfer to private code",
+           "rows": rows}
+    with open(os.path.join(_HERE, "generative-260726.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=2)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

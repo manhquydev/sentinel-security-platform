@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-07-25T19:25:52.369276+00:00",
+  "model": "sast-grok45",
+  "granularity": "file-level (line-level unobtainable: see conformance finding)",
+  "counts": {
+    "positive": {
+      "clean": 1,
+      "non-answer": 1
+    },
+    "negative": {
+      "clean": 1,
+      "non-answer": 1
+    }
+  },
+  "flag_rate_vulnerable": 0.0,
+  "flag_rate_clean": 0.0,
+  "separation": 0.0,
+  "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
+  "rows": [
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "accounts/urls.py",
+      "verdict": "non-answer"
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/models/test_model_note.py",
+      "verdict": "clean"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/categories.py",
+      "verdict": "non-answer"
+    }
+  ]
+}
