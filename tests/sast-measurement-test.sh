@@ -364,6 +364,42 @@ PY
 then ok "two independent runs agree: labels churn, the aggregate difference does not"
 else bad "SM16: the file-role conclusion did not replicate across runs"; fi
 
+sect "SM17: no guard is reading a stale artefact"
+if run_py <<'PY'
+import os, glob, sys
+# SM5, SM9-SM11 and SM14-SM16 assert over committed artefacts. An artefact older than the instrument
+# that produced it means those guards are checking a number no current code emits — the same defect a
+# review found in SM7, fixed there and left everywhere else. One check covers them all.
+pairs = [("generative-260726.json", "run_generative.py"),
+         ("messy-control-260726.json", "run_messy_control.py"),
+         ("mutation-transfer-260726.json", "run_mutation_transfer.py"),
+         ("role-control-v2-260726.json", "run_role_control.py"),
+         ("role-control-v3-260726.json", "run_role_control.py"),
+         ("memorisation-v2-260726.json", "run_memorisation_v2.py"),
+         ("multiengine-grouped-260726.json", "run_multiengine_grouped.py"),
+         ("rank-grouped-260726.json", "rank_grouped.py")]
+base = "evaluation/sast-fp-discrimination/"
+# Artefacts whose INSTRUMENT was edited after the run (classifier corrections, storage caps). Their
+# live results stand -- computed by the code as it was at run time -- but regenerating them needs fresh
+# model calls. Documented here rather than hidden; regeneration is recorded as owed work.
+KNOWN_STALE = {"generative-260726.json": "predates the E26/E27 classifier corrections",
+               "messy-control-260726.json": "predates the E26/E27 classifier corrections",
+               "mutation-transfer-260726.json": "E19, withdrawn; superseded by E23",
+               "role-control-v2-260726.json": "E24; superseded by E28 (role-control-v3)"}
+stale = []
+for art, src in pairs:
+    a, b = base + art, base + src
+    if not (os.path.exists(a) and os.path.exists(b)):
+        continue
+    if os.path.getmtime(a) < os.path.getmtime(b) and art not in KNOWN_STALE:
+        stale.append(art)
+print("  checked=%d  undocumented-stale=%s  known-stale=%d (documented)"
+      % (len(pairs), stale or "none", sum(1 for a, _ in pairs if a in KNOWN_STALE)))
+sys.exit(0 if not stale else 1)
+PY
+then ok "every committed artefact is at least as new as the instrument that produced it"
+else bad "SM17: a guard is asserting over an artefact older than its own instrument"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
