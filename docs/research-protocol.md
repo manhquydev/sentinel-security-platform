@@ -76,6 +76,11 @@ Mandatory before any result is read:
 fell back to a partial path list and would have reported a smaller gap with exit 0; the runtime probers
 now carry both canaries.*
 
+*Scar (E19): a positive control must distinguish **"the harness could not reach the instrument"** from
+**"the instrument answered and was wrong."** A single transient transport failure aborted an entire
+experiment whose canary fires reliably (verified 3/3 directly). Retry an **empty/errored** reply; never
+retry a **substantive** negative, because retrying until it passes converts the gate into a formality.*
+
 *Scar (E16a, the clearest case yet): an experiment measuring whether an LLM can propose vulnerabilities
 printed `RECALL=0.000` on its first run. It had no positive control. The zero was entirely an artefact —
 the harness truncated a file mid-function, the model asked a clarifying question, and the parser scored

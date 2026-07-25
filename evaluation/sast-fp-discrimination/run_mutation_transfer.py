@@ -45,10 +45,23 @@ def main() -> int:
                                      llm.target_derived(source="corpus-file", target=target))],
                             model=model, max_tokens=160, temperature=0.0)
         except Exception:
-            return ""
+            return ""      # transport failure, indistinguishable here from an empty reply
 
-    if classify_prose(ask("canary.py", _CANARY_SRC, "__canary__")) != "flagged":
-        print("FAIL: positive control did not fire; the harness would be what is measured.")
+    # The canary must separate "the harness cannot reach the model" from "the model did not flag it".
+    # A transient network error aborted a previous run of this experiment even though the canary fires
+    # reliably (verified 3/3 directly), so an EMPTY reply is retried; a SUBSTANTIVE reply that fails to
+    # flag is fatal on the first occurrence and is never retried into a pass.
+    canary_ok = False
+    for attempt in range(3):
+        reply = ask("canary.py", _CANARY_SRC, "__canary__")
+        if not reply.strip():
+            print(f"  canary attempt {attempt + 1}: empty/transport failure, retrying")
+            continue
+        canary_ok = classify_prose(reply) == "flagged"
+        break                              # a real answer decides it, pass or fail
+    if not canary_ok:
+        print("FAIL: positive control did not fire on a substantive reply; the harness would be what "
+              "is measured, not the hypothesis.")
         return 2
     print("positive control PASSED")
 
