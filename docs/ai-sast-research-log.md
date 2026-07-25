@@ -889,3 +889,60 @@ Registered 2026-07-26 02:50 +07. **Nothing below was measured before this text w
 - **Bounds unchanged and restated:** file-level only (E16a); one model; and RealVuln is public and
   `llm_generated_corpus: true`, so any positive mixes capability with memorisation and does not
   transfer to private code.
+
+## E17 — RESULT: the preregistered replication REJECTS the null (p = 0.024)
+
+Run 2026-07-26 exactly as preregistered: 60 vulnerable + 40 clean files, **disjoint** from E16b's
+sample, instrument frozen, positive control passed, one run only.
+
+| | flagged | n | rate |
+|---|---|---|---|
+| files containing an absence-class vulnerability | 10 | 60 | **0.167** |
+| clean control files | **1** | 40 | **0.025** |
+
+| analysis | separation | one-sided Fisher | verdict |
+|---|---|---|---|
+| **ITT — the preregistered primary** (non-answer = not flagged) | **+0.142** | **p = 0.0237** | **null REJECTED at α = 0.05** |
+| engaged-only (secondary, exploratory) | +0.218 | p = 0.0112 | agrees |
+
+Non-answers: 20/60 vulnerable (33%), 9/40 clean (23%).
+
+**This is the first statistically significant result in this project's history in which the LLM arm
+wins.** It is preregistered, powered in advance by simulation (83%), replicated on a sample disjoint
+from the exploratory run, gated by a positive control, scored by a deterministic classifier audited
+before any data was seen, and tested by the statistic named before the data existed. Both the primary
+and secondary analyses agree in direction and significance.
+
+### What it does and does not mean
+
+**Does:** in the **generative role** — propose candidates, let deterministic code dispose — an LLM
+carries **real signal about absence-of-control vulnerabilities**, the class where pattern SAST is
+measured at ~0–6.8% recall (0022–0024). It is not flagging indiscriminately: **only 1 of 40 clean files
+drew a false absence-class claim**.
+
+**Does not:**
+- **It is a weak detector.** 16.7% of vulnerable files flagged. Six in seven are missed.
+- **It is file-level.** Line-level structured output was unobtainable from any of five models (E16a), so
+  per-line precision is unmeasured and no one should imagine a ranked line list.
+- **It is contaminated by construction.** RealVuln is public and its repos carry
+  `llm_generated_corpus: true`. This measures capability and memorisation **inseparably**, and
+  therefore **cannot** be claimed to transfer to a client's private code. Establishing transfer needs a
+  target the model cannot have seen — which this lab does not currently have.
+- **One model, one corpus, one language.**
+- **A third of answers are non-answers**, which is a usability fact, not a detection fact.
+
+### Consequence: the lab's headline claim is now formally narrowed
+
+Before tonight: *"every measured AI-vs-deterministic comparison ended with AI losing, tying, or being
+unanswerable."* That was true of every role ever measured — and every role ever measured was a
+**verdict/gate** role the architecture forbids the LLM to hold anyway.
+
+After E14/E15/E16/E17 the honest statement is two-part:
+
+1. **In gate roles — judging, verifying, ranking — the deterministic method wins or ties.** Repeatedly,
+   and now with the estimand argued in the open (0021: prior wins +0.095 per application).
+2. **In the generative role, on the class deterministic tooling structurally cannot see, the LLM adds
+   measurable signal** — significant, small, specificity-strong, and bounded by contamination.
+
+That is a materially different and more useful claim than "AI loses", and it is the first time this
+project has been able to say where AI *does* belong on evidence rather than on architecture alone.
