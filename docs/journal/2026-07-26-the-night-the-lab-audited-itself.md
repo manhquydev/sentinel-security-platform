@@ -138,3 +138,45 @@ hours earlier by the same process that was supposed to prevent them.
 The protocol is not what makes the work correct. Nothing does. What the protocol buys is that the errors
 get found by us, in a repository nobody has shipped yet, instead of by a client with a report in their
 hand.
+
+---
+
+## Postscript: the protocol turned on the protocol
+
+The account above ends around 03:00. What happened afterwards is the part I would most want a future
+reader to have.
+
+I commissioned an adversarial review of the entire generative-role chain, because decision 0027 had been
+*accepted* on evidence nobody independent had attacked. The reviewer found four defects. The worst was
+not a bug in an experiment — it was an assumption underneath three of them: **`temperature=0` does not
+mean deterministic.** Measured: **~40% of raw verdicts differ on identical input**, and across 38 paired
+calls the model never once returned the same text.
+
+Two preregistered experiments died of it. Both had treated a single verdict as a fixed value. I had
+written the protocol section on freezing instruments that same night, and it never said *check that it
+returns the same answer twice*.
+
+Then it got worse in a more interesting way. I built a model to propagate that measurement noise into
+the published intervals. It concluded **every interval crossed zero** — that the whole finding dissolved
+under honest error. That result was dramatic, self-critical, and completely wrong: it had treated a
+*disagreement rate* as a *flip probability*, which annihilates signal in both arms by construction. It
+survived exactly one check — the lab had already measured the quantity it was estimating. Predicted
+run-to-run drift ~0.2; measured drift 0.001.
+
+**Every other safeguard in this protocol guards against claims that flatter the author. This one would
+have retracted five of my own findings in an apparent act of rigour, and was just as false.** That
+became rule 12, and it is the one I trust least to be remembered: self-criticism is not self-evidently
+correct.
+
+The thread ended properly, by measuring instead of modelling. Per-file propensities, k=3: **ten of
+twelve files never flag at all, one always does, one churns.** Most of that alarming 40% is files
+oscillating between `clean` and `non-answer` — a transition that never touches the flag rate. **Flag
+decisions churn on about one file in twelve.** Which is why the replication drifted by 0.001, why the
+noise model was off by two orders of magnitude, and why the control arm — supposedly the *least* stable
+— turned out to be the steadiest thing in the study, at zero false claims across eighteen consecutive
+calls.
+
+Nineteen corrections in one night. Every quantified one moved a claim against its own headline. Two were
+rules I wrote and then broke within hours. The protocol did not make the work correct — nothing does.
+What it bought was that the errors were found here, in a branch nobody has merged, instead of in a
+report someone was relying on.
