@@ -241,6 +241,25 @@ PY
 then ok "anonymised source still detects at the same rate — surface memorisation stays excluded"
 else bad "SM10: mutation now collapses detection; 0027's narrowed contamination bound is invalid"; fi
 
+sect "SM11: the file-role control is published WITH its fragility"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/role-control-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run run_role_control.py"); sys.exit(1)
+d = json.load(open(p))
+# This closes E18's named confound. It is a MARGINAL result (one extra flag flips it), so the guard
+# checks the whole population was used and the effect size held, not the p-value alone.
+a = d["arm_a_prime"]; rate_c = d["flag_rate"]
+ratio = a["rate"] / rate_c if rate_c else float("inf")
+whole_pop = d["n"] >= 40      # every qualifying handler file in the corpus
+print("  armA=%.3f armC=%.3f ratio=%.1fx n_C=%d p=%s"
+      % (a["rate"], rate_c, ratio, d["n"], d["fisher_p_one_sided"]))
+sys.exit(0 if (whole_pop and ratio >= 2.0 and d["fisher_p_one_sided"] < 0.05) else 1)
+PY
+then ok "handlers with an absent control still flag multiples more often than handlers without"
+else bad "SM11: the role control weakened; 0027 would collapse to 'recognises endpoint code'"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

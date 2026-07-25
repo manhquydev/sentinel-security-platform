@@ -101,10 +101,14 @@ against synthetic cases before any data was seen.
   language about them at **3/80 — indistinguishable from files with nothing wrong (p = 0.59)** — and far
   below the absence-class arm (p = 0.010). The "reacts to messy code" explanation predicts the opposite
   and is refuted. **The model discriminates the class, not the defectiveness.**
-- **Residual confound now named:** absent controls live disproportionately in request handlers, while
-  XSS and hardcoded credentials live in templates, models and utilities — so arm A and arm B may differ
-  in **file role** as well as class. A third arm of *correctly protected endpoint handlers* would
-  separate those. Specified, not yet run.
+- **That residual confound is now CLOSED (E20, same day).** The third arm this decision specified was
+  run on the **whole population** of qualifying files: holding file role fixed — endpoint handlers in
+  both arms — handlers **with** an absent control flag at **0.250** and handlers **without** one at
+  **0.071** (Fisher p = 0.042). The model responds to the **missing control**, not to endpoint-ness.
+  **Reported with its fragility:** one additional flagged file in arm C would move p to 0.081, so this
+  single test is marginal. The conclusion rests on **three independent preregistered controls
+  converging** — messiness (E18), memorisation (E19) and file role (E20) — with no result pointing the
+  other way.
 - **Transfer — partially addressed (E19).** Surface memorisation is excluded by semantics-preserving
   mutation. **Still outstanding:** structural familiarity, and a genuinely unseen target. Until one
   exists, full generalisation remains unproven — but "unproven by construction" is no longer accurate,

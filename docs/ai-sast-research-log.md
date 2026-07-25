@@ -40,6 +40,7 @@ audited on 2026-07-26.
 | E16a | can models emit machine-readable findings? | **STANDS (negative)** — 5 models × 3 formats × prefill = zero conformance, while correctly finding planted defects |
 | E16b | generative role, first look | **INCONCLUSIVE** by preregistration (p = 0.065) |
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
+| E20 | file role or missing control? | **STANDS (marginal)** — handlers with an absent control 0.250 vs handlers without 0.071, p = 0.042; one extra flag would flip it |
 | E19 | capability or memorisation? | **STANDS** — surface memorisation **excluded**: full anonymisation leaves the rate at 10/53, paired diff 0.000 [−0.094,+0.094] |
 | E18 | is it detection, or reaction to messy code? | **STANDS** — **detection**: defective code with no absent control draws flags at 3/80, indistinguishable from clean (p = 0.59); vs absence arm p = 0.010 |
 
