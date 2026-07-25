@@ -1995,3 +1995,28 @@ the published sensitivity understates the model.
   correctly stayed silent — but it cannot make my defects representative of a real client codebase.
 - **`reset_a` is a genuine miss**, and rate-limiting absence is exactly the class CWE-307 covers, the
   most common absence class in the corpus.
+
+## E27 — PREREGISTRATION: how much did the classifier under-count? (written before measuring)
+
+Registered 2026-07-26 06:02 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** E26 caught the scoring classifier calling a *correct* detection "clean" — the model named a
+  missing webhook signature verification precisely, and `_CONCEPT` had no term for it. Every sensitivity
+  figure this lab has published was scored by that vocabulary, so all of them are floors by an
+  **unmeasured** margin. This measures the margin.
+- **THE OVERFITTING RISK, named first.** Expanding the vocabulary *after* seeing which term was missing
+  is exactly how a classifier gets tuned to flatter its own results. Mitigation, committed in advance:
+  **new terms are derived from the CWE definitions of the eight classes under test** (284, 285, 200,
+  306, 307, 639, 862, 863) — the standard terminology for each class — **not** from the observed misses.
+  The webhook term will appear because CWE-306 is "Missing Authentication for Critical Function", not
+  because E26 tripped over it.
+- **Method.** Extend `_CONCEPT` per CWE class. Re-score **every stored response** from E17, E18, E23,
+  E24, E25 and E26 with old and new vocabulary. Report both.
+- **Primary outcome.** The change in each published rate, and whether any **between-arm conclusion**
+  moves.
+- **Prediction, recorded before running.** Absolute rates rise in **both** arms of every comparison,
+  because the same vocabulary scored both. Between-arm conclusions should be **stable**. If a conclusion
+  flips, that is a finding about the fragility of the whole chain and will be reported as one.
+- **Falsifying result for the mitigation.** If the new vocabulary raises the *vulnerable* arm while
+  leaving *control* arms untouched, that asymmetry is evidence the terms were tuned to the answer rather
+  than to the CWE definitions, and the expansion must be reverted.
