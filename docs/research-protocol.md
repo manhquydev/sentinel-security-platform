@@ -76,6 +76,15 @@ Mandatory before any result is read:
 fell back to a partial path list and would have reported a smaller gap with exit 0; the runtime probers
 now carry both canaries.*
 
+*Scar (E16a, the clearest case yet): an experiment measuring whether an LLM can propose vulnerabilities
+printed `RECALL=0.000` on its first run. It had no positive control. The zero was entirely an artefact —
+the harness truncated a file mid-function, the model asked a clarifying question, and the parser scored
+that as a non-answer. Published unexamined it would have read as "the generative role fails". A planted
+blatant defect that the harness MUST surface now gates the run, and it aborts rather than reporting a
+zero it cannot distinguish from its own breakage. **A run without a positive control cannot tell a
+finding from a broken instrument, and the failure mode is always the flattering direction: a broken
+instrument reports the null result you were half-expecting.***
+
 ### Stage 5 — Verify the instrument measures what you claim
 Ask literally: *what would this instrument print if my hypothesis were false?* If the answer is "the
 same thing", it is not an instrument. Check specifically:
