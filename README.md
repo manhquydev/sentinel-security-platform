@@ -89,7 +89,7 @@ flowchart LR
 | `attack-surface/` | Juice Shop attack‑surface schema, manifest, baselines. |
 | `benchmark/` | AI‑SAST scoring harness, targets, results. |
 | `tests/` | Behavioral guards (redaction, SSRF allowlist, close‑decision gate, CI workflow safety). |
-| `docs/` | [`WORKFLOW.md`](docs/WORKFLOW.md), `product/`, `decisions/`, `journal/`, `plans/`. Map: [`docs/README.md`](docs/README.md). |
+| `docs/` | [`WORKFLOW.md`](docs/WORKFLOW.md), [`research-protocol.md`](docs/research-protocol.md) (how an experiment is run here), `product/`, `decisions/`, `journal/`, `plans/`. Map: [`docs/README.md`](docs/README.md). |
 
 ## Running the pieces (local)
 
