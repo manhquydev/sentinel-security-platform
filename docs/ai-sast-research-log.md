@@ -638,3 +638,48 @@ prints this warning next to the number so it cannot be misread later.
 **Bound that travels with the number.** RealVuln's repos are `vc-*-seeded-v2-*` with
 `llm_generated_corpus: true` — an **LLM-seeded** corpus, not organic CVEs. This measures multi-engine
 complementarity on synthetic-seeded Python. Generalisation to organic code is untested.
+
+## E16 — PREREGISTRATION: the FIRST measurement of the LLM in a GENERATIVE role
+
+Registered 2026-07-26 01:55 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** This lab's headline is that every measured AI-vs-deterministic comparison ended
+  with AI losing, tying, or being unanswerable. A meta-analysis of our own 13 experiments found that
+  claim is **structurally incomplete**: every role we ever measured (judge, verifier, ranker) is a
+  **verdict/gate role the architecture forbids the LLM to hold anyway**. The **generative** role —
+  *propose candidates, let deterministic code dispose* — has **zero measurements**, because Phase 3 was
+  cancelled at the red-team gate. Until it is measured, "AI loses" is an overclaim, and the Week-12
+  business case rests on it.
+- **The opening.** Decisions 0022–0024 measured that SAST is ~0% recall on **absence-of-control**
+  classes: CWE-307 (no auth-attempt limit), CWE-639 (IDOR), CWE-200 (info exposure), CWE-862/306
+  (missing authz/authn). The corpus holds **357 such vulnerabilities across 185 distinct files**. This
+  is the one place where a generative proposer cannot be beaten by the deterministic baseline, because
+  **the deterministic baseline is approximately zero there**. Any correct proposal is a net gain.
+- **Hypothesis (falsifiable).** Given source code, an LLM proposing `(line, CWE)` candidates achieves
+  **recall > 0.15 on absence-class vulnerabilities**, at a precision distinguishable from indiscriminate
+  flagging — i.e. materially better than the deterministic engines' ~0% on the same files.
+- **Falsifying result.** Recall ≈ 0, **or** a flag rate on clean negative-control files statistically
+  indistinguishable from the flag rate on vulnerable files. The latter would mean the model flags
+  everything and its "recall" is an artefact of guessing, not detection.
+- **Primary outcomes.** (a) recall over absence-class ground truth using the **existing deterministic
+  matcher** (`run_spike.match`: file + CWE + line±10, claim-once); (b) precision; (c) the flag rate on
+  negative-control files.
+- **Controls (Stage 4).**
+  - **Negative-control files** — files with **zero** ground-truth vulnerabilities, sampled from the same
+    repos and mixed in indistinguishably. Without these, recall alone is uninterpretable.
+  - **Deterministic control arm** — Bandit + Semgrep on the identical file set, so the comparison is on
+    the same inputs, not against a remembered number.
+  - **Fail-closed** — a model call that errors or returns unparseable output is recorded as a
+    **non-answer**, never silently dropped and never counted as a correct abstention.
+- **No LLM in the verdict path.** The model emits candidate strings only. Scoring is done entirely by
+  the committed deterministic matcher. The model never sees ground truth and cannot mark its own work.
+- **Contamination — stated in advance, not after (protocol §5).** RealVuln is **public** and its repos
+  are `vc-*-seeded-v2-*` with `llm_generated_corpus: true`, i.e. **LLM-seeded**. A positive result here
+  therefore measures **capability and memorisation together and inseparably**, and must be reported that
+  way. This experiment can establish a **ceiling**, never transfer to a client's private code.
+- **Power / limits.** Bounded sample (tens of files, not 185) for cost and time. This is explicitly a
+  **first look**, powered to detect a large effect only; a near-zero or near-total result is
+  interpretable, a marginal one is not, and will be reported as inconclusive rather than spun.
+- **Abort condition.** If the deterministic control arm finds a *non-trivial* number of absence-class
+  vulns on these files, the premise ("deterministic baseline ≈ 0 here") is wrong and the experiment is
+  reframed before any LLM comparison is published.
