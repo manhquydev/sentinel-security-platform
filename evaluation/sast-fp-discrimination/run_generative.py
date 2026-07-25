@@ -40,6 +40,7 @@ for _p in (_ROOT, _HERE):
         sys.path.insert(0, _p)
 
 import run_spike as rs  # noqa: E402
+from agent import trace  # noqa: E402
 
 # The absence-of-control classes decisions 0022-0024 measured pattern SAST at ~0% on.
 BLIND = {284, 285, 200, 306, 307, 639, 862, 863}
@@ -108,15 +109,36 @@ _NO = re.compile(r"^\W*(no|none)\b", re.I)
 # Kept deliberately narrow: only ABSENCE-of-control vocabulary counts. Words like "sql injection" or
 # "xss" are presence-class and must NOT count, or the classifier would credit the model for finding the
 # very class pattern SAST already covers.
-_ABSENCE_CONCEPTS = re.compile(
-    r"\b(idor|bola|broken (?:object level )?access control|access control|authoriz|unauthoriz|"
-    r"ownership check|owner check|no auth\b|without auth|unauthenticated|missing auth|authentication "
-    r"(?:is )?(?:missing|absent)|rate.?limit|throttl|lockout|brute.?force|privilege escalation|"
-    r"any (?:user|caller|one) can (?:read|access|view|modify)|leaks? (?:sensitive|internal|other)|"
-    r"data exposure|information disclosure|excessive data)\b", re.I)
-# A response that engaged with the file at all (vs asking a question / returning nothing).
+# Absence-class vocabulary, split into two kinds because a bare keyword match is not evidence.
+#
+# An audit of this classifier, run BEFORE any result was read, found two defects:
+#   1. "Access control looks properly implemented here." matched -> flagged. A control being PRESENT
+#      was scored as a finding.
+#   2. `authoriz\b` could never match "Authorization", because the word continues past the boundary.
+# Both are fixed by requiring absence LANGUAGE, not merely security vocabulary.
+
+# Terms that are themselves a defect - no qualifier needed.
+_INHERENT = re.compile(
+    r"\b(idor|bola|broken (?:object level )?access control|unauthenticated|privilege escalation|"
+    r"brute.?force|information disclosure|excessive data exposure|"
+    r"any(?:one| user| caller)? can (?:read|access|view|modify|delete))\b", re.I)
+
+# Security concepts that indicate a defect only when something is said to be MISSING.
+_CONCEPT = re.compile(r"(access control|authoriz\w*|ownership check|owner check|authentication|"
+                      r"rate.?limit\w*|throttl\w*|lockout|auth\b)", re.I)
+_ABSENCE = re.compile(r"(lack\w*|missing|absent|no\s|not\s|without|none|fails? to|does ?n[o\u2019']t|"
+                      r"unprotected|unchecked|unenforced|never|any(?:one| user)?\s+can)", re.I)
+# Explicitly reassuring language: the control is present and correct.
+_PRESENT_OK = re.compile(r"(correctly|properly|is enforced|are enforced|looks (?:fine|good|ok)|"
+                         r"already (?:enforced|checked)|no issues?|seems (?:fine|ok)|appears (?:fine|ok))",
+                         re.I)
+
 _QUESTION_BACK = re.compile(r"(what (?:need|do you want)|state task|send goal|missing ask|"
                             r"which (?:file|task))", re.I)
+
+
+def _sentences(t: str):
+    return re.split(r"(?<=[.;:!?])\s+|\n+", t)
 
 
 def classify_prose(text: str) -> str:
@@ -126,8 +148,12 @@ def classify_prose(text: str) -> str:
         return "non-answer"
     if _QUESTION_BACK.search(t[:200]):
         return "non-answer"
-    if _ABSENCE_CONCEPTS.search(t):
-        return "flagged"
+    for sent in _sentences(t):
+        if _INHERENT.search(sent):
+            return "flagged"
+        # A concept counts only with absence language and without a reassurance that it is present.
+        if _CONCEPT.search(sent) and _ABSENCE.search(sent) and not _PRESENT_OK.search(sent):
+            return "flagged"
     return "clean"
 
 
@@ -294,9 +320,14 @@ def main() -> int:
     rows = []
     for arm, files in (("positive", pos), ("negative", neg)):
         for slug, relpath in files:
-            verdict = classify_prose(query(slug, relpath))
+            raw = query(slug, relpath)
+            verdict = classify_prose(raw)
             counts[arm][verdict] = counts[arm].get(verdict, 0) + 1
-            rows.append({"arm": arm, "repo": slug, "file": relpath, "verdict": verdict})
+            # Keep the prose. A classifier this new WILL be revised, and re-querying 40 files to
+            # re-score would be wasteful and non-reproducible (protocol section 9: never discard what
+            # re-analysis needs).
+            rows.append({"arm": arm, "repo": slug, "file": relpath, "verdict": verdict,
+                         "response": trace.redact_persisted(raw[:600])})
 
     def rate(arm):
         c = counts[arm]
