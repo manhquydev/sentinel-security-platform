@@ -151,7 +151,7 @@ this territory can only be reached by an LLM.
 one place "a proposer cannot be beaten by the deterministic baseline, because the deterministic baseline is
 approximately nothing". The baseline is not nothing; it was merely unwritten. The generative role's claim
 now has to rest on what it does *better* than a rule — and E56 measured that too: the detector reaches 24%
-recall at **12.4% precision per reported route handler** (E71; the 6.7% figure counted each handler twice, once per CWE), because it cannot distinguish a deliberately public endpoint from a forgotten
+recall at **12.5% precision per reported route handler** (E71; the 6.7% figure counted each handler twice, once per CWE), because it cannot distinguish a deliberately public endpoint from a forgotten
 check. That distinction is about intent, and it is the honest residual where the model has an advantage.
 
 **What it does not license.** Composing them — detector for recall, model to filter its output — is the

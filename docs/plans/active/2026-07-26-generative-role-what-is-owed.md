@@ -6,12 +6,14 @@ state, not the morning's.
 
 ## What is settled
 
-> **2026-07-26, late: the generative role failed its transfer test (E75).** On maintainer-confirmed
-> missing-control defects in production code published after any plausible training cutoff, paired against
-> the same file after its fix, the model returns **0.154 pre-fix and 0.154 post-fix** — below the
-> preregistered collapse line and, decisively, **the arms do not separate**. Everything in this section is
-> therefore a **corpus** result. The capability claims below stand as measurements of this benchmark and
-> **not** as claims about customer code; the negative findings are unaffected and strengthened.
+> **2026-07-27: the transfer test is INCONCLUSIVE (E79, correcting E75).** E75 reported a collapse
+> (0.154/0.154); that was an instrument artefact. Re-run with the corpus instrument replicated exactly:
+> on 10 post-cutoff paired sites the model flags the confirmed defect at **0.300** and the fixed version at
+> **0.200**, 33% non-answers — above the collapse line but the arms do not separate (the model flags
+> production code at a base rate). Neither transfer nor collapse is demonstrated. Everything in this section
+> remains a **corpus** result: the capability claims stand as measurements of this benchmark, not of
+> customer code. The LLM leaves the runtime product on **non-reproducibility** grounds (E42/E57), not on a
+> transfer collapse.
 
 **The capability is real, bounded, and every coverage number is budget-dependent.**
 
@@ -54,7 +56,7 @@ what it covers, it covers exactly, repeatably and for free. Any honest product s
 deterministic layer and position the model as the thing that covers what no rule can express.
 
 **Its precision does not yield, and that decides the product shape (E60–E62).** The absence detector
-reaches CWE-306/862 at **26.3% recall** where Bandit and Semgrep reach zero, at **12.4% precision** (both corrected in E71; the published 22.6%/6.7% double-counted the denominator and the findings). Three
+reaches CWE-306/862 at **26.3% recall** where Bandit and Semgrep reach zero, at **12.5% precision** (both corrected in E71; the published 22.6%/6.7% double-counted the denominator and the findings). Three
 routes to fixing that are now closed by measurement rather than by argument:
 
 - **Ordering it** — four prespecified security signals rank real defects **worse than shuffling**
@@ -66,9 +68,9 @@ routes to fixing that are now closed by measurement rather than by argument:
 - **A model filter** — the gate role, already falsified in 0018/0020.
 
 **Measured on real production applications (E76).** The viability figures above are benchmark numbers, and
-the benchmark understated a customer's workload by roughly **21×**: five production web applications carry
-median **421 route sites** [124, 1435] against the benchmark's 17.7, and median **62 file-level decisions**
-against 2.9. Counted as findings the framing is dead; counted as decisions — the unit E64 established the
+the benchmark understated a customer's workload by roughly **21×**: production web applications carry
+median **246 route sites** against the benchmark's 17.7, and median **27 file-level decisions**
+against 2.9 (E78 corrected the E76 figures down ~2x after fixing a @patch-as-route bug). Counted as findings the framing is dead; counted as decisions — the unit E64 established the
 reviewer actually works in — the median application is a day's work and the framing **survives**. Precision
 on that population is still unmeasured and is the harder half.
 

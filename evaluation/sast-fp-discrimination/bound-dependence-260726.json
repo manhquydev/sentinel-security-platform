@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T15:22:34.677706+00:00",
+  "generated_at": "2026-07-26T17:13:09.511763+00:00",
   "question": "does E57's joint rule-out of the never-surfaced files survive measured reading-to-reading dependence?",
   "files": 24,
   "readings": 18,
@@ -29,13 +29,14 @@
     "0.03": 0.0124,
     "0.05": 0.0006
   },
-  "published_points_with_effects": {
-    "0.03": 0.0124,
-    "0.05": 0.0006
+  "published_points_random_effects": {
+    "0.03": 0.0128,
+    "0.05": 0.0007
   },
   "threshold_independent": 0.0206,
-  "threshold_with_reading_effects": 0.0206,
-  "weakening_factor": 0.999,
-  "verdict": "BOUND ESSENTIALLY UNCHANGED \u2014 the measured reading effects are too uniform to matter",
+  "threshold_random_effects": 0.0207,
+  "weakening_factor": 1.004,
+  "model": "random-effects: each reading's rate is a draw from the empirical distribution; P(all zero) = E_w[(1-p*w)^n]^k, convex in w so correlation raises it \u2014 the check CAN fail, unlike the conditional version it replaces (which Jensen made vacuous, \u00a717)",
+  "verdict": "BOUND HOLDS UNDER THE CORRECTED MODEL \u2014 the random-effects correlation shifts the threshold by less than 15%, so E57's ~3% rule-out stands",
   "limit": "models only the reading-level channel; residual dependence would weaken further"
 }

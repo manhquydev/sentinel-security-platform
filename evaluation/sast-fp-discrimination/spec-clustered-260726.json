@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-26T15:15:47.779294+00:00",
-  "question": "does the flagship multi-engine gain survive clustering by independent APPLICATION (36 units: 26 human + 10 specs x 4 generators) instead of by repository (63)?",
+  "generated_at": "2026-07-26T17:38:04.958726+00:00",
+  "question": "does the flagship multi-engine gain survive clustering by independent APPLICATION (33 units: 23 human + 10 specs x 4 generators) instead of by repository (63)?",
   "source_artefact": "multiengine-grouped-260726.json (committed per-repo counts; no engine run)",
   "independent_applications": 33,
   "spec_clusters": {

@@ -719,10 +719,17 @@ for i in range(1, len(parts), 2):
     if n < 60:
         continue
     seen += 1
+    body = parts[i + 1]
     # A filename mentioned in passing is not an attribution — E62 discusses rescore_artefacts.py while
     # describing the defect, and an earlier version of this guard accepted that as its citation. The entry
     # must DECLARE what produced its numbers, on its own line.
-    if not re.search(r"(?im)^(?:instrument|artefact)s?\b[^\n]*`[\w./-]+\.(?:json|py|sh)`", parts[i + 1]):
+    cited = re.search(r"(?im)^(?:instrument|artefact)s?\b[^\n]*`[\w./-]+\.(?:json|py|sh)`", body)
+    # A retracted measurement is a legitimate entry with no artefact BY DESIGN (E77 removed a broken
+    # instrument rather than keep a citation hazard). It must SAY so explicitly — a narrow exemption, not
+    # a loophole: claiming "removed" while actually publishing a number contradicts the entry's own text.
+    retracted = re.search(r"(?im)^(?:no instrument or artefact|the (?:invalid )?instrument .* (?:were |was )?"
+                          r"removed)\b", body)
+    if not (cited or retracted):
         bad.append(n)
 print("  entries at or after E60: %d   uncited: %s" % (seen, sorted(set(bad)) or "none"))
 sys.exit(1 if bad else 0)
@@ -786,6 +793,24 @@ sys.exit(0 if ok else 1)
 PY
 then ok "SM27: application-clustered support for the flagship claim is present and consistent"
 else bad "SM27: the flagship claim's honest-clustering support broke or drifted"; fi
+
+sect "SM28: the organic paired eval has no duplicate (repo, file, commit) site"
+if run_py <<'PY'
+import json, sys
+# C1 (review, E79): two advisories shared one fix commit + file (jupyterlab test_extensions.py), so the
+# identical pre/post pair was measured twice and padded every denominator. Dedup is now by (repo,file,commit);
+# this pins it so a future rerun cannot silently reintroduce the double-count.
+a = json.load(open("evaluation/sast-fp-discrimination/organic-paired-260726.json", encoding="utf-8"))
+rows = a["rows"]
+keys = [(r["repo"], r["file"], r["commit"]) for r in rows]
+dups = [k for k in set(keys) if keys.count(k) > 1]
+tests = [r["file"] for r in rows if "/tests/" in r["file"] or "/test_" in r["file"]]
+print("  sites=%d distinct=%d dups=%s test_files=%s"
+      % (len(rows), len(set(keys)), dups or "none", tests or "none"))
+sys.exit(1 if (dups or tests) else 0)
+PY
+then ok "SM28: paired sites are unique by (repo, file, commit) and carry no test files"
+else bad "SM28: the paired eval reintroduced a duplicate or test-file site"; fi
 
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"

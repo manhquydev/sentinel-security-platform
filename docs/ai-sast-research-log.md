@@ -42,12 +42,15 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E75 | does the model transfer to organic post-cutoff production code? | **STANDS (negative) — COLLAPSE on the preregistered line** — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E79 | RE-CHECK of E75 under a corrected instrument | **REVERSES E75 — collapse was an artefact, result is INCONCLUSIVE** — E75's 0.154 came from the wrong prompt (`_RUBRIC` not the corpus's `_BINARY_RUBRIC`), truncation hiding routes, and a duplicated/test site. Corrected: pre **0.300** [0.108, 0.603], post **0.200**, 33% non-answers, 10 sites. Above the 0.229 collapse line so NOT collapse; but post 0.200 >> corpus ~1% specificity so arms don't separate — the model flags production code at a base rate. Neither transfer nor collapse. Memorisation now UNRESOLVED |
+| E78 | adversarial self-review of the session's instruments | **4 defects, numbers corrected** — `det.ROUTE` matched `@patch` mocks (corpus unmoved 565→561; census E76 inflated ~2x: medians **62→27** decisions, **421→246** sites, still viable). E74's dependence check **could not fail** (§17 violated) — rewritten with random-effects, E57 stands. **E72 fame split AND E59 authorship split are both union-over-k artefacts**: per-reading 0.215 vs 0.214 (p=0.61) and 0.204 vs 0.233 (p=0.81) — corpus gives NO memorisation evidence either way |
+| E77 | can organic precision be measured for free? | **NO (negative method result)** — the presumptive-negative attempt printed a floor of **0.987** vs the benchmark's 0.124: a broken instrument, disbelieved. Two causes: repo CHURN reads 'route changed' as 'control added', and fatally, **a fix commit labels only the advisory's routes and is silent on every other flag** — so E66's 'fix is the label' is a RECALL instrument, never a precision one. Organic precision needs held-out labels = the corpus debt. Invalid instrument removed, not kept with a caveat |
 | E76 | how big is the inventory on real production code? | **STANDS — 24x the benchmark, and the product survives on the DECISION unit** — production web apps carry median **421 route sites** [124, 1435] against the benchmark's 17.7, and median **62 file decisions** against 2.9: the concentration artefact understated a customer's workload ~**21x**. Counted as findings the framing is dead; counted as E64's file-level decisions it is a day's work per app and **survives**. First run printed 'VIABLE, median 1' by averaging in libraries with **0 routes** (nltk, glances) — stratified by route count before concluding. Precision on this population still unmeasured |
 | E74 | does E57's rule-out survive measured reading dependence? | **STANDS — yes, unchanged** — the threatening channel (cold passes) is directly measurable: per-reading flag rates over the 16 surfaced files have **CV 0.23**, and recomputing (1-p)^144 with those multipliers moves nothing at the fourth decimal: threshold **p > 0.0206 at both** (1.00x). Closes the synthesis list: 2 corrections (E71, E72), 2 confirmed-and-fixed (E66 staleness, 63-vs-33), 1 defence (this). E61's in-sample vocabulary remains flagged, attached to the corpus debt |
 | E73 | are 63 repos 63 independent units? | **NO — they are 33 applications (10 specs x 4 generators + 23 human)** — re-clustering the flagship gain by APPLICATION: **H1 survives** ([+28.5%, +61.7%], floor +10% cleared 3x) but **H2 drops to MARGINAL** (median-gain CI [+0.0000, +0.0690] touches zero — four implementations of one spec were being counted as four pieces of evidence). Also fixed: E66/E70's stale 8%-route-landing prose vs the artefact's 52/7/37, and E67's 'two independent measurements agreeing' is withdrawn |
-| E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split leans the same way: famous **0.600** vs obscure **0.333**, p = 0.20. Contamination is NOT ruled out; deterministic results and organic E66-E69 unaffected |
-| E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1130 = 2 x 565). Recall **0.226 → 0.263**, precision **6.7% → 12.4%**, and the product sentence named **1,130** handlers where there are **565**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
+| E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split **was** cited as corroboration (0.600 vs 0.333) but **E78 showed it is a union-over-k artefact**: per reading 0.215 vs 0.214, p=0.61. The logical point (arms mislabelled for memorisation) stands but now explains a NULL, not an effect |
+| E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1122 = 2 x 561 after the E78 @patch fix; 1130/565 before it). Recall **0.226 → 0.263**, precision **6.7% → 12.5%**, and the product sentence named **1,130** handlers where there are **561**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
 | E70 | can the free path reach the ~127 repositories E69 requires? | **STANDS (negative) — NO, it saturates at ~9** — sweeping CWE-285/284 as a sources review recommended moved advisories 355→**463** and fix commits 137→**191**, and repositories **8→9** against a projected ~35. Second measurement of the same wall: widening the input by a third moves the output by nothing, because the binding filter is that the fix must attach to a **route handler**. Free advisory mining cannot close owed item 1; the paid options return for scale, now far better informed |
 | E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
 | E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
@@ -59,7 +62,7 @@ audited on 2026-07-26.
 | E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
 | E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision at site level 11.8% → **12.4%** (published as 6.40% → 6.73% on the doubled finding count; E71) |
 | E60 | can a free ordering rescue the free layer's precision? | **STANDS (negative, inverted)** — four prespecified security signals rank real defects **worse than shuffling**: recall@10% **0.029 vs 0.100**, permutation p(>=obs) = **0.9975**; precision falls monotonically 0.250 → 0.062 as signals accumulate (p = 0.0344). **Source line number, which has no security content, beats the designed ranker 6.5×.** Authorship split cannot separate corpus artefact from real effect (1.32× human vs 1.56× LLM, both n.s.) |
-| E59 | is the contamination threat real? | **CORRECTED BY E72 — conclusion inverted** — the factual half stands: 26 of 66 repos human_authored, the blanket 'LLM-seeded' disclaimer wrong about 40%. But the human half is **famous teaching apps (memorisation-maximal)** and the LLM half is **2026-generated (post-cutoff)**, so detection HIGHER on human (0.519 vs 0.316, p = 0.062) is the direction memorisation **predicts**. 'No evidence for the feared direction' is withdrawn |
+| E59 | is the contamination threat real? | **CORRECTED BY E72 — conclusion inverted** — the factual half stands: 26 of 66 repos human_authored, the blanket 'LLM-seeded' disclaimer wrong about 40%. **E78 then showed 0.519 vs 0.316 is a UNION-over-k artefact**: per reading it is 0.204 vs 0.233 (p=0.81), i.e. NOT higher on human at all. Both E59's original 'no contamination' and E72's 'memorisation predicted' readings are void; the corpus gives no memorisation evidence either way |
 | E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **0.263 recall** on CWE-306/862 (76 of 289 distinct entries — the 337 denominator double-counts, E71) where Bandit+Semgrep get **0**. But precision is **12.4%** per reported handler (E71) — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
@@ -5526,7 +5529,12 @@ Instrument `pool_bound_dependence.py`, artefact `bound-dependence-260726.json`. 
 
 ---
 
-## E76 — the volume census: production web apps carry 24× the benchmark's inventory, and the product survives anyway
+## E76 — the volume census: production web apps carry ~14× the benchmark's inventory, and the product survives anyway
+
+> **Figures corrected by E78.** `det.ROUTE` counted `@patch` mock decorators as routes, inflating this
+> census ~2x. Corrected medians: **27 file-decisions** (not 62) and **246 route-sites** (not 421) per web
+> app, 4 web apps not 5. The conclusion is unchanged — a production application is a tractable ~27-decision
+> attestation job, ~9x the benchmark — but the magnitudes below are the inflated originals; see E78.
 
 **Why this was the highest-value work available.** Advisory counsel (`docs/plans/reports/2026-07-26-product-fork-free-layer-vs-llm-counsel.md`)
 identified the concentration artefact as the heaviest open threat to the whole inventory framing, and it is
@@ -5586,6 +5594,12 @@ Instrument `run_volume_census.py`, artefact `volume-census-260726.json`. Zero mo
 
 ## E75 — the model on organic post-cutoff production code: COLLAPSE, by the criterion written before the run
 
+> **REVERSED BY E79 (same session).** This entry's COLLAPSE conclusion does not survive: its 0.154 figures
+> were produced by a wrong prompt (`_RUBRIC` instead of the corpus's `_BINARY_RUBRIC`), by truncation that
+> hid labelled routes, and by a duplicated/test-file site. Corrected, pre-fix detection is **0.300** and the
+> result is **INCONCLUSIVE**, not a collapse. The reasoning below is kept as the record of how the error
+> was made and found. See E79.
+
 **What this had to settle.** E72 left every generative-role number carrying a live memorisation caveat, and
 no re-analysis of the benchmark can lift it. Only new code can: maintainer-confirmed missing-control defects
 in production projects, published after any plausible training cutoff — one advisory landed **two days
@@ -5643,3 +5657,173 @@ recommendation — the deterministic layer ships and the LLM leaves the runtime 
 this measurement, and its flip condition is **not met**.
 
 Instrument `run_organic_paired.py`, artefact `organic-paired-260726.json`. 90 model readings, ~$0.60.
+
+---
+
+## E77 — the free label gives RECALL but not PRECISION. A negative methodological result, caught by disbelieving 0.987
+
+**What was attempted.** E76 left organic precision unmeasured and flagged it as the harder half. The plan
+was to measure it for free with the same oracle that made E66 work — *the maintainer's fix is the label* —
+via presumptive negatives: a route the detector flags on the pre-fix file that the maintainer left open at
+HEAD, after auditing that file for this exact defect class, is public by design (a false positive); one
+that is protected by HEAD is confirmed real.
+
+**The number it produced was 0.987**, against a benchmark precision of 0.124 (E71). A precision floor eight
+times the benchmark, on the population everyone worries is *harder*, is not a finding — it is a broken
+instrument, and it was treated as one.
+
+**Two failures, one fatal.**
+
+1. **Churn masquerades as confirmation.** "No longer flagged at HEAD" was read as "a control was added,"
+   but a route also stops being flagged when it is deleted, renamed, or its file rewritten. Between an old
+   fix commit and HEAD of an active project (open-webui: 907→1025 lines on one file) most decorator text no
+   longer matches verbatim, so most flagged routes were scored "confirmed real" for having *changed*, not
+   for being *fixed*. Directly checked: the 76-flag file counted 75 confirmed while a stable file in the
+   same repo (`files.py`, 10 flags, decorators intact) correctly counted them still-open.
+
+2. **The oracle is silent on the routes that matter, and this is not fixable.** A security fix confirms the
+   route(s) its advisory addressed and says **nothing** about the other routes the detector flags in the
+   same file. Pre-vs-HEAD scores those by churn (spuriously high); pre-vs-post scores them all as false
+   positives (spuriously low, because "not in this one advisory" is not "not a defect"). Neither is a valid
+   label. **The fix-commit oracle assigns positives, never negatives.**
+
+**The general result, which is worth more than the number would have been.** E66's insight — *the fix commit
+is the label* — is a **recall** instrument and cannot be a **precision** instrument. It confirms defects the
+maintainer found; it is structurally blind to whether the tool's other flags are false alarms, because a
+maintainer fixing one reported bug does not certify the rest of the file. **Organic precision therefore
+cannot be had for free.** It requires per-route labels the fix commit does not supply — either hand
+adjudication of a sample (single-rater, provisional, and in tension with this project's own scepticism about
+LLM security judgement, E1/E2) or a held-out organic set labelled independently, which is the corpus-scale
+debt (owed item 1) under a different name.
+
+**What this leaves standing for the product decision.** The inventory's *size* is measured (E76: median 62
+decisions/app) and its *recall* is measured (E68/E75: ~0.49 site-level, indistinguishable from corpus). Its
+*precision on production code* is **not measured and cannot be measured for free**, and the one benchmark
+figure (0.124) is a concentration artefact (§22). So the honest status of the free-layer inventory product
+is: known to be the right size and to find about half the real defects, with an **unmeasured false-positive
+rate on real code** — and closing that is now correctly attached to the paid/labelled-corpus decision rather
+than to a research session.
+
+The invalid instrument and its artefact were removed rather than kept with a caveat: a script that prints
+0.987 is a citation hazard, and SM25/SM26 guard published numbers, not deleted ones.
+
+No instrument or artefact — this entry records a removed measurement and a methodological conclusion. Zero model calls.
+
+---
+
+## E78 — an adversarial review of my own instruments caught four defects the guards could not. Numbers corrected
+
+**Why this happened.** After E75 I noticed two of my own instrument bugs by luck. That is not a method, so a
+`code-reviewer` agent was pointed at the four load-bearing instruments written this session with one
+instruction: find bugs that change a *published* number. It found several, each verified here from data
+before acting — two external claims failed verification earlier today, so agent output is checked, not
+adopted.
+
+**Defect 1 — `det.ROUTE` matched `@patch`, the unittest.mock decorator.** The verb list included `patch`
+(HTTP PATCH), and `@patch(...)`, `@mock.patch(...)`, `@patch.object(...)` share that word. On the teaching
+corpus this changed **nothing** (0 mock decorators there; the anchor numbers 0.263 recall, 561 sites hold —
+the site count moved 565 → 561 as four mock-decorator false positives dropped, nudging precision 0.124 →
+0.125). On **production code it was large**: two negative lookaheads now reject the mock family while
+keeping `@app.patch(`/`@router.patch(`, pinned by two self-test cases.
+
+**Defect 2 — the volume census counted those mocks, inflating E76 ~2×.** Production repos are full of
+`@patch` in tests. `firefighter-incident` was classified a "web app" with a 124-site inventory built
+**entirely from mock decorators** — it has zero real routes. With the regex fixed and test directories
+excluded, E76's medians fall by about half:
+
+| E76 figure | published | corrected |
+|---|---|---|
+| median file-decisions / web app | 62 | **27** [5, 35] |
+| median route-sites / web app | 421 | **246** [93, 421] |
+| ratio to benchmark (decisions) | 21× | **9×** |
+| web apps in sample | 5 | **4** (firefighter-incident → library) |
+
+The direction is unchanged and the product conclusion survives: a production web application is still a
+**tractable attestation job** at ~27 decisions, an order of magnitude above the benchmark's 2.9 — but the
+published magnitudes were inflated and are corrected.
+
+**Defect 3 — E74's dependence check could not fail (§17 violated).** `pool_bound_dependence` conditioned on
+the observed reading weights; with weights normalised to mean 1, Jensen guarantees the conditional
+probability can only *drop*, so the "bound weakened" branch was unreachable. Numerically confirmed over
+20,000 weight vectors: the falsifying branch never fires. This is the exact defect protocol §17 exists to
+forbid, committed in the entry that *closed the synthesis list*. Rewritten with the honest random-effects
+model — each reading's rate a draw from the empirical distribution, `E_w[(1-p·w)^n]^k`, convex in w so
+correlation *raises* P(all-zero) and *can* weaken the bound. The branch is now reachable (fires at rate
+CV ≈ 1.3). **E57's conclusion stands under the correct model** — at the measured CV 0.23 the threshold moves
+0.0206 → 0.0207 — but the evidence is now a check that could have failed and did not, rather than one that
+could not.
+
+**Defect 4 — the fame split (E72) and the authorship split (E59) are both union-over-k artefacts.** This is
+the most consequential. Both were measured as *union over readings*, and famous/human files were read far
+more often than obscure/llm ones (famous ~8×, obscure ~3.4×). Union rises mechanically with k — the exact
+trap E50/E51 were retracted for. Under the clean **per-reading flag rate**:
+
+| split | published (union) | corrected (per reading) |
+|---|---|---|
+| famous vs obscure (E72) | 0.600 vs 0.333, p = 0.20 | **0.215 vs 0.214, p = 0.61** |
+| human vs llm (E59) | 0.519 vs 0.316, p = 0.062 | **0.204 vs 0.233, p = 0.81** |
+
+Both evaporate. Per reading, detection is **not** higher on the memorisation-maximal human/famous code — if
+anything it is marginally higher on the llm-generated half. **So the corpus provides no evidence for or
+against memorisation once the union confound is removed.** E59's "detection higher on human code" is
+withdrawn; E72's within-arm corroboration is withdrawn; E72's logical point (the arms are mislabelled for
+the memorisation mechanism) stands but now explains a null, not an effect.
+
+Instruments `detect_absent_auth.py`, `run_volume_census.py`, `pool_bound_dependence.py`; artefacts
+`absent-auth-detector-260726.json`, `volume-census-260726.json`, `bound-dependence-260726.json`,
+`rank-absent-auth-260726.json`. Verification is `docs/plans/reports/2026-07-26-instrument-review-organic-eval-chain.md` (agent output, not independently re-derived except where cited). Zero model calls in this entry.
+
+---
+
+## E79 — E75 REVERSED: the organic "collapse" was largely an instrument artefact. Corrected result is INCONCLUSIVE
+
+**What E75 claimed.** On post-cutoff production code the model flagged the defect at **0.154** and the fixed
+version equally (0.154), "COLLAPSE, the arms do not separate." The review found E75's instrument carried
+three result-shaping defects, each verified and fixed:
+
+1. **Wrong prompt.** E75 said it imported the corpus prompt; it imported `_RUBRIC`, but the corpus rate
+   (0.458) was produced by `_BINARY_RUBRIC` at 160 tokens scoring `redact_persisted` text. E75's "fix"
+   made the mismatch worse. The instrument now replicates the corpus path exactly.
+2. **Truncation hid the routes** on multi-route sites even after the first windowing fix; the window now
+   records which routes it contains and scores only those.
+3. **A duplicated site and test-file sites** padded the denominator (jupyterlab's `test_extensions.py`
+   entered twice under two advisories on one commit; its "route" was a `@patch` mock).
+
+**Re-run with the corrected instrument — 10 post-cutoff sites, 7 repositories, k=3:**
+
+| | E75 (defective) | E79 (corrected) |
+|---|---|---|
+| pre-fix (confirmed defect) | 0.154 | **0.300** [0.108, 0.603] |
+| post-fix (control added) | 0.154 | **0.200** [0.057, 0.510] |
+| discordant pairs | 2 vs 2 | **2 pre-only, 1 post-only** |
+| non-answers, pre arm | — | **10 of 30 readings (33%)** |
+
+**The collapse is withdrawn.** Pre-fix detection is **0.300**, above the preregistered collapse line
+(0.229 = half the corpus rate), so "COLLAPSE" is false — it was substantially manufactured by the wrong
+prompt and truncation, both of which suppressed pre-fix flags.
+
+**But it is not a capability demonstration either, and the preregistered rule says which:** the post-fix
+(fixed) file is flagged at **0.200**, far above the corpus clean-arm specificity of ~1%. The arms do not
+cleanly separate — the model flags production code, defective or repaired, at an elevated base rate — and a
+third of the pre-arm readings are non-answers. Protocol §15 and the rule-23 preregistration both name this
+the **uninterpretable / base-rate-flagging** outcome, not detection. The honest verdict is **INCONCLUSIVE**:
+on 10 sites the test distinguishes neither weak transfer capability nor its absence.
+
+**What this does to the memorisation question.** E75 was going to be the clean evidence. It is not. Combined
+with E78 (the corpus authorship split is a null once the union confound is removed), the position is:
+**there is no clean evidence for or against training-data memorisation of the corpus results.** The earlier
+"mildly supported" (E72) and "COLLAPSE confirms it" (E75) are both withdrawn.
+
+**What it does to the product fork.** The advisory counsel recommended cutting the LLM from the runtime
+partly on E75's collapse. That leg is gone. The recommendation nonetheless **stands on the other leg**,
+which the review did not touch: the model is **not reproducible per file** (0/24 files stable at k=18, E57;
+two runs give disjoint worklists, E42), and an attestation inventory cannot have items that change between
+runs. So the deterministic layer still ships and the LLM still leaves the runtime — for
+non-reproducibility, not for a transfer collapse that turned out to be an artefact.
+
+**Three headline reversals in one session** (E67 better → E68 worse → E69 indistinguishable; and now E75
+collapse → E79 inconclusive) is itself a finding: small organic samples measured through hand-built
+instruments are fragile, and the only thing that kept the record honest was re-running under review rather
+than defending the published number.
+
+Instrument `run_organic_paired.py`, artefact `organic-paired-260726.json`. ~72 model readings, ~$0.50.

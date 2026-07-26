@@ -33,26 +33,29 @@ deterministic baseline is approximately nothing.
 > Bandit and Semgrep reach **zero**. The engines' blindness is a property of their *rulesets*, not of
 > pattern analysis. This decision's opening premise is therefore weaker than stated, and the generative
 > role must justify itself on what it does *better* than a rule rather than on having the field to itself.
-> The measured answer: that detector pays **12.4% precision** (E71) because it cannot separate a deliberately
+> The measured answer: that detector pays **12.5% precision** (E71) because it cannot separate a deliberately
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
-## Addendum 2026-07-26 (E75) — the generative role does NOT transfer to post-cutoff production code
+## Addendum 2026-07-27 (E79, superseding the E75 addendum) — the transfer test is INCONCLUSIVE, not a collapse
 
-This decision placed the LLM in the generative role on the strength of corpus measurements. **Those
-measurements are now explicitly corpus-only.**
+This decision placed the LLM in the generative role on corpus measurements. **Those measurements are
+corpus-only, and the direct transfer test does not resolve their memorisation status either way.**
 
-Tested directly, on maintainer-confirmed missing-control defects in production projects whose advisories
-postdate any plausible training cutoff — paired against the *same file after* the fix, so project
-familiarity cancels — the model returns **pre-fix 2/13 = 0.154 and post-fix 2/13 = 0.154**, with symmetric
-discordance (2 vs 2). It is **below the collapse line preregistered before the run** (0.229, half the corpus
-rate at matched k) and, more decisively, **the arms do not separate**: the model flags the repaired file as
-often as the vulnerable one. The canary passed 3/3, and two instrument defects that would each have made
-the collapse *look worse* were found and fixed before the result was accepted (§23, E75).
+The first transfer run (E75) reported COLLAPSE (0.154 vs 0.154). That was substantially an instrument
+artefact — wrong prompt (`_RUBRIC` not the corpus's `_BINARY_RUBRIC`), truncation hiding labelled routes,
+a duplicated/test site. Re-run with the corpus instrument replicated exactly (E79): on 10 post-cutoff
+paired sites the model flags the confirmed defect at **0.300** and the fixed version at **0.200**, with 33%
+non-answers. Pre-fix clears the preregistered collapse line (0.229), so it is **not** a collapse; but the
+fixed file is flagged far above the corpus's ~1% specificity, so the arms do not cleanly separate — the
+model flags production code at an elevated base rate. **INCONCLUSIVE.**
 
-**Standing of this decision.** The generative role retains no demonstrated capability on code the model has
-not seen. Read with E72 — detection higher on memorisation-maximal repositories, fame split leaning the same
-way — memorisation is the most economical explanation of the corpus figures this decision rests on.
+**Standing of this decision.** The generative role has **no demonstrated** transfer capability on unseen
+code, and no evidence **against** it either. The memorisation question is unresolved: E78 showed the corpus
+authorship/fame splits (E59/E72) are union-over-k artefacts that vanish per reading, so the corpus gives no
+memorisation signal, and E79's direct test is inconclusive. What removes the LLM from the runtime product
+is not this — it is **per-file non-reproducibility** (0/24 files stable at k=18, E57; disjoint worklists
+across runs, E42), which an attestation inventory cannot tolerate.
 
 **What may still be claimed:** the corpus results as *corpus* results, with their k, and the negative
 findings (CWE-307 near-invisible, no reliable per-file core), which a collapse only strengthens.

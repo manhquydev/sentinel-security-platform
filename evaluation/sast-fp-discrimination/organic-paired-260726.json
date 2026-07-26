@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T16:46:38.523334+00:00",
+  "generated_at": "2026-07-26T18:00:23.654378+00:00",
   "question": "does the model detect maintainer-confirmed missing-control defects in ORGANIC, POST-CUTOFF production code, and does it distinguish the fixed version?",
   "why": "E72 left every generative-role number on the benchmark carrying a live memorisation caveat; paired post-cutoff organic files are the only evidence that can lift it",
   "model": "sast-grok45",
@@ -7,25 +7,28 @@
   "cutoff": "2025-06-01",
   "design": "paired \u2014 pre-fix and post-fix versions of the SAME file, so project familiarity, style and authorship are held constant and only the control differs",
   "residual_leak": "some projects are famous (langflow, airflow); the model may know the project without knowing the fix. Pairing cancels project familiarity; the fix itself postdates training.",
-  "sites": 15,
-  "post_cutoff_sites": 13,
-  "repositories": 9,
+  "sites": 12,
+  "post_cutoff_sites": 10,
+  "test_sites_excluded": 1,
+  "repositories": 7,
+  "test": "exact McNemar sign test on discordant pairs (paired); no p-value quoted as a headline",
   "canary": {
     "passed": true,
     "verdicts": [
       "flagged",
       "flagged",
-      "flagged"
+      "clean"
     ]
   },
   "verdict_distribution": {
-    "clean": 63,
+    "flagged": 9,
+    "clean": 44,
     "non-answer": 18,
-    "flagged": 8,
     "error": 1
   },
-  "prompt_source": "run_generative._RUBRIC \u2014 imported, so the instrument matches the corpus number this is compared against",
-  "windowing": "the prompt carries the slice of the file containing the labelled routes, within the same 4000-char budget. Whole-file truncation hid 56.5% of the labelled routes from the model, because production files run 400-2700 lines while corpus files are 88-184; the same window is applied to both arms",
+  "prompt_source": "run_generative._BINARY_RUBRIC at 160 tokens with trace.redact_persisted \u2014 the EXACT corpus instrument, so 0.458 corpus vs organic is apples-to-apples (the first two runs used _RUBRIC/400/raw and were not comparable; caught in review)",
+  "windowing": "the prompt carries the slice of the file containing the labelled routes, within the same 4000-char budget, and records which routes it actually contains; a route cut by the budget is NOT scored, so 'the model saw the defect' holds by construction. Whole-file truncation had hidden 56.5% of labelled routes because production files run 400-2700 lines against the corpus's 88-184; same window both arms",
+  "non_answer_bias": "non-answers count as not-flagged in the >=1-of-k tally, which biases the PRE arm toward collapse; effective k per site is recorded in rows.pre_answers",
   "rows": [
     {
       "advisory": "GHSA-gc24-px2r-5qmf",
@@ -34,20 +37,28 @@
       "file": "backend/app/api/routes/api_keys.py",
       "commit": "a82f9278d2",
       "routes": 5,
+      "route_lines": [
+        22,
+        29,
+        73,
+        88,
+        123
+      ],
       "pre_lines": 137,
-      "pre_flagged": 0,
-      "post_flagged": 1,
+      "routes_shown": 2,
+      "pre_flagged": 1,
+      "post_flagged": 0,
       "pre_verdicts": [
-        "clean",
+        "flagged",
         "clean",
         "clean"
       ],
       "post_verdicts": [
-        "non-answer",
-        "non-answer",
-        "flagged"
+        "clean",
+        "clean",
+        "clean"
       ],
-      "pre_nonanswer": 0
+      "pre_answers": 3
     },
     {
       "advisory": "GHSA-c5cp-vx83-jhqx",
@@ -56,20 +67,25 @@
       "file": "src/backend/base/langflow/api/log_router.py",
       "commit": "3fed9fe1b5",
       "routes": 2,
+      "route_lines": [
+        53,
+        72
+      ],
       "pre_lines": 102,
+      "routes_shown": 2,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
         "non-answer",
-        "clean",
-        "clean"
+        "non-answer",
+        "non-answer"
       ],
       "post_verdicts": [
         "clean",
         "clean",
         "clean"
       ],
-      "pre_nonanswer": 1
+      "pre_answers": 0
     },
     {
       "advisory": "GHSA-fh37-cx83-q542",
@@ -78,7 +94,11 @@
       "file": "airflow/www/api/experimental/endpoints.py",
       "commit": "21cedff205",
       "routes": 1,
+      "route_lines": [
+        391
+      ],
       "pre_lines": 416,
+      "routes_shown": 1,
       "pre_flagged": 3,
       "post_flagged": 0,
       "pre_verdicts": [
@@ -87,11 +107,11 @@
         "flagged"
       ],
       "post_verdicts": [
+        "non-answer",
         "clean",
-        "clean",
-        "non-answer"
+        "clean"
       ],
-      "pre_nonanswer": 0
+      "pre_answers": 3
     },
     {
       "advisory": "GHSA-rqj7-6wrp-6g2g",
@@ -100,20 +120,24 @@
       "file": "backend/open_webui/routers/images.py",
       "commit": "e038bab66d",
       "routes": 1,
+      "route_lines": [
+        770
+      ],
       "pre_lines": 1076,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
         "clean",
-        "clean",
+        "non-answer",
         "non-answer"
       ],
       "post_verdicts": [
         "clean",
         "clean",
-        "non-answer"
+        "clean"
       ],
-      "pre_nonanswer": 1
+      "pre_answers": 1
     },
     {
       "advisory": "GHSA-8jjp-r2w2-4v22",
@@ -122,42 +146,24 @@
       "file": "backend/open_webui/main.py",
       "commit": "e7ff4768f8",
       "routes": 1,
+      "route_lines": [
+        1990
+      ],
       "pre_lines": 2609,
+      "routes_shown": 1,
       "pre_flagged": 1,
       "post_flagged": 0,
       "pre_verdicts": [
         "clean",
-        "flagged",
-        "clean"
+        "clean",
+        "flagged"
       ],
       "post_verdicts": [
         "clean",
         "clean",
-        "clean"
+        "non-answer"
       ],
-      "pre_nonanswer": 0
-    },
-    {
-      "advisory": "GHSA-h336-2wxm-pr6q",
-      "published_at": "2026-04-07T18:31:38Z",
-      "repo": "volcengine/OpenViking",
-      "file": "tests/server/test_auth.py",
-      "commit": "8c1c3f3608",
-      "routes": 1,
-      "pre_lines": 717,
-      "pre_flagged": 0,
-      "post_flagged": 0,
-      "pre_verdicts": [
-        "clean",
-        "non-answer",
-        "clean"
-      ],
-      "post_verdicts": [
-        "non-answer",
-        "non-answer",
-        "clean"
-      ],
-      "pre_nonanswer": 1
+      "pre_answers": 3
     },
     {
       "advisory": "GHSA-fj5v-w2jp-wqvj",
@@ -166,42 +172,24 @@
       "file": "cps/shelf.py",
       "commit": "bcdc976414",
       "routes": 1,
+      "route_lines": [
+        224
+      ],
       "pre_lines": 451,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
         "clean",
         "clean",
-        "clean"
+        "non-answer"
       ],
       "post_verdicts": [
         "clean",
-        "clean",
+        "error",
         "clean"
       ],
-      "pre_nonanswer": 0
-    },
-    {
-      "advisory": "GHSA-h5v5-8746-g7mm",
-      "published_at": "2026-07-22T23:13:34Z",
-      "repo": "jupyterlab/jupyterlab",
-      "file": "jupyterlab/tests/test_extensions.py",
-      "commit": "be9303f5bc",
-      "routes": 1,
-      "pre_lines": 525,
-      "pre_flagged": 0,
-      "post_flagged": 0,
-      "pre_verdicts": [
-        "clean",
-        "clean",
-        "clean"
-      ],
-      "post_verdicts": [
-        "clean",
-        "clean",
-        "clean"
-      ],
-      "pre_nonanswer": 0
+      "pre_answers": 2
     },
     {
       "advisory": "GHSA-qrpv-q767-xqq2",
@@ -210,20 +198,24 @@
       "file": "src/backend/base/langflow/api/v1/endpoints.py",
       "commit": "2c9f498d66",
       "routes": 1,
+      "route_lines": [
+        555
+      ],
       "pre_lines": 1200,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
-        "clean",
         "non-answer",
+        "clean",
         "non-answer"
       ],
       "post_verdicts": [
         "clean",
         "clean",
-        "non-answer"
+        "clean"
       ],
-      "pre_nonanswer": 2
+      "pre_answers": 1
     },
     {
       "advisory": "GHSA-26g9-27vm-x3q8",
@@ -232,7 +224,12 @@
       "file": "backend/open_webui/routers/chats.py",
       "commit": "2e52ad8ff2",
       "routes": 2,
+      "route_lines": [
+        877,
+        1267
+      ],
       "pre_lines": 1402,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 1,
       "pre_verdicts": [
@@ -242,10 +239,10 @@
       ],
       "post_verdicts": [
         "clean",
-        "clean",
-        "flagged"
+        "flagged",
+        "clean"
       ],
-      "pre_nonanswer": 0
+      "pre_answers": 3
     },
     {
       "advisory": "GHSA-x3qm-p8hr-3c3h",
@@ -254,20 +251,24 @@
       "file": "backend/open_webui/main.py",
       "commit": "de3317e26b",
       "routes": 1,
+      "route_lines": [
+        2107
+      ],
       "pre_lines": 2699,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
-        "error",
         "clean",
+        "non-answer",
         "clean"
       ],
       "post_verdicts": [
         "clean",
         "non-answer",
-        "clean"
+        "non-answer"
       ],
-      "pre_nonanswer": 1
+      "pre_answers": 2
     },
     {
       "advisory": "GHSA-m98r-6667-4wq7",
@@ -276,7 +277,13 @@
       "file": "libs/aegra-api/src/aegra_api/api/runs.py",
       "commit": "e1b2042254",
       "routes": 3,
+      "route_lines": [
+        39,
+        78,
+        294
+      ],
       "pre_lines": 543,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
@@ -287,9 +294,9 @@
       "post_verdicts": [
         "clean",
         "non-answer",
-        "non-answer"
+        "clean"
       ],
-      "pre_nonanswer": 2
+      "pre_answers": 1
     },
     {
       "advisory": "GHSA-rf6x-r45m-xv3w",
@@ -298,42 +305,24 @@
       "file": "src/backend/base/langflow/api/v1/api_key.py",
       "commit": "fdc1b3b144",
       "routes": 1,
+      "route_lines": [
+        44
+      ],
       "pre_lines": 88,
+      "routes_shown": 1,
       "pre_flagged": 2,
-      "post_flagged": 0,
+      "post_flagged": 1,
       "pre_verdicts": [
-        "clean",
         "flagged",
-        "flagged"
-      ],
-      "post_verdicts": [
-        "clean",
-        "clean",
-        "clean"
-      ],
-      "pre_nonanswer": 0
-    },
-    {
-      "advisory": "GHSA-whvh-wf3x-g77j",
-      "published_at": "2026-07-22T23:12:22Z",
-      "repo": "jupyterlab/jupyterlab",
-      "file": "jupyterlab/tests/test_extensions.py",
-      "commit": "be9303f5bc",
-      "routes": 1,
-      "pre_lines": 525,
-      "pre_flagged": 0,
-      "post_flagged": 0,
-      "pre_verdicts": [
-        "clean",
-        "clean",
+        "flagged",
         "clean"
       ],
       "post_verdicts": [
-        "clean",
-        "clean",
-        "clean"
+        "flagged",
+        "non-answer",
+        "non-answer"
       ],
-      "pre_nonanswer": 0
+      "pre_answers": 3
     },
     {
       "advisory": "GHSA-82fw-ch24-j34w",
@@ -342,7 +331,11 @@
       "file": "backend/routers/personalities.py",
       "commit": "36a5b513df",
       "routes": 1,
+      "route_lines": [
+        443
+      ],
       "pre_lines": 494,
+      "routes_shown": 1,
       "pre_flagged": 0,
       "post_flagged": 0,
       "pre_verdicts": [
@@ -351,11 +344,11 @@
         "clean"
       ],
       "post_verdicts": [
-        "non-answer",
+        "clean",
         "clean",
         "clean"
       ],
-      "pre_nonanswer": 0
+      "pre_answers": 3
     }
   ]
 }

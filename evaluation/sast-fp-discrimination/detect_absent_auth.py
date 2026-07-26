@@ -45,8 +45,15 @@ for _p in (_ROOT, _HERE):
 
 import run_spike as rs  # noqa: E402
 
-# A route is declared by one of these decorators.
-ROUTE = re.compile(r"^\s*@(?:\w+\.)?(?:route|get|post|put|patch|delete)\s*\(", re.M)
+# A route is declared by one of these decorators. The two negative lookaheads reject unittest.mock's
+# `@patch` family, which shares the `patch` verb: `@patch('mod.thing')`, `@patch.object(...)`,
+# `@mock.patch(...)`, `@unittest.mock.patch(...)` are test scaffolding, not HTTP routes. A real PATCH route
+# always carries an app/router prefix (`@app.patch(`, `@router.patch(`), never a bare or mock-prefixed one.
+# Measured on the teaching corpus this changes nothing (0 mock decorators there); it corrects production
+# code, where a fifth to four-fifths of a repo's `@patch` decorators are mocks in tests (E78).
+ROUTE = re.compile(
+    r"^\s*@(?!patch\b)(?!(?:unittest\.)?mock\.patch\b)(?:\w+\.)?"
+    r"(?:route|get|post|put|patch|delete)\s*\(", re.M)
 
 # Anything that establishes WHO the caller is, or WHAT they may do. Presence of any of these on the
 # handler means the control is not absent — the point is to report only handlers with none of them.
@@ -118,6 +125,10 @@ SELF_TEST = [
     ("@app.route('/admin')\ndef admin():\n    if not user.is_admin:\n        abort(403)\n"
      "    return 1", False,
      "enforcement in the body: the handler refuses, so the control is present"),
+    ("@patch('requests.get')\ndef test_thing(m):\n    assert call() == 1", False,
+     "unittest.mock @patch is not a route — it shares the verb 'patch' but is test scaffolding"),
+    ("@mock.patch('svc.client')\ndef test_flow(m):\n    do()", False,
+     "@mock.patch is not a route either"),
     ("@app.route('/doc/<int:i>')\ndef doc(i):\n    u = session['user_id']\n"
      "    return Doc.query.get(i)", True,
      "IDENTITY IS NOT AUTHORIZATION: reading the session then serving any object is CWE-862"),

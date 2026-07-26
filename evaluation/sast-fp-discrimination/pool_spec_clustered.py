@@ -1,10 +1,10 @@
-"""The corpus has 36 independent applications, not 63. Do the flagship intervals survive re-clustering?
+"""The corpus has 33 independent applications, not 63. Do the flagship intervals survive re-clustering?
 
 The 40 `llm_generated` repositories are not 40 applications: the manifest shows they are **10 application
 specs x 4 generators** (claude-code, codex, codex-high, kimi-code), each generator implementing the same
 spec with the same seeding process. Four implementations of `crm-saas-django` share structure, route
-names and seeded-defect placement — they are replicates, not independent draws. With the 26 human-authored
-repositories that makes **36 independent applications**.
+names and seeded-defect placement — they are replicates, not independent draws. With the 23 human-authored (three have no engine rows)
+repositories (three have no engine rows) that makes **33 independent applications**.
 
 Every grouped statistic this project has published bootstraps over the 63 fetched repositories as if they
 were independent. The flagship number — the multi-engine relative recall gain **+43.6% [31.5%, 58.4%]**
@@ -100,7 +100,7 @@ def main() -> int:
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(),
            "question": "does the flagship multi-engine gain survive clustering by independent APPLICATION "
-                       "(36 units: 26 human + 10 specs x 4 generators) instead of by repository (63)?",
+                       "(33 units: 23 human + 10 specs x 4 generators) instead of by repository (63)?",
            "source_artefact": "multiengine-grouped-260726.json (committed per-repo counts; no engine run)",
            "independent_applications": len(by_app),
            "spec_clusters": {k: len(v) for k, v in sorted(spec_clusters.items())},

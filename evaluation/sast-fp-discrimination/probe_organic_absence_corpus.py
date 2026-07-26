@@ -50,6 +50,8 @@ for _p in (_HERE,):
         sys.path.insert(0, _p)
 
 import detect_absent_auth as det  # noqa: E402
+from stats import fisher_one_sided  # noqa: E402
+from pool_propensity import wilson  # noqa: E402
 
 # 306/862/863/639 are the canonical absence classes. 285 and 284 ("Improper Access Control") were added
 # after a sources review found them indexed by the same API and far denser in DISTINCT repositories — the
@@ -366,8 +368,6 @@ def main() -> int:
                 # 35 sites is a small sample and the two point estimates have swung in BOTH directions
                 # across revisions of this probe. Whether they differ at all is a question the intervals
                 # answer, and it must be asked before either is described as better or worse.
-                from stats import fisher_one_sided
-                from pool_propensity import wilson
                 olo, ohi = wilson(site_hit, site_want)
                 clo, chi = wilson(gt_hit, gt_route)
                 pv = fisher_one_sided(gt_hit, gt_route - gt_hit, site_hit, site_want - site_hit)

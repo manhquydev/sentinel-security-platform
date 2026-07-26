@@ -79,9 +79,15 @@ def census(root: str) -> tuple[int, int, int, int, int]:
     hit_files = 0
     sites = set()
     for dp, dirs, fns in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in (".git", "node_modules", ".venv", "venv", "__pycache__")]
+        dirs[:] = [d for d in dirs
+                   if d not in (".git", "node_modules", ".venv", "venv", "__pycache__", "tests", "test")]
         for fn in fns:
             if not fn.endswith(".py"):
+                continue
+            # Test files hold mock decorators and fixture routes that are not part of any production
+            # access-control surface. Excluding them (not just the @patch verb, fixed in det.ROUTE) is
+            # what stops a test-heavy repo being scored as a large inventory it does not actually present.
+            if fn.startswith("test_") or fn.endswith("_test.py") or "/tests/" in dp or "/test/" in dp:
                 continue
             path = os.path.join(dp, fn)
             try:
