@@ -1183,7 +1183,11 @@ this lab keeps having to retract.
 That is a *cleaner* finding than the horse-race framing, and it is the one decision 0027 should rest on.
 The genuinely two-sided comparison in this experiment remains **E17's preregistered primary** — vulnerable
 files vs clean control files, 10/60 vs 1/40, **p = 0.024** — where both arms could have scored and the
-model discriminates. E18 (running) tests whether that discrimination is class-specific or mess-driven.
+model discriminates. *(Superseded: the classifier fixes recorded further down this log — "access control
+looks properly implemented" being scored as a finding, quoted code supplying the absence word — moved
+this to **9/60 vs 0/40, p = 0.0078**. The corrected pair is what decision 0027 cites. Both are kept
+because the direction of the correction matters: fixing the instrument moved the number in the arm that
+suited us, and a reader should be able to see that.)* E18 (running) tests whether that discrimination is class-specific or mess-driven.
 
 **Retained without change:** the ~10% hit rate, the file-level granularity, the 33% non-answer rate, and
 the contamination bound. None of those depend on this framing.

@@ -11,14 +11,15 @@
 
 ## 0. Tóm tắt cho lãnh đạo (một trang)
 
-Sentinel **không phải** là "AI tự tìm ra nhiều lỗ hổng hơn con người". Qua 17 thí nghiệm
+Sentinel **không phải** là "AI tự tìm ra nhiều lỗ hổng hơn con người". Qua 36 thí nghiệm
 có đo đạc, mỗi lần em cho AI giữ **vai trò chốt chặn** (phán quyết, xác nhận, xếp hạng)
 thì **AI hoặc thua, hoặc hòa, hoặc câu hỏi không trả lời được** — chi tiết ở mục 4. Bán
 câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự án đã bác bỏ.
 
 > **Ranh giới em phải nói rõ, kẻo chính em cũng nói quá:** kết luận trên đã đo **cho vai
 > trò chốt chặn** (phán quyết / xác nhận / xếp hạng). Vai trò **đề xuất** (AI nêu giả
-> thuyết, code tất định kiểm chứng) đo lần đầu đêm 26/07 và **kết quả ngược lại**: trên
+> thuyết, code tất định kiểm chứng) đo đêm 26/07, **lặp lại độc lập sáng 26/07**, và
+> **kết quả ngược lại**: trên
 > đúng lớp lỗ mà máy quét mù (thiếu kiểm soát — IDOR, thiếu rate-limit, thiếu authz),
 > **Bandit + Semgrep tìm được 0/60 file**, còn LLM gọi đúng tên lớp lỗ ở **6/60 file
 > (p = 0.0137)** — cùng một bộ file, nên không phải do "file này bẩn hơn".
