@@ -3929,6 +3929,31 @@ Stated for a buyer: **read every file six times, pay six times, and roughly thre
 still never appear.** Everything else measured today — the mixture, the saturation, the class asymmetry —
 is detail hanging off that sentence.
 
+### Both estimands published, and the frame turns out not to be load-bearing
+
+Rather than choose a sampling frame — which would be deciding a policy this experiment has no authority to
+decide — both are reported, the way E14 reports macro and micro:
+
+| frame | clean-control false positives | 95% CI |
+|---|---|---|
+| all clean files, as sampled | 1/184 = **0.0054** | [0.0010, 0.0301] |
+| excluding test files | 0/152 = **0.0000** | [0.0000, 0.0247] |
+| test files only | 1/32 = **0.0312** | [0.0055, 0.1574] |
+
+**The two candidate frames' intervals overlap almost entirely.** Whichever is chosen, the supportable claim
+is the same: *the clean-control false-positive rate is somewhere below about 3%.* Excluding test files
+recovers a point estimate of zero but not a claim of zero — 0 of 152 still admits up to 2.5%.
+
+So the sampling-frame question, which read an hour ago as blocking every specificity number, is **real but
+not load-bearing**. It should still be settled for cleanliness, and 17% of the clean arm being test files is
+still a design defect worth fixing. But no conclusion in decision 0027 turns on which way it goes, and that
+is worth knowing before anyone spends effort on it.
+
+**The durable lesson is about the original claim, not the frame.** "Zero false positives in 96
+observations" was never a claim of zero — 0 of 96 admits up to 3.8%. The floor language came from the point
+estimate rather than the interval, and it survived precisely as long as the sample stayed small enough to
+keep producing zeros. The interval said all along what the breach later demonstrated.
+
 **Status: no fix applied, and the owed work is now a different question** — whether test files belong in
 either arm of this design. Changing that changes the sampling frame and therefore every specificity number
 this project has published, so it needs deciding deliberately rather than as a patch. The measured rate of

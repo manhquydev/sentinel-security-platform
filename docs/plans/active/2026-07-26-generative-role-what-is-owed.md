@@ -53,9 +53,13 @@ came from exactly that subpopulation.
 
 Neither candidate repair works: the prose-level rule removes 2 genuine positive-arm detections and misses
 the false positive; the path-level rule removes only the one embarrassing observation, which is a
-retraction rather than a fix. **The decision is about the sampling frame, not the classifier**, and it
-changes every specificity figure this project has published — so it must be made deliberately. Cost: no
-model calls, only a decision and a re-derivation.
+retraction rather than a fix. **The decision is about the sampling frame, not the classifier.**
+
+**Downgraded in priority — both estimands are now published and they agree.** All clean files: 1/184
+[0.0010, 0.0301]. Excluding test files: 0/152 [0.0000, 0.0247]. The intervals overlap almost entirely, so
+whichever frame is chosen the claim is "below about 3%", and no conclusion in 0027 turns on it. Still worth
+settling for cleanliness — 17% of the clean arm being test files is a design defect — but it is not
+blocking anything.
 
 ### 4. Whether the 14 zero-propensity files are truly unreachable
 
