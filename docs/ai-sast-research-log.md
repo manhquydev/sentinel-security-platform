@@ -2578,3 +2578,28 @@ n = 12 pairs. I authored the defects — matched pairs stop conspicuousness from
 cannot make my defect distribution representative of a client codebase. This closed the **power** gap
 E26 left. It did not close the **realism** gap, and the class breakdown above is the honest warning:
 a corpus weighted toward CWE-307 or 915 would have scored far worse.
+
+## E35 — PREREGISTRATION: re-run the headline comparison, paying the stale-artefact debt (written before measuring)
+
+Registered 2026-07-26 10:20 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** `generative-260726.json` carries E17, this lab's **most load-bearing result** (absence-class
+  vs clean files, p = 0.0078 after correction). SM17 lists it as **known-stale**: it predates the
+  E26/E27/E34 classifier corrections, so its committed numbers were produced by a classifier that no
+  longer exists. The published figures are the *re-scored* ones, which is defensible but leaves the
+  headline resting on an artefact nobody can regenerate.
+- **This is a replication, not bookkeeping.** A fresh run of the same design with the current instrument
+  is an **independent second measurement of the core finding**. E28 did exactly this for the file-role
+  comparison and reproduced its difference to 0.001; the headline has never had the same treatment.
+- **Method.** Identical design to E17 — 60 files holding an absence-class vulnerability, 40 clean
+  controls, frozen prompt, positive-control gate — with the **corrected classifier** and **full response
+  storage**. Both arms measured in the same run.
+- **Primary outcome.** Flag rate in each arm and the one-sided Fisher p, compared against the re-scored
+  E17 (9/60 = 0.150 vs 0/40 = 0.000, p = 0.0078).
+- **Prediction, recorded in advance.** Rates shift by a few files — flag-level churn is ~1 in 12 (E31) —
+  and **the conclusion holds**: the vulnerable arm materially above the clean arm.
+- **Falsifying result.** The clean arm rises to meet the vulnerable arm, or the gap loses significance.
+  That would mean E17 was a lucky draw and decision 0027's primary evidence needs re-basing. Published
+  if it occurs.
+- **Limits unchanged.** Same corpus, same model, same gateway redaction confound (37% of absence-class
+  files arrive with identifiers rewritten), same file-level granularity.
