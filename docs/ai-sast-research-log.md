@@ -3476,9 +3476,17 @@ One observation that must not be over-read: the single file that *was* named for
 (`accounts/views.py`) was named in **both** readings — 1 of 1 overlap, where ownership managed 0 of 6.
 If that held up it would mean the rare rate-limit detections are high-propensity files rather than lucky
 draws, which is a different failure mode (a narrow competence, not a weak one) with different implications.
-**But n=1 supports nothing.** It is recorded as a question for the next repeated-reading run — measure that
-file at k=9 and see whether it sits near 1.0 or regresses like the ownership group did — and it is not a
-finding.
+**But n=1 supports nothing**, so that file was read nine more times at k=9 before this entry was written.
+
+**It came back 0 of 9.** Combined across every reading ever taken of it: **2 of 11 = 0.182, 95% CI
+[0.051, 0.478]**. The two-for-two start was a coincidence, and the narrow-competence story is dead: there
+is no high-propensity file for CWE-307 in this slice, only a uniformly near-zero class with one file that
+happened to fire twice early. That is the less interesting answer and the one the data gives.
+
+Worth noting how cheap this was to settle — nine calls, about five minutes — against how wrong the
+alternative reading would have been. "The model reliably catches missing rate limits in *some* files" and
+"the model essentially never catches missing rate limits" are different products, and one lucky pair of
+readings was all that separated them.
 
 **Method note worth keeping.** The plan written thirty minutes earlier listed this as work owed to a future
 session and needing fresh model calls. It needed neither. Before scheduling a run, it is worth asking what

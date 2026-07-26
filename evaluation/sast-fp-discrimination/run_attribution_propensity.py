@@ -45,7 +45,7 @@ for _p in (_ROOT, _HERE):
 
 import run_spike as rs  # noqa: E402
 from agent import trace  # noqa: E402
-from run_class_asymmetry import OWN_AUTHN  # noqa: E402
+from run_class_asymmetry import OWN_AUTHN, RATE_LIMIT  # noqa: E402
 from run_generative import (MAX_BYTES, _BINARY_RUBRIC, _CANARY_SRC, canary_passes,
                             classify_prose, names_class_absence)  # noqa: E402
 
@@ -54,11 +54,21 @@ K = int(os.environ.get("PROPENSITY_K", "5"))
 # propensity distribution can be told apart from a flat rate, so when the budget binds it is the group
 # size that gives way, not the number of readings per file.
 GROUP_CAP = int(os.environ.get("PROPENSITY_GROUP", "6"))
+# Which absence class the propensity is measured FOR. The default is the ownership/authentication family,
+# which is what the group design was built around. Asking a CWE-307 question while counting ownership
+# attributions would answer a different question than the one posed, and would do it silently.
+MEASURE = os.environ.get("PROPENSITY_CLASS", "own_authn")
 _RUNS = ("class-asymmetry-260726.json", "class-asymmetry-replication-260726.json")
 
 
 def groups(seed: int = 21) -> tuple[list[dict], list[dict]]:
-    """(EVER reported, NEVER reported) — from the two committed runs, not from a fresh judgement."""
+    """(EVER reported, NEVER reported) — from the two committed runs, not from a fresh judgement.
+
+    `PROPENSITY_FILES` overrides the selection with an explicit comma-separated list of `repo/path`
+    entries, for the case where one named file needs measuring rather than a group. The rows still come
+    from the committed runs so the ground-truth class list is the same one every other run used; only
+    which files are read changes.
+    """
     seen: dict[tuple[str, str], dict] = {}
     ever: set[tuple[str, str]] = set()
     for name in _RUNS:
@@ -67,6 +77,14 @@ def groups(seed: int = 21) -> tuple[list[dict], list[dict]]:
             seen[key] = r
             if r["named_own_authn"]:
                 ever.add(key)
+    explicit = os.environ.get("PROPENSITY_FILES", "").strip()
+    if explicit:
+        want = [e.strip() for e in explicit.split(",") if e.strip()]
+        picked = [seen[k] for k in seen if f"{k[0]}/{k[1]}" in want]
+        if len(picked) != len(want):
+            raise SystemExit(f"PROPENSITY_FILES matched {len(picked)} of {len(want)} entries")
+        # One group only; the comparison here is against the file's own prior readings, not a control arm.
+        return picked, []
     ever_rows = [seen[k] for k in sorted(ever)]
     if len(ever_rows) > GROUP_CAP:
         random.Random(seed).shuffle(ever_rows)
@@ -133,12 +151,13 @@ def main() -> int:
     # Interleaved, not group-after-group. If the run is cut short it must still leave a COMPARISON rather
     # than one finished group and nothing to compare it against — the entire design is the contrast
     # between the two, so the ordering is what makes partial output survivable.
-    ordered = [pair for a, b in zip(ever, never) for pair in (("ever", a), ("never", b))]
+    ordered = ([pair for a, b in zip(ever, never) for pair in (("ever", a), ("never", b))]
+               if never else [("ever", r) for r in ever])
     rows, empty = [], 0
     if True:
         for label, r in ordered:
             slug, relpath = r["repo"], r["file"]
-            own = r["gt_own_authn"]
+            own = r["gt_own_authn"] if MEASURE == "own_authn" else [RATE_LIMIT]
             hits, keeps = 0, []
             for _ in range(K):
                 raw = query(slug, relpath)
@@ -155,23 +174,32 @@ def main() -> int:
 
     pe = [r["propensity"] for r in rows if r["group"] == "ever"]
     pn = [r["propensity"] for r in rows if r["group"] == "never"]
-    me, mn = sum(pe) / len(pe), sum(pn) / len(pn)
-    lo, hi = boot_diff(pe, pn)
+    # Targeted mode measures named files against their own prior readings, so there is no control arm and
+    # no difference to report. Printing a difference of "x - 0" here would invent a comparison.
+    me = sum(pe) / len(pe) if pe else 0.0
+    mn = sum(pn) / len(pn) if pn else None
+    lo, hi = boot_diff(pe, pn) if pn else (None, None)
     print(f"\nEVER  mean propensity = {me:.3f}   distribution = {sorted(pe)}")
-    print(f"NEVER mean propensity = {mn:.3f}   distribution = {sorted(pn)}")
-    print(f"difference = {me - mn:+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}]")
+    if mn is not None:
+        print(f"NEVER mean propensity = {mn:.3f}   distribution = {sorted(pn)}")
+        print(f"difference = {me - mn:+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}]")
+    else:
+        print("no control arm in targeted mode — compare against this file's prior readings, not a group")
     # The lottery hypothesis predicts BOTH means land near the population rate of 0.113.
     print(f"\nlottery predicts both means near 0.113; signal predicts EVER high and NEVER near 0")
     if empty:
         print(f"WARNING: {empty} calls returned nothing; they bias this toward the null.")
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "model": model, "k": K,
+           "measured_class": MEASURE,
            "question": "is per-file class attribution a lottery at a fixed rate, or real per-file signal?",
            "preregistered": "estimation only; two propensity distributions and a bootstrap interval on "
                             "their difference. No p-value: 12 files per group is what the prior runs "
                             "define, not a number chosen for power",
-           "ever_mean": round(me, 4), "never_mean": round(mn, 4),
-           "difference": round(me - mn, 4), "difference_ci95": [round(lo, 4), round(hi, 4)],
+           "ever_mean": round(me, 4),
+           "never_mean": round(mn, 4) if mn is not None else None,
+           "difference": round(me - mn, 4) if mn is not None else None,
+           "difference_ci95": [round(lo, 4), round(hi, 4)] if mn is not None else None,
            "population_rate_for_comparison": 0.113,
            "empty_responses": empty, "rows": rows}
     # A deeper re-run over the same files must not overwrite the readings it is meant to be pooled with.

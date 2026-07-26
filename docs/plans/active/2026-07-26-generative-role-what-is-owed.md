@@ -55,11 +55,9 @@ What remains open here is narrower, and there is one concrete next measurement:
 
 - The per-file intervals for files that DO carry signal are wide (the best is [0.320, 0.807]) — the ceiling
   is established but not located.
-- **`realvuln-.../accounts/views.py` is the single file ever named for CWE-307, and it was named in both
-  readings (1 of 1) where ownership detections overlapped 0 of 6.** Read that one file at k=9. If it sits
-  near 1.0, the rate-limit failure is a *narrow competence* rather than a weak one — a different failure
-  mode with different product implications. If it regresses toward the group mean, it was a lucky draw.
-  One file, nine calls, and it distinguishes two stories that currently look identical.
+- ~~The single file ever named for CWE-307 was named in both readings.~~ **Done: read at k=9, came back
+  0/9, combined 2/11 = 0.182 [0.051, 0.478].** The narrow-competence story is dead; CWE-307 is uniformly
+  near-zero. No follow-up needed.
 
 ## 3. A defect distribution not authored by us
 

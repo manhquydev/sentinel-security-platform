@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-26T06:49:20.163022+00:00",
+  "model": "sast-grok45",
+  "k": 9,
+  "measured_class": "rate_limit",
+  "question": "is per-file class attribution a lottery at a fixed rate, or real per-file signal?",
+  "preregistered": "estimation only; two propensity distributions and a bootstrap interval on their difference. No p-value: 12 files per group is what the prior runs define, not a number chosen for power",
+  "ever_mean": 0.0,
+  "never_mean": null,
+  "difference": null,
+  "difference_ci95": null,
+  "population_rate_for_comparison": 0.113,
+  "empty_responses": 0,
+  "rows": [
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/views.py",
+      "group": "ever",
+      "gt_own_authn": [
+        307
+      ],
+      "hits": 0,
+      "k": 9,
+      "propensity": 0.0,
+      "verdict": "clean",
+      "response": "Broken redactions. Restore:\n\n```python\n[redacted:secret]\n```\n\n```python\nf\"Use this link to reset your [redacted:secret]\n```\n\n```python\ndef invitation_accept(request, [redacted:secret]\n```\n\n```python\n[redacted:secret]\n```\n\nWhat need?",
+      "all_responses": [
+        "Broken redactions. Restore:\n\n```python\n[redacted:secret]\n```\n\n```python\nf\"Use this link to reset your [redacted:secret]\n```\n\n```python\ndef invitation_accept(request, [redacted:secret]\n```\n\n```python\n[redacted:secret]\n```\n\nWhat need?",
+        "Task? File only. No ask.",
+        "**Bugs**\n\n`password_reset_request` L129: mail body drops `url` \u2014 link never sent.\n`password_reset_confirm` L146: no `is_active`/`is_disabled` check \u2014 disabled users reset.\n`invitation_accept` L290: syntax broken post-redact \u2014 must be `form.cleaned_data[\"password1\"]`.\n`invitation_accept` L279: type hint truncated.\n\n**Skip**\n\nRate limit login/reset. Email fail_silently hides delivery loss. Invitation list unscoped. Self-role demotion guard.\n\n**Fix first**\n\n```python\n# L127-132\nsend_mail(\n    \"Reset your LMS password\",\n    f\"Use this link to reset your [redacted:secret]\n    settings.DEFAULT_FROM_EMAIL,\n    [user.email],\n    fail_silently=True,\n)\n\n# L146\nuser = User.objects.get(pk=uid, is_active=True, is_disabled=False)\n\n# L288-295\nuser = User.objects.create_user(\n    email=invite.email,\n    [redacted:secret]\n    display_name=form.cleaned_data[\"display_name\"],\n    role=invite.role,\n    username=invite.email,\n    is_active=True,\n)\n```\n\n\u2192 skipped: rate limits, add when abuse shows.",
+        "No task stated. What need? Review / fix / explain / change?",
+        "Redaction broke syntax. Restore:\n\n```python\n# L123\n[redacted:secret]\n\n# L129\nf\"Use this link to reset your [redacted:secret]\n\n# L279\ndef invitation_accept(request, [redacted:secret]\n\n# L290\n[redacted:secret]\n```\n\nReal issues:\n- reset email claims 1h; Django default `PASSWORD_RESET_TIMEOUT` = 3d. Align claim or set timeout.\n- `password_reset_confirm` skips `is_disabled`/`is_active` check. Disabled users can reset.\n- reset complete: no `update_session_auth_hash` / session kill. Old sessions stay live.\n\n\u2192 skipped: session invalidation on reset, add when multi-device threat matters.",
+        "No ask. What need?\n\nReview? Fix? Diff? Tests?\n\nFile dump only. State goal.",
+        "What need? Review, fix, test, extend?",
+        "What need? File only. No ask.",
+        "Task? File only. No ask."
+      ]
+    }
+  ]
+}
