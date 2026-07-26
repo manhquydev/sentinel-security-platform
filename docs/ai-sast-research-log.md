@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
 | E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
 | E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
 | E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 355 → 137 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
@@ -5183,3 +5184,55 @@ random. This is now a better-founded indication than E67's and it is still not a
 should sell.
 
 Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.
+
+---
+
+## E69 — the organic sample, grouped by repository: the conclusion holds and the debt finally has a number
+
+**Why grouping was owed.** E68 compared organic recall (17/35) against the corpus (76/132) with the **site**
+as the unit and found them indistinguishable. But sites are not independent: one maintainer's fix adds a
+control to many routes in one repository. E14 established for this project that grouped analysis can change
+a conclusion, so the same test has to be asked of the repository.
+
+| repository | hit | sites | recall |
+|---|---|---|---|
+| langflow-ai/langflow | 11 | 15 | 0.733 |
+| maziggy/bambuddy | 0 | 8 | 0.000 |
+| open-webui/open-webui | 3 | 5 | 0.600 |
+| aegra/aegra | 0 | 3 | 0.000 |
+| apache/airflow | 1 | 1 | 1.000 |
+| volcengine/OpenViking | 1 | 1 | 1.000 |
+| janeczku/calibre-web | 0 | 1 | 0.000 |
+| jupyterlab/jupyterlab | 1 | 1 | 1.000 |
+
+| | estimate | 95% CI | width |
+|---|---|---|---|
+| pooled, **site** as unit | 0.486 | [0.330, 0.644] | 0.314 |
+| grouped, **repository** as unit | mean 0.542 | **[0.135, 0.731]** | **0.596** |
+
+**The conclusion survives.** The corpus comparator 0.576 sits inside the grouped interval, so organic and
+teaching-corpus recall are **indistinguishable at the repository level too** — E68's null result is robust
+to clustering rather than an artefact of pooling.
+
+**Two things the pooled number was hiding.** The grouped interval is **nearly twice as wide** (0.596 vs
+0.314): treating 35 correlated sites as 35 independent observations overstated the precision by roughly a
+factor of two. And **one repository supplies 43% of all sites** — langflow, at recall 0.733 — so the pooled
+figure moves with a single maintainer's fix. The repo-level mean (0.542) sits closer to the corpus's 0.576
+than the pooled 0.486 does, because pooling lets the two zero-recall repositories with 8 and 3 sites weigh
+against the many single-site repositories.
+
+**And the debt finally has a target instead of a complaint.** "Eight repositories is too few" has been
+asserted in this log for three entries without a number attached. Scaling the measured grouped width at
+the usual 1/√n gives:
+
+> **~127 repositories** for a ±0.075 interval — the precision at which a transfer claim would be worth
+> making.
+
+That is an estimate resting on two stated assumptions (width scales as 1/√n; further repositories resemble
+these), so it is a target rather than a promise. But it converts owed item 1 from a validity threat with no
+owner into a work item with a size: **the free advisory path currently reaches 8, and a publishable claim
+needs of the order of 127.** Whether that gap is closable from free sources is the open question, and it is
+what determines whether the paid options in the plan come back into play.
+
+Instrument `pool_organic_grouped.py`, artefact `organic-grouped-260726.json`. Zero API and model calls —
+computed entirely from the committed probe artefact.

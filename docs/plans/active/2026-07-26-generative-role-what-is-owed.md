@@ -161,11 +161,28 @@ and sit in the published denominator as guaranteed misses. So "22.6% recall" car
 The instrument is not weak over absence classes — it is strong over *route-level* absence and silent on the
 other 54%, which is where further deterministic work belongs.
 
-**So what is actually owed has changed shape.** Not "$30–50k or nothing", but engineering: ecosystems
-beyond `pip`, and enough repositories that the unit of analysis is the repository rather than the site. The
-paid options remain the route to a *publishable* corpus; they are no longer the route to a first organic
-check. What still may not be published as applying to customer code is any positive figure resting on
-**6 repositories** with sites clustered inside them.
+**So what is actually owed has changed shape, and E69 gave it a size.** Not "$30–50k or nothing", but
+engineering — and the engineering target is now measured rather than asserted.
+
+Grouping the organic sample by repository (E69) does two things. It confirms the null result is not an
+artefact of pooling: the grouped 95% CI is **[0.135, 0.731]** and the corpus comparator 0.576 sits inside
+it, so organic and teaching-corpus recall are indistinguishable at repo level too. And it shows the pooled
+figure was **overstating precision by roughly 2×** — 35 sites clustered in 8 repositories are not 35
+independent observations, and one repository (langflow) supplies **43%** of them.
+
+Scaling the measured grouped width at 1/√n:
+
+> **~127 repositories** are needed for a ±0.075 interval — the precision at which a transfer claim would be
+> worth making. The free advisory path currently reaches **8**.
+
+That number rests on stated assumptions (width scales as 1/√n; further repositories resemble these) and is
+a target, not a promise. But it is the first time this debt has had a size, and it sets the decision:
+**whether ~127 repositories are reachable from free sources determines whether the paid options come back
+into play.** The paid options remain the route to a *publishable* corpus; they are no longer the route to a
+first organic check, which now exists.
+
+What still may not be published as applying to customer code is any positive figure resting on **8
+repositories** with sites clustered inside them.
 
 **E65 gave this debt a second, independent reason.** The headroom for any prioritisation method is bounded
 by defect concentration, and on this corpus the oracle sits 6.5 points from a trivial density ordering

@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-07-26T14:34:11.804072+00:00",
+  "question": "does the organic transfer conclusion survive repo-level grouping, and how many repositories would a real claim need?",
+  "repositories": 8,
+  "sites": 35,
+  "hits": 17,
+  "pooled_site_level": {
+    "recall": 0.4857,
+    "ci": [
+      0.3299,
+      0.6443
+    ],
+    "width": 0.3144
+  },
+  "repo_level": {
+    "mean_recall": 0.5417,
+    "grouped_ci": [
+      0.1351,
+      0.7308
+    ],
+    "width": 0.5956
+  },
+  "largest_repo": {
+    "repo": "langflow-ai/langflow",
+    "sites": 15,
+    "share_of_sites": 0.4286,
+    "recall": 0.7333
+  },
+  "corpus_comparator": 0.576,
+  "distinguishable_at_repo_level": false,
+  "repositories_needed": 127,
+  "target_interval_width": 0.15,
+  "projection_assumptions": "width ~ 1/sqrt(n) and further repositories resemble these"
+}
