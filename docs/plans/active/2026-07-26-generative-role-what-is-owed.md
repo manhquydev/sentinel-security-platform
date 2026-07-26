@@ -144,8 +144,11 @@ specific route the maintainer fixed needs diff-to-line mapping that does not exi
 built the same evening and gave **0.722** — then widening the extractor to fixes that land in the handler's
 *signature* showed that figure was a **selection effect**: requiring the route decorator inside the diff hunk
 had kept only short, simple handlers the detector finds easily. On the corrected sample — **35 sites across
-8 repositories** — organic recall is **17/35 = 0.486**, slightly *below* the corpus's 0.576. The detector
-does not collapse on production code; it does not improve on it either.
+8 repositories** — organic recall is **17/35 = 0.486** against the corpus's 0.576 — and at this sample size the two are
+**indistinguishable**: 95% CIs [0.330, 0.644] and [0.490, 0.657], Fisher one-sided p = 0.22. Both "better"
+and "worse" are withdrawn. What the data supports: **a detector built and tuned entirely on teaching
+applications does not measurably degrade on real production code** — weaker than a transfer advantage, and
+considerably stronger than the threat it was tested against, which predicted collapse.
 
 Superseded figures, kept only as the record of how the reasoning went: **0.722** on organic route sites. It must not be quoted against the published 0.226 — organic sites
 are route handlers by construction, and that is the denominator error §22 records. Matched population, the

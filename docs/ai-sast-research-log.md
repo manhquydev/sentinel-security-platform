@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486**, now BELOW the corpus's 0.576. Two accounting errors fixed in the same pass, both flattering. 'Points away from the feared direction' is **withdrawn**; what stands is that it does not collapse |
+| E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
 | E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
 | E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 355 → 137 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
 | E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
@@ -5143,7 +5143,7 @@ from the patch alone.
 | repositories contributing a site | 6 | **8** |
 | **organic site-level recall** | **0.722** | **17/35 = 0.486** |
 | corpus, matched population | 0.576 | 0.576 |
-| verdict | organic **better**, 1.25× | organic **slightly worse** |
+| verdict | organic **better**, 1.25× | **indistinguishable** (p = 0.22) |
 
 **The mechanism, and why it is worth more than the number.** Requiring the route decorator to appear inside
 the hunk selected for handlers whose decorator sat within three lines of the change — short, simple,
@@ -5156,12 +5156,23 @@ was credited before a file was disqualified for having no resolvable route (prin
 `22/22 = 1.000`), and the repository count was taken over *candidate* files rather than files contributing a
 scored site — reporting **30 repositories** where the true figure is **8**.
 
-**What now stands.** Organic site-level recall is **0.486 against 0.576** on the teaching corpus, same
-population and same matcher tolerance. The claim that this was "a third result pointing away from the feared
-direction", made in E66 and E67, **does not survive** and is withdrawn: the detector is *comparable to
-slightly worse* on production code, not better. What survives is the weaker and still useful statement —
-**it does not collapse**. A route-level absence detector built and tuned entirely on teaching applications
-transfers to real code at roughly five sixths of its home-corpus recall.
+**What now stands — and it is neither of the two readings above.** Organic site-level recall is **17/35 =
+0.486** against **76/132 = 0.576**, same population and same matcher tolerance. Before calling that "worse",
+the intervals were asked, because 35 sites is small and this probe's point estimate had already swung once:
+
+- organic **0.486**, 95% CI **[0.330, 0.644]**
+- corpus **0.576**, 95% CI **[0.490, 0.657]**
+- Fisher one-sided, corpus > organic: **p = 0.2226 — indistinguishable**
+
+So E67's "organic is better" is withdrawn, and this entry's own first phrasing — "slightly worse" — is
+withdrawn with it. **The two are not distinguishable at this sample size.** The claim in E66 and E67 that
+this was "a third result pointing away from the feared direction" does not survive either, because a null
+result points in no direction.
+
+What survives is the statement the data actually supports: **a route-level absence detector built and tuned
+entirely on deliberately-vulnerable teaching applications does not measurably degrade on real production
+code.** That is weaker than a transfer advantage and considerably stronger than the threat it was tested
+against, which predicted collapse.
 
 File-level firing is now **18/22 = 0.818** against 0.297 on the corpus, but that comparison was always weak
 and is weaker now: organic API modules are route-dense, so "fired somewhere in this file" is close to

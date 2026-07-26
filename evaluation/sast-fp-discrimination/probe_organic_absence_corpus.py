@@ -360,6 +360,18 @@ def main() -> int:
             if gt_route:
                 print(f"    CORPUS  : {gt_hit}/{gt_route} = {gt_hit/gt_route:.3f}  "
                       f"(same population: labelled entries that sit ON a route)")
+                # 35 sites is a small sample and the two point estimates have swung in BOTH directions
+                # across revisions of this probe. Whether they differ at all is a question the intervals
+                # answer, and it must be asked before either is described as better or worse.
+                from stats import fisher_one_sided
+                from pool_propensity import wilson
+                olo, ohi = wilson(site_hit, site_want)
+                clo, chi = wilson(gt_hit, gt_route)
+                pv = fisher_one_sided(gt_hit, gt_route - gt_hit, site_hit, site_want - site_hit)
+                print(f"    organic 95% CI [{olo:.3f}, {ohi:.3f}]   "
+                      f"corpus 95% CI [{clo:.3f}, {chi:.3f}]")
+                print(f"    Fisher one-sided (corpus > organic): p = {pv:.4f} — "
+                      f"{'DIFFERENT' if pv < 0.05 else 'INDISTINGUISHABLE'}")
                 print(f"\n  The published corpus recall uses ALL {gt_all} labelled entries as its")
                 print(f"  denominator, of which only {gt_route} = {gt_route/gt_all:.1%} sit on a route at")
                 print("  all. The rest are structurally unreachable by a route-decorator detector and sit")
@@ -412,6 +424,8 @@ def main() -> int:
                                             if site_want else None,
                                             "line_tolerance": LINE_TOL,
                                             "corpus_published_strict_recall": 0.226,
+                                            "organic_ci": list(wilson(site_hit, site_want)) if site_want else None,
+                                            "fisher_corpus_gt_organic_p": round(pv, 4) if site_want and gt_route else None,
                                             "corpus_same_population": {
                                                 "labelled_entries": gt_all,
                                                 "on_a_route": gt_route,

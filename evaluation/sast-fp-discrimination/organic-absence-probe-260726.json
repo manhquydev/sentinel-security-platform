@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T14:25:04.133360+00:00",
+  "generated_at": "2026-07-26T14:29:12.960126+00:00",
   "question": "can an organic absence-class corpus be built without paid expert labelling?",
   "method": "GitHub Security Advisories -> fix commit -> diff ADDS an auth/enforcement marker on a route; the maintainer's fix IS the label, so nothing is inferred",
   "ecosystem": "pip",
@@ -221,6 +221,11 @@
       "organic_site_recall": 0.4857,
       "line_tolerance": 10,
       "corpus_published_strict_recall": 0.226,
+      "organic_ci": [
+        0.32993980391252736,
+        0.6443146037328837
+      ],
+      "fisher_corpus_gt_organic_p": 0.2226,
       "corpus_same_population": {
         "labelled_entries": 289,
         "on_a_route": 132,
