@@ -3375,6 +3375,13 @@ mixture predicts E42. What is not: where exactly the distribution sits, which ne
 k. Group size was cut rather than k when the call budget bound, because k is what makes the distinction
 visible at all.
 
+**Superseded in scope by E46:** the same mixture is now characterised on all 53 files at k=5 — **38 at
+exactly zero (0.717 [0.584, 0.820]), a tail of 8/4/2/1 files at 0.2/0.4/0.6/0.8, and none at 1.0.** That
+measurement has no EVER/NEVER construction and no selection on a prior reading, so it carries the claim
+more cleanly than this entry does. The conclusions here stand; the evidence under them got seven times
+larger, and the group difference this entry reports is visibly a consequence of the mixture rather than a
+separate finding — selecting on one reading selects from the tail.
+
 ---
 
 ## E44 — the positive control was itself a single reading of a churning instrument
