@@ -595,3 +595,27 @@ that keeps busy.
 therefore not entitled to say.* An unclosable threat is not an excuse for silence and not grounds for
 discarding the work; it is a boundary that has to be drawn explicitly, because the alternative is that
 every reader draws it wherever flatters them.
+
+## 20. Run the suite BEFORE the push, not after (three times, 2026-07-26)
+
+Not a research rule — an operator rule, recorded because it happened three times in one day and each time
+the same way: edit, commit, push, *then* run the suite, discover red, fix, push again. The window between
+those two pushes is a period where `main` is broken and anyone pulling it inherits the breakage.
+
+The three:
+
+1. Adding `canary_passes` aged every artefact past its instrument — SM17 red on `main`.
+2. The `run_generative` scoring fix changed stored verdicts — SM19 red on `main`.
+3. Editing one comment string in `run_multiengine_grouped` aged its artefact — SM7 and SM17 red on `main`
+   for 48 minutes, across a session boundary.
+
+**What makes this specific to the way this repository is built.** Its guards deliberately assert over
+*committed artefacts* and *git commit times*, so a change to an instrument can turn a guard red without
+touching a single number — case 3 was a comment. That design is right and is what caught real defects all
+day, but it means "the edit was cosmetic" is never a reason to skip the suite. It also means the fix is
+often to regenerate an artefact rather than to change code: the deterministic runners can simply be re-run,
+and case 3's re-run reproduced all eight committed totals exactly.
+
+**The rule.** The suite runs between `commit` and `push`, always, including for documentation-only and
+comment-only changes. If a run is too slow to sit through, push nothing until it has finished — a delayed
+push costs minutes, a red `main` costs whoever pulls next.
