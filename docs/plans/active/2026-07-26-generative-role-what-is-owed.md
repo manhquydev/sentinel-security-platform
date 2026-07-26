@@ -13,9 +13,9 @@ state, not the morning's.
 | Specificity | **2 flags in 328 clean-control observations = 0.61%**, 95% CI [0.17%, 2.2%] (E52). Two different causes; the second may be a **corpus labelling gap, not a model error**. |
 | Sensitivity, single reading | ~0.20 on files carrying a real absent control |
 | Per-file structure | a **mixture**: 8 of 24 at zero, a long thin tail, **nothing at 1.0** |
-| Reliable core | **none.** 2 files at k=4, 1 at k=6 and k=9, **0 from k=12 on**. Best file 14/15 = 0.933 |
-| Union coverage at k=15 | **17/24 = 0.708**; last increase at k=9, flat for 6 readings since (not a plateau claim — §18) |
-| Never surfaced | **7/24 = 0.292** [0.149, 0.492] at k=15 — after 0.583 (k=6), 0.458 (k=9), 0.333 (k=12) |
+| Reliable core | **none.** 2 files at k=4, 1 at k=6 and k=9, **0 from k=12 through k=18**. Best file 17/18 = 0.944 |
+| Union coverage at k=18 | **16/24 = 0.667**; last increase at k=9, **nine flat readings since**; the 8 remaining files are jointly ruled out above ~3% propensity (E57) |
+| Never surfaced | **8/24 = 0.333** [0.180, 0.533] at k=18 — after 0.583 (k=6), 0.458 (k=9), 0.333 (k=12) |
 | Class asymmetry | ownership/authn ≫ CWE-307, **p = 0.0327** (E37), realized power 61% |
 | CWE-307 | **50 of 53 files never named across five readings**; not recovered by targeted prompting (E40) or by removing competing defects (E41) |
 
@@ -92,6 +92,18 @@ The residual is a corpus-construction note, not a blocker: **14% of the clean-co
 (8 of 56) because the arms are defined by ground-truth presence and ground truth records production
 defects only. A test file has no production controls, so *"is a required control absent here?"* is close
 to ill-posed for it. Worth fixing in any future corpus; it changes no published number.
+
+### 4. ~~Where the union curve actually plateaus~~ — ANSWERED as a bound (E57)
+
+At **k=18** the union is 0.667 with the last increase at k=9 — nine flat readings since. Not claimed as a
+ceiling (§18), but the flat stretch bounds what remains: if the 8 never-surfaced files shared a propensity
+`p`, observing nothing from any of them across 18 readings has probability 0.0124 at p=0.03 and 0.0006 at
+p=0.05. **They are jointly ruled out above ~3% and compatible with ~1%.**
+
+Practical consequence: **no realistic reading budget will surface that last third.** Falsifiable — one new
+file at k=25 would break it. Cost of knowing: ~720 model calls across 18 readings.
+
+(This section was accidentally deleted while closing item 5 and is restored here with its answer.)
 
 ## Not worth doing, and why
 
