@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
+| E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
 | E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
 | E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate** — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
 | E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 14/59, p = 0.000120; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
@@ -3054,3 +3055,41 @@ the same `names_class_absence` rule every other experiment uses, whose CWE-307 s
 two outcomes rather than three, because separating "no login path here" from "there is one and it is
 limited" is not recoverable from prose without inventing a second unvalidated classifier — and both mean
 the same thing for this measurement: the missing rate limit was not reported.
+
+### RESULT: the probe was abandoned at the canary gate, twice. Per-class prompting is not available here.
+
+The rebuilt prose probe reached the same gate and failed it differently — and worse. Both canaries read
+**absent**, including the file carrying `@limiter.limit('5 per minute')` on the line above the handler.
+A probe that reports a missing rate limit on code whose rate limit is three tokens long is measuring its
+own question. Had it shipped with only the missing-limit canary — the one that passed — it would have
+reported recovery, and that number would have become a product recommendation to prompt per class.
+
+Four canary readings across the two formats, inspected directly:
+
+| prompt format | file WITHOUT a limiter | file WITH a limiter |
+|---|---|---|
+| structured (one word from three) | unparseable | unparseable |
+| prose, run 1 | absent | **absent** (wrong) |
+| prose, run 2 (diagnostic) | **not-absent** (wrong) | not-absent |
+
+Two things are visible here and they compound. The verdicts are **unstable between calls** at
+`temperature=0`, which E22 and E31 already established and which this reproduces on a new prompt. And
+underneath that, the model is not answering the question at all. Asked only about rate limiting, it
+replied about a syntax error and rewrote the handler — on *both* canaries, in *both* formats. Its one
+mention of the actual subject was a dismissal: `→ skipped: token mint, rate limit, add when prod`.
+
+**What this bounds.** E39 left open whether CWE-307's near-invisibility (1 of 53 real defects named) was
+capability or salience, and noted that if it were salience the fix would be per-class prompting. This
+attempt to do that could not produce an instrument that distinguishes a present control from an absent
+one, so **the question stays open and the obvious remedy is not available by this route**. The honest
+scope: two formats, four readings, never once discriminating. That is enough to abandon the approach as
+measured and not enough to prove no prompt could ever work — a stronger claim needs many more attempts,
+and the instability above means each attempt needs repeated measurement to mean anything.
+
+**What it cost, and what it saved.** Fifty-three files' worth of calls were never spent on the real run,
+because the gate came first. The alternative — running the corpus, then discovering the control problem
+afterwards — is how a lab publishes a recovery rate that is really a leading question. The two-canary
+design is the entire reason this is a paragraph in a log rather than a retraction: **the canary that
+passed is the one that would have been reported, and the canary that failed is the one that was true.**
+Any probe whose prompt argues for a particular answer needs a control that can only pass if the model is
+reading the code, and it needs to be built before the run, not after a surprising result.
