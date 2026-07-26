@@ -28,11 +28,11 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >
 > **⚠️ ĐÍNH CHÍNH QUAN TRỌNG (đo chiều nay):** em từng viết câu này là "công cụ tất định không cung cấp
 > được", và **câu đó quá mạnh**. Em tự viết **khoảng 60 dòng regex** tìm route không có bất kỳ dấu hiệu
-> xác thực nào, chấm bằng chính thước đo của dự án: **đạt 24,0% recall trên CWE-306/862, trong khi hai
+> xác thực nào, chấm bằng chính thước đo của dự án: **đạt 22,8% recall trên CWE-306/862, trong khi hai
 > engine kia đạt 0**. Nghĩa là hai engine mù ở đây vì **bộ luật của chúng không có luật nào cho lớp này**,
 > chứ không phải vì máy móc không làm được. **Chưa ai viết luật đó, chỉ vậy thôi.**
 >
-> Nhưng cái giá: detector đó phát ra **1242 cảnh báo để lấy 81 cái đúng — precision 6,5%**. Kiểm mẫu thì
+> Nhưng cái giá: detector đó phát ra khoảng **1.200 cảnh báo để lấy 77 cái đúng — precision ~6,4%**. Kiểm mẫu thì
 > phần lớn cảnh báo sai là **endpoint công khai có chủ đích** (`/storefront`, `/public`). Máy không phân
 > biệt được *"không có auth vì công khai"* với *"không có auth vì quên"* — phân biệt đó thuộc về **ý
 > định**, mà ý định không nằm trong cú pháp. **Đây mới là chỗ model thật sự hơn một cái luật.**

@@ -58,6 +58,23 @@ AUTH_MARKER = re.compile(
     r"current_user|request\.user\.is_authenticated|@token_required|@jwt_required|"
     r"api_key|check_permission|has_perm|ensure_\w*auth", re.I)
 
+# Protection declared once for a whole router or application, which a handler-only scan cannot see:
+# FastAPI routers carry dependencies=[Depends(...)], Flask has before_request, Django has auth middleware.
+# Measured at 9 of 101 finding-producing files (28 of 621 findings, 4.5%) — too small to rescue precision,
+# but a correctness gap regardless, and reporting a route as unprotected when its router protects it is
+# simply wrong.
+# App-wide protection: nothing in the module can be unprotected behind it.
+APP_LEVEL = re.compile(r"@\w+\.before_request|add_middleware\s*\([^)]*Auth"
+                       r"|LoginRequiredMiddleware|AuthenticationMiddleware", re.I)
+# Per-router protection: `admin = APIRouter(dependencies=[Depends(require_user)])` protects only the
+# handlers decorated with THAT router. A file often holds both a protected and a public router, so
+# suppressing the whole module on one match was too coarse — it cost four real detections.
+PROTECTED_ROUTER = re.compile(
+    r"^\s*(\w+)\s*=\s*APIRouter\s*\([^)]*dependencies\s*=\s*\[[^\]]*(?:Depends|require|auth)",
+    re.I | re.M)
+# Which router object a decorator belongs to: @admin.get(...) -> "admin".
+ROUTE_OWNER = re.compile(r"^\s*@(\w+)\.(?:route|get|post|put|patch|delete)\s*\(")
+
 # Handlers that are meant to be public. Reporting these would be noise, not a finding.
 PUBLIC_OK = re.compile(r"\b(login|logout|signup|register|healthz?|health_check|ping|status|"
                        r"index|home|docs|openapi|metrics|robots|favicon|static|webhook)\b", re.I)
@@ -71,6 +88,11 @@ SELF_TEST = [
      "FastAPI dependency present"),
     ("@app.route('/login', methods=['POST'])\ndef login():\n    return 1", False,
      "login is meant to be public"),
+    ("adm = APIRouter(dependencies=[Depends(require_user)])\n@adm.get('/x')\ndef x():\n    return 1", False,
+     "handler on a router that carries the dependency"),
+    ("adm = APIRouter(dependencies=[Depends(require_user)])\npub = APIRouter()\n"
+     "@pub.get('/secrets')\ndef s():\n    return 1", True,
+     "a DIFFERENT, unprotected router in the same file must still be reported"),
 ]
 
 
@@ -94,10 +116,16 @@ def _handler_span(lines: list[str], i: int) -> tuple[int, int]:
 
 def findings_for(src: str, relpath: str) -> list[dict]:
     """Report every route handler with no authentication or authorization marker on it."""
+    if APP_LEVEL.search(src):
+        return []                      # every handler in the module sits behind app-wide auth
+    protected = set(PROTECTED_ROUTER.findall(src))
     lines = src.splitlines()
     out = []
     for m in ROUTE.finditer(src):
         i = src[:m.start()].count("\n")
+        owner = ROUTE_OWNER.match(lines[i])
+        if owner and owner.group(1) in protected:
+            continue                   # this particular router carries the dependency
         start, end = _handler_span(lines, i)
         block = "\n".join(lines[start:end])
         if AUTH_MARKER.search(block):

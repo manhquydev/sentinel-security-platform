@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-07-26T10:50:27.626823+00:00",
+  "generated_at": "2026-07-26T11:00:12.813873+00:00",
   "detector": "absent-auth (route handler with no authn/authz marker)",
   "scored_with": "run_spike.match \u2014 file + CWE + line tolerance, claim-once",
   "gt_306": 121,
   "gt_862": 216,
-  "matched": 81,
-  "unmatched": 1161,
-  "recall": 0.2404,
+  "matched": 77,
+  "unmatched": 1127,
+  "recall": 0.2285,
   "per_repo": [
     {
       "repo": "realvuln-damn-vulnerable-flask-application",
@@ -14,18 +14,8 @@
       "tp": 5
     },
     {
-      "repo": "realvuln-damn-vulnerable-graphql-application",
-      "findings": 24,
-      "tp": 4
-    },
-    {
-      "repo": "realvuln-extremely-vulnerable-flask-app",
-      "findings": 2,
-      "tp": 0
-    },
-    {
       "repo": "realvuln-flask-xss",
-      "findings": 10,
+      "findings": 8,
       "tp": 0
     },
     {
@@ -75,12 +65,12 @@
     },
     {
       "repo": "realvuln-vulpy",
-      "findings": 66,
+      "findings": 58,
       "tp": 6
     },
     {
       "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
-      "findings": 44,
+      "findings": 42,
       "tp": 3
     },
     {

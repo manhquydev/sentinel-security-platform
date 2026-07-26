@@ -81,32 +81,17 @@ Measured: widening the context to one sentence either side fixes the false posit
 detections to remove 1**. Rejected. The false positive is kept as a named cost, and the clean-arm rate it
 feeds (0.96%) is small enough that buying it down at 9:1 is the wrong purchase.
 
-### 5. Do test files belong in either arm?
+### 5. ~~Do test files belong in either arm?~~ — CLOSED, not load-bearing (E49)
 
-The clean-control arm is defined as "files with no ground-truth entries", which makes it **14% test files**
-(8 of 56) while the positive arm has none (0 of 84). A test file has no production controls, so *"is a
-required control absent here?"* is ill-posed for it — and the single specificity breach measured so far
-came from exactly that subpopulation.
+Left open longer than it deserved. Both estimands were already published and they agree: all clean files
+**1/184 [0.0010, 0.0301]**, excluding test files **0/152 [0.0000, 0.0247]**. The intervals overlap almost
+entirely, so **no conclusion in 0027 turns on which frame is adopted** — the claim is "below about 3%"
+either way, and neither frame supports a claim of zero.
 
-Neither candidate repair works: the prose-level rule removes 2 genuine positive-arm detections and misses
-the false positive; the path-level rule removes only the one embarrassing observation, which is a
-retraction rather than a fix. **The decision is about the sampling frame, not the classifier.**
-
-**Downgraded in priority — both estimands are now published and they agree.** All clean files: 1/184
-[0.0010, 0.0301]. Excluding test files: 0/152 [0.0000, 0.0247]. The intervals overlap almost entirely, so
-whichever frame is chosen the claim is "below about 3%", and no conclusion in 0027 turns on it. Still worth
-settling for cleanliness — 17% of the clean arm being test files is a design defect — but it is not
-blocking anything.
-
-### 4. Where the union curve actually plateaus (open, and the most expensive question here)
-
-Answered partially and revised twice. At k=12 the union is 0.667 and **still climbing**; 8 files remain at
-zero. The phrase "unreachable" has been retired — three files so labelled at k=6 fired by k=12.
-
-What is still unknown is where this stops, and it matters because **the commercial number is whatever
-coverage the budget buys**. Extending sample A to k=20 is ~320 calls and would either locate a plateau or
-push the bound down again. Note the curve goes flat for stretches (k=8–11) and then moves, so **a plateau
-may only be claimed from many readings past the last increase**, never from a flat stretch.
+The residual is a corpus-construction note, not a blocker: **14% of the clean-control arm is test files**
+(8 of 56) because the arms are defined by ground-truth presence and ground truth records production
+defects only. A test file has no production controls, so *"is a required control absent here?"* is close
+to ill-posed for it. Worth fixing in any future corpus; it changes no published number.
 
 ## Not worth doing, and why
 

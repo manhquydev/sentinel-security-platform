@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **81/337 = 0.240 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
+| E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
 | E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
 | E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
@@ -4378,7 +4378,7 @@ written the rule.
 
 ### And then the price
 
-The detector emits **1,242 findings to land those 81**. Label-precision is **6.5%**. Spot-checking the
+The detector emits roughly **1,200 findings to land those 77**. Label-precision is **~6.4%**. Spot-checking the
 unmatched ones settles what they are — not corpus gaps this time:
 
 - `@router.get("/storefront")` — a public product listing
@@ -4402,6 +4402,17 @@ handler, while FastAPI routers carry `dependencies=[Depends(...)]`, Flask has `b
 authentication middleware. Measured: of 101 files producing findings, **9** carry router- or app-level
 auth, accounting for **28 of 621 findings — 4.5%**. Worth fixing for correctness; nowhere near enough to
 move a 6.5% precision.
+
+**Fixed, in two steps, because the first was wrong.** Suppressing any module containing a protected router
+cost **4 real detections** — a file often holds one protected router and one public one, and the coarse
+version silenced both. Rewritten to track *which* router each decorator belongs to, with a self-test
+asserting that a second, unprotected router in the same file is still reported. Final: recall
+**77/337 = 0.228**, precision still ~6.4%.
+
+The 4 detections not recovered sit in modules carrying **app-level** auth markers (`before_request`,
+authentication middleware) while ground truth still labels them missing-auth. Either the middleware does
+not actually cover those routes or the labels are questionable; either way it is 4 sites and does not move
+the argument.
 
 **So the low precision is intrinsic.** Most unauthenticated routes in this corpus genuinely have no
 authentication marker anywhere, and whether that is a defect depends on whether the endpoint was *meant*

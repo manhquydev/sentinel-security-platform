@@ -140,7 +140,7 @@ contain no absence-class rule**. It does not show that such a rule cannot be wri
 
 **One can be written, and it works.** About sixty lines that locate route declarations and report handlers
 carrying no authentication or authorization marker, scored with this project's own matcher, reaches
-**81 of 337 = 24.0% recall on CWE-306 and CWE-862**, against a shipped-engine baseline of **zero**.
+**77 of 337 = 22.8% recall on CWE-306 and CWE-862**, against a shipped-engine baseline of **zero**.
 
 **What survives unchanged.** The *presence/absence* distinction itself is sound and remains the most useful
 frame this project has produced — the two families really do detect different things, and the engines
