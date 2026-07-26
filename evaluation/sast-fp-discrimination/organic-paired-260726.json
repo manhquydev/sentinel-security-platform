@@ -1,0 +1,323 @@
+{
+  "generated_at": "2026-07-26T15:51:49.030234+00:00",
+  "question": "does the model detect maintainer-confirmed missing-control defects in ORGANIC, POST-CUTOFF production code, and does it distinguish the fixed version?",
+  "why": "E72 left every generative-role number on the benchmark carrying a live memorisation caveat; paired post-cutoff organic files are the only evidence that can lift it",
+  "model": "sast-grok45",
+  "k": 3,
+  "cutoff": "2025-06-01",
+  "design": "paired \u2014 pre-fix and post-fix versions of the SAME file, so project familiarity, style and authorship are held constant and only the control differs",
+  "residual_leak": "some projects are famous (langflow, airflow); the model may know the project without knowing the fix. Pairing cancels project familiarity; the fix itself postdates training.",
+  "sites": 15,
+  "post_cutoff_sites": 13,
+  "repositories": 9,
+  "canary": {
+    "passed": true,
+    "verdicts": [
+      "flagged",
+      "clean",
+      "flagged"
+    ]
+  },
+  "rows": [
+    {
+      "advisory": "GHSA-gc24-px2r-5qmf",
+      "published_at": "2026-02-02T21:21:14Z",
+      "repo": "maziggy/bambuddy",
+      "file": "backend/app/api/routes/api_keys.py",
+      "commit": "a82f9278d2",
+      "routes": 5,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "error",
+        "clean"
+      ],
+      "post_verdicts": [
+        "error",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-c5cp-vx83-jhqx",
+      "published_at": "2026-01-02T21:11:50Z",
+      "repo": "langflow-ai/langflow",
+      "file": "src/backend/base/langflow/api/log_router.py",
+      "commit": "3fed9fe1b5",
+      "routes": 2,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "post_verdicts": [
+        "non-answer",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-fh37-cx83-q542",
+      "published_at": "2021-06-18T18:30:11Z",
+      "repo": "apache/airflow",
+      "file": "airflow/www/api/experimental/endpoints.py",
+      "commit": "21cedff205",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-rqj7-6wrp-6g2g",
+      "published_at": "2026-07-24T16:58:48Z",
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/images.py",
+      "commit": "e038bab66d",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ],
+      "post_verdicts": [
+        "non-answer",
+        "clean",
+        "non-answer"
+      ]
+    },
+    {
+      "advisory": "GHSA-8jjp-r2w2-4v22",
+      "published_at": "2026-05-14T20:26:49Z",
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/main.py",
+      "commit": "e7ff4768f8",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "non-answer",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "non-answer",
+        "clean",
+        "non-answer"
+      ]
+    },
+    {
+      "advisory": "GHSA-h336-2wxm-pr6q",
+      "published_at": "2026-04-07T18:31:38Z",
+      "repo": "volcengine/OpenViking",
+      "file": "tests/server/test_auth.py",
+      "commit": "8c1c3f3608",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "non-answer",
+        "non-answer",
+        "clean"
+      ],
+      "post_verdicts": [
+        "non-answer",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-fj5v-w2jp-wqvj",
+      "published_at": "2024-11-15T12:31:44Z",
+      "repo": "janeczku/calibre-web",
+      "file": "cps/shelf.py",
+      "commit": "bcdc976414",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "non-answer",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-h5v5-8746-g7mm",
+      "published_at": "2026-07-22T23:13:34Z",
+      "repo": "jupyterlab/jupyterlab",
+      "file": "jupyterlab/tests/test_extensions.py",
+      "commit": "be9303f5bc",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-qrpv-q767-xqq2",
+      "published_at": "2026-06-19T21:16:46Z",
+      "repo": "langflow-ai/langflow",
+      "file": "src/backend/base/langflow/api/v1/endpoints.py",
+      "commit": "2c9f498d66",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "non-answer",
+        "clean",
+        "non-answer"
+      ]
+    },
+    {
+      "advisory": "GHSA-26g9-27vm-x3q8",
+      "published_at": "2026-05-14T20:28:34Z",
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/chats.py",
+      "commit": "2e52ad8ff2",
+      "routes": 2,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-x3qm-p8hr-3c3h",
+      "published_at": "2026-05-14T20:27:56Z",
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/main.py",
+      "commit": "de3317e26b",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-m98r-6667-4wq7",
+      "published_at": "2026-05-07T01:49:51Z",
+      "repo": "aegra/aegra",
+      "file": "libs/aegra-api/src/aegra_api/api/runs.py",
+      "commit": "e1b2042254",
+      "routes": 3,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "non-answer",
+        "clean",
+        "clean"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "non-answer"
+      ]
+    },
+    {
+      "advisory": "GHSA-rf6x-r45m-xv3w",
+      "published_at": "2026-03-18T12:58:35Z",
+      "repo": "langflow-ai/langflow",
+      "file": "src/backend/base/langflow/api/v1/api_key.py",
+      "commit": "fdc1b3b144",
+      "routes": 1,
+      "pre_flagged": 1,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "flagged"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-whvh-wf3x-g77j",
+      "published_at": "2026-07-22T23:12:22Z",
+      "repo": "jupyterlab/jupyterlab",
+      "file": "jupyterlab/tests/test_extensions.py",
+      "commit": "be9303f5bc",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "non-answer",
+        "non-answer"
+      ],
+      "post_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ]
+    },
+    {
+      "advisory": "GHSA-82fw-ch24-j34w",
+      "published_at": "2026-02-02T12:31:14Z",
+      "repo": "parisneo/lollms",
+      "file": "backend/routers/personalities.py",
+      "commit": "36a5b513df",
+      "routes": 1,
+      "pre_flagged": 0,
+      "post_flagged": 0,
+      "pre_verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "post_verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ]
+    }
+  ]
+}

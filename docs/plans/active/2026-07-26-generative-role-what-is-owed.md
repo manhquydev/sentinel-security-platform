@@ -58,6 +58,13 @@ routes to fixing that are now closed by measurement rather than by argument:
   −1 true positive), and it moves precision by **0.6 percentage points** at site level, 11.8% → 12.4% (E71 re-expressed this; it was published as 6.40% → 6.73% on the doubled finding count).
 - **A model filter** — the gate role, already falsified in 0018/0020.
 
+**Measured on real production applications (E76).** The viability figures above are benchmark numbers, and
+the benchmark understated a customer's workload by roughly **21×**: five production web applications carry
+median **421 route sites** [124, 1435] against the benchmark's 17.7, and median **62 file-level decisions**
+against 2.9. Counted as findings the framing is dead; counted as decisions — the unit E64 established the
+reviewer actually works in — the median application is a day's work and the framing **survives**. Precision
+on that population is still unmeasured and is the harder half.
+
 So the layer is a **recall instrument**, and the product built on it must be an **inventory, not an alert
 stream**: *"here are 565 route handlers with no visible access control — confirm which are public by
 design."* Compliance attestation runs on exactly that shape, and the ~88% that are not defects are cheap

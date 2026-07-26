@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E76 | how big is the inventory on real production code? | **STANDS — 24x the benchmark, and the product survives on the DECISION unit** — production web apps carry median **421 route sites** [124, 1435] against the benchmark's 17.7, and median **62 file decisions** against 2.9: the concentration artefact understated a customer's workload ~**21x**. Counted as findings the framing is dead; counted as E64's file-level decisions it is a day's work per app and **survives**. First run printed 'VIABLE, median 1' by averaging in libraries with **0 routes** (nltk, glances) — stratified by route count before concluding. Precision on this population still unmeasured |
 | E74 | does E57's rule-out survive measured reading dependence? | **STANDS — yes, unchanged** — the threatening channel (cold passes) is directly measurable: per-reading flag rates over the 16 surfaced files have **CV 0.23**, and recomputing (1-p)^144 with those multipliers moves nothing at the fourth decimal: threshold **p > 0.0206 at both** (1.00x). Closes the synthesis list: 2 corrections (E71, E72), 2 confirmed-and-fixed (E66 staleness, 63-vs-33), 1 defence (this). E61's in-sample vocabulary remains flagged, attached to the corpus debt |
 | E73 | are 63 repos 63 independent units? | **NO — they are 33 applications (10 specs x 4 generators + 23 human)** — re-clustering the flagship gain by APPLICATION: **H1 survives** ([+28.5%, +61.7%], floor +10% cleared 3x) but **H2 drops to MARGINAL** (median-gain CI [+0.0000, +0.0690] touches zero — four implementations of one spec were being counted as four pieces of evidence). Also fixed: E66/E70's stale 8%-route-landing prose vs the artefact's 52/7/37, and E67's 'two independent measurements agreeing' is withdrawn |
 | E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split leans the same way: famous **0.600** vs obscure **0.333**, p = 0.20. Contamination is NOT ruled out; deterministic results and organic E66-E69 unaffected |
@@ -5521,3 +5522,61 @@ only out-of-sample exercise so far is the organic pipeline (E66–E68), which us
 than scoring, so it remains unvalidated as a *precision* device off-corpus.
 
 Instrument `pool_bound_dependence.py`, artefact `bound-dependence-260726.json`. Zero model calls.
+
+---
+
+## E76 — the volume census: production web apps carry 24× the benchmark's inventory, and the product survives anyway
+
+**Why this was the highest-value work available.** Advisory counsel (`docs/plans/reports/2026-07-26-product-fork-free-layer-vs-llm-counsel.md`)
+identified the concentration artefact as the heaviest open threat to the whole inventory framing, and it is
+this project's own convicted error class: **every viability figure — 12.4% precision, 565 items, 92
+decisions, 3× compression (E64, E71) — comes from a benchmark where 38% of files carry a defect** (E65).
+The only organic datum pointed the wrong way: one production file produced 98 findings (E66). §22 forbids
+carrying an effort figure across corpora of different concentration, and nobody had checked.
+
+The census needs **no labels**, which is why it can run where the labelled organic set is stuck at 9
+repositories (E70): shallow-clone real applications that shipped an absence-class fix and count what the
+detector reports.
+
+**The first run printed the wrong answer, and the mistake is the lesson.** It reported "median 1 decision
+per repo — VIABLE" because the sample mixed web applications with libraries. `nltk` (434 Python files, **0
+routes**), `glances`, `strawberry` cannot produce an access-control inventory at all, and averaging them in
+dragged the median to 1 while the two real web applications in the sample were carrying **over a thousand
+sites each**. Stratified by route count (≥20 declarations = web application; the threshold is arbitrary and
+the per-repo table is published so any reader can move it):
+
+| repository | routes | file decisions | route sites |
+|---|---|---|---|
+| NousResearch/hermes-agent | 1660 | 70 | **1435** |
+| ethyca/fides | 1187 | 135 | 1173 |
+| open-webui/open-webui | 506 | 30 | 421 |
+| marimo-team/marimo | 375 | 62 | 323 |
+| ManoManoTech/firefighter-incident | 124 | 12 | 124 |
+
+| | production web apps (5) | benchmark (E64) | ratio |
+|---|---|---|---|
+| route **sites** per repo | median **421** [124, 1435] | 17.7 | **24×** |
+| file **decisions** per repo | median **62** [12, 135] | 2.9 | **21×** |
+
+**Both readings are true and they point opposite ways — which is exactly why the unit had to be settled
+first.** Counted as findings, a production application yields **hundreds to 1,435 items** and the alert-stream
+framing is dead many times over. Counted as E64 established the reviewer actually works — one answer to
+*"are these routes public by design?"* per file — the median application is **62 decisions**, a day's work,
+and the attestation framing **survives**. E64's finding that the unit of work is the file, which at the time
+looked like a modest 3× effect on a benchmark, is what carries the product on real code.
+
+**What is corrected.** The concentration artefact is real and large: the benchmark understated a customer's
+workload by roughly **21×**. No figure of the form "92 decisions" may be presented as what a user faces —
+that was 32 repositories of teaching code. The honest product sentence is per-application and now has a
+measured range.
+
+**What is not measured, and it is the harder half.** Precision on this population. A tractable inventory
+that is mostly wrong is no better than an intractable one, and nothing here bounds how many of those 62
+decisions per application are real. That is the next experiment, and the counsel's design for it —
+presumptive negatives at HEAD — is on the table.
+
+**Sampling bias, stated in the direction it runs:** repositories too large to shallow-clone in four minutes
+are skipped and counted. Those are the *big* applications, so the medians above are biased **downward** —
+toward the product looking viable.
+
+Instrument `run_volume_census.py`, artefact `volume-census-260726.json`. Zero model calls.
