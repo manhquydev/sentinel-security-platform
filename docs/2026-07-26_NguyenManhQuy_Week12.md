@@ -75,6 +75,13 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > dưới dạng **ước lượng**, không phải kiểm định — và không ghi p-value để không ai đọc nhầm
 > thành đã chứng minh.
 >
+> **Câu hỏi hiển nhiên tiếp theo — "thế thì hỏi thẳng model về rate-limit có được không?" — em đã
+> thử và KHÔNG dựng được phép đo.** Khi hỏi thẳng "file này có thiếu giới hạn số lần đăng nhập
+> không?", model trả lời **"thiếu" ngay cả với file đã có sẵn bộ giới hạn** ngay dòng trên. Nghĩa
+> là câu hỏi mớm sẵn đáp án, và nếu em chỉ kiểm bằng một file mẫu (file thật sự thiếu) thì đã
+> báo cáo "hỏi riêng thì phát hiện được" — một khuyến nghị sản phẩm **sai**. Em cài **hai** file
+> mẫu đối chứng nên bẫy này lộ ra **trước khi** tốn một lời gọi nào trên dữ liệu thật.
+>
 > **Và vẫn chưa bán được:** tỉ lệ trúng ~24% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
