@@ -47,7 +47,7 @@ audited on 2026-07-26.
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
 | E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
 | E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
-| E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate** — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
+| E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate, then SUPERSEDED by E42** — reinstated at k=3, 94.6% power, 159 calls, once the correlation was measured here instead of imported from E31. Original text: — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
 | E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 14/59, p = 0.000120; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
 | E35 | replicate the headline | **STANDS** — fresh run 14/59 vs 0/40, p = 0.000350 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
 | E34 | authored-unseen, powered | **STANDS** — 7/12 vs 0-1/12, p = 0.0136. **Class-specific**: ownership+authn 6/6, rate-limit/mass-assignment/error-leak/re-auth 0/4 |
@@ -2862,6 +2862,33 @@ E34 therefore stays a hint, and decision 0027's narrowing stays where E34 put it
 **4/4**; real corpus files produce ownership-class language at **13.3%**. The gap is an order of
 magnitude, in the direction that should worry us: **our own authored test set is easier than reality**,
 and the transfer evidence built on it is correspondingly optimistic.
+
+### SUPERSEDED by E42 — the cancellation rested on a correlation figure that did not apply here
+
+The gate above computed the k=3 repeated-reading design at 53.7% power "under E31's measured
+correlation", and set aside the 91.3% figure because it assumed independence between readings, which E31
+appeared to have falsified. E42 then measured the correlation directly, on this exact material and this
+exact measure: the ownership attributions from two independent runs over the same 53 files **overlap in 0
+of 6 files**, against an expectation of 0.68 under independence and 6.0 under stability.
+
+For class attribution on this material, independence is not an optimistic assumption — it is the
+best-supported model of the data. Recomputing the same design with it:
+
+| k | union rate, ownership | union rate, CWE-307 | power | calls |
+|---|---|---|---|---|
+| 1 | 0.113 | 0.019 | 44.8% | 53 |
+| **3** | **0.302** | **0.056** | **94.6%** | **159** |
+| 5 | 0.451 | 0.091 | 99.5% | 265 |
+
+**The cancellation was correct on the evidence available when it was made and is wrong now.** E31's churn
+figure came from a different arm and did not generalise; importing it was the error, not the arithmetic
+done with it. E37 is reinstated as runnable at k=3 for 159 calls.
+
+One caveat that must travel with the reinstatement: the union-over-k estimand is not the same quantity the
+single-reading design measured. It answers "is this class reported in at least one of three readings",
+which — given E42's finding that per-file detection behaves like sampling — is the more product-relevant
+question, but it is a different question and must be labelled as such rather than quietly substituted for
+the original.
 
 ## E38 — a stored verdict is a derived value, and ours had drifted from the data
 
