@@ -2603,3 +2603,45 @@ Registered 2026-07-26 10:20 +07. **Nothing below was measured before this text w
   if it occurs.
 - **Limits unchanged.** Same corpus, same model, same gateway redaction confound (37% of absence-class
   files arrive with identifiers rewritten), same file-level granularity.
+
+### E34 — CORRECTION after an independent audit of the test set: 2 of 12 control variants were not controls
+
+The `_b` variants were audited by a reviewer who did not write them and did not see the results, against
+the **full** absence-of-control list rather than each pair's own planted class. Report:
+`docs/plans/reports/2026-07-26-authored-control-variant-audit.md`.
+
+**Two of twelve "controlled" files carry an unplanted absence-class defect:**
+
+| pair | planted control | unplanted defect found | verified |
+|---|---|---|---|
+| `email` | CWE-620 re-authentication — **present and correct** | **CWE-307**: `check_password` behind no throttle or lockout. A hijacked session brute-forces the password using the 403/200 split as an oracle. | yes — the model had flagged it and was scored wrong for doing so |
+| `lookup` | CWE-209 error-path — **present and correct** | **CWE-306 + 200**: the endpoint has **no authentication at all** — no decorator, no `current_user()`, no dependency — while returning `{id, status}` for an arbitrary `?ref=`. | yes — confirmed by inspection: `@bp.get` then `def account()`, nothing else. Every other Flask `_b` gates (invoices_b 4 sites, exports_b 2, internal_b 2) |
+
+**`lookup` is the worse case: the missing authentication is in BOTH arms**, so `lookup_a`'s label ("one
+defect, CWE-209") is also wrong. That pair cannot be scored in either direction and is excluded, not
+relabelled.
+
+### Re-scored, with both numbers published
+
+| scoring | sensitivity | false positives | p |
+|---|---|---|---|
+| all 12 pairs (as published above) | 7/12 = 0.583 | 1/12 = 0.083 | 0.0136 |
+| **10 pairs with valid ground truth** | **7/10 = 0.700** | **0/10 = 0.000** | **0.0015** |
+
+**The exclusion improves the result, so the justification has to be stated and judged, not assumed.**
+It is legitimate here because the audit was **independent, blind to the outcome, and decided on a
+criterion unrelated to it** — *does the control variant actually control?* — not because the excluded
+files scored badly. Both numbers are published so a reader can disagree with the exclusion and still
+have the conservative figure. **The conservative figure is the one quoted in decision 0027.**
+
+### The finding underneath, which matters more than either number
+
+Both defects have the **same shape**: the control class was applied only where it was the answer key.
+`reset_b` is rate-limited because CWE-307 was *its* planted class; `email_b` is not. `invoices_b`,
+`exports_b` and `internal_b` authenticate; `lookup_b` does not. That is **one systematic authoring bias,
+not two slips** — an author writing matched pairs defends the class under test and stops thinking about
+the rest.
+
+**It predicts recurrence in any test set authored this way, including E26's four pairs.** The protocol
+gains a rule: **a control variant must be audited against the full class list by someone who did not
+write it, before it is used as ground truth.**

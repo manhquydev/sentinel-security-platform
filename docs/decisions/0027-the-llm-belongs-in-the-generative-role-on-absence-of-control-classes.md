@@ -122,7 +122,11 @@ file-role recognition. Both are open questions again.
 
 E26's transfer demonstration (3/4, n = 8, p = 0.071 — not significant) was scaled to **12 matched pairs
 across Flask, FastAPI and Django**, blinded, with exact ground truth: **sensitivity 7/12, model false
-positives 0/12 on adjudication** (1/12 by classifier), **p = 0.0136**. The transfer claim is now powered
+positives 1/12 by classifier, p = 0.0136** — the **conservative** figure, quoted here deliberately. An
+independent audit later found **2 of 12 control variants carried unplanted defects** (a rate-limit gap
+and a missing-authentication gap the author never planted); on the 10 pairs with valid ground truth the
+result is 7/10 with 0 false positives (p = 0.0015). **The weaker number is the one this decision
+rests on**, because the exclusion — however well justified — improves the result. The transfer claim is now powered
 rather than illustrated.
 
 **The refinement that matters more than the number:**
