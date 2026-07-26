@@ -2685,3 +2685,29 @@ re-verified from the artefact, which was the point.
 Same corpus, same model, same gateway-redaction confound (37% of absence-class files arrive with
 identifiers rewritten), file-level granularity, and the sensitivity figure remains a floor rather than
 an estimate.
+
+## E36 — PREREGISTRATION: re-run the mess control, clearing the last live stale artefact (written before measuring)
+
+Registered 2026-07-26 10:45 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** `messy-control-260726.json` (E18) is the arm that rules out "the model just reacts to
+  defective code" — the control decision 0027 rests on for its class-specificity claim. It is still
+  listed known-stale: produced before the E26/E27/E34 classifier corrections. Of the three remaining
+  stale entries it is the only one carrying a **live** conclusion; the other two are superseded records
+  (`mutation-transfer` = withdrawn E19, `role-control-v2` = superseded by E28).
+- **Replication, not bookkeeping.** E35 just re-ran the headline and it came back stronger. This does the
+  same for the supporting control, so both halves of 0027's mechanism argument will rest on
+  independently replicated runs rather than on single measurements.
+- **Method.** Identical design to E18 — 80 files carrying real vulnerabilities of **presence** classes
+  only (no absent control) — current instrument, full response storage, positive-control gated.
+- **Primary outcome.** Flag rate on the messy arm, and the Fisher p against E35's freshly-measured
+  vulnerable arm (15/59), replacing the cross-run comparison E18 had to make against an older run.
+- **Prediction, recorded in advance.** The messy arm stays near zero. E18 re-scored gave 0/80.
+- **Falsifying result.** The messy arm rises materially. That would mean the model does react to
+  defectiveness after all, and **0027's class-specificity claim collapses** — the single most damaging
+  outcome available to this decision. Published if it occurs.
+- **A caveat this run inherits and cannot fix.** The E34 audit found that an authored "control" can carry
+  an unplanted defect. E18's messy arm is drawn from the **corpus**, not authored, so its labels come
+  from RealVuln ground truth — which is *also* not exhaustive. A file recorded as presence-class-only
+  could still lack a control nobody labelled. That biases **against** the hypothesis (it would raise the
+  messy arm), so a near-zero result is safe from it; a raised result would be ambiguous.
