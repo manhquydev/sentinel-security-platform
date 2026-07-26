@@ -480,13 +480,20 @@ def main() -> int:
     for arm, files in (("positive", pos), ("negative", neg)):
         for slug, relpath in files:
             raw = query(slug, relpath)
-            verdict = classify_prose(raw)
+            # Score the text that is PERSISTED, not the raw response (protocol section 14). Scoring the
+            # raw prose while storing a redacted copy makes the published number impossible for anyone —
+            # including us — to re-derive from the committed evidence. This runner kept doing it after the
+            # rule was written, and the reproducibility guard caught it on the next fresh pair of runs.
+            # Redaction only ever removes characters, so this can suppress a flag and never invent one:
+            # the resulting rates are a floor.
+            kept = raw if raw == "\x00FILE-MISSING" else trace.redact_persisted(raw[:4000])
+            verdict = classify_prose(kept)
             counts[arm][verdict] = counts[arm].get(verdict, 0) + 1
             # Keep the prose. A classifier this new WILL be revised, and re-querying 40 files to
             # re-score would be wasteful and non-reproducible (protocol section 9: never discard what
             # re-analysis needs).
             rows.append({"arm": arm, "repo": slug, "file": relpath, "verdict": verdict,
-                         "response": trace.redact_persisted(raw[:4000])})
+                         "response": kept})
 
     def rate(arm):
         c = counts[arm]

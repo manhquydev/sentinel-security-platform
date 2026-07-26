@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E48 | four readings of the headline design | **STANDS** — **2/24 files flagged in ALL four readings** (class attribution had 0/53 in five): the COARSE question has a reliable core, the fine one does not. 15/24 never flagged; union delivers 66% of independence at k=4; **0 flags in 64 clean-control observations** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
 | E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
@@ -3694,3 +3695,65 @@ lab can stand behind, and a true-positive rate that is a sampling process — wh
 correlation" from "moderate correlation" — it excludes only the extremes. What it does establish, at the
 sample size available, is that the primary claim's sensitivity half shows the same shape as everything
 else measured today, and its specificity half does not.
+
+---
+
+## E48 — four readings of the headline design: the coarse question has a reliable core, the fine one does not
+
+E47 characterised decision 0027's primary claim on two readings and an overlap of two — enough to see a
+shape, not enough to describe it. Two more independent readings were run. Four readings, 24 absence-class
+files and 16 clean controls shared across all of them.
+
+### Sensitivity: a mixture again, but this time with a floor above zero
+
+| flagged in | files | propensity | 95% CI |
+|---|---|---|---|
+| 0 of 4 | **15** | 0.000 | [0.000, 0.490] |
+| 1 of 4 | 4 | 0.250 | [0.046, 0.699] |
+| 2 of 4 | 3 | 0.500 | [0.150, 0.850] |
+| **4 of 4** | **2** | **1.000** | **[0.510, 1.000]** |
+
+**Two of twenty-four files were flagged in every single reading.** That is the first time in this session's
+work that any file has been detected consistently, and it is a real difference from the class-attribution
+result, where **zero of fifty-three** fired in all five readings.
+
+The union curve shows the same decay as everywhere else — 0.188 at k=1 rising to 0.375 at k=4, delivering
+**66% of what independence predicts** by k=4, against E46's 70% at k=5. The correlation structure is
+consistent across both measures even though their reliable cores are not.
+
+> **These numbers are the corrected ones, and the correction is worth recording against this lab rather
+> than buried.** The first version of this entry reported 13 files at zero, 71% delivered at k=4, and a
+> single-reading rate of 0.229. Those came from an instrument that scored the **raw** model response while
+> persisting a **redacted** copy — precisely the defect protocol §14 was written about this morning, in a
+> runner that was never fixed when the rule was written. `SM19` caught it on the next pair of fresh runs.
+> Re-derived from the persisted prose: **15 files at zero, 0.188 at k=1, 66% delivered.** Redaction only
+> removes characters, so every corrected figure moved **down**, and the reliable core of 2 of 24 survived
+> unchanged. Writing a rule is not the same as applying it everywhere the rule applies, and the gap
+> between those two lasted about six hours here.
+
+### The distinction this establishes, which is the point of the entry
+
+Two different questions were being conflated under "detection":
+
+- **"Is a required control absent somewhere in this file?"** — the file-level verdict. Has a **dependable
+  core**: 2 of 24 files answered yes every time, 3 more answered yes at least half the time. Still 15 of
+  24 never answered yes at all.
+- **"Which control is absent?"** — class attribution. Has **no dependable core** at all: nothing fired in
+  all five readings, 38 of 53 fired in none.
+
+**The coarser the question, the more reliable the answer.** That is unsurprising in hindsight and it was
+not measured until now, and it matters commercially: a product that asks "does this file deserve a human
+look?" stands on firmer ground than one that asks "what is wrong with this file?", and the second is the
+one a findings-list interface implicitly promises.
+
+### Specificity: 64 clean-control observations, zero flags
+
+Sixteen clean files across four readings. **No flag.** Combined with every earlier run, the clean arm has
+now produced zero flags in every observation this project has ever taken — SM23 asserts this across all
+committed artefacts and is what will catch the first breach if one ever comes.
+
+**Honest bounds.** Twenty-four positive files is small, and a propensity of 1.000 measured on four readings
+carries the interval [0.510, 1.000] — "always" here means "four for four", which is consistent with a true
+propensity of 0.6. The claim supported is that a reliable core **exists**, not that these two particular
+files are certainties. Distinguishing them needs more readings of those two files specifically, which is
+cheap and is the obvious next step.
