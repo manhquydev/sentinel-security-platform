@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-07-26T15:03:25.725271+00:00",
+  "question": "does the within-human-arm fame split support E59's 'no contamination evidence' reading, or the memorisation reading?",
+  "arm_identity": {
+    "human_authored": "famous public teaching apps (PyGoat, VAmPI, vulpy, DjanGoat, DSVW, DVWA-family) \u2014 memorisation-MAXIMAL",
+    "llm_generated": "generated 2026 for this benchmark by Claude Opus 4.7, GPT-5.5, GPT-5.5 x-high, Kimi K2.6 \u2014 memorisation-MINIMAL"
+  },
+  "median_stars": 59,
+  "famous": {
+    "repos": 7,
+    "flagged": 9,
+    "files": 15,
+    "union": 0.6,
+    "ci": [
+      0.3575,
+      0.8018
+    ]
+  },
+  "obscure": {
+    "repos": 6,
+    "flagged": 3,
+    "files": 9,
+    "union": 0.3333,
+    "ci": [
+      0.1206,
+      0.6458
+    ]
+  },
+  "fisher_one_sided_famous_gt_obscure": 0.2002,
+  "famous_leads": true,
+  "excluded_mirrors": [
+    "realvuln-owasp-web-playground",
+    "realvuln-python-insecure-app"
+  ],
+  "per_repo": {
+    "realvuln-damn-vulnerable-graphql-application": {
+      "stars": 1697,
+      "flagged": 0,
+      "files": 1
+    },
+    "realvuln-vampi": {
+      "stars": 1277,
+      "flagged": 1,
+      "files": 1
+    },
+    "realvuln-dvpwa": {
+      "stars": 191,
+      "flagged": 1,
+      "files": 1
+    },
+    "realvuln-lets-be-bad-guys": {
+      "stars": 189,
+      "flagged": 0,
+      "files": 1
+    },
+    "realvuln-vulpy": {
+      "stars": 128,
+      "flagged": 3,
+      "files": 6
+    },
+    "realvuln-djangoat": {
+      "stars": 76,
+      "flagged": 3,
+      "files": 4
+    },
+    "realvuln-dvblab": {
+      "stars": 59,
+      "flagged": 1,
+      "files": 1
+    },
+    "realvuln-dsvpwa": {
+      "stars": 18,
+      "flagged": 0,
+      "files": 1
+    },
+    "realvuln-vfapi": {
+      "stars": 17,
+      "flagged": 1,
+      "files": 1
+    },
+    "realvuln-extremely-vulnerable-flask-app": {
+      "stars": 7,
+      "flagged": 1,
+      "files": 3
+    },
+    "realvuln-flask-xss": {
+      "stars": 4,
+      "flagged": 0,
+      "files": 2
+    },
+    "realvuln-insecure-web": {
+      "stars": 1,
+      "flagged": 1,
+      "files": 1
+    },
+    "realvuln-vulnerable-python-apps": {
+      "stars": 0,
+      "flagged": 0,
+      "files": 1
+    }
+  }
+}

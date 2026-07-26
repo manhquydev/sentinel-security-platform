@@ -537,12 +537,17 @@ def main() -> int:
            "flag_rate_vulnerable": round(fr, 4) if fr is not None else None,
            "flag_rate_clean": round(nr, 4) if nr is not None else None,
            "separation": round(fr - nr, 4) if (fr is not None and nr is not None) else None,
-           "contamination_bound": "RealVuln is public and MIXED provenance: the benchmark records "
-                                  "authorship per repo and 26 of 66 are human_authored (704 real "
-                                  "vulns), 40 are llm_generated. E59 measured detection HIGHER on the "
-                                  "human half (0.519 vs 0.316 union, p=0.062), i.e. no evidence for the "
-                                  "feared direction, though confounded by file size. A "
-                                  "positive result mixes capability with memorisation and cannot "
+           "contamination_bound": "RealVuln is public and MIXED provenance: 26 of 66 repos are "
+                                  "human_authored (704 real vulns), 40 llm_generated (2026, Claude "
+                                  "Opus 4.7 / GPT-5.5 / Kimi K2.6). E59 measured detection HIGHER on "
+                                  "the human half (0.519 vs 0.316, p=0.062) and read that as evidence "
+                                  "AGAINST contamination; E72 corrected the reading: the human half is "
+                                  "famous teaching apps (PyGoat, VAmPI, vulpy - memorisation-MAXIMAL) "
+                                  "while the llm half postdates plausible training cutoffs, so "
+                                  "higher-on-human is the direction training-data memorisation "
+                                  "PREDICTS, and the within-arm fame split points the same way (0.600 "
+                                  "famous vs 0.333 obscure, p=0.20). Contamination is NOT ruled out; "
+                                  "a positive result mixes capability with memorisation and cannot "
                                   "transfer to private code",
            "rows": rows}
     # A re-run must not overwrite the artefact it is meant to be compared against.

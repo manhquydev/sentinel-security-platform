@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split leans the same way: famous **0.600** vs obscure **0.333**, p = 0.20. Contamination is NOT ruled out; deterministic results and organic E66-E69 unaffected |
 | E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1130 = 2 x 565). Recall **0.226 → 0.263**, precision **6.7% → 12.4%**, and the product sentence named **1,130** handlers where there are **565**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
 | E70 | can the free path reach the ~127 repositories E69 requires? | **STANDS (negative) — NO, it saturates at ~9** — sweeping CWE-285/284 as a sources review recommended moved advisories 355→**463** and fix commits 137→**191**, and repositories **8→9** against a projected ~35. Second measurement of the same wall: widening the input by a third moves the output by nothing, because the binding filter is that the fix must attach to a **route handler**. Free advisory mining cannot close owed item 1; the paid options return for scale, now far better informed |
 | E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
@@ -54,7 +55,7 @@ audited on 2026-07-26.
 | E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
 | E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision at site level 11.8% → **12.4%** (published as 6.40% → 6.73% on the doubled finding count; E71) |
 | E60 | can a free ordering rescue the free layer's precision? | **STANDS (negative, inverted)** — four prespecified security signals rank real defects **worse than shuffling**: recall@10% **0.029 vs 0.100**, permutation p(>=obs) = **0.9975**; precision falls monotonically 0.250 → 0.062 as signals accumulate (p = 0.0344). **Source line number, which has no security content, beats the designed ranker 6.5×.** Authorship split cannot separate corpus artefact from real effect (1.32× human vs 1.56× LLM, both n.s.) |
-| E59 | is the contamination threat real? | **STANDS — no evidence for it** — the corpus records `authorship` per repo: **26 of 66 are human_authored** (704 real vulns), so 'the corpus is LLM-seeded' was wrong about 40%. Detection is **HIGHER on human code** (0.519 vs 0.316 union, p = 0.062) — opposite to the threat's prediction. Confounded by file size; not a refutation |
+| E59 | is the contamination threat real? | **CORRECTED BY E72 — conclusion inverted** — the factual half stands: 26 of 66 repos human_authored, the blanket 'LLM-seeded' disclaimer wrong about 40%. But the human half is **famous teaching apps (memorisation-maximal)** and the LLM half is **2026-generated (post-cutoff)**, so detection HIGHER on human (0.519 vs 0.316, p = 0.062) is the direction memorisation **predicts**. 'No evidence for the feared direction' is withdrawn |
 | E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **0.263 recall** on CWE-306/862 (76 of 289 distinct entries — the 337 denominator double-counts, E71) where Bandit+Semgrep get **0**. But precision is **12.4%** per reported handler (E71) — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
@@ -4593,6 +4594,14 @@ cheap one carrying more of the load than its reputation suggests.**
 
 ## E59 — the contamination threat, tested at last: detection is HIGHER on human-written code
 
+> **CORRECTED BY E72 (2026-07-26, same day).** This entry's conclusion — "there is no evidence for the
+> feared direction" — is **withdrawn**. The arms were labelled backwards for the mechanism that matters:
+> the `human_authored` half is famous public teaching apps (memorisation-MAXIMAL) and the `llm_generated`
+> half was generated in 2026, post-cutoff (memorisation-MINIMAL). Detection being higher on the human half
+> is therefore the direction training-data memorisation **predicts**, and the within-arm fame split
+> (famous 0.600 vs obscure 0.333) leans the same way. The factual half of this entry — the corpus is
+> mixed, the blanket disclaimer was over-broad — stands. See E72.
+
 Every result in this log carries the same disclaimer, written into the artefacts themselves: *"RealVuln is
 public and LLM-seeded (`llm_generated_corpus=true`); a positive result mixes capability with memorisation
 and cannot transfer to private code."* It has been repeated all day as though nothing could be done about
@@ -5355,3 +5364,67 @@ they use site-level or organic denominators throughout.
 
 Instrument `detect_absent_auth.py` now reports both denominators side by side and persists all four figures,
 so the two cannot drift apart again. Artefact `absent-auth-detector-260726.json`. Zero model calls.
+
+---
+
+## E72 — E59's arms were labelled backwards. Higher-on-human is the direction memorisation PREDICTS
+
+**The claim, and why it was checked rather than adopted.** The same synthesis pass that found E71 reported
+that E59's contamination test had mapped its arms to the wrong variable. Three external claims have now
+been verified this session and one survived (E71) while two failed (E64's HARMLESS story, E70's 4×
+projection) — so this one was re-derived from the manifest and the committed readings. **It survives.**
+
+**What the arms actually are.** E59 split the corpus on `authorship` and reasoned: *if positives come from
+an LLM recognising another LLM's injected defect, the seeded half should lead; it trails, so there is no
+evidence for the feared direction.* That tests only the **kinship** mechanism. The feared mechanism in
+every disclaimer this project has written is **training-data memorisation**, and on that mechanism the
+arms invert:
+
+- `human_authored` (26) = **PyGoat (OWASP), VAmPI (1,277 stars), vulpy, DjanGoat, DSVW, the
+  Damn-Vulnerable-\* family** — famous, public, deliberately-vulnerable teaching apps, documented in years
+  of writeups, tutorials and CTF material. **Memorisation-maximal.**
+- `llm_generated` (40) = generated **in 2026 for this benchmark** by Claude Opus 4.7, GPT-5.5 and Kimi
+  K2.6 (E59 recorded this as "GPT-5.5" alone, also wrong) — after any plausible training cutoff for the
+  model under test. **Memorisation-minimal.**
+
+Under memorisation, detection should be higher on the human half. E59 measured exactly that — **0.519 vs
+0.316, p = 0.0617** — and read it as evidence *against* the threat. **The observation is the threat's own
+predicted direction.**
+
+**The discriminating test E59 never ran.** The two readings disagree within the human arm: memorisation
+predicts famous apps lead obscure ones; "human code is simply easier" predicts no fame effect. Splitting
+the 13 star-resolvable human repos at the median (59 stars of the *original* repository; two kolega-ai
+mirrors excluded as unresolvable):
+
+| | repos | files ever flagged | union | 95% CI |
+|---|---|---|---|---|
+| famous (≥59★) | 7 | 9/15 | **0.600** | [0.357, 0.802] |
+| obscure (<59★) | 6 | 3/9 | **0.333** | [0.121, 0.646] |
+
+Fisher one-sided p = **0.20** — not conclusive alone, and the sample is thin. What it settles is the
+phrasing: **the one available test that could have supported E59's reading does not support it.** Both the
+between-arm direction and the within-arm fame split are consistent with memorisation; nothing measured
+points the other way.
+
+**What is corrected, and what stands.**
+
+- **Corrected:** E59's conclusion "there is no evidence for the feared direction" is **withdrawn**. The
+  honest statement: *detection is higher exactly where training-data memorisation predicts it, the
+  within-arm fame split leans the same way, and the file-size confound prevents any of it being
+  conclusive. Contamination is **not ruled out** — for the model's positive results it is mildly
+  **supported**.* The corrected wording has reached `run_generative.py`'s persisted
+  `contamination_bound`, decision 0027, and the plan.
+- **Stands:** E59's factual half — the corpus is mixed, the blanket "LLM-seeded" disclaimer was wrong
+  about 40% of it. Also unaffected: every **deterministic** result (the free layer cannot memorise), and
+  the organic transfer measurements E66–E69, whose whole point is code the benchmark does not contain.
+- **Sharpened, not weakened:** the model's own standing. Its generative-role numbers on this corpus now
+  carry a live memorisation caveat again, which **raises** the value of the one measurement that
+  sidesteps it entirely — an organic, post-cutoff check of the *model* (not just the rule), which does
+  not yet exist and is the natural next use of the E66 pipeline.
+
+**Method note.** This is the second time today a conclusion inverted because two variables were conflated
+(E67's denominator, E59's provenance-vs-fame). Both were found by the same synthesis pass over the whole
+ledger — a pass no single experiment would have triggered, which is the strongest argument yet for running
+one periodically.
+
+Instrument `probe_fame_memorisation.py`, artefact `fame-memorisation-260726.json`. Zero model calls.

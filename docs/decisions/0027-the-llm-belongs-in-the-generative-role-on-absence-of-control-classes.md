@@ -37,7 +37,25 @@ deterministic baseline is approximately nothing.
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
-## Addendum 2026-07-26 (E59) — the contamination bound was over-broad, and the threat is not evidenced
+## Addendum 2026-07-26 (E72) — E59's reading is inverted: the threat is mildly SUPPORTED, not absent
+
+E59's addendum below survives only in its factual half. Its arms were labelled backwards for the mechanism
+the disclaimers actually fear: the `human_authored` repositories are **famous public teaching applications**
+(PyGoat, VAmPI, vulpy, DjanGoat, DSVW — years of writeups and tutorials, memorisation-maximal), while the
+`llm_generated` repositories were **generated in 2026 for this benchmark** (Claude Opus 4.7, GPT-5.5,
+Kimi K2.6 — after any plausible training cutoff). Detection being **higher on the human half** (0.519 vs
+0.316, p = 0.062) is therefore the direction training-data memorisation **predicts**. The one available
+discriminating test — splitting the human arm by original-repo fame — leans the same way: famous **0.600**
+vs obscure **0.333** (p = 0.20, thin sample).
+
+**Corrected bound, replacing the wording below:** the model's positive results on this corpus carry a live
+memorisation caveat; contamination is *not ruled out* and is mildly *supported* by both available
+directional tests. Deterministic results are unaffected (a regex cannot memorise), as are the organic
+transfer measurements (E66–E69), which are exactly the kind of check that sidesteps this threat. The
+model has **no organic post-cutoff measurement yet**; until one exists, no generative-role number may be
+presented as free of memorisation. (`probe_fame_memorisation.py`, `fame-memorisation-260726.json`.)
+
+## Addendum 2026-07-26 (E59) — the contamination bound was over-broad — **conclusion since inverted by E72, kept as record**
 
 This decision, and every artefact this project writes, has carried the bound *"RealVuln is public and
 LLM-seeded, so capability and memorisation are inseparable"*. **That was wrong about 40% of the corpus.**

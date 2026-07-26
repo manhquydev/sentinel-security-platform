@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T12:59:42.530298+00:00",
+  "generated_at": "2026-07-26T15:12:10.901719+00:00",
   "totals": {
     "repos": 63,
     "real": 1790,
@@ -41,7 +41,7 @@
     -0.0136,
     0.0173
   ],
-  "corpus_note": "RealVuln is MIXED: 26 of 66 repos are human_authored (DVWA-family, Vulpy, DjanGoat, VAmPI), 40 are llm_generated (GPT-5.5). The earlier note calling the whole corpus LLM-seeded was wrong about 40% of it (E59).",
+  "corpus_note": "RealVuln is MIXED: 26 of 66 repos are human_authored (DVWA-family, Vulpy, DjanGoat, VAmPI), 40 are llm_generated (2026: Claude Opus 4.7, GPT-5.5, Kimi K2.6). The earlier note calling the whole corpus LLM-seeded was wrong about 40% of it (E59).",
   "per_repo": [
     {
       "repo": "realvuln-damn-vulnerable-flask-application",

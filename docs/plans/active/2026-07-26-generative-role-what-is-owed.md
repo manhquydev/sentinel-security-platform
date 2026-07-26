@@ -76,12 +76,14 @@ genuinely finding different files.
 
 **What it specifically invalidates.** Not "the results" — these claims, this much:
 
-- **Positive claims do not transfer — but the threat is weaker than stated (E59).** The corpus is *mixed*:
-  **26 of 66 repositories are `human_authored`** (704 real vulnerabilities), not LLM-seeded, and detection
-  on that half is **higher** (0.519 vs 0.316 union, p = 0.062) — the opposite of what memorisation
-  predicts. Not a refutation (p > 0.05, and human files are half the size), but there is **no evidence for
-  the feared direction**. What still does not transfer is the step from *any* deliberately-vulnerable
-  application to *private production code*, which no repository in this corpus represents.
+- **Positive claims do not transfer — and the memorisation threat is live again (E59 corrected by E72).**
+  The corpus is *mixed*: **26 of 66 repositories are `human_authored`** (704 real vulnerabilities). E59
+  read higher detection on that half (0.519 vs 0.316, p = 0.062) as evidence against contamination; E72
+  showed the arms were labelled backwards — the human half is **famous teaching apps
+  (memorisation-maximal)**, the LLM half is **2026-generated (post-cutoff)** — so that observation is the
+  direction memorisation **predicts**, and the within-arm fame split (famous 0.600 vs obscure 0.333,
+  p = 0.20) leans the same way. The model's generative-role numbers carry a live memorisation caveat until
+  an organic post-cutoff measurement of the *model* exists; the E66 pipeline is the natural instrument.
 - **Negative claims are far more robust.** CWE-307 being near-invisible, no file reaching reliability, the
   union bounded around two thirds — a defect the model misses on easy seeded code will not appear on harder
   real code. These survive the threat; the selling points do not.
@@ -205,10 +207,11 @@ because 38% of files carry a defect. Production code, where missing authorizatio
 different concentration and therefore different headroom. **This corpus cannot answer that question at
 all**, so "is prioritisation worth building?" is now blocked on the same organic data.
 
-**Partially closed already, for free (E59).** The single largest component of this threat — "the defects
-are LLM-generated, so the model may be recognising its own kind" — was testable from data already on disk
-and does not survive contact with it. What remains is the narrower and still-real gap between
-deliberately-vulnerable teaching applications and real production code.
+**One component closed, one reopened (E59 → E72).** The kinship component — "the model may be recognising
+its own kind's output" — does not survive contact with the data: the seeded half trails. But E72 showed the
+training-data-memorisation component was mislabelled as absent: the human half is famous teaching apps and
+detection is higher exactly there, with the fame split leaning the same way. That component is **live**,
+and it attaches to the model only — the deterministic layer and the organic measurements are outside it.
 
 **If it is never closed.** The work still stands as a negative result and as a methodology: the protocol,
 the guards, and every retraction in the log are corpus-independent. What must never be published without

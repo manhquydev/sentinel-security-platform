@@ -165,7 +165,8 @@ def main() -> int:
            "precision_delta": round(prec_delta, 4),
            "precision_delta_ci95": [round(p_lo, 4), round(p_hi, 4)],
            "corpus_note": "RealVuln is MIXED: 26 of 66 repos are human_authored (DVWA-family, "
-                          "Vulpy, DjanGoat, VAmPI), 40 are llm_generated (GPT-5.5). The earlier note "
+                          "Vulpy, DjanGoat, VAmPI), 40 are llm_generated (2026: Claude Opus 4.7, GPT-5.5, "
+                          "Kimi K2.6). The earlier note "
                           "calling the whole corpus LLM-seeded was wrong about 40% of it (E59).",
            "per_repo": stats}
     with open(os.path.join(_HERE, "multiengine-grouped-260726.json"), "w", encoding="utf-8") as fh:
