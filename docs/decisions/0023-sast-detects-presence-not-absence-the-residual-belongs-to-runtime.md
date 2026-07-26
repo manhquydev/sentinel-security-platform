@@ -140,7 +140,7 @@ contain no absence-class rule**. It does not show that such a rule cannot be wri
 
 **One can be written, and it works.** About sixty lines that locate route declarations and report handlers
 carrying no authentication or authorization marker, scored with this project's own matcher, reaches
-**76 of 337 = 22.6% recall on CWE-306 and CWE-862**, against a shipped-engine baseline of **zero**.
+**76 of 289 distinct labelled entries = 26.3% recall on CWE-306/862** (the 337 denominator double-counts the 48 entries carrying both classes — E71), against a shipped-engine baseline of **zero**.
 
 **What survives unchanged.** The *presence/absence* distinction itself is sound and remains the most useful
 frame this project has produced — the two families really do detect different things, and the engines
@@ -151,7 +151,7 @@ this territory can only be reached by an LLM.
 one place "a proposer cannot be beaten by the deterministic baseline, because the deterministic baseline is
 approximately nothing". The baseline is not nothing; it was merely unwritten. The generative role's claim
 now has to rest on what it does *better* than a rule — and E56 measured that too: the detector reaches 24%
-recall at **6.7% precision**, because it cannot distinguish a deliberately public endpoint from a forgotten
+recall at **12.4% precision per reported route handler** (E71; the 6.7% figure counted each handler twice, once per CWE), because it cannot distinguish a deliberately public endpoint from a forgotten
 check. That distinction is about intent, and it is the honest residual where the model has an advantage.
 
 **What it does not license.** Composing them — detector for recall, model to filter its output — is the

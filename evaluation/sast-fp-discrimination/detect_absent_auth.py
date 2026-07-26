@@ -191,6 +191,19 @@ def main() -> int:
 
     tp = fp = 0
     real_306 = real_862 = 0
+    # Both denominators are counted, because the obvious ones double-count and flatter the result:
+    #
+    #   real_306 + real_862 counts an entry labelled with BOTH classes twice — 48 of them here — so a
+    #   defect the detector can only find once sits in the denominator twice. Distinct entries is the
+    #   honest denominator for "recall over this class".
+    #
+    #   findings counts each SITE twice, because the detector emits one finding per CWE for every route
+    #   it reports (`for cwe in (306, 862)`). A user is shown route handlers, not (route, CWE) pairs, so
+    #   finding-level precision understates by exactly 2x and the product sentence built on it named
+    #   twice as many handlers as exist.
+    distinct_real = 0
+    sites = 0
+    tp_sites = 0
     per_repo = []
     for slug in sorted(os.listdir(rs.REPOS)):
         root = os.path.join(rs.REPOS, slug)
@@ -201,6 +214,8 @@ def main() -> int:
             continue
         real_306 += sum(1 for g in gt if g["is_vulnerable"] and 306 in g["cwes"])
         real_862 += sum(1 for g in gt if g["is_vulnerable"] and 862 in g["cwes"])
+        distinct_real += sum(1 for g in gt if g["is_vulnerable"]
+                             and (306 in g["cwes"] or 862 in g["cwes"]))
         findings = []
         for dp, _, fns in os.walk(root):
             for fn in fns:
@@ -213,17 +228,30 @@ def main() -> int:
                     continue
                 findings += findings_for(src, os.path.relpath(path, root))
         claimed: set[int] = set()
-        rtp = sum(1 for f in findings if rs.match(f, gt, claimed))
+        hit_sites = set()
+        rtp = 0
+        for f in findings:
+            if rs.match(f, gt, claimed):
+                rtp += 1
+                hit_sites.add((f["file"], f["line"]))
         tp += rtp
         fp += len(findings) - rtp
+        sites += len({(f["file"], f["line"]) for f in findings})
+        tp_sites += len(hit_sites)
         if findings:
             per_repo.append({"repo": slug, "findings": len(findings), "tp": rtp})
 
     real = real_306 + real_862
-    print(f"ground-truth entries: CWE-306 {real_306}, CWE-862 {real_862}, total {real}")
+    print(f"ground-truth entries: CWE-306 {real_306}, CWE-862 {real_862}, sum {real}")
+    print(f"  of which carry BOTH classes: {real - distinct_real};  DISTINCT entries: {distinct_real}")
     print(f"detector findings matched (claim-once, file+CWE+line+/-{rs.LINE_TOL}): {tp}")
-    print(f"recall on these two classes = {tp}/{real} = {tp/real:.3f}")
-    print(f"unmatched findings: {fp}")
+    print(f"\nRECALL")
+    print(f"  over distinct entries (honest) : {tp}/{distinct_real} = {tp/distinct_real:.3f}")
+    print(f"  over the summed denominator    : {tp}/{real} = {tp/real:.3f}  <- double-counts dual-labelled")
+    print(f"\nPRECISION")
+    print(f"  per SITE, what a user is shown : {tp_sites}/{sites} = {tp_sites/sites:.3f}")
+    print(f"  per finding                    : {tp}/{tp+fp} = {tp/(tp+fp):.3f}  <- 2 findings per site")
+    print(f"\nreported route handlers: {sites}   (findings emitted: {tp + fp} = {(tp+fp)/sites:.1f}x)")
     print("\ncomparison, same corpus and same matcher:")
     print("  Bandit + Semgrep on absence classes : 0 (they emit no absence-class rule at all)")
     print(f"  this detector                       : {tp}")
@@ -231,8 +259,17 @@ def main() -> int:
     out = {"generated_at": datetime.now(timezone.utc).isoformat(),
            "detector": "absent-auth (route handler with no authn/authz marker)",
            "scored_with": "run_spike.match — file + CWE + line tolerance, claim-once",
-           "gt_306": real_306, "gt_862": real_862, "matched": tp, "unmatched": fp,
-           "recall": round(tp / real, 4) if real else None, "per_repo": per_repo}
+           "gt_306": real_306, "gt_862": real_862, "gt_distinct": distinct_real,
+           "matched": tp, "unmatched": fp,
+           "sites": sites, "tp_sites": tp_sites,
+           "recall": round(tp / distinct_real, 4) if distinct_real else None,
+           "recall_summed_denominator": round(tp / real, 4) if real else None,
+           "precision_site": round(tp_sites / sites, 4) if sites else None,
+           "precision_finding": round(tp / (tp + fp), 4) if (tp + fp) else None,
+           "denominator_note": "recall is over DISTINCT labelled entries; the summed 306+862 denominator "
+                               "double-counts the 48 entries carrying both. precision is per SITE; the "
+                               "detector emits one finding per CWE so finding-level precision halves it",
+           "per_repo": per_repo}
     with open(os.path.join(_HERE, "absent-auth-detector-260726.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     return 0

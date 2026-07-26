@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1130 = 2 x 565). Recall **0.226 → 0.263**, precision **6.7% → 12.4%**, and the product sentence named **1,130** handlers where there are **565**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
 | E70 | can the free path reach the ~127 repositories E69 requires? | **STANDS (negative) — NO, it saturates at ~9** — sweeping CWE-285/284 as a sources review recommended moved advisories 355→**463** and fix commits 137→**191**, and repositories **8→9** against a projected ~35. Second measurement of the same wall: widening the input by a third moves the output by nothing, because the binding filter is that the fix must attach to a **route handler**. Free advisory mining cannot close owed item 1; the paid options return for scale, now far better informed |
 | E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
 | E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
@@ -51,12 +52,12 @@ audited on 2026-07-26.
 | E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
 | E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
 | E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
-| E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision 6.40% → **6.73%** |
+| E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision at site level 11.8% → **12.4%** (published as 6.40% → 6.73% on the doubled finding count; E71) |
 | E60 | can a free ordering rescue the free layer's precision? | **STANDS (negative, inverted)** — four prespecified security signals rank real defects **worse than shuffling**: recall@10% **0.029 vs 0.100**, permutation p(>=obs) = **0.9975**; precision falls monotonically 0.250 → 0.062 as signals accumulate (p = 0.0344). **Source line number, which has no security content, beats the designed ranker 6.5×.** Authorship split cannot separate corpus artefact from real effect (1.32× human vs 1.56× LLM, both n.s.) |
 | E59 | is the contamination threat real? | **STANDS — no evidence for it** — the corpus records `authorship` per repo: **26 of 66 are human_authored** (704 real vulns), so 'the corpus is LLM-seeded' was wrong about 40%. Detection is **HIGHER on human code** (0.519 vs 0.316 union, p = 0.062) — opposite to the threat's prediction. Confounded by file size; not a refutation |
 | E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
-| E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
+| E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **0.263 recall** on CWE-306/862 (76 of 289 distinct entries — the 337 denominator double-counts, E71) where Bandit+Semgrep get **0**. But precision is **12.4%** per reported handler (E71) — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
 | E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
 | E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
@@ -4747,19 +4748,24 @@ so the distinction cannot be lost to a later edit.
 
 **Effect, measured end to end:** 1204 findings/77 TP → **1130 findings/76 TP**. Seventy-three false
 positives removed for one real detection. **Accepted** — a 73:1 trade on a principled basis, against the
-1:9 trade E55 rejected. Recall 0.2285 → **0.2255**; precision 6.40% → **6.73%**.
+1:9 trade E55 rejected.
+
+*(Corrected by E71: those are FINDING counts and the detector emits two per site, so the real change is
+602 → **565 reported handlers** and site-level precision **11.8% → 12.4%**. Recall over distinct labelled
+entries is 0.266 → **0.263**. The trade and the conclusion are unchanged; the scale was doubled.)*
 
 **And that is the point.** The best available repair, applied, moves precision by a third of a percentage
 point. Together with E60 this closes the question:
 
 > **The deterministic absence detector is a recall instrument. Its precision does not yield — not to
-> ordering (worse than chance), not to better markers (+0.33pp), and not to a model filter (falsified as
-> the gate role).**
+> ordering (worse than chance), not to better markers (+0.6pp at site level), and not to a model filter
+> (falsified as the gate role).**
 
-**The consequence is a product-shape claim, not a defeat.** 22.6% recall at 6.7% precision is fatal for an
-alert stream and unremarkable for an **inventory**: *"here are 1,130 route handlers with no visible access
-control — confirm which are public by design."* Compliance attestation workflows run on exactly that shape,
-the 93% that are not defects are cheap for a human to dismiss, and nothing else in this project's toolbox
+**The consequence is a product-shape claim, not a defeat.** 26.3% recall at 12.4% precision is fatal for an
+alert stream and unremarkable for an **inventory**: *"here are 565 route handlers with no visible access
+control — confirm which are public by design."* (E71 corrected the count: the detector emits two findings
+per handler, so the sentence originally named twice as many as exist.) Compliance attestation workflows run on exactly that shape,
+the ~88% that are not defects are cheap for a human to dismiss, and nothing else in this project's toolbox
 reaches these classes at all. What must never be claimed is that this is a list of vulnerabilities.
 
 Instrument `detect_absent_auth.py` (the `ENFORCEMENT` vocabulary and its two self-test cases), artefact
@@ -5294,3 +5300,58 @@ It was checked rather than adopted, which cost one run. This is the second exter
 failed verification, after the HARMLESS abandonment story in E64.
 
 Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.
+
+---
+
+## E71 — the free layer double-counts. Both headline numbers were ~2× too pessimistic, for thirteen experiments
+
+**How it was found.** A synthesis pass over the whole ledger, commissioned to find where this lab is
+fooling itself. It reported that the free layer's headline figures were wrong by about 2×. Two external
+claims had already failed verification today (E64's HARMLESS story, E70's 4× projection), so this was
+re-derived from the corpus rather than adopted. **It survives, exactly as stated.**
+
+**Two independent double-counts, both flattering the *denominator* and so understating the detector.**
+
+1. **The recall denominator.** `real_306 + real_862 = 121 + 216 = 337`. But **48 ground-truth entries carry
+   both classes**, so the distinct count is **289**. A defect the detector can find only once sits in the
+   denominator twice.
+2. **The finding count.** `findings_for` emits one finding per CWE for every route it reports
+   (`for cwe in (306, 862)`), so it produces **exactly 2.00 findings per site**: 1130 findings over **565
+   sites**. A user is shown route handlers, not (route, CWE) pairs.
+
+| figure | published | verified |
+|---|---|---|
+| recall | 76/337 = **0.226** | 76/289 = **0.263** |
+| precision | 76/1130 = **6.7%** | 70/565 = **12.4%** |
+| items in the product sentence | "**1,130** route handlers" | **565** |
+
+**The product sentence was factually wrong**, not merely pessimistic: it named twice as many route handlers
+as the detector reports.
+
+**Two traps this had to get past, and one it caught.** The first re-derivation gave "98 distinct entries
+claimed" against 76 matched findings — impossible, and caused by keying claimed entries on the ground-truth
+*index*, which repeats across repositories. The second gave 98 again for a different reason: `run_spike.match`
+**claims an entry and returns `is_vulnerable`**, so it also consumes false-positive-trap entries, and 98 = 76
+real + 22 traps. Only the third pass, keying on `(repo, index)` and counting claims whose entry is real, is
+the one reported above. A correction has to be right too.
+
+**Why it survived thirteen experiments — and this is the part worth keeping.** The lab already held the
+correct site count. `rank_absent_auth.py`, written for E60 and reused by E64, computes **565 sites and 70
+real defects** and stores `site_precision = 0.1239` in its committed artefact. E61 published `1130 findings`,
+which is exactly `2 × 565`. **Both numbers sat in the repository, in adjacent artefacts, unreconciled.**
+Every guard here checks an artefact against its instrument or a stored verdict against its prose; **nothing
+checks one artefact's number against another's**, and nothing checks the log's prose against either.
+
+And the scepticism was asymmetric. Eight results were retracted or corrected today, every one of them
+because a figure looked **too good**. This one made the detector look worse than it is, so it was never
+examined — and it propagated into two decision records, the plan, the stakeholder report and the product
+framing. **A lab that only audits flattering results is running half a check.**
+
+**What changes.** The free layer's standing is better than published, and the comparison that matters is
+unaffected: Bandit and Semgrep still find **zero** on these classes. E61's enforcement fix is re-expressed
+at site level as **11.8% → 12.4%** (it was published as 6.40% → 6.73%); it remains a real but small gain.
+E67's structural ceiling of 45.7% was already computed on 289 and stands. E63–E65, E68–E70 are unaffected:
+they use site-level or organic denominators throughout.
+
+Instrument `detect_absent_auth.py` now reports both denominators side by side and persists all four figures,
+so the two cannot drift apart again. Artefact `absent-auth-detector-260726.json`. Zero model calls.

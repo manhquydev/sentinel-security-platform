@@ -47,7 +47,7 @@ what it covers, it covers exactly, repeatably and for free. Any honest product s
 deterministic layer and position the model as the thing that covers what no rule can express.
 
 **Its precision does not yield, and that decides the product shape (E60–E62).** The absence detector
-reaches CWE-306/862 at **22.6% recall** where Bandit and Semgrep reach zero, at **6.7% precision**. Three
+reaches CWE-306/862 at **26.3% recall** where Bandit and Semgrep reach zero, at **12.4% precision** (both corrected in E71; the published 22.6%/6.7% double-counted the denominator and the findings). Three
 routes to fixing that are now closed by measurement rather than by argument:
 
 - **Ordering it** — four prespecified security signals rank real defects **worse than shuffling**
@@ -55,12 +55,12 @@ routes to fixing that are now closed by measurement rather than by argument:
   signals accumulate. Source line number, which carries no security content, beats the designed ranker
   **6.5×**. The intuition that you look hardest where the code looks most critical is backwards here.
 - **Better markers** — the enforcement/identity split is real and worth having (−73 false positives for
-  −1 true positive), and it moves precision by **0.33 percentage points**.
+  −1 true positive), and it moves precision by **0.6 percentage points** at site level, 11.8% → 12.4% (E71 re-expressed this; it was published as 6.40% → 6.73% on the doubled finding count).
 - **A model filter** — the gate role, already falsified in 0018/0020.
 
 So the layer is a **recall instrument**, and the product built on it must be an **inventory, not an alert
-stream**: *"here are 1,130 route handlers with no visible access control — confirm which are public by
-design."* Compliance attestation runs on exactly that shape, and the ~93% that are not defects are cheap
+stream**: *"here are 565 route handlers with no visible access control — confirm which are public by
+design."* Compliance attestation runs on exactly that shape, and the ~88% that are not defects are cheap
 for a human to dismiss. What must never be shipped is a claim that this is a list of vulnerabilities.
 
 **And it is not a rounding error next to the model.** Rebuilt with a committed instrument over 22 readings

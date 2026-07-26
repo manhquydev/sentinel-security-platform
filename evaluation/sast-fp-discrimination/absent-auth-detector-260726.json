@@ -1,12 +1,19 @@
 {
-  "generated_at": "2026-07-26T13:12:32.184058+00:00",
+  "generated_at": "2026-07-26T14:49:33.313098+00:00",
   "detector": "absent-auth (route handler with no authn/authz marker)",
   "scored_with": "run_spike.match \u2014 file + CWE + line tolerance, claim-once",
   "gt_306": 121,
   "gt_862": 216,
+  "gt_distinct": 289,
   "matched": 76,
   "unmatched": 1054,
-  "recall": 0.2255,
+  "sites": 565,
+  "tp_sites": 70,
+  "recall": 0.263,
+  "recall_summed_denominator": 0.2255,
+  "precision_site": 0.1239,
+  "precision_finding": 0.0673,
+  "denominator_note": "recall is over DISTINCT labelled entries; the summed 306+862 denominator double-counts the 48 entries carrying both. precision is per SITE; the detector emits one finding per CWE so finding-level precision halves it",
   "per_repo": [
     {
       "repo": "realvuln-damn-vulnerable-flask-application",

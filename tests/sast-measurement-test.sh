@@ -730,6 +730,36 @@ PY
 then ok "SM25: every entry since the rule was written names what produced its numbers"
 else bad "SM25: an entry publishes numbers with no instrument or artefact to re-derive them from"; fi
 
+sect "SM26: two artefacts describing the same detector agree with each other"
+if run_py <<'PY'
+import json, sys
+# The gap E71 fell through. SM17 checks an artefact against its instrument; rescore_artefacts checks a
+# stored verdict against its prose; SM25 requires a citation. NOTHING compared one artefact's number with
+# another's — so `absent-auth-detector` published 1130 findings while `rank-absent-auth`, built from the
+# same detector, recorded 565 sites, and the factor of two sat unreconciled through thirteen experiments
+# and into two decision records.
+H = "evaluation/sast-fp-discrimination/"
+det = json.load(open(H + "absent-auth-detector-260726.json", encoding="utf-8"))
+rank = json.load(open(H + "rank-absent-auth-260726.json", encoding="utf-8"))
+ok = True
+if det["sites"] != rank["sites"]:
+    print("  MISMATCH sites: detector=%s rank=%s" % (det["sites"], rank["sites"])); ok = False
+if det["tp_sites"] != rank["real_defects"]:
+    print("  MISMATCH real defects: detector=%s rank=%s" % (det["tp_sites"], rank["real_defects"])); ok = False
+if abs(det["precision_site"] - rank["site_precision"]) > 0.001:
+    print("  MISMATCH site precision: %s vs %s" % (det["precision_site"], rank["site_precision"])); ok = False
+# and the emission ratio the double-count came from must stay visible rather than silently drifting
+ratio = (det["matched"] + det["unmatched"]) / det["sites"]
+print("  sites=%d  real=%d  site-precision=%.4f  findings-per-site=%.2f"
+      % (det["sites"], det["tp_sites"], det["precision_site"], ratio))
+if abs(ratio - 2.0) > 0.01:
+    print("  emission ratio moved off 2.00 — the detector's per-CWE emission changed; recheck every"
+          " finding-level figure derived from it"); ok = False
+sys.exit(0 if ok else 1)
+PY
+then ok "SM26: the two detector artefacts report the same sites, defects and precision"
+else bad "SM26: two artefacts describing the same detector disagree — one of them is being published"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
