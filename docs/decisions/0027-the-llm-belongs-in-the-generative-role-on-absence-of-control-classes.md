@@ -37,6 +37,25 @@ deterministic baseline is approximately nothing.
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
+## Addendum 2026-07-26 (E58) — what a cheap rule adds at a realistic budget
+
+E56 argued the model and a deterministic rule are independent evidence sources. E58 measured it on the
+same 24 files, scoring both the same way (each must identify a class the ground truth records):
+
+| budget | model alone | model + 60-line rule | rule adds |
+|---|---|---|---|
+| **k=1 reading/file** | 0.208 | **0.312** | **+0.104** |
+| k=3 | 0.402 | 0.464 | +0.062 |
+| k=18 | 0.625 | 0.667 | +0.042 |
+
+Overlap between them is **4 files observed against 4.7 expected under independence** — they are close to
+statistically independent, so running both is not redundant.
+
+**At one reading per file, the only budget with a defensible cost story, the rule raises correct detections
+by half again.** It costs nothing per file, does not vary between runs, and needs no k. The model's value
+grows with budget; the rule's is largest at the smallest budget. Running both is also *all* that is
+licensed — 0018/0020 and DD1 forbid the composition where either filters the other.
+
 ## Decision
 
 **The LLM's measured place in this system is the generative role on absence-of-control classes: it

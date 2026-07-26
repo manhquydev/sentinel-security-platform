@@ -41,6 +41,24 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > hỏng** (0020: verifier giấu mất 3/8 lỗ thật). Nên cách ghép hiển nhiên nhất đã bị chính bằng chứng của
 > dự án đóng lại.
 >
+> **NHƯNG chạy SONG SONG cả hai thì có giá trị đo được — và đây là con số hữu ích nhất cho sản phẩm
+> trong cả ngày.** Em đo trên cùng 24 file, chấm cùng một cách (cả hai đều phải gọi đúng một lớp mà
+> đáp án có ghi):
+>
+> | Ngân sách | Chỉ model | Model + luật 60 dòng | Luật thêm được |
+> |---|---|---|---|
+> | **1 lần đọc/file** | 0,208 | **0,312** | **+0,104** |
+> | 3 lần đọc | 0,402 | 0,464 | +0,062 |
+> | 18 lần đọc | 0,625 | 0,667 | +0,042 |
+>
+> Hai bên **trùng nhau 4 file, trong khi nếu độc lập hoàn toàn thì kỳ vọng 4,7** — tức chúng gần như
+> độc lập, nên chạy cả hai **không thừa**.
+>
+> **Ở mức 1 lần đọc mỗi file — ngân sách duy nhất có câu chuyện chi phí đứng vững — 60 dòng regex nâng
+> số phát hiện đúng lên thêm một nửa (0,208 → 0,312).** Luật không tốn tiền mỗi file, không đổi giữa
+> các lần chạy, không cần k. Giá trị của model **tăng** theo ngân sách; giá trị của luật **lớn nhất ở
+> ngân sách nhỏ nhất**. Đúng chỗ khách hàng thật sẽ đứng.
+>
 > Ngoài ra em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
 > - **Có phải model chỉ "thấy code xấu là kêu"?** Không, và điều này đã **lặp lại độc lập
 >   2 lần**. Trên 80 file có lỗ thật nhưng **không thuộc lớp thiếu-kiểm-soát**, model chỉ
