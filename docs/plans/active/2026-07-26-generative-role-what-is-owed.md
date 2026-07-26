@@ -30,6 +30,13 @@ expected under independence — and independence is the best-supported model her
 
     ASYMMETRY_OUT=... rag/.venv/bin/python -W ignore evaluation/sast-fp-discrimination/run_class_asymmetry.py
 
+**Run 1 of 3 was launched 2026-07-26 13:51** and writes to `class-asymmetry-e37-run1-260726.json`. It was
+started deliberately knowing it would finish after the session ended: the artefact lands either way, and a
+finished run waiting on disk is worth more to the next session than an unstarted one. **First thing to do
+when picking this up: check whether that artefact exists and whether its positive-control tally is in the
+file.** If the run died mid-way there will be no artefact at all — this runner writes once at the end — in
+which case simply relaunch it.
+
 Run it three times with different output names, then pool. **The estimand changes** and must be labelled:
 union-over-k answers "is this class reported in at least one of three readings", which is the
 product-relevant question given E43, but it is not the single-reading quantity E39 published. Do not
