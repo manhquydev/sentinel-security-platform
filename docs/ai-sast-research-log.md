@@ -3600,6 +3600,34 @@ Stated as an offer: **read every file five times, pay five times, and see about 
 is a real capability and a defensible one, but it is not a scanner, and any pricing built on "11% per
 reading, so k readings gives k × 11%" is wrong in the direction that overcharges.
 
+### The mixture, now characterised on all 53 files instead of 8
+
+E43 established the mixture on 8 files at k=3 and deepened it to 16. The five readings give the same thing
+for **every** file in the slice, which is what that claim always needed:
+
+| propensity | files | share of corpus slice |
+|---|---|---|
+| 0.000 | **38** | **0.717** [0.584, 0.820] |
+| 0.200 | 8 | 0.151 |
+| 0.400 | 4 | 0.075 |
+| 0.600 | 2 | 0.038 |
+| 0.800 | 1 | 0.019 |
+| 1.000 | **0** | **0** |
+
+Mean across all files **0.098**; mean among the 15 that ever fire **0.347**; **highest observed 0.800, and
+nothing at 1.000**.
+
+This is E43's picture confirmed at seven times the file count and with the group construction removed
+entirely — no EVER/NEVER split, no selection on a prior reading, just every file in the slice read five
+times. The shape it argued for from a small sample is the shape the full slice has: **a large spike at
+exactly zero, a thin tail reaching 0.8, and nothing dependable.**
+
+Two things this closes. The per-file intervals are still wide individually — a file at 2 of 5 has
+[0.118, 0.769] — so **individual files remain badly determined and always will at this k**; the
+distribution is what is well measured, not its members. And E43's group difference (EVER 0.291 vs NEVER
+0.021) is now visibly an artefact-free consequence of the mixture rather than a separate finding: select
+on one reading and you select files from the tail, which is what that comparison was detecting.
+
 ### A note on where this evidence came from
 
 Every number above is a re-reading of artefacts already committed — the same move as E45, and the second
