@@ -110,6 +110,20 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > lấy mẫu ít nhiễu**, không phải một **máy quét** — vẫn là sản phẩm dùng được, nhưng khác hẳn thứ
 > người ta tưởng khi chỉ nhìn con số "tỉ lệ trúng".
 >
+> **Đọc thêm thành 4 lần thì tách ra được hai câu hỏi mà trước giờ em vẫn gộp làm một — và đây là
+> điều hữu ích nhất cho việc thiết kế sản phẩm:**
+>
+> | Câu hỏi | Phần đáng tin | Không bao giờ trả lời |
+> |---|---|---|
+> | *"File này có thiếu kiểm soát ở đâu đó không?"* | **2/24 file bị nêu ở CẢ 4 lần đọc** | 15/24 |
+> | *"Thiếu đúng kiểm soát nào?"* | **0/53 file qua 5 lần đọc** | 38/53 |
+>
+> **Câu hỏi càng thô thì câu trả lời càng đáng tin.** Một sản phẩm hỏi *"file này có đáng để người
+> xem không?"* đứng trên nền vững hơn hẳn một sản phẩm hỏi *"file này sai chỗ nào?"* — mà cái thứ
+> hai mới đúng là thứ một giao diện "danh sách lỗi" ngầm hứa hẹn.
+>
+> Đặc hiệu qua 4 lần đọc đó: **0 lần báo nhầm trên 64 lượt quan sát file sạch.**
+>
 > **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại nhiều lần
 > trên cùng một file cho thấy **không phải xổ số**: file "có gì đó" thật sự dễ được nêu hơn. Nhưng
 > **file cao nhất cũng chỉ 0,67**, tức **không file nào chắc chắn được phát hiện**. Con số cụ thể

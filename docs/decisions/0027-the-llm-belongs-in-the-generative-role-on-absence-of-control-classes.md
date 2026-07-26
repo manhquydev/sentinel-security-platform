@@ -162,6 +162,19 @@ time, on a shifting subset; on a file with no defect, no reading has ever flagge
 **sampler**, not a scanner — a coherent product, and not the one a reader would assume from a sensitivity
 figure alone.
 
+**Four readings (E48) then separated two questions this decision had been conflating**, and the separation
+is the most useful thing in it for product design:
+
+| question | reliable core | never answers |
+|---|---|---|
+| *"Is a required control absent somewhere in this file?"* (file verdict) | **2 of 24 files flagged in all four readings** | 15 of 24 |
+| *"Which control is absent?"* (class attribution) | **0 of 53 in five readings** | 38 of 53 |
+
+**The coarser the question, the more reliable the answer.** A product asking *"does this file deserve a
+human look?"* stands on measurably firmer ground than one asking *"what is wrong with this file?"* — and
+the second is what a findings-list interface implicitly promises. Specificity across those four readings:
+**0 flags in 64 clean-control observations.**
+
 **This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
 the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate
 limit on **2/53**, discordant 9 vs 2, **exact McNemar one-sided p = 0.0327 — the null of no class asymmetry
