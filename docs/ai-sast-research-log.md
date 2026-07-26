@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
 | E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
@@ -4370,7 +4371,7 @@ already published:
 | | recall on CWE-306 + 862 (n=337) |
 |---|---|
 | Bandit + Semgrep | **0** — no absence-class rule exists in either ruleset |
-| this detector | **81/337 = 0.240** |
+| this detector | **77/337 = 0.228** |
 
 **The claim that absence classes are structurally beyond deterministic tooling is too strong.** They are
 beyond the *shipped rulesets*, which is a different and much less interesting statement. Nobody had
@@ -4444,3 +4445,51 @@ capabilities are **independent evidence sources for a human**, not a pipeline. N
 deterministic layer is worth building because it is nearly free and its recall is real; the model is worth
 keeping because its false-positive rate is genuinely low; and the arrow between them is the thing the
 evidence does not support.
+
+---
+
+## E57 — k=18: where the curve stops, stated as a bound instead of a ceiling
+
+E50 retracted a saturation claim that rested on a circular test, and protocol §18 forbids reading a flat
+stretch as a plateau. That left a real question genuinely open: **the union stopped moving — how much can
+still be hiding?** Three more readings take sample A to **k=18**, and the question can now be answered
+properly, as a bound on the remaining files rather than as a claim about the curve.
+
+**Union: last increase at k=9, then nine consecutive readings with nothing new.** Total 16/24 = 0.667.
+The previous flat stretch that fooled me ran four readings before breaking; this one has run nine.
+
+**Never surfaced: 8/24 = 0.333** [0.180, 0.533]. **Flagged in all 18: still 0** — the best file now sits at
+17/18 = 0.944, so eighteen readings have still not produced a single dependable file.
+
+### The bound, which is what a flat stretch actually licenses
+
+Nine flat readings do not prove a ceiling. They do constrain what could still appear. If the 8 remaining
+files shared some propensity `p`, the chance of seeing *nothing* from any of them across 18 readings is
+`((1-p)^18)^8`:
+
+| p | P(observing what we observed) | |
+|---|---|---|
+| 0.10 | 0.0000 | ruled out |
+| 0.05 | 0.0006 | ruled out |
+| 0.03 | 0.0124 | ruled out |
+| 0.02 | 0.0545 | unlikely |
+| 0.01 | 0.2352 | **compatible** |
+
+**So the remaining third of the corpus is not merely "not yet surfaced" — it is bounded below roughly 2–3%
+per file.** Individually each is [0.000, 0.176] on a Wilson interval, which says almost nothing; jointly,
+eight files all staying silent for eighteen readings says a great deal.
+
+That is the honest version of the claim I retracted this afternoon. Not *"the capability saturates"* — a
+statement about the curve that a circular test appeared to support — but *"whatever remains is reachable
+at under about 3% per reading, so no realistic budget will surface it."* Same practical consequence,
+different epistemic status, and this one can be checked: a single new file appearing at k=25 would
+falsify it.
+
+**Specificity across the same 18 readings: 2 flags in 288 clean-control observations.**
+
+### What it costs to know this
+
+Eighteen readings of forty files is roughly **720 model calls** to move the never-surfaced figure from
+0.583 (k=6) to 0.333 (k=18) and to earn the bound above. The measurement is worth having and the
+capability it measures is not improved by it — coverage bought with k tops out around two thirds of
+defective files, and the last third is bounded away from reach.
