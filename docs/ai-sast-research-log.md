@@ -2512,3 +2512,67 @@ Registered 2026-07-26 10:08 +07. **Nothing below was measured before this text w
 - **The bias that remains, unfixable by scaling.** I still author the defects. Matched pairs stop
   conspicuousness from inflating the score; they cannot make my defects representative of a real client
   codebase. This closes the *power* gap, never the *realism* gap.
+
+## E34 — RESULT: significant, and the MISS pattern is worth more than the rate
+
+Run 2026-07-26. Positive control passed. 12 matched pairs, 3 frameworks, shown blind as `module_N.py`.
+
+| scoring | sensitivity | false positives | one-sided Fisher |
+|---|---|---|---|
+| **as run** (classifier at run time) | 7/12 = 0.583 | 2/12 = 0.167 | **p = 0.0447** |
+| rescored (reassurance vocabulary extended by category) | 7/12 | 1/12 = 0.083 | **p = 0.0136** |
+| hand-adjudicated, **model** errors only | 7/12 | **0/12** | — |
+
+E26 at 3/4 vs 0/4 gave p = 0.0714 — **not** significant, which is why it was published as a
+demonstration. Scaling to 12 pairs was the fix, and it worked.
+
+### Where the capability actually is — the finding of this run
+
+| CWE class | planted | detected |
+|---|---|---|
+| **639** ownership / IDOR | 4 | **4** |
+| **306** missing authentication | 2 | **2** |
+| 862 missing authorization | 2 | 1 |
+| **307** no rate limit / lockout | 1 | **0** *(also missed in E26)* |
+| **915** mass assignment | 1 | **0** |
+| **209** error path leaks trace | 1 | **0** |
+| **620** no re-authentication | 1 | **0** |
+
+**The model detects absent ownership and absent authentication essentially reliably (6/6) and misses
+rate-limiting, mass assignment, error-leakage and re-authentication entirely (0/4).** Authorization is
+mixed (1/2). That is far more actionable than "58% sensitivity": the aggregate number is an average over
+classes the model is good at and classes it does not see at all, and CWE-307 has now been missed in
+**both** authored runs.
+
+### Specificity held against deliberately subtle controls
+
+Two `_b` variants hid the control on purpose — one enforced ownership through an **injected dependency**
+(no check visible in the handler body), one applied the scope **inside a service `base()` method**. The
+model correctly stayed silent on both. That is the specificity result this run was designed to stress,
+and it is the strongest one so far.
+
+### Both "false positives" were mine, not the model's
+
+- **`download_b`** — the model wrote *"Org filter on get. IDOR blocked."* It **recognised the control**.
+  The classifier scored it as a finding because "blocked" was not in the reassurance vocabulary.
+  Fixed by extending that vocabulary **as a category** (blocked/prevented/mitigated/guarded/scoped),
+  the same way E27 derived concept terms from CWE definitions rather than from whichever word tripped
+  the run.
+- **`email_b`** — the model wrote *"No rate limit. Brute password / spam confirmations."* **The model is
+  right.** That file re-checks the password and has no throttle. It is a real absent control that I did
+  not plant and did not record.
+
+### A design flaw in my own test set, disclosed
+
+`email_a` and `email_b` differ in re-authentication and **both lack rate limiting**. A matched pair is
+only "controlled" with respect to the *planted* class; it can carry an **unplanted** defect, which makes
+the control arm not truly clean and turns a correct model finding into a scored false positive.
+**Every matched-pair result in this lab inherits that flaw**, including E26's. The fix for a future set
+is to audit each `_b` variant against the full absence-class list, not only against its own pair.
+
+### Limits, unchanged
+
+n = 12 pairs. I authored the defects — matched pairs stop conspicuousness from inflating the score but
+cannot make my defect distribution representative of a client codebase. This closed the **power** gap
+E26 left. It did not close the **realism** gap, and the class breakdown above is the honest warning:
+a corpus weighted toward CWE-307 or 915 would have scored far worse.
