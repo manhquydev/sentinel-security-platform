@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-07-26T15:22:34.677706+00:00",
+  "question": "does E57's joint rule-out of the never-surfaced files survive measured reading-to-reading dependence?",
+  "files": 24,
+  "readings": 18,
+  "never_surfaced": 8,
+  "per_reading_rates": [
+    0.3125,
+    0.4375,
+    0.4375,
+    0.1875,
+    0.4375,
+    0.375,
+    0.3125,
+    0.3125,
+    0.3125,
+    0.3125,
+    0.375,
+    0.1875,
+    0.375,
+    0.25,
+    0.375,
+    0.25,
+    0.25,
+    0.3125
+  ],
+  "rate_cv": 0.2348,
+  "published_points_independent": {
+    "0.03": 0.0124,
+    "0.05": 0.0006
+  },
+  "published_points_with_effects": {
+    "0.03": 0.0124,
+    "0.05": 0.0006
+  },
+  "threshold_independent": 0.0206,
+  "threshold_with_reading_effects": 0.0206,
+  "weakening_factor": 0.999,
+  "verdict": "BOUND ESSENTIALLY UNCHANGED \u2014 the measured reading effects are too uniform to matter",
+  "limit": "models only the reading-level channel; residual dependence would weaken further"
+}

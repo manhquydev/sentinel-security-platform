@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E74 | does E57's rule-out survive measured reading dependence? | **STANDS — yes, unchanged** — the threatening channel (cold passes) is directly measurable: per-reading flag rates over the 16 surfaced files have **CV 0.23**, and recomputing (1-p)^144 with those multipliers moves nothing at the fourth decimal: threshold **p > 0.0206 at both** (1.00x). Closes the synthesis list: 2 corrections (E71, E72), 2 confirmed-and-fixed (E66 staleness, 63-vs-33), 1 defence (this). E61's in-sample vocabulary remains flagged, attached to the corpus debt |
 | E73 | are 63 repos 63 independent units? | **NO — they are 33 applications (10 specs x 4 generators + 23 human)** — re-clustering the flagship gain by APPLICATION: **H1 survives** ([+28.5%, +61.7%], floor +10% cleared 3x) but **H2 drops to MARGINAL** (median-gain CI [+0.0000, +0.0690] touches zero — four implementations of one spec were being counted as four pieces of evidence). Also fixed: E66/E70's stale 8%-route-landing prose vs the artefact's 52/7/37, and E67's 'two independent measurements agreeing' is withdrawn |
 | E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split leans the same way: famous **0.600** vs obscure **0.333**, p = 0.20. Contamination is NOT ruled out; deterministic results and organic E66-E69 unaffected |
 | E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1130 = 2 x 565). Recall **0.226 → 0.263**, precision **6.7% → 12.4%**, and the product sentence named **1,130** handlers where there are **565**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
@@ -5484,3 +5485,39 @@ E67's "two independent measurements agreeing" (8% ≈ the corpus's 54% off-route
 of that agreement was an artefact of the narrow extractor.
 
 Instrument `pool_spec_clustered.py`, artefact `spec-clustered-260726.json`. Zero engine and model calls.
+
+---
+
+## E74 — the last suspect claim, tested: E57's bound SURVIVES measured reading dependence
+
+**The concern.** The synthesis pass flagged that E57's joint rule-out of the 8 never-surfaced files —
+(1-p)^144, "ruled out above ~3%" — assumes 144 independent file-reading cells, while E46/E48 measured the
+union delivering only 58–70% of its independence projection. If whole passes run cold, P(all zero) rises
+and the rule-out weakens.
+
+**Measured, not argued.** The channel that threatens this bound is the reading effect, and it is directly
+measurable: each pass's flag rate over the 16 files that do surface. From the committed 24×18 matrix:
+per-reading rates mean 0.323, range [0.188, 0.438], **CV 0.23**. Recomputing the bound with those measured
+multipliers (concavity of log(1-x) means rate variance can only *raise* P(all zero)):
+
+| | independent | with measured reading effects |
+|---|---|---|
+| P(all zero) at p = 0.03 | 0.0124 | **0.0124** |
+| P(all zero) at p = 0.05 | 0.0006 | **0.0006** |
+| rule-out threshold (α = 0.05) | p > 0.0206 | **p > 0.0206** (1.00×) |
+
+**The bound is essentially unchanged.** At propensities this small, reading-rate variance of CV 0.23 moves
+nothing at the fourth decimal. E57's statement stands as written. The stated limit: this models the
+reading-level channel only; any residual dependence structure would weaken the bound further, never
+strengthen it — but the channel E46/E48 actually measured is this one, and it is too uniform to matter.
+
+**This closes the synthesis pass's list.** Five suspect claims were raised; every one has now been tested
+against data: E59's arms **inverted** (E72), the double-count **confirmed and fixed** (E71), E66's stale
+prose **confirmed and fixed** (E73), the 63-vs-33 clustering **confirmed — H1 survives, H2 demoted**
+(E73), and E57's independence assumption **survives** (this entry). Two corrections, two confirmations of
+defects, one defence. The one remaining methodological flag — E61's ENFORCEMENT vocabulary was selected on
+the same population it is scored on — is recorded as a limitation attaching to the corpus-scale debt: its
+only out-of-sample exercise so far is the organic pipeline (E66–E68), which used it for extraction rather
+than scoring, so it remains unvalidated as a *precision* device off-corpus.
+
+Instrument `pool_bound_dependence.py`, artefact `bound-dependence-260726.json`. Zero model calls.
