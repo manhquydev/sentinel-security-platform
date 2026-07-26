@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
 | E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
 | E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
 | E52 | k=15 and a second specificity breach | **STANDS** — union flat for 6 readings at **0.708** (not a plateau claim, per §18); never-surfaced **7/24**. **SECOND clean-arm flag, NOT a test file**: an uncapped `limit` param — possibly a REAL absent control the corpus fails to label. Documented cause withdrawn; specificity 2/328 = 0.61% |
@@ -4296,3 +4297,45 @@ fail: a move to 5% would mean the model or the classifier changed materially.
 would have produced a wrong conclusion, and the second time repeated measurement caught it. The first was
 the saturation retraction (E50). The pattern is identical: a single observation, a plausible story, and no
 falsification attempt until one was deliberately run.
+
+---
+
+## E55 — the obvious fix for the crypto false positive costs nine real detections to remove one
+
+E54's third clean-arm breach had a clean diagnosis: `aes-encrypt.py` drew *"Gaps: - No auth. CFB malleable
+→ use AES-GCM"*, the model meaning **unauthenticated encryption**, and the presence-class suppressor
+(`aes|cbc|gcm|cipher|…`) failed to fire because the crypto words sit in the *adjacent* sentence while the
+suppressor only inspects the matching window.
+
+The fix is obvious: widen the suppressor's context to one sentence either side. Reproduced first, so the
+diagnosis was not assumed:
+
+| prose | flagged | wanted |
+|---|---|---|
+| "Gaps: - No auth. CFB malleable → use AES-GCM." | yes | **no** — the bug |
+| "No auth on AES-GCM encryption." | no | no — same-sentence case already worked |
+| "No auth check on /admin endpoint." | yes | yes — must survive any fix |
+
+**Measured before adoption, and rejected on the measurement:**
+
+| | before | after widening |
+|---|---|---|
+| positive-arm flags | 111 | 100 (**−11**) |
+| flags naming a ground-truth class | 76 | **67 (−9)** |
+| clean-arm flags | 2 | 2 |
+| the `aes-encrypt.py` breach | flagged | **clean — fixed** |
+
+It removes the false positive and **costs nine genuine detections to do it**. The reason is obvious in
+hindsight: these are security reviews, so crypto vocabulary appears near almost everything, and a
+suppressor with a three-sentence reach silences real absent-control findings whenever the model also
+mentions hashing or a cipher somewhere close.
+
+**Nine real detections for one false positive is a bad trade, so the fix is not applied.** The
+`aes-encrypt.py` false positive stands as a known, named cost of keeping those nine, and the clean-arm
+rate it contributes to — 4 in 418 readings, 0.96% — is small enough that buying it down at this price
+would be the wrong purchase.
+
+This is the second candidate repair today rejected by its own validation data, after the CWE-863
+vocabulary widening in E53. Both were plausible, both were mine, and both would have been adopted on the
+strength of the story if the numbers had not been checked first. **The rule that keeps earning its place:
+measure a fix's cost on the data before adopting it, including the cost you are not looking for.**

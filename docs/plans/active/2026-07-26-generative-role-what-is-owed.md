@@ -70,15 +70,16 @@ times. But the follow-up test showed the gap does **not** give meaningful headro
 unlabelled defects are flagged 2/9 against 2/30 for clean controls (p = 0.22), and `audit.py` itself did
 not reproduce at 0/3. Measured precision is a floor; the space above it is not demonstrated to be large.
 
-### 3b. The classifier's presence-class suppressor only looks inside one window
+### 3b. ~~The presence-class suppressor only looks inside one window~~ — MEASURED AND REJECTED (E55)
 
 The third clean-arm breach is `aes-encrypt.py`: the model wrote *"No auth. CFB malleable → use AES-GCM"*,
 meaning **unauthenticated encryption**. The classifier read it as a missing authentication control. The
 presence-class suppressor (`aes|cbc|gcm|cipher|...`) exists precisely for this and did not fire, because
 the crypto words sit in the *adjacent* sentence while the suppressor only inspects the matching window.
 
-Fix is a window widening, but it must be validated both ways before adoption — it will remove some genuine
-detections too. **Zero model calls to measure.**
+Measured: widening the context to one sentence either side fixes the false positive and **costs 9 genuine
+detections to remove 1**. Rejected. The false positive is kept as a named cost, and the clean-arm rate it
+feeds (0.96%) is small enough that buying it down at 9:1 is the wrong purchase.
 
 ### 4. Do test files belong in either arm?
 
