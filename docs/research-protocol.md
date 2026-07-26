@@ -673,3 +673,32 @@ which closed a research direction rather than opening one.
 
 This applies with equal force in the flattering direction: beating an external number on a corpus where the
 oracle is generous proves nothing either.
+
+## 23. Preregistration written while the run is in flight is still preregistration — but only if nothing has been read
+
+The organic post-cutoff paired evaluation (E75) was launched before its interpretation criterion was
+written. That is a real lapse: §7 requires the decision rule before the data. It was caught while the run
+was still executing and with **no output read** — the log was checked for size and process liveness only,
+never for content — so the criterion below is recorded now, before any result exists in this session.
+
+**The criterion, fixed in advance.** The evaluation asks whether the model detects maintainer-confirmed
+missing-control defects in organic post-cutoff production code. With ~9 repositories the inference is
+**collapse versus non-collapse only**, because cluster-robust intervals are downward-biased below ~30
+clusters (external review, `docs/plans/reports/researcher-260726-2226-contamination-safe-llm-security-eval-practice-report.md`).
+Therefore:
+
+- **COLLAPSE** — the memorisation caveat is confirmed as load-bearing and no generative-role number may be
+  presented as transferable — if pre-fix detection at k≤3 is **below half** the corpus rate at matched k
+  (corpus k=3 union on positive-arm files ≈ 0.458, so the collapse line is **< 0.229**).
+- **NON-COLLAPSE** — the caveat is materially reduced, though not removed — if pre-fix detection is at or
+  above that line **and** post-fix (control) flagging stays consistent with the ≤~3% specificity bound
+  this project has measured, i.e. the paired arms separate.
+- **UNINTERPRETABLE** — if fewer than 8 paired sites resolve, or the canary fails, or the two arms both
+  flag at high rates (the model flagging everything is not detection, §15).
+
+**No p-value will be quoted as the headline.** Nine clustered repositories cannot support one. The paired
+Fisher figure is reported as a descriptive companion and explicitly not as inference.
+
+**Why the rule matters more than the result.** Writing it afterwards would let any outcome be read as
+success — which is precisely how E50's unfalsifiable saturation claim happened. The rule above admits an
+outcome that would damage the project's main line of work, and that is the point.
