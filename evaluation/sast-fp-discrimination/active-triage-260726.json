@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-07-26T13:56:56.725308+00:00",
+  "question": "does reviewer-in-the-loop learning beat density ordering on this inventory?",
+  "protocol": "prequential \u2014 every file scored and chosen BEFORE its label is revealed; the learner trains only on labels a reviewer already paid for by opening the file",
+  "learner": "naive Bayes log-odds over binary file features, Laplace smoothed",
+  "runs": 200,
+  "seed_files": 5,
+  "files": 92,
+  "real_defects": 70,
+  "negative_control": "identical pipeline with shuffled labels",
+  "control_behaves": true,
+  "beats_density_at_90": false,
+  "harmless_reference": "arxiv 1803.06545 \u2014 80/90/95% of vulnerabilities at 10/16/20% of files, on a corpus where vulnerable files are a small minority; NOT comparable to this one, where the oracle itself cannot match those figures",
+  "defect_concentration": 0.3804,
+  "headroom_density_to_oracle_at_90": 0.0653,
+  "targets": {
+    "0.80": {
+      "oracle_effort": 0.2391,
+      "active_median_effort": 0.337,
+      "active_p05_p95": [
+        0.3152,
+        0.4239
+      ],
+      "shuffled_control_median": 0.7935,
+      "density_effort": 0.3152,
+      "random_expected": 0.8,
+      "harmless_published": 0.1
+    },
+    "0.90": {
+      "oracle_effort": 0.3043,
+      "active_median_effort": 0.4674,
+      "active_p05_p95": [
+        0.4239,
+        0.5543
+      ],
+      "shuffled_control_median": 0.8913,
+      "density_effort": 0.3696,
+      "random_expected": 0.9,
+      "harmless_published": 0.16
+    },
+    "0.95": {
+      "oracle_effort": 0.3478,
+      "active_median_effort": 0.7065,
+      "active_p05_p95": [
+        0.5978,
+        0.7283
+      ],
+      "shuffled_control_median": 0.9565,
+      "density_effort": 0.5326,
+      "random_expected": 0.95,
+      "harmless_published": 0.2
+    }
+  },
+  "learned_signal_weights": {
+    "maxsig:1": -1.0915,
+    "maxsig:2": 1.0728,
+    "sig:object_id": -0.632,
+    "sig:write_method": 0.4041,
+    "maxsig:0": -0.3807,
+    "maxsig:3": -0.3663,
+    "sig:sensitive_name": -0.1465,
+    "sig:touches_data": 0.0612
+  }
+}

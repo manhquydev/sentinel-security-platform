@@ -42,7 +42,8 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and points at learned prioritisation as the open lead |
+| E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
+| E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
 | E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
 | E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
 | E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision 6.40% → **6.73%** |
@@ -4897,8 +4898,12 @@ by inspecting 10, 16, 20, 34% of the source code files."* The abandonment narrat
 the precision figure is unsupported. The report is committed with a verification note on its face; §2B, §4A
 and the "~30% precision adoption floor" are marked unverified and are **not** treated as evidence here.
 
-**And the corrected numbers are worth more than the claim they replace, because they are a benchmark.**
-HARMLESS's curve is the same measurement E64 makes, on the same axes:
+**The corrected numbers looked like a benchmark, and E65 showed they are not one.** The comparison below
+is retained because it is how the reasoning actually went, but it is **VOID**: E65 computed the oracle
+ordering for this corpus — unbeatable by any ranker — and it needs **30.4%** of files to reach 90%.
+HARMLESS's 16% is below what perfect knowledge achieves here, because 38% of these files carry a defect
+against a small minority in its setting. Effort at a given recall is a joint property of method and defect
+concentration, never of method alone (now protocol §22).
 
 | defects reached | HARMLESS (published) | this detector, densest-file-first |
 |---|---|---|
@@ -4906,12 +4911,63 @@ HARMLESS's curve is the same measurement E64 makes, on the same axes:
 | 90% | **16% of files** | **37%** |
 | 95% | 20% of files | ~45% |
 
-So a published active-learning approach allocates inspection effort **more than twice as efficiently** as
-the density ordering measured here. That does not contradict E60 — E60 tested **prespecified, unfitted**
-signals and found them worse than chance, deliberately avoiding the overfitting trap that 70 positives
-invites. HARMLESS is *learned*, with a human in the loop. **The prioritisation problem may therefore be
-solvable by exactly the mechanism the inventory workflow already requires** — a reviewer confirming items
-one at a time is an active-learning oracle — and that is the strongest open lead this line of work has.
-It is recorded as the next experiment, not claimed as a result.
+That reads as though a published learned approach allocates effort twice as efficiently, and it was
+recorded as the strongest open lead. **E65 ran it and both halves failed.** Reviewer-in-the-loop learning
+needs 46.7% of files against density's 37.0% — it loses to the trivial heuristic — and the external target
+was never reachable in the first place. What replaced the lead is a bound: **6.5 percentage points** separate
+density ordering from the oracle, so prioritisation is closed as a line of work on this corpus.
 
 Instrument `rank_absent_auth.py` (`collect()`), artefact `rank-absent-auth-260726.json`.  Zero model calls.
+
+---
+
+## E65 — reviewer-in-the-loop learning, and the bound that makes the whole question small
+
+**The lead being chased.** E64's correction identified learned prioritisation as the strongest open lead:
+HARMLESS reaches 90% of vulnerabilities at 16% of files where density ordering here needs 37%, and it does
+it by learning from a human confirming items one at a time — which the inventory workflow already provides
+for free. E60's signals failed with their *direction assumed*; a learner estimates the sign instead, so if
+E60's inversion was real a learner should exploit it.
+
+**Protocol.** Prequential and therefore leak-proof by construction: every file is scored and chosen
+**before** its label is revealed, and the learner trains only on labels a reviewer already paid for by
+opening that file. This is the one setting where fitting on the evaluation corpus is legitimate, and it is
+why the experiment can run at all on 70 positives. Learner is naive Bayes log-odds over binary file
+features (Laplace smoothed) — one counter per feature, because anything heavier would fit the reviewer's
+first few answers and report its own noise back. 200 runs, 5 seed files.
+
+**Result — the learner loses to the trivial heuristic:**
+
+| reach | **ORACLE** | active learning | shuffled-label control | density | random | HARMLESS |
+|---|---|---|---|---|---|---|
+| 80% | **23.9%** | 33.7% [32%, 42%] | 79.3% | 31.5% | 80% | 10% |
+| 90% | **30.4%** | 46.7% [42%, 55%] | 89.1% | **37.0%** | 90% | 16% |
+| 95% | **34.8%** | 70.7% [60%, 73%] | 95.7% | 53.3% | 95% | 20% |
+
+The control behaves: with labels shuffled the identical pipeline needs 89% of files to reach 90%, i.e.
+chance. **The protocol invents nothing.** Active learning beats chance decisively (46.7% vs 90%) and still
+loses to sorting by finding count.
+
+**The finding that matters is the oracle, and it retires the question.** The oracle ordering — descending
+true defect count, unbeatable by any ranker — needs **30.4%** of files to reach 90%. Density needs 37.0%.
+**The entire headroom available to any prioritisation method on this corpus is 6.5 percentage points.**
+E60's signals, this learner, and anything else that might be tried are competing for that sliver.
+
+**And it invalidates the comparison that motivated the experiment.** HARMLESS's 16% is *below what perfect
+knowledge can achieve here*. The two corpora are not comparable: effort at a given recall is a function of
+defect concentration, and **35 of 92 files (38%) carry a defect** here against a small minority in the
+setting HARMLESS was measured in. The E64 correction that called HARMLESS "more than twice as efficient"
+and named learned prioritisation "the strongest open lead" was wrong on both counts, and is corrected
+above. That was a cross-corpus comparison made without checking whether this corpus admits the number —
+the same error class as quoting a coverage figure without its k (§18).
+
+**What survives, and what it means for the product.** Density ordering sits 6.5 points from optimal and
+needs no learning, no model, no reviewer history and no tuning, so **the inventory should ship with it and
+prioritisation should be closed as a line of work on this corpus.** The caveat is the interesting part:
+this bound is a property of a benchmark where 38% of files are defective. On production code, where missing
+authorization is rare, concentration would be far lower and the headroom correspondingly larger — so
+prioritisation may well be a real lever in the field while being a nearly dead one here. **This corpus
+cannot answer that question**, which makes it a validity threat with an owner rather than a closed issue
+(§19), and it attaches to the same external-corpus requirement already recorded as owed item 1.
+
+Instrument `run_active_triage.py`, artefact `active-triage-260726.json`. Zero model calls.

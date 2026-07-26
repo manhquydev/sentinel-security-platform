@@ -651,3 +651,25 @@ resting on evidence no reader can open — the E62 defect in a different costume
 already do this and are left alone as historical record; anything written from now on cites the tracked
 copy. E64 was caught by this while being written: its external-practice source was sitting in the ignored
 tree and was moved before the entry was committed.
+
+## 22. A number from another corpus is not a benchmark until your corpus admits it (E65)
+
+E64 quoted a published curve — HARMLESS finding 90% of vulnerabilities at 16% of files — against this
+project's 37%, concluded the external method was "more than twice as efficient", and named the gap the
+strongest open lead. One measurement retired it: the **oracle** ordering, files opened in descending true
+defect count, which no ranker can beat, needs **30.4%** on this corpus. The external figure sits below what
+perfect knowledge achieves here, so it was never a target.
+
+The mechanism is the same one §18 records for coverage. An effort-at-recall figure is not a property of a
+method; it is a joint property of the method and **how concentrated the defects are**. Thirty-eight percent
+of the files here carry a defect. In the setting the external number came from, vulnerable files are a
+small minority. The two numbers were never on the same axis.
+
+**The rule.** Before an external figure is used as a target, compute what the *best possible* method
+achieves on our data. If the external number beats the oracle, the corpora differ and the comparison is
+void — and the oracle, not the external figure, is the baseline worth reporting, because it also states how
+much headroom the whole line of work is competing for. Here that headroom was **6.5 percentage points**,
+which closed a research direction rather than opening one.
+
+This applies with equal force in the flattering direction: beating an external number on a corpus where the
+oracle is generous proves nothing either.
