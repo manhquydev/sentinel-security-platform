@@ -63,9 +63,29 @@ deterministic layer and position the model as the thing that covers what no rule
   having it, so precision against these labels is a floor (E53), though E54 showed the headroom is small.
 
 **Named next action, which is not an experiment.** Source an organic, externally-labelled corpus carrying
-absence-of-control classes. A research task has been dispatched to establish what actually exists, what it
-costs, and which validity threat each option does *not* solve; its report lands at
-`plans/reports/from-researcher-to-lab-260726-1827-external-vulnerability-corpus-sourcing.md`.
+absence-of-control classes. That was researched rather than guessed — full report with 30+ primary sources
+at `plans/reports/researcher-260726-1846-external-vulnerability-corpus-sourcing-report.md`. The two
+findings that change the decision:
+
+- **The gap is field-wide, not ours.** Across the datasets that dominate this literature — Juliet/SARD,
+  Big-Vul, CVEFixes, DiverseVul, Devign, OWASP Benchmark — memory-safety and injection classes make up
+  60–80% of content and **absence-of-control (CWE-306/862) is under 5%**. There is no established
+  benchmark for missing-authz/missing-authn. This lab is not behind the field here; the field has not
+  built the yardstick either.
+- **Label quality is the binding constraint, not volume.** Prior datasets are reported at **20–71% label
+  inaccuracy**, so simply acquiring a bigger corpus imports someone else's labelling problem. Any option
+  must budget for validation with a stated inter-rater agreement, not just for acquisition.
+
+Costed options, ranked (figures are the researcher's estimates, not quotes):
+
+| option | cost / time | gives us | does NOT solve |
+|---|---|---|---|
+| **1. NVD-mined CVEs + expert labelling** (recommended) | ~$30–50k, 2–3 months, Cohen's κ > 0.85 target | organic real CVEs, per-file absence-class labels, replicable published pipeline | labeller bias on boundary cases (rate-limit vs access-control), skew toward novel cases |
+| **2. Bug-bounty disclosures** (HackerOne/Bugcrowd) | ~$5–10k, 4–6 weeks | ~100–300 confirmed IDOR/access-control bugs, real attacker patterns, cheap | web/API only; disclosure bias toward what bounty hunters look for |
+| **3. Hand-built benchmark** | ~$15–25k | full control of class coverage | **repeats exactly the self-authorship bias this lab already measured** (authored files 4/4 vs ~0.19 on corpus) — the researcher flagged this independently |
+
+Option 3 should be rejected on evidence this project already owns. Option 2 is the cheap first move and
+its bias is nameable; Option 1 is what a publishable claim would require.
 
 **Who owns it.** Corpus acquisition is a project-level decision (licensing, budget, possibly a data
 partnership) and sits above a research session. This file records the requirement and the options; the
