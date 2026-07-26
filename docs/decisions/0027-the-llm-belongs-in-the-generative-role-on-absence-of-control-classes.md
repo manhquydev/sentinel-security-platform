@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
-| specificity | **1 flag in 184 clean-control observations** (E49 — was reported as an unbroken zero until a disjoint sample breached it) | it is not flagging indiscriminately: a false-positive rate of ~0.5%, with the single breach traced to a known classifier failure mode, not a floor at zero |
+| specificity | **1 flag in 184 clean-control observations = 0.5%, 95% CI [0.1%, 3.0%]**; excluding test files **0/152, CI [0%, 2.5%]** (E49) | it is not flagging indiscriminately. Both sampling frames agree the rate is **below ~3%** — and neither supports a claim of *zero*, which is how "0 of 96" was being read before a disjoint sample breached it |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
@@ -185,9 +185,17 @@ truth and ground truth records defects in production code only. So the clean arm
 whose controls are present"; it is "any file with no ground-truth entries", one in seven of which is test
 code where the question this design asks has no well-formed answer. The specificity claim was partly
 measuring that subpopulation, and the first breach came from precisely it. **The defensible claim is a false-positive
-rate near 0.5% with one known cause — not zero.** The classifier fix is owed and was deliberately not
-applied the same day, because changing an instrument immediately after it produces the first result that
-damages a claim is the pattern the guards exist to prevent.
+rate below about 3% with one known cause — not zero.**
+
+Both candidate sampling frames were then computed rather than one being chosen: all clean files **1/184
+[0.1%, 3.0%]**, excluding test files **0/152 [0%, 2.5%]**. The intervals overlap almost entirely, so **no
+conclusion here turns on which frame is adopted** — the frame question is a cleanliness matter, not a
+blocker. Note also that 0 of 152 is still not a claim of zero; it admits up to 2.5%.
+
+The classifier fix is owed and was deliberately not applied the same day, because changing an instrument
+immediately after it produces the first result that damages a claim is the pattern the guards exist to
+prevent. When the two candidate repairs were measured, one removed two genuine detections while missing the
+false positive entirely, and the other removed only the single embarrassing observation.
 
 **The cost curve, measured rather than modelled.** Union coverage of the positive arm at k readings, as a
 fraction of what an independence model would predict: **100%, 81%, 71%, 65%, 61%, 58%** for k = 1 to 6. At
