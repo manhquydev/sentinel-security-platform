@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
+| E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
 | E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled over 3 runs, 16 files: ever 0.291 vs never 0.021, **+0.271 [+0.104, +0.437] (excludes 0)**; best file **0.667 (excludes 1.0)**; 7 of 8 never-reported files at exactly 0. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
@@ -3460,6 +3460,25 @@ effective (E43), but it can only accumulate where there is something to accumula
 are at zero, then **k readings of the whole corpus buys coverage of at most about two files in five**, at
 k times the cost, with no way to identify in advance which two. That is the shape of the offer, and it is
 a very different product from "an 11% detector that gets better if you run it more".
+
+### The same free analysis, applied to CWE-307
+
+| across the same two readings of the same 53 files | ever named | never named |
+|---|---|---|
+| ownership / authentication absence | 12/53 = 0.226 | 41/53 = 0.774 |
+| **rate limit absence (CWE-307)** | **1/53 = 0.019** | **52/53 = 0.981, 95% CI [0.901, 0.997]** |
+
+**Fifty-two of fifty-three files carrying a real missing rate limit were never named in either reading.**
+That is the most decision-relevant single number produced today, and it is a direct measurement needing
+no model correction, because at a rate this low the two-reading upper bound is barely above the truth.
+
+One observation that must not be over-read: the single file that *was* named for CWE-307
+(`accounts/views.py`) was named in **both** readings — 1 of 1 overlap, where ownership managed 0 of 6.
+If that held up it would mean the rare rate-limit detections are high-propensity files rather than lucky
+draws, which is a different failure mode (a narrow competence, not a weak one) with different implications.
+**But n=1 supports nothing.** It is recorded as a question for the next repeated-reading run — measure that
+file at k=9 and see whether it sits near 1.0 or regresses like the ownership group did — and it is not a
+finding.
 
 **Method note worth keeping.** The plan written thirty minutes earlier listed this as work owed to a future
 session and needing fresh model calls. It needed neither. Before scheduling a run, it is worth asking what

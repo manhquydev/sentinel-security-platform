@@ -126,6 +126,10 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > biết trước đó là những file nào**. Đây là một sản phẩm **khác hẳn** với "bộ dò 11% chạy nhiều
 > lần thì tốt lên" — và đây mới là mô tả đúng.
 >
+> **Riêng với lớp lỗi thiếu rate-limit thì con số còn nghiệt hơn: 52/53 file (98%) chưa từng được
+> nêu lần nào qua cả hai lần đọc**, khoảng [90% – 99,7%]. Đây là con số có ý nghĩa quyết định nhất
+> trong ngày, và nó là số đo trực tiếp, không cần hiệu chỉnh gì.
+>
 > Điểm đáng nói về cách làm: con số này em **không tốn thêm một lời gọi model nào** để có. Nó nằm
 > sẵn trong dữ liệu đã lưu — hai lần chạy trước chính là hai lần đọc độc lập của cả 53 file. Nửa
 > giờ trước em còn ghi nó vào danh sách "việc còn nợ, cần chạy thêm".
