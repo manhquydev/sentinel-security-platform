@@ -2477,3 +2477,38 @@ stable and repeated sampling buys real precision rather than averaging noise.
 
 **Consequence:** decision 0027's structural-familiarity item stays exactly where E32 left it —
 inconclusive, point estimate leaning toward structure contributing, transfer bound not narrowed.
+
+## E34 — PREREGISTRATION: scale the authored-unseen test to a measurement (written before measuring)
+
+Registered 2026-07-26 10:08 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E26 measured sensitivity on genuinely unseen code — 3/4 planted defects found, 0/4
+  false claims — and was explicitly labelled a **demonstration, not a rate** (n = 8, no p-value quoted).
+  It is the strongest transfer evidence this lab has and the weakest-powered. The corpus cannot fix the
+  structural question (E33 cancelled), but this one is fixable: the test set is **authored**, so n is a
+  choice rather than a constraint.
+- **Method.** Extend `evaluation/authored-unseen/` from 4 matched pairs to **12** (24 modules), written
+  in this session and therefore outside any deployed model's training set. Each pair implements the same
+  feature twice, differing only in whether the required control is present.
+- **Deliberate changes from E26, to attack author bias rather than repeat it:**
+  1. **New CWE classes** not used in E26 — mass assignment, missing tenant scope on a bulk endpoint,
+     unauthenticated internal admin route, missing re-authentication on a sensitive change, missing
+     object-level check on delete, information exposure through an error path.
+  2. **Three frameworks** (Flask, FastAPI, Django) rather than one, so "this author's Flask style" is
+     not the thing being detected.
+  3. **Subtle controls** in some `_b` variants — a control that is present but easy to overlook (a
+     dependency-injected guard, a queryset filter in a base class) — so specificity is tested against
+     near-misses, not only against obvious guards.
+- **Constraints carried over unchanged:** matched pairs (anything conspicuous appears in the twin, where
+  it must NOT fire); no comment, name or docstring hints at the defect; realistic CRUD idiom; files
+  shuffled and shown as `module_N.py` so neither name nor order leaks the answer.
+- **Primary outcome.** Sensitivity (planted defects flagged) and false-positive rate (controls flagged),
+  with a one-sided Fisher exact test — the statistic E26 could not justify at n = 8.
+- **Power, computed before writing any code.** At 12 pairs: 9/12 vs 1/12 → p = 0.0028; 7/12 vs 2/12 →
+  p = 0.0498. **So the design detects the effect E26 suggested, and is marginal if sensitivity falls to
+  ~0.58.** Stated in advance rather than discovered afterwards.
+- **Falsifying result.** Sensitivity near the control rate ⇒ the E26 demonstration does not survive
+  scaling, and decision 0027's transfer claim weakens.
+- **The bias that remains, unfixable by scaling.** I still author the defects. Matched pairs stop
+  conspicuousness from inflating the score; they cannot make my defects representative of a real client
+  codebase. This closes the *power* gap, never the *realism* gap.
