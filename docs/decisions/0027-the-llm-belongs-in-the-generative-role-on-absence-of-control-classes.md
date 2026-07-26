@@ -155,6 +155,27 @@ class and may carry an unplanted defect. E34's `email_b` does — the model corr
 missing rate limit there, and it was scored as a false positive. Every matched-pair result in this lab
 inherits this, and future sets must audit controls against the full class list.
 
+## REPLICATED ON BOTH HALVES (E35 + E36, 2026-07-26)
+
+Both legs of this decision's mechanism argument now rest on **two independent runs each**, not on single
+measurements:
+
+| claim | first run | independent replication |
+|---|---|---|
+| discriminates absence-class from **clean** files | 9/60 vs 0/40, p = 0.0078 | **15/59 vs 0/40, p = 0.000185** |
+| discriminates absence-class from **merely defective** files | 9/60 vs 0/80, p = 0.0003 | **15/59 vs 2/80, p = 0.0000494** |
+
+**Specificity across both runs: 0/40 clean files flagged — 80 consecutive, no false claim.** Defective
+files with no absent control sit at 2/80, **statistically indistinguishable from files with nothing
+wrong** (p = 0.44), while every one of those 80 carries a real confirmed vulnerability.
+
+Sensitivity rose from 0.150 to 0.254 between runs. Two instrument corrections since the first run push
+that way — the classifier now recognises findings its earlier vocabulary missed, and unreadable files
+are no longer counted as model failures — which is the "published rates are a **floor**" caveat paying
+out in the predicted direction rather than a change in the model.
+
+**Every artefact behind a standing claim in this decision is now re-verifiable from the repository.**
+
 ## The bounds are part of the claim
 
 1. **It is a weak detector — but every published rate is a FLOOR, not an estimate.** The measured
