@@ -651,6 +651,43 @@ PY
 then ok "clean-control false positives stay at the one documented case with a known cause"
 else bad "SM23: a SECOND clean-control false positive appeared — the documented cause is not the whole story"; fi
 
+sect "SM24: the never-surfaced fraction is derivable from the artefacts and stays where it was measured"
+if run_py <<'PY'
+import glob, json, sys
+sys.path.insert(0, "evaluation/sast-fp-discrimination")
+from pool_propensity import wilson
+# "Roughly three in five defective files never appear at any k" is the sentence decision 0027's commercial
+# case turns on. It is derived across many artefacts rather than stored in one, which is exactly the shape
+# of number that rots silently: any run added or removed changes it and nothing would say so.
+def group(patterns):
+    runs = []
+    for pat in patterns:
+        for f in sorted(glob.glob("evaluation/sast-fp-discrimination/" + pat)):
+            runs.append({(r["repo"], r["file"]): r for r in json.load(open(f))["rows"]})
+    return runs
+zeros = total = 0
+for label, pats in (("A", ["generative-260726.json", "generative-rerun*-260726.json"]),
+                    ("B", ["generative-disjoint*-260726.json"])):
+    runs = group(pats)
+    if len(runs) < 2:
+        print("  SKIP-AS-FAIL: sample %s has %d readings" % (label, len(runs))); sys.exit(1)
+    shared = set.intersection(*(set(m) for m in runs))
+    pos = [k for k in shared if runs[0][k]["arm"] == "positive"]
+    z = sum(1 for k in pos if not any(m[k]["verdict"] == "flagged" for m in runs))
+    print("  sample %s: %d readings, %d positive files, %d never surfaced" % (label, len(runs), len(pos), z))
+    zeros += z; total += len(pos)
+frac = zeros / total
+lo, hi = wilson(zeros, total)
+print("  pooled: %d/%d = %.3f  95%% CI [%.3f, %.3f]" % (zeros, total, frac, lo, hi))
+# The band is deliberately wide: this guard exists to catch the figure MOVING or becoming underivable,
+# not to freeze a point estimate that more data should be allowed to refine.
+ok = 0.40 <= frac <= 0.80 and total >= 40
+print("  within the published band [0.40, 0.80] and >=40 files: %s" % ok)
+sys.exit(0 if ok else 1)
+PY
+then ok "the never-surfaced fraction still derives from the artefacts and sits in its published band"
+else bad "SM24: the never-surfaced fraction moved out of band, or can no longer be derived"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
