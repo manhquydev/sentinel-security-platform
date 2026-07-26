@@ -99,9 +99,10 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >
 > **Em đã hỏi đúng câu đó với kết quả CHỦ CHỐT của dự án, và câu trả lời chia làm hai nửa rõ rệt.**
 > Chạy lại độc lập thiết kế gốc trên cùng bộ file:
-> - **Nửa "không báo bậy" thì vững như đá:** file sạch bị báo nhầm **0/16 ở cả hai lần đọc** — và
->   qua *mọi* lần chạy từ trước tới nay, nhóm file sạch **chưa bao giờ** bị báo nhầm lần nào. Đây
->   là con số chắc chắn nhất của cả dự án.
+> - **Nửa "không báo bậy" thì rất vững:** file sạch bị báo nhầm **0/16 ở cả hai lần đọc**.
+>   *(Lúc viết dòng này em đã nói "chưa bao giờ báo nhầm, con số chắc chắn nhất dự án". **Câu đó
+>   sai và em đã sửa ở phần dưới**: trên một bộ file hoàn toàn mới thì có 1 lần báo nhầm. Tỉ lệ
+>   đúng, gộp toàn bộ tới giờ, là **1/280 = 0,36%** — rất thấp, nhưng **không phải 0**.)*
 > - **Nửa "tìm được lỗi" thì vẫn là tỉ lệ:** cùng 24 file có lỗi thật, lần 1 báo 5 file, lần 2 báo
 >   3 file, **trùng nhau 2**. Và **18/24 file có lỗi thật không bị báo ở cả hai lần**.
 >
