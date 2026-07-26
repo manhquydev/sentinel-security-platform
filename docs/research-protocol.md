@@ -554,3 +554,40 @@ increase, never from a flat run**, and the honest default is that no ceiling has
 **Corollary for anything selected on a previous reading.** "Always detected" and "never detected" are both
 selection effects at small k. Both regress under deeper reading, in opposite directions, and both were
 published here before they did.
+
+## 19. A validity threat that no experiment can close still needs an owner and a plan
+
+Rules 1–18 all assume the answer to a doubt is another measurement. Some doubts are not like that, and
+this lab has been carrying one all day while treating it as a footnote.
+
+**The standing example.** Every result here is measured on a corpus whose defects were LLM-seeded
+(`llm_generated_corpus=true`), scored against labels that are demonstrably incomplete — a deterministic
+scan found ten endpoints with an unbounded client-controlled `limit` and the ground truth labels that class
+zero times — and supplemented by matched-pair files this lab authored itself, which three separate
+measurements show are **easier** than corpus files. No amount of re-reading, re-scoring or replication
+touches any of that. Running more experiments on the same corpus makes the numbers tighter and no more
+transferable.
+
+**What was wrong with how it was handled.** It sat in the owed-work list under a line saying it "cannot be
+closed by running anything", which is true and is not a plan. A threat filed that way stays filed: it never
+competes for effort against items that *can* be closed by running something, so it survives every session
+that keeps busy.
+
+**The rule.** A validity threat that no experiment can close must still carry, in writing:
+
+1. **What it invalidates specifically** — not "the results", but which claims and by how much. Here:
+   nothing measured transfers to private, human-written code, and the transfer gap is unquantified because
+   the only available comparison is against material with the same defect.
+2. **A named next action that is not an experiment** — sourcing data, an external review, a licence, a
+   collaboration, a purchase. If the action is a decision above this lab's authority, name the decision
+   and who owns it rather than restating the constraint.
+3. **The cost of the action**, so it can lose to something better on merit instead of by default.
+4. **What the results are worth if it is never closed.** Usually not nothing — here the *negative* results
+   (the model cannot see CWE-307; no file is reliably detected; the union saturates) are far more robust to
+   corpus provenance than the positive ones, because a defect the model misses on easy seeded code will not
+   suddenly be found on harder real code.
+
+**The general form.** *Measure what you can, and for what you cannot, write down precisely what you are
+therefore not entitled to say.* An unclosable threat is not an excuse for silence and not grounds for
+discarding the work; it is a boundary that has to be drawn explicitly, because the alternative is that
+every reader draws it wherever flatters them.

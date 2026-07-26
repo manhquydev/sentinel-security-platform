@@ -49,13 +49,31 @@ deterministic layer and position the model as the thing that covers what no rule
 ## What is left
 ## What is left
 
-### 1. A defect distribution not authored by us
+### 1. A defect distribution not authored by us — the one threat no experiment closes
 
-Still open, still the largest threat to external validity. Every matched-pair result inherits the authoring
-bias E34 disclosed, and three independent measurements show our authored files are easier than corpus files
-(ownership 4/4 authored vs ~0.19 on corpus). The corpus is itself LLM-seeded. **Neither source is clean and
-no current result transfers to private code.** A data-sourcing problem, not an experiment — running things
-cannot close it.
+**What it specifically invalidates.** Not "the results" — these claims, this much:
+
+- **Positive claims do not transfer.** Detection rates, the k=1 rule increment, coverage curves: all
+  measured on LLM-seeded defects plus self-authored matched pairs that three measurements show are easier
+  than corpus files. Nothing here licenses a number on private, human-written code.
+- **Negative claims are far more robust.** CWE-307 being near-invisible, no file reaching reliability, the
+  union bounded around two thirds — a defect the model misses on easy seeded code will not appear on harder
+  real code. These survive the threat; the selling points do not.
+- **Label incompleteness is separate and also real.** CWE-770 is labelled zero times despite ten endpoints
+  having it, so precision against these labels is a floor (E53), though E54 showed the headroom is small.
+
+**Named next action, which is not an experiment.** Source an organic, externally-labelled corpus carrying
+absence-of-control classes. A research task has been dispatched to establish what actually exists, what it
+costs, and which validity threat each option does *not* solve; its report lands at
+`plans/reports/from-researcher-to-lab-260726-1827-external-vulnerability-corpus-sourcing.md`.
+
+**Who owns it.** Corpus acquisition is a project-level decision (licensing, budget, possibly a data
+partnership) and sits above a research session. This file records the requirement and the options; the
+choice is not one this lab makes alone.
+
+**If it is never closed.** The work still stands as a negative result and as a methodology: the protocol,
+the guards, and every retraction in the log are corpus-independent. What must never be published without
+this closed is any positive per-file number presented as applying to a customer's code.
 
 ### 2. ~~Where the ceiling sits on other code~~ — DONE 2026-07-26 (E49)
 
