@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312). First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
@@ -4493,3 +4494,66 @@ Eighteen readings of forty files is roughly **720 model calls** to move the neve
 0.583 (k=6) to 0.333 (k=18) and to earn the bound above. The measurement is worth having and the
 capability it measures is not improved by it — coverage bought with k tops out around two thirds of
 defective files, and the last third is bounded away from reach.
+
+---
+
+## E58 — the complementarity E56 asserted, finally measured: real, independent, and small
+
+E56 concluded that the model and a deterministic rule are "independent evidence sources, not a pipeline".
+That was an argument, not a measurement, and it sat unmeasured in a decision record for an hour. Both
+instruments have now been run over the same 24 files — no new model calls, the 18 readings already exist.
+
+### First pass was wrong, and the error is instructive
+
+Counting *files where each instrument fired* gave model 16/24, detector 7/24, **3 detector-only**, union
+0.792 — a headline gain of +12.5 points. Spot-checking those three killed it:
+
+- `list_public_vendors` — public by its own name
+- `/api/auth/me` — protected by a `CurrentUser` type alias whose `Depends` my regex does not see
+- `/api/auth/forgot-password` — meant to be public
+
+**All three were false positives.** "The instrument fired here" is not "the instrument was right here", and
+conflating them inflated the result by a factor of three. Re-scored so both sides must **identify a class
+the ground truth actually records**:
+
+| | correct detections on 24 files |
+|---|---|
+| model, union of 18 readings | 15/24 = 0.625 |
+| deterministic rule | 3/24 = 0.125 |
+| both | 2 |
+| **rule only** | **1** |
+| neither | 8 |
+| union | 16/24 = **0.667** |
+
+### They are genuinely independent — and that was worth checking
+
+Overlap expected if the two were independent: **4.7 files. Observed: 4.** The rule and the model are not
+finding the same things by different means; they are close to statistically independent. E56's claim
+survives its own test, which is not something to take for granted.
+
+### Where the rule is actually worth having
+
+At k=18 the rule adds one file — +0.042 — because eighteen readings have already found most of what the
+model can find. **No deployment runs eighteen readings.** Recomputed across budgets anyone would actually
+choose, averaging over all reading subsets of each size:
+
+| budget | model alone | model + rule | rule adds |
+|---|---|---|---|
+| **k=1** | 0.208 | **0.312** | **+0.104** |
+| k=2 | 0.319 | 0.406 | +0.088 |
+| k=3 | 0.402 | 0.464 | +0.062 |
+| k=6 | 0.526 | 0.568 | +0.042 |
+| k=18 | 0.625 | 0.667 | +0.042 |
+
+**At one reading per file — the only budget with a defensible cost story — sixty lines of regex raise
+correct detections by half again, from 0.208 to 0.312.** The rule costs nothing per file, never varies
+between runs, and needs no k. Its marginal value is largest exactly where a real deployment sits and
+decays as the model is re-read, which is the opposite of how the model's own value behaves.
+
+### The honest summary of this pairing
+
+Neither instrument is a scanner. The rule is cheap, invariant and narrow; the model is expensive,
+non-deterministic and broader. They overlap about as much as chance predicts, so running both is not
+redundant — and running both is *all* that is licensed, because 0018/0020 and DD1 forbid the arrangement
+where one filters the other. **Two independent, individually weak signals presented to a human, with the
+cheap one carrying more of the load than its reputation suggests.**
