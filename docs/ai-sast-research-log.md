@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
 | E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled over 3 runs, 16 files: ever 0.291 vs never 0.021, **+0.271 [+0.104, +0.437] (excludes 0)**; best file **0.667 (excludes 1.0)**; 7 of 8 never-reported files at exactly 0. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
@@ -3420,3 +3421,47 @@ only the one where the failure surfaced. Leaving the others on a single reading 
 they each carried a ~20% spurious-stop rate and doing nothing, and the change is the same three lines in
 each. The correctness-relevant half was never at risk in either case: nothing this control lets through
 can be a dead harness, because a dead harness scores zero however often it is read.
+
+---
+
+## E45 — how much of the corpus carries no signal at all: 60–77%, and it cost nothing to find out
+
+E43 left this as the open question with the clearest commercial consequence: if repeated reading only
+recovers files that carry propensity, **what fraction of the corpus carries none?** The handover plan
+listed it as owed work needing fresh calls. It did not — E39 and E42 are already two independent single
+readings of the same 53 files, and the answer was sitting in committed data.
+
+**The model-free measurement.** Across those two readings, 6 files were named in the first and 6 in the
+second, overlapping in none, so 12 distinct files were ever named and **41 of 53 = 0.774 were never named
+in either reading, 95% CI [0.645, 0.865]**.
+
+That is an **upper bound**, not the zero fraction, and the gap is not small: a file at propensity 0.333 is
+missed in two readings 44% of the time. Quoting 0.774 as "77% of files have nothing" would overstate it in
+the direction that makes the tool look worse, which is no more acceptable than overstating the other way.
+
+**A model-based refinement, and why it is reported second.** Using E43's measured non-zero propensities
+(mean 0.357, mean probability of being missed twice 0.451), the zero fraction `z` can be solved two ways:
+
+| route | z |
+|---|---|
+| from the per-reading rate 0.113 = (1−z)·μ | 0.683 |
+| from never-named-in-two 0.774 = z + (1−z)·0.451 | 0.589 |
+
+**These are not two independent confirmations.** Both consume the same measured non-zero distribution;
+they are two consequences of one model, so their agreement would only have shown internal consistency.
+Their *disagreement* — 0.09 — is the useful part, because it bounds how much weight the model can carry.
+
+**The answer, stated at the precision the evidence supports: between roughly 60% and 77% of files in this
+slice carry essentially no propensity to be reported at all.** Not "rarely reported" — never, across every
+reading taken.
+
+**Why this is the number that matters commercially.** Repeated reading was established as required and
+effective (E43), but it can only accumulate where there is something to accumulate. If three files in five
+are at zero, then **k readings of the whole corpus buys coverage of at most about two files in five**, at
+k times the cost, with no way to identify in advance which two. That is the shape of the offer, and it is
+a very different product from "an 11% detector that gets better if you run it more".
+
+**Method note worth keeping.** The plan written thirty minutes earlier listed this as work owed to a future
+session and needing fresh model calls. It needed neither. Before scheduling a run, it is worth asking what
+the committed artefacts already answer — two single readings of a corpus are a propensity measurement of
+the whole corpus at k=2, which is weak per file and strong in aggregate, and aggregate was the question.

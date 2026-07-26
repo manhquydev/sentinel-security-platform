@@ -116,6 +116,20 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > Con số nói rõ nhất bản chất: **7 trong 8 file thuộc nhóm chưa từng được phát hiện đứng đúng ở 0
 > qua mọi lần đọc.** Không phải "ít khi được phát hiện" — mà là **không bao giờ**.
 >
+> **Và em đã đo được tỉ lệ đó trên cả 53 file — đây là con số quyết định giá trị thương mại.**
+> Qua hai lần đọc độc lập, **41/53 file (77%, khoảng [64% – 87%]) chưa từng được nêu lần nào**.
+> Đây là **cận trên**, vì file ở mức 0,33 thì hai lần đọc vẫn trượt cả hai với xác suất 44%. Hiệu
+> chỉnh lại thì tỉ lệ thật vào khoảng **60–77%**.
+>
+> Nói thẳng ý nghĩa: **3–4 file trong 5 sẽ KHÔNG BAO GIỜ được nêu, dù đọc bao nhiêu lần.** Đọc lặp
+> chỉ mua được phần còn lại, tức **nhiều nhất 1–2 file trong 5**, với chi phí nhân k, và **không
+> biết trước đó là những file nào**. Đây là một sản phẩm **khác hẳn** với "bộ dò 11% chạy nhiều
+> lần thì tốt lên" — và đây mới là mô tả đúng.
+>
+> Điểm đáng nói về cách làm: con số này em **không tốn thêm một lời gọi model nào** để có. Nó nằm
+> sẵn trong dữ liệu đã lưu — hai lần chạy trước chính là hai lần đọc độc lập của cả 53 file. Nửa
+> giờ trước em còn ghi nó vào danh sách "việc còn nợ, cần chạy thêm".
+>
 > **Đính chính quan trọng:** con số 11% **không có nghĩa là "mỗi file có 11% cơ hội được phát
 > hiện"**. Thực tế là **phần lớn file gần như bằng 0**, và một thiểu số nằm ở mức 33–67%. Số 11%
 > là trung bình của một tập mà **hầu như không file nào giống cái trung bình đó**.

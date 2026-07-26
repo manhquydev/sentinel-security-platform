@@ -189,6 +189,15 @@ file buys roughly a third of what the headline sensitivity implies. But repeated
 there is signal to accumulate: a file at 0.000 is never found at any k. What may be promised is **coverage
 of a subset of the corpus, at k times the cost, with no way to identify that subset in advance.**
 
+**That subset has now been sized (E45), and it is the number this decision should be read through.**
+Across two independent readings of the same 53 files, **41 of 53 (0.774, 95% CI [0.645, 0.865]) were never
+named at all** — an upper bound on the zero fraction, since a file at 0.333 is missed twice 44% of the
+time. Correcting with the measured propensity distribution puts the true figure at roughly **0.60–0.77**.
+
+So **three to four files in five carry no propensity to be reported at any k**, and repeated reading buys
+coverage of at most the remaining one to two in five, at k times the cost. That is a materially different
+product from "an 11% detector that improves when run repeatedly", and it is the honest description.
+
 So what replicates is a **rate**, not a detection. This model reports an absent ownership control on about
 11% of files of this kind, and does not consistently report it on the *same* files. For a product that
 means two runs yield two disjoint worklists, both at the published rate — which forces either repeated

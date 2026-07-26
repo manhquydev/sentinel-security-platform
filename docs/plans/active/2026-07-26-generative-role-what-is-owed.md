@@ -43,9 +43,13 @@ interval is [0.320, 0.807].
 
 `run_attribution_propensity.py` takes `PROPENSITY_K` and `PROPENSITY_GROUP`; `pool_propensity.py` globs
 every `attribution-propensity-*.json`, so a new run widens the estimate with no code change. The
-interesting question is no longer whether the mixture exists but **what fraction of the corpus sits at
-zero** — currently 7 of 8 never-reported files, which if it generalises is the single most
-commercially important number in this line of work.
+interesting question was what fraction of the corpus sits at zero. **That is now answered (E45) and this
+item is closed: 41 of 53 files were never named across two independent readings (0.774, upper bound), with
+the model-corrected zero fraction at roughly 0.60-0.77.** It required no new calls — the two committed
+single-reading runs already were a k=2 propensity measurement of the whole slice.
+
+What remains open here is narrower: the per-file intervals for the files that DO carry signal are still
+wide (the best is [0.320, 0.807]), so the ceiling is established but not located.
 
 ## 3. A defect distribution not authored by us
 
