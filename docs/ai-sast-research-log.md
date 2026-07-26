@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312). First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
+| E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
@@ -4549,6 +4549,24 @@ choose, averaging over all reading subsets of each size:
 correct detections by half again, from 0.208 to 0.312.** The rule costs nothing per file, never varies
 between runs, and needs no k. Its marginal value is largest exactly where a real deployment sits and
 decays as the model is re-read, which is the opposite of how the model's own value behaves.
+
+### Replicated on a disjoint sample
+
+The k=1 figure is the one worth acting on, so it was checked on the 24 files of E49's disjoint sample —
+zero overlap with the first, three readings available:
+
+| | rule alone | k=1 model | k=1 model+rule | rule adds |
+|---|---|---|---|---|
+| first sample (24 files) | 0.125 | 0.208 | 0.312 | **+0.104** |
+| **disjoint sample (24 files)** | 0.208 | 0.222 | 0.347 | **+0.125** |
+
+**The effect replicates**, and slightly larger on the fresh sample. Two disjoint file sets agree that at
+one reading per file a sixty-line rule adds roughly ten to twelve points of correct detection — which is
+about half again on top of what the model alone delivers at that budget.
+
+Worth noting what did *not* replicate identically: the rule alone scores 0.125 on the first sample and
+0.208 on the second, so the rule's own recall varies substantially between file sets. The *increment* it
+provides is the stable quantity here, not its absolute recall.
 
 ### The honest summary of this pairing
 

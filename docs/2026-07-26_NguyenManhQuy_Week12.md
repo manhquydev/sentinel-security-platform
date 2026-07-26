@@ -55,7 +55,14 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > độc lập, nên chạy cả hai **không thừa**.
 >
 > **Ở mức 1 lần đọc mỗi file — ngân sách duy nhất có câu chuyện chi phí đứng vững — 60 dòng regex nâng
-> số phát hiện đúng lên thêm một nửa (0,208 → 0,312).** Luật không tốn tiền mỗi file, không đổi giữa
+> số phát hiện đúng lên thêm một nửa (0,208 → 0,312).**
+>
+> **Và em đã kiểm lại trên một bộ 24 file HOÀN TOÀN RỜI:** model 0,222 → cộng luật 0,347, tức luật thêm
+> **+0,125** — **lặp lại được, còn nhỉnh hơn một chút**. Hai bộ file rời nhau cùng nói rằng ở 1 lần đọc,
+> 60 dòng regex thêm khoảng **10–12 điểm**.
+>
+> Nói cho đủ phần không lặp lại: **recall của riêng cái luật** thì dao động mạnh giữa hai bộ (0,125 và
+> 0,208). Thứ ổn định là **phần nó THÊM VÀO**, không phải recall tuyệt đối của nó. Luật không tốn tiền mỗi file, không đổi giữa
 > các lần chạy, không cần k. Giá trị của model **tăng** theo ngân sách; giá trị của luật **lớn nhất ở
 > ngân sách nhỏ nhất**. Đúng chỗ khách hàng thật sẽ đứng.
 >
