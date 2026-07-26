@@ -42,6 +42,8 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and points at learned prioritisation as the open lead |
+| E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
 | E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
 | E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision 6.40% → **6.73%** |
 | E60 | can a free ordering rescue the free layer's precision? | **STANDS (negative, inverted)** — four prespecified security signals rank real defects **worse than shuffling**: recall@10% **0.029 vs 0.100**, permutation p(>=obs) = **0.9975**; precision falls monotonically 0.250 → 0.062 as signals accumulate (p = 0.0344). **Source line number, which has no security content, beats the designed ranker 6.5×.** Authorship split cannot separate corpus artefact from real effect (1.32× human vs 1.56× LLM, both n.s.) |
@@ -4798,3 +4800,118 @@ a rounding error next to the model — on absence-class files it delivers about 
 delivers**, deterministically, for free, with no k and no non-determinism.
 
 Instrument `pool_rule_model_union.py`, artefact `rule-model-union-260726.json`. Zero model calls.
+
+---
+
+## E63 — what the LLM layer costs on top of the FREE layer, and where the spending stops paying
+
+**Why the question reopened.** E13 answered "marginal cost/yield of the LLM layer" with **+$0.05, +35s,
+zero extra findings** and that verdict stands — for the role it tested, an LLM gate behind Semgrep. It says
+nothing about the generative role, which E17 onward showed produces findings no engine produces. And the
+order matters: the deterministic rule is free, instant and offline, so in any real product **it runs first
+and is the baseline.** The buyer's question is not whether the model is good but *given the free layer
+already ran, what does each further reading buy and what does it cost?*
+
+**Fairness correction applied before the numbers were believed.** The naive comparison flatters the model:
+the rule is scored by the project matcher (file AND CWE AND line, claim-once) while a model "flag" only
+asserts that *some* control is missing *somewhere* in the file. Both standards are therefore reported, the
+strict one requiring the model to also name the ground-truth class using the same prose parser the
+attribution experiments used.
+
+**Sample A — 24 files, 18 readings, free layer 3/24 = 0.125:**
+
+| standard | model's total contribution over free | last reading that added anything | spent to k=18 |
+|---|---|---|---|
+| file-level flag | **+0.583** (14 files) | **k=9** | 432 calls, ~$2.76 |
+| strict (names the class) | **+0.500** (12 files) | k=14 | 432 calls, ~$2.76 |
+
+Sample B (24 files, 3 readings, free layer 5/24 = 0.208) gives +0.250 loose and +0.125 strict; at matched
+k=3 sample A is at +0.333 loose and +0.333 strict, so the two are closer than their totals suggest and the
+difference is mostly reading depth, not sample.
+
+**The operational finding is the flat tail.** Under the published estimand the union stops moving after
+**k=9**, and readings 10–18 cost **$1.40 of the $2.76** — **51% of the budget bought nothing.** Marginal
+cost per new detection sits flat at roughly $0.14–$0.16 from k=3 to k=9 and then becomes infinite. There is
+no signal in the run itself that says "stop", which is the whole reason the schedule has to be measured
+rather than assumed.
+
+**So E13's verdict is overturned for this role and confirmed for its own.** The generative layer does buy
+coverage the free layer misses — **+0.50 strict, at ~$0.23 per file the free layer missed** — and it stops
+buying anything long before a naive "read it many times" budget stops spending.
+
+Cost is an **estimate** and labelled as one throughout: token counts were never persisted, so input is
+reconstructed from the truncated file text plus prompt template and output from the persisted response, at
+4 chars/token on the project's committed price table. **Call counts are exact** and are reported alongside,
+because a call count cannot rot the way a price estimate can.
+
+Instrument `run_marginal_llm_value.py`, artefact `marginal-llm-value-260726.json`. Zero new model calls.
+
+---
+
+## E64 — the inventory claim, tested: the reviewer's unit is the file, and that is the whole gain
+
+**Where the question came from.** E61 concluded the free layer must ship as an inventory rather than an
+alert stream, resting on an untested assumption: that the ~93% which are not defects are cheap to dismiss.
+External practice research (`docs/plans/reports/2026-07-26-recall-instrument-evaluation-practice.md`)
+found the field does ship exactly this shape — CSPM, IAM Access Analyzer, SBOM+VEX — evaluated on coverage,
+dismissal rate and time-to-decision rather than precision, with 60–80% "not applicable" closures normal.
+It also found **no published measurement of analyst time per attestation decision**, which leaves the
+assumption load-bearing and unmeasured.
+
+Time per decision cannot be measured here. **The number of decisions can**, and it is the multiplier.
+
+**Measured.** 565 finding sites, 70 real defects, across **92 files** in 32 repositories. A reviewer
+confirming at file level — *"are these routes public by design?"*, one answer covering every finding in the
+file — faces **92 decisions, not 565**: 6.1 findings per decision, median group 2, largest 19. The top 25%
+of files hold 71% of all findings.
+
+**Ordering files by finding density beats chance decisively** — 25% of files opened reaches **70%** of real
+defects against 35.7% at chance, p < 0.0001 at every depth tested.
+
+**And that result is not what it looks like.** Measuring the same ordering against *findings read* instead
+of *files opened* collapses it:
+
+| defects reached | files opened | findings read |
+|---|---|---|
+| 25% | 7.6% | 23.5% |
+| 50% | 17.4% | 51.7% |
+| 70% | 23.9% | 69.4% |
+| 90% | 37.0% | 83.2% |
+
+Findings-read tracks defects-reached almost exactly. **Per finding there is no prioritisation whatsoever**,
+precisely as E60 measured. The entire gain comes from the unit of work: a file with 19 unprotected routes
+yields more defects per decision because it holds more findings, which is arithmetic and not insight.
+
+**What survives is the stronger claim anyway.** Effort compresses about **3×** at every yield level purely
+by making the file the unit of confirmation — and unlike a prioritisation heuristic, that cannot silently
+invert on a different corpus the way E60's signals did, because it depends on no security judgement at all.
+The inventory framing therefore rests on 92 decisions rather than 565 findings; whether 92 decisions is
+cheap enough remains genuinely unmeasured, and no published source answers it.
+
+**The external evidence had to be checked, and one claim of it failed.** The subagent report named
+HARMLESS (arxiv 1803.06545) as the single documented case of a low-precision tool abandoned because
+"inspectors quickly lost faith", at 5% precision — a profile almost identical to this detector's, and
+therefore the most decision-relevant sentence in the whole report. **It does not survive checking.** The
+paper's abstract presents HARMLESS as an efficiency success: *"found 80, 90, 95, 99% of the vulnerabilities
+by inspecting 10, 16, 20, 34% of the source code files."* The abandonment narrative could not be found and
+the precision figure is unsupported. The report is committed with a verification note on its face; §2B, §4A
+and the "~30% precision adoption floor" are marked unverified and are **not** treated as evidence here.
+
+**And the corrected numbers are worth more than the claim they replace, because they are a benchmark.**
+HARMLESS's curve is the same measurement E64 makes, on the same axes:
+
+| defects reached | HARMLESS (published) | this detector, densest-file-first |
+|---|---|---|
+| 80% | 10% of files | ~30% |
+| 90% | **16% of files** | **37%** |
+| 95% | 20% of files | ~45% |
+
+So a published active-learning approach allocates inspection effort **more than twice as efficiently** as
+the density ordering measured here. That does not contradict E60 — E60 tested **prespecified, unfitted**
+signals and found them worse than chance, deliberately avoiding the overfitting trap that 70 positives
+invites. HARMLESS is *learned*, with a human in the loop. **The prioritisation problem may therefore be
+solvable by exactly the mechanism the inventory workflow already requires** — a reviewer confirming items
+one at a time is an active-learning oracle — and that is the strongest open lead this line of work has.
+It is recorded as the next experiment, not claimed as a result.
+
+Instrument `rank_absent_auth.py` (`collect()`), artefact `rank-absent-auth-260726.json`.  Zero model calls.

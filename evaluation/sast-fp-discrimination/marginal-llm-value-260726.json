@@ -1,0 +1,483 @@
+{
+  "generated_at": "2026-07-26T13:43:39.136694+00:00",
+  "question": "what does the LLM layer add on top of the FREE deterministic layer, and at what cost?",
+  "baseline": "deterministic absence rule \u2014 0 calls, $0.00",
+  "cost_basis": {
+    "model": "sast-grok45",
+    "usd_per_1m_input": 3.0,
+    "usd_per_1m_output": 15.0,
+    "chars_per_token": 4,
+    "note": "ESTIMATE \u2014 token counts were never persisted; input reconstructed from the truncated file text plus prompt template, output from the persisted response. Call counts are exact."
+  },
+  "supersedes_for_generative_role": "E13's 'zero extra findings' verdict, which tested the gate role",
+  "samples": [
+    {
+      "sample": "A",
+      "model_standard": "file-level",
+      "files": 24,
+      "eligible": 16,
+      "readings": 18,
+      "rule_alone": 3,
+      "rule_coverage": 0.125,
+      "last_productive_k": 9,
+      "curve": [
+        {
+          "k": 1,
+          "union": 8,
+          "coverage": 0.3333,
+          "gained": 5,
+          "calls": 24,
+          "cum_cost_usd": 0.1426,
+          "marginal_usd_per_new_file": 0.0285,
+          "gain_over_free": 0.2083
+        },
+        {
+          "k": 2,
+          "union": 10,
+          "coverage": 0.4167,
+          "gained": 2,
+          "calls": 48,
+          "cum_cost_usd": 0.2926,
+          "marginal_usd_per_new_file": 0.075,
+          "gain_over_free": 0.2917
+        },
+        {
+          "k": 3,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 1,
+          "calls": 72,
+          "cum_cost_usd": 0.4557,
+          "marginal_usd_per_new_file": 0.1631,
+          "gain_over_free": 0.3333
+        },
+        {
+          "k": 4,
+          "union": 12,
+          "coverage": 0.5,
+          "gained": 1,
+          "calls": 96,
+          "cum_cost_usd": 0.6191,
+          "marginal_usd_per_new_file": 0.1633,
+          "gain_over_free": 0.375
+        },
+        {
+          "k": 5,
+          "union": 13,
+          "coverage": 0.5417,
+          "gained": 1,
+          "calls": 120,
+          "cum_cost_usd": 0.7613,
+          "marginal_usd_per_new_file": 0.1422,
+          "gain_over_free": 0.4167
+        },
+        {
+          "k": 6,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 1,
+          "calls": 144,
+          "cum_cost_usd": 0.9016,
+          "marginal_usd_per_new_file": 0.1403,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 7,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 1,
+          "calls": 168,
+          "cum_cost_usd": 1.0492,
+          "marginal_usd_per_new_file": 0.1476,
+          "gain_over_free": 0.5
+        },
+        {
+          "k": 8,
+          "union": 16,
+          "coverage": 0.6667,
+          "gained": 1,
+          "calls": 192,
+          "cum_cost_usd": 1.2041,
+          "marginal_usd_per_new_file": 0.1549,
+          "gain_over_free": 0.5417
+        },
+        {
+          "k": 9,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 1,
+          "calls": 216,
+          "cum_cost_usd": 1.367,
+          "marginal_usd_per_new_file": 0.1628,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 10,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 240,
+          "cum_cost_usd": 1.5426,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 11,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 264,
+          "cum_cost_usd": 1.6957,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 12,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 288,
+          "cum_cost_usd": 1.8502,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 13,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 312,
+          "cum_cost_usd": 2.0024,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 14,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 336,
+          "cum_cost_usd": 2.1414,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 15,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 360,
+          "cum_cost_usd": 2.3115,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 16,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 384,
+          "cum_cost_usd": 2.4551,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 17,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 408,
+          "cum_cost_usd": 2.5934,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        },
+        {
+          "k": 18,
+          "union": 17,
+          "coverage": 0.7083,
+          "gained": 0,
+          "calls": 432,
+          "cum_cost_usd": 2.7642,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5833
+        }
+      ]
+    },
+    {
+      "sample": "A",
+      "model_standard": "strict",
+      "files": 24,
+      "eligible": 16,
+      "readings": 18,
+      "rule_alone": 3,
+      "rule_coverage": 0.125,
+      "last_productive_k": 14,
+      "curve": [
+        {
+          "k": 1,
+          "union": 7,
+          "coverage": 0.2917,
+          "gained": 4,
+          "calls": 24,
+          "cum_cost_usd": 0.1426,
+          "marginal_usd_per_new_file": 0.0356,
+          "gain_over_free": 0.1667
+        },
+        {
+          "k": 2,
+          "union": 10,
+          "coverage": 0.4167,
+          "gained": 3,
+          "calls": 48,
+          "cum_cost_usd": 0.2926,
+          "marginal_usd_per_new_file": 0.05,
+          "gain_over_free": 0.2917
+        },
+        {
+          "k": 3,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 1,
+          "calls": 72,
+          "cum_cost_usd": 0.4557,
+          "marginal_usd_per_new_file": 0.1631,
+          "gain_over_free": 0.3333
+        },
+        {
+          "k": 4,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 0,
+          "calls": 96,
+          "cum_cost_usd": 0.6191,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.3333
+        },
+        {
+          "k": 5,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 0,
+          "calls": 120,
+          "cum_cost_usd": 0.7613,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.3333
+        },
+        {
+          "k": 6,
+          "union": 12,
+          "coverage": 0.5,
+          "gained": 1,
+          "calls": 144,
+          "cum_cost_usd": 0.9016,
+          "marginal_usd_per_new_file": 0.1403,
+          "gain_over_free": 0.375
+        },
+        {
+          "k": 7,
+          "union": 13,
+          "coverage": 0.5417,
+          "gained": 1,
+          "calls": 168,
+          "cum_cost_usd": 1.0492,
+          "marginal_usd_per_new_file": 0.1476,
+          "gain_over_free": 0.4167
+        },
+        {
+          "k": 8,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 1,
+          "calls": 192,
+          "cum_cost_usd": 1.2041,
+          "marginal_usd_per_new_file": 0.1549,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 9,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 0,
+          "calls": 216,
+          "cum_cost_usd": 1.367,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 10,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 0,
+          "calls": 240,
+          "cum_cost_usd": 1.5426,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 11,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 0,
+          "calls": 264,
+          "cum_cost_usd": 1.6957,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 12,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 0,
+          "calls": 288,
+          "cum_cost_usd": 1.8502,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 13,
+          "union": 14,
+          "coverage": 0.5833,
+          "gained": 0,
+          "calls": 312,
+          "cum_cost_usd": 2.0024,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.4583
+        },
+        {
+          "k": 14,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 1,
+          "calls": 336,
+          "cum_cost_usd": 2.1414,
+          "marginal_usd_per_new_file": 0.139,
+          "gain_over_free": 0.5
+        },
+        {
+          "k": 15,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 0,
+          "calls": 360,
+          "cum_cost_usd": 2.3115,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5
+        },
+        {
+          "k": 16,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 0,
+          "calls": 384,
+          "cum_cost_usd": 2.4551,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5
+        },
+        {
+          "k": 17,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 0,
+          "calls": 408,
+          "cum_cost_usd": 2.5934,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5
+        },
+        {
+          "k": 18,
+          "union": 15,
+          "coverage": 0.625,
+          "gained": 0,
+          "calls": 432,
+          "cum_cost_usd": 2.7642,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.5
+        }
+      ]
+    },
+    {
+      "sample": "B",
+      "model_standard": "file-level",
+      "files": 24,
+      "eligible": 15,
+      "readings": 3,
+      "rule_alone": 5,
+      "rule_coverage": 0.2083,
+      "last_productive_k": 2,
+      "curve": [
+        {
+          "k": 1,
+          "union": 10,
+          "coverage": 0.4167,
+          "gained": 5,
+          "calls": 24,
+          "cum_cost_usd": 0.1237,
+          "marginal_usd_per_new_file": 0.0247,
+          "gain_over_free": 0.2083
+        },
+        {
+          "k": 2,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 1,
+          "calls": 48,
+          "cum_cost_usd": 0.2568,
+          "marginal_usd_per_new_file": 0.1332,
+          "gain_over_free": 0.25
+        },
+        {
+          "k": 3,
+          "union": 11,
+          "coverage": 0.4583,
+          "gained": 0,
+          "calls": 72,
+          "cum_cost_usd": 0.3835,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.25
+        }
+      ]
+    },
+    {
+      "sample": "B",
+      "model_standard": "strict",
+      "files": 24,
+      "eligible": 15,
+      "readings": 3,
+      "rule_alone": 5,
+      "rule_coverage": 0.2083,
+      "last_productive_k": 3,
+      "curve": [
+        {
+          "k": 1,
+          "union": 7,
+          "coverage": 0.2917,
+          "gained": 2,
+          "calls": 24,
+          "cum_cost_usd": 0.1237,
+          "marginal_usd_per_new_file": 0.0618,
+          "gain_over_free": 0.0833
+        },
+        {
+          "k": 2,
+          "union": 7,
+          "coverage": 0.2917,
+          "gained": 0,
+          "calls": 48,
+          "cum_cost_usd": 0.2568,
+          "marginal_usd_per_new_file": null,
+          "gain_over_free": 0.0833
+        },
+        {
+          "k": 3,
+          "union": 8,
+          "coverage": 0.3333,
+          "gained": 1,
+          "calls": 72,
+          "cum_cost_usd": 0.3835,
+          "marginal_usd_per_new_file": 0.1267,
+          "gain_over_free": 0.125
+        }
+      ]
+    }
+  ]
+}

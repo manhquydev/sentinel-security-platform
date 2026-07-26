@@ -644,3 +644,10 @@ disproportionate for a one-line calculation, note that E58's was one line.
 **Pinned by `SM25`**, which requires every log entry from E60 onward to cite an instrument or artefact.
 It is not retroactive: 55 of the 86 earlier entries would fail it, and rewriting history to satisfy a new
 guard would destroy the record of how the work actually went. The guard starts where the rule starts.
+
+**The same principle covers cited evidence, not just computed numbers.** `plans/` is gitignored in this
+repository and `docs/plans/reports/` is tracked. A committed claim that cites a report under `plans/` is
+resting on evidence no reader can open — the E62 defect in a different costume. Several older documents
+already do this and are left alone as historical record; anything written from now on cites the tracked
+copy. E64 was caught by this while being written: its external-practice source was sitting in the ignored
+tree and was moved before the entry was committed.
