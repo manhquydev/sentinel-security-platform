@@ -74,3 +74,12 @@ documents here as real choices are accepted, then index them in this file.
   the agent holds only the verify key (can't self-approve), the single-use token binds the exact
   reviewed proposal + is audited before the dry-run action; real execution + its prerequisites are
   deferred to an explicit future cycle.
+- [0017 Week-9 PII redaction is structural at capture, measured not trusted; real dumps are simulated](0017-week9-pii-redaction-is-structural-at-capture-measured-not-trusted.md)
+  — a red-team showed the charter's literal DB-dump surface doesn't exist (Exploit never executes,
+  the fuzzer reduces bodies to signal-kinds, RAG ingests only static records), so Week-9 creates a
+  fixture-backed simulated dump on the Week-8 seam and scrubs it AT CAPTURE (before the checkpoint,
+  the approval-audit ledger, and stdout). Detection is narrow deterministic regex (email, Luhn card
+  under a label anchor, JWT, UUID) — Presidio/NER rejected (heavy model, air-gapped break, FP on
+  security vocabulary) — so the SQLi/XSS/hash workload passes untouched; the unsalted-MD5 password
+  value is removed via the credential pass while the finding survives; residual is MEASURED (recall
+  vs FP) with a guard that fails closed on an absent corpus. Egress PII leg + bare-PAN + NER deferred.

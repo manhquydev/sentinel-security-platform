@@ -30,6 +30,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from . import pii
+
 SERVICE_NAME = "sentinel-agent-syndicate"
 # Loopback only (D10) — mirrors the Kong/Langfuse convention of never publishing a plane that
 # holds anything derived from a scanned target beyond 127.0.0.1.
@@ -86,21 +88,31 @@ def _scrub_target_raw(text: str) -> str:
     return _TARGET_RAW_PATTERNS.sub("[redacted:target-raw]", text)
 
 
+def _scrub_scalar(text: str) -> str:
+    """The shared three-stage scalar scrub used by BOTH the checkpoint path (`redact_persisted`)
+    and the span path (`_scrub_value`), so a shape covered here is covered on every persisted and
+    traced field — there is no path that runs one stage and not another (decision 0017, B2).
+    Ordering is load-bearing: secrets → target-raw → **PII last**. PII runs last so an
+    already-placed `[redacted:pii:*]` token can never be re-matched (and its line swallowed) by the
+    greedy credential-assignment rule in `_SECRET_PATTERNS` (decision 0017, M1)."""
+    return pii.scrub(_scrub_target_raw(scrub_secrets(text) or "")) or ""
+
+
 def redact_persisted(text: str | None) -> str | None:
-    """Full scrub (secrets AND target-raw) for every free-text field the Supervisor checkpoint
-    persists to disk (D5/HF1). These fields are LLM narrative synthesized over target-derived
-    input — a scanner finding title, a fuzz stack-trace signal — so the model can and does echo
-    attack-shaped substrings (`UNION SELECT`, a traversal string, a stack-trace signature) into
-    its own prose. The span path already runs both passes via `_scrub_value`; this is the same
-    two-stage scrub for the DURABLE checkpoint path, which previously only ran `scrub_secrets`."""
+    """Full scrub (secrets, target-raw, AND PII) for every free-text field the Supervisor
+    checkpoint or the approval-audit ledger persists to disk (D5/HF1; 0017). These fields are LLM
+    narrative synthesized over target-derived input — a scanner finding title, a fuzz stack-trace
+    signal — so the model can and does echo attack-shaped substrings (`UNION SELECT`, a traversal
+    string) into its own prose; a simulated dump can likewise surface a target email/PAN. The span
+    path runs the same scrub via `_scrub_value`."""
     if not text:
         return text
-    return _scrub_target_raw(scrub_secrets(text) or "")
+    return _scrub_scalar(text)
 
 
 def _scrub_value(value: Any) -> Any:
     if isinstance(value, str):
-        return _scrub_target_raw(scrub_secrets(value) or "")
+        return _scrub_scalar(value)
     return value  # numeric/bool attributes carry no target text or secret shape
 
 

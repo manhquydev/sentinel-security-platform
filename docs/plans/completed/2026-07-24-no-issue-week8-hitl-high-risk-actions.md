@@ -4,6 +4,9 @@ Date: 2026-07-24
 
 ## Status
 
+**Complete** — shipped to `main` (commit `b879a9b` PR1; decision 0016; README "Built (Week-8)").
+Real state-changing execution deferred per 0016. Archived 2026-07-24. History below.
+
 Active — red-team done (4/4 lenses, unanimous NOT CLEAN → real-execution scope broken on 5+ axes);
 user RE-SCOPED to a genuine HITL gate over a SIMULATED action with out-of-process approval. Remaining
 before cook: reconcile the body to the re-scope (below), validate. The Outcome/Scope/TDD/Design

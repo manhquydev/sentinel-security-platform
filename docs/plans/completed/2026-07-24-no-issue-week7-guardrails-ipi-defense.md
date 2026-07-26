@@ -4,6 +4,9 @@ Date: 2026-07-24
 
 ## Status
 
+**Complete** — shipped to `main` (commits `52fab70` PR1 + `56cba74` PR3; decision 0015; README
+"Built (Week-7)"). Archived 2026-07-24. History below.
+
 Active — hardened + reconciled. Red-team (4/4 lenses) → all blockers resolved on evidence (2 spikes
 + research); plan body rewritten into the reconciled 3-PR structure; validate pass done (see
 Validation Log). **CLEAN.** PR1 built + green + STRIDE-clean (code-review adjudication folding in).
