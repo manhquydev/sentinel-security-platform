@@ -122,9 +122,16 @@ labelling*. For this defect class it is not needed, because **the fix commit is 
 who adds an authentication check to a route has already ruled that the pre-fix file was missing one, and
 the file and line come from the diff. Nothing is inferred — which is precisely where the 20–71% label
 inaccuracy in prior datasets comes from. Measured yield from GitHub Security Advisories (`pip`, four
-absence CWEs): 319 advisories → 115 with a resolvable fix commit → **20 labelled organic sites across 6
-repositories**, at zero cost, and that is a lower bound because only fixes written in the vocabulary the
-detector already knows are counted.
+absence CWEs): **355** advisories → **137** with a resolvable fix commit → **20 labelled organic sites
+across 6 repositories**, at zero cost, and that is a lower bound because only fixes written in the
+vocabulary the detector already knows are counted.
+
+**Widening the sweep does not help, and that is informative.** Sweeping every pip advisory in these classes
+rather than the first few pages moved the advisory count from 319 to 355 and fix commits from 115 to 137,
+while the site and repository counts **did not change at all**. The binding constraint is the **8%
+route-landing rate** — 44 organic fixes add an auth marker and only 11 put it on a route decorator — so
+about two thirds of real absence fixes are not route-shaped. More `pip` advisories will not produce more
+repositories; a different extraction shape would.
 
 That bought the measurement this project had never been able to make. On the pre-fix versions of those
 organic production files (langflow, airflow, bambuddy and others) the detector's **file-level firing is

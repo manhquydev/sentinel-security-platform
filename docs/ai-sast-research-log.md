@@ -43,7 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
-| E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 319 → 115 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
+| E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 355 → 137 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
 | E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
 | E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
 | E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
@@ -4993,12 +4993,26 @@ The part that costs money is *expert labelling*, and for this class of defect th
 
 | stage | count |
 |---|---|
-| distinct advisories in the absence classes | 319 |
-| carrying a resolvable GitHub fix commit | 115 = 36.1% |
-| commit touches a Python file | 114/115 = 99.1% |
-| diff **adds** an auth/enforcement marker | 42/115 = 36.5% |
-| ...and that marker lands on a route | 11/115 = 9.6% |
+| distinct advisories in the absence classes | 355 |
+| carrying a resolvable GitHub fix commit | 137 = 38.6% |
+| commit touches a Python file | 136/137 = 99.3% |
+| diff **adds** an auth/enforcement marker | 44/137 = 32.1% |
+| ...and that marker lands on a route | 11/137 = 8.0% |
 | **labelled absence sites extracted** | **20**, across **6 repositories** |
+
+*(Figures corrected after a pagination defect. `/advisories` paginates by **cursor**; passing `page=N`
+silently returns the same first 100 rows, so the probe first printed "CWE-863: 1200 advisories" while the
+distinct total sat unchanged — deduplication hid the error and only the distinct figure was ever right.
+Fixed to follow the Link header. The sweep grew from 319 advisories to 355 and from 115 fix commits to
+137, and **the site and repository counts did not move at all**.)*
+
+**That non-movement is itself the finding.** "Only 6 repositories" is not an artefact of a bound this probe
+set — widening the sweep to every pip advisory in these classes yields the same 20 sites. The constraint is
+the **8% route-landing rate**: 44 organic fixes add an authentication or authorization marker and only 11
+of them put it on a route decorator. So roughly **two thirds of real-world absence fixes are not
+route-shaped** — they land in middleware, service layers, or decorators defined elsewhere. That is the same
+boundary E67 finds from the other direction, where 54% of the corpus's labelled entries do not sit on a
+route either. Two independent measurements agreeing on where this detector's scope ends.
 
 This is a **lower bound**: only fixes expressed in the vocabulary `detect_absent_auth` already knows are
 counted, so a fix written in an unrecognised form is invisible to the probe.

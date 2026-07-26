@@ -53,8 +53,7 @@ import detect_absent_auth as det  # noqa: E402
 
 CWES = (306, 862, 863, 639)
 ECOSYSTEM = "pip"
-PAGES = 3                 # bounded: 100 advisories per page per class
-COMMIT_SAMPLE = 200       # bounded diff fetches — this is the expensive stage
+COMMIT_SAMPLE = 600       # bounded diff fetches — this is the expensive stage
 CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "organic-absence-cache")
 
 COMMIT_URL = re.compile(r"https://github\.com/([^/]+)/([^/]+)/commit/([0-9a-f]{7,40})")
@@ -91,25 +90,47 @@ def protected_route_lines(patch: str) -> list[int]:
     return sorted(set(out))
 
 
-def gh(path: str):
-    """One authenticated GitHub API call, cached on disk outside the repository."""
+def gh(path: str, paginate: bool = False):
+    """One authenticated GitHub API call, cached on disk outside the repository.
+
+    `/advisories` paginates by CURSOR, not by page number. Passing `page=N` silently returns the same
+    first 100 rows every time — the first version of this probe did exactly that and printed "CWE-863:
+    1200 advisories" while the distinct count sat unchanged at 319, because deduplication hid it. Only
+    the *distinct* figure was ever right. `--paginate` follows the Link header properly; it emits one
+    JSON array per page, concatenated, so the response is decoded as a stream of values.
+    """
     os.makedirs(CACHE, exist_ok=True)
-    key = os.path.join(CACHE, re.sub(r"[^A-Za-z0-9]+", "_", path)[:180] + ".json")
+    key = os.path.join(CACHE, re.sub(r"[^A-Za-z0-9]+", "_", path)[:180]
+                       + ("_p" if paginate else "") + ".json")
     if os.path.exists(key):
         try:
             return json.load(open(key, encoding="utf-8"))
         except json.JSONDecodeError:
             pass
+    cmd = ["gh", "api"] + (["--paginate"] if paginate else []) + [path]
     try:
-        out = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=60)
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     except (OSError, subprocess.TimeoutExpired):
         return None
     if out.returncode != 0:
         return None
-    try:
-        data = json.loads(out.stdout)
-    except json.JSONDecodeError:
-        return None
+    if not paginate:
+        try:
+            data = json.loads(out.stdout)
+        except json.JSONDecodeError:
+            return None
+    else:
+        data, dec, text, i = [], json.JSONDecoder(), out.stdout, 0
+        while i < len(text):
+            while i < len(text) and text[i].isspace():
+                i += 1
+            if i >= len(text):
+                break
+            try:
+                val, i = dec.raw_decode(text, i)
+            except ValueError:
+                break
+            data.extend(val if isinstance(val, list) else [val])
     with open(key, "w", encoding="utf-8") as fh:
         json.dump(data, fh)
     return data
@@ -120,18 +141,12 @@ def advisories() -> dict:
     seen = {}
     per_class = {}
     for cwe in CWES:
-        n = 0
-        for page in range(1, PAGES + 1):
-            batch = gh(f"/advisories?ecosystem={ECOSYSTEM}&cwes={cwe}&per_page=100&page={page}")
-            if not batch:
-                break
-            for a in batch:
-                seen.setdefault(a["ghsa_id"], a)
-                n += 1
-            if len(batch) < 100:
-                break
-        per_class[cwe] = n
-        print(f"  CWE-{cwe}: {n} advisories")
+        batch = gh(f"/advisories?ecosystem={ECOSYSTEM}&cwes={cwe}&per_page=100", paginate=True) or []
+        uniq = {a["ghsa_id"] for a in batch}
+        for a in batch:
+            seen.setdefault(a["ghsa_id"], a)
+        per_class[cwe] = len(uniq)
+        print(f"  CWE-{cwe}: {len(uniq)} advisories")
     return seen, per_class
 
 
