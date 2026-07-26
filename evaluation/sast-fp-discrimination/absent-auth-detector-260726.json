@@ -1,0 +1,182 @@
+{
+  "generated_at": "2026-07-26T10:50:27.626823+00:00",
+  "detector": "absent-auth (route handler with no authn/authz marker)",
+  "scored_with": "run_spike.match \u2014 file + CWE + line tolerance, claim-once",
+  "gt_306": 121,
+  "gt_862": 216,
+  "matched": 81,
+  "unmatched": 1161,
+  "recall": 0.2404,
+  "per_repo": [
+    {
+      "repo": "realvuln-damn-vulnerable-flask-application",
+      "findings": 10,
+      "tp": 5
+    },
+    {
+      "repo": "realvuln-damn-vulnerable-graphql-application",
+      "findings": 24,
+      "tp": 4
+    },
+    {
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "findings": 2,
+      "tp": 0
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "findings": 10,
+      "tp": 0
+    },
+    {
+      "repo": "realvuln-insecure-web",
+      "findings": 4,
+      "tp": 1
+    },
+    {
+      "repo": "realvuln-intentionally-vulnerable-python-application",
+      "findings": 6,
+      "tp": 1
+    },
+    {
+      "repo": "realvuln-python-insecure-app",
+      "findings": 2,
+      "tp": 0
+    },
+    {
+      "repo": "realvuln-pythonssti",
+      "findings": 2,
+      "tp": 0
+    },
+    {
+      "repo": "realvuln-threatbyte",
+      "findings": 20,
+      "tp": 2
+    },
+    {
+      "repo": "realvuln-vfapi",
+      "findings": 20,
+      "tp": 2
+    },
+    {
+      "repo": "realvuln-vulnerable-flask-app",
+      "findings": 16,
+      "tp": 0
+    },
+    {
+      "repo": "realvuln-vulnerable-python-apps",
+      "findings": 30,
+      "tp": 3
+    },
+    {
+      "repo": "realvuln-vulnpy",
+      "findings": 42,
+      "tp": 1
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "findings": 66,
+      "tp": 6
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
+      "findings": 44,
+      "tp": 3
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "findings": 42,
+      "tp": 2
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "findings": 52,
+      "tp": 4
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "findings": 42,
+      "tp": 3
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
+      "findings": 42,
+      "tp": 2
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
+      "findings": 80,
+      "tp": 3
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
+      "findings": 44,
+      "tp": 1
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "findings": 86,
+      "tp": 3
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "findings": 38,
+      "tp": 2
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "findings": 60,
+      "tp": 2
+    },
+    {
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "findings": 90,
+      "tp": 4
+    },
+    {
+      "repo": "vc-codex-seeded-v2-logistics-dispatch-fastapi",
+      "findings": 44,
+      "tp": 2
+    },
+    {
+      "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
+      "findings": 40,
+      "tp": 2
+    },
+    {
+      "repo": "vc-codex-seeded-v2-property-management-fastapi",
+      "findings": 38,
+      "tp": 1
+    },
+    {
+      "repo": "vc-codex-seeded-v2-support-desk-fastapi",
+      "findings": 40,
+      "tp": 5
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "findings": 42,
+      "tp": 4
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "findings": 44,
+      "tp": 3
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "findings": 42,
+      "tp": 3
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "findings": 38,
+      "tp": 2
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "findings": 40,
+      "tp": 5
+    }
+  ]
+}

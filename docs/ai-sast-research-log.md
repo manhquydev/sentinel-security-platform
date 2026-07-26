@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **81/337 = 0.240 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
 | E55 | fix the crypto false positive? | **STANDS — fix REJECTED** — widening the presence-class context removes the `aes-encrypt.py` FP but costs **9 genuine detections (76 → 67)** to remove 1. Bad trade; FP kept as a named cost. Second candidate repair rejected by its own data today |
 | E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
 | E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
@@ -4339,3 +4340,78 @@ This is the second candidate repair today rejected by its own validation data, a
 vocabulary widening in E53. Both were plausible, both were mine, and both would have been adopted on the
 strength of the story if the numbers had not been checked first. **The rule that keeps earning its place:
 measure a fix's cost on the data before adopting it, including the cost you are not looking for.**
+
+---
+
+## E56 — the absence classes are NOT invisible to deterministic tooling, and that is bad news for the obvious product
+
+Decisions 0022–0024 rest on a claim this project has repeated all day: absence-of-control classes are
+invisible to pattern SAST, and the deterministic baseline there is "approximately nothing". The evidence
+was that Bandit and Semgrep emit 33 distinct CWE classes across the corpus and **not one is absence-class**.
+
+That evidence is sound. The inference drawn from it was not. It establishes a property of **those
+rulesets**, and it was generalised into a property of **determinism** — *"an absent control writes no
+token, so pattern matching has nothing to match."*
+
+### About sixty lines of regex
+
+Ground-truth CWE-306/862 sites in this corpus look like this:
+
+```python
+@app.route('/evaluate', methods=['POST','GET'])
+def evaluate():                      # no @login_required, no Depends(...), no permission check
+```
+
+A detector that finds route declarations, reads the decorators and body attached to the handler, and
+reports those carrying no authentication or authorization marker — scored with **the project's own
+matcher** (`run_spike.match`, file + CWE + line ±10, claim-once) so the number is comparable to everything
+already published:
+
+| | recall on CWE-306 + 862 (n=337) |
+|---|---|
+| Bandit + Semgrep | **0** — no absence-class rule exists in either ruleset |
+| this detector | **81/337 = 0.240** |
+
+**The claim that absence classes are structurally beyond deterministic tooling is too strong.** They are
+beyond the *shipped rulesets*, which is a different and much less interesting statement. Nobody had
+written the rule.
+
+### And then the price
+
+The detector emits **1,242 findings to land those 81**. Label-precision is **6.5%**. Spot-checking the
+unmatched ones settles what they are — not corpus gaps this time:
+
+- `@router.get("/storefront")` — a public product listing
+- `@router.get("/public")` — an endpoint named *public*
+- `@mod_hello.route('/')` returning `'hello :)'`
+
+They are **genuinely public endpoints**. The detector cannot tell "no authentication because this is
+public" from "no authentication because somebody forgot", because that distinction is about **intent**,
+and intent is not in the syntax.
+
+### Why this closes the obvious product idea rather than opening it
+
+The complementarity looks perfect on paper: determinism supplies recall for almost nothing, the model
+supplies precision — clean-arm false positives run at 0.96% — so run the detector for coverage and let the
+model triage its 1,242 findings down to the real ones.
+
+**This project has already measured that arrangement and it failed.** Putting the model on the output of a
+deterministic tool is the verdict/gate role: decision 0020 measured an LLM verifier **hiding 3 of 8 real
+vulnerabilities**, and 0018 measured a judge refusing under correct provenance. DD1 asserts structurally
+that no model is reachable from the verdict path, precisely because of those results. The composition that
+would make this pair useful is the one configuration the evidence forbids.
+
+So the honest position is narrower than either "only AI can see absences" or "just write the rules":
+
+1. **Deterministic rules do reach these classes** — 24% recall for sixty lines, against a shipped-tool
+   baseline of zero. Any roadmap claiming this territory is AI-only is wrong.
+2. **They reach it at 6.5% precision**, because the missing judgement is *intent*, not *pattern*.
+3. **The model has the complementary shape** — low recall, ~1% false-positive rate — but cannot be
+   composed as a filter over the detector without re-entering a role this project has measured twice and
+   architecturally forbidden.
+
+What that leaves is unglamorous and, unlike the alternatives, consistent with everything measured: the two
+capabilities are **independent evidence sources for a human**, not a pipeline. Neither is a scanner. The
+deterministic layer is worth building because it is nearly free and its recall is real; the model is worth
+keeping because its false-positive rate is genuinely low; and the arrow between them is the thing the
+evidence does not support.
