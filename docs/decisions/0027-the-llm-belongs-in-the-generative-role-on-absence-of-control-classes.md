@@ -37,6 +37,22 @@ deterministic baseline is approximately nothing.
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
+## Addendum 2026-07-27 (E80) — the generative role cannot be aimed at a repository
+
+This decision assigns the LLM a "generative role" on absence classes. E80 measures what that role produces
+when pointed at real code with no prior localisation: **0 flags in 41 production route files**, against the
+deterministic layer's 37, with 31.7% non-answers. Restricted to the 28 files where a route was inside the
+model's window it still flags **0** (detector: 25), so truncation is not the explanation.
+
+Read against E79 — where the model flagged 0.300 of confirmed defects **when the prompt was windowed around
+a route a maintainer had already identified** — the capability is conditional on prior localisation.
+
+**Scope correction to this decision.** The generative role is real only as a **commentator on located
+findings**, never as a finder. It is strictly downstream of the deterministic layer. Every union figure
+supporting this decision (E58, E62, E63) was computed on file sets already narrowed by ground truth or by
+the rule, which is legitimate for what those experiments asked and **must not be presented as repository-
+level capability**. The marginal value of running the model across a repository is nil at ~$0.23/file.
+
 ## Addendum 2026-07-27 (E79, superseding the E75 addendum) — the transfer test is INCONCLUSIVE, not a collapse
 
 This decision placed the LLM in the generative role on corpus measurements. **Those measurements are

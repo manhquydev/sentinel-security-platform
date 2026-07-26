@@ -43,6 +43,8 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E81 | do real apps centralise auth the detector cannot see? | **YES — high FP floor, cause identified** — 2 of 4 production apps enforce auth via app-wide middleware declared in a CENTRAL file (`AuthTokenMiddleware`, `CustomAuthenticationMiddleware`); the detector's `APP_LEVEL` suppressor exists but applies **per file**, so scanning `routers/*.py` it never sees `main.py`. **20 of 20 sampled flags in those apps sit behind app-wide auth.** Single-file scope is structurally blind to how production apps are built. BLOCKS the precision claim until cross-file awareness lands; recall claim unaffected |
+| E80 | what inventory does the LLM produce on a real repo? | **ZERO — and it reframes the architecture** — pointed at production route files with the corpus instrument verbatim: model **0/41**, detector 37/41, overlap 0, non-answers 31.7%. Truncation checked and rejected as the cause: in the **28 files where a route WAS visible** the model still flags **0** vs the detector's 25. E79's 0.300 came from windowing around a route a maintainer had already localised — so the model is a **commentator on located findings, not a finder**; it cannot be aimed at a repository. Marginal value of running it over a repo: nil |
 | E79 | RE-CHECK of E75 under a corrected instrument | **REVERSES E75 — collapse was an artefact, result is INCONCLUSIVE** — E75's 0.154 came from the wrong prompt (`_RUBRIC` not the corpus's `_BINARY_RUBRIC`), truncation hiding routes, and a duplicated/test site. Corrected: pre **0.300** [0.108, 0.603], post **0.200**, 33% non-answers, 10 sites. Above the 0.229 collapse line so NOT collapse; but post 0.200 >> corpus ~1% specificity so arms don't separate — the model flags production code at a base rate. Neither transfer nor collapse. Memorisation now UNRESOLVED |
 | E78 | adversarial self-review of the session's instruments | **4 defects, numbers corrected** — `det.ROUTE` matched `@patch` mocks (corpus unmoved 565→561; census E76 inflated ~2x: medians **62→27** decisions, **421→246** sites, still viable). E74's dependence check **could not fail** (§17 violated) — rewritten with random-effects, E57 stands. **E72 fame split AND E59 authorship split are both union-over-k artefacts**: per-reading 0.215 vs 0.214 (p=0.61) and 0.204 vs 0.233 (p=0.81) — corpus gives NO memorisation evidence either way |
 | E77 | can organic precision be measured for free? | **NO (negative method result)** — the presumptive-negative attempt printed a floor of **0.987** vs the benchmark's 0.124: a broken instrument, disbelieved. Two causes: repo CHURN reads 'route changed' as 'control added', and fatally, **a fix commit labels only the advisory's routes and is silent on every other flag** — so E66's 'fix is the label' is a RECALL instrument, never a precision one. Organic precision needs held-out labels = the corpus debt. Invalid instrument removed, not kept with a caveat |
@@ -5827,3 +5829,100 @@ instruments are fragile, and the only thing that kept the record honest was re-r
 than defending the published number.
 
 Instrument `run_organic_paired.py`, artefact `organic-paired-260726.json`. ~72 model readings, ~$0.50.
+
+---
+
+## E80 — pointed at a real repository, the model produces a ZERO-item inventory. It cannot be aimed without the rule
+
+**The question the product fork needed.** E76/E78 measured what the free layer produces on production web
+apps: a median of **27 file-level decisions**. Nothing had measured the other side. E79's post-fix arm
+flagged repaired production code at 0.200 against a corpus clean-arm rate of ~1%, so the expectation going
+in was that the model would produce a **larger** inventory than the rule and drown the attestation workflow.
+
+**Method.** Both tools pointed at the same route-bearing files in four production applications already
+cloned for E76, each run as it actually would be: the detector reads whole files (free, offline); the model
+gets the corpus instrument verbatim — `_BINARY_RUBRIC`, 160 tokens, first 4000 characters, scored on the
+redacted response. Truncation is not a handicap invented here; it is what happens when that instrument meets
+a 2000-line file. Volume and overlap only — no ground truth, so nothing about which flags are correct.
+
+**Result — 41 files, 4 repositories:**
+
+| | flagged |
+|---|---|
+| **model** | **0/41 = 0.000** [0.000, 0.086] |
+| detector | 37/41 = 0.902 |
+| overlap | 0 |
+| non-answers | 13/41 = 0.317 |
+| files truncated at 4000 chars | 33/41 = 0.805 |
+
+**The obvious explanation is checked and rejected.** 80% truncation invites "the model never saw a route".
+It saw one in **28 of 41** files. Restricted to those 28, the model still flags **0**, while the detector
+flags **25**. Truncation accounts for 13 files; the zero is not an artefact of it.
+
+**What this means, and it reframes the whole fork.** In E79 the model flagged 0.300 of confirmed defects —
+but that run windowed the prompt *around a route a maintainer had already identified as defective*. Given a
+production file with no such localisation, the model flags nothing. **Its apparent capability is conditional
+on someone else having already found the place to look.** That makes the model strictly *downstream* of the
+deterministic layer rather than an alternative or independent second opinion: it cannot be pointed at a
+repository, only at a finding.
+
+Together with E63's measured contribution over the free layer, the honest architecture statement is: the
+LLM is a **commentator on located findings**, not a **finder**. Every union figure in this project (E58,
+E62, E63) was computed on file sets someone had already narrowed — which is legitimate for what those
+experiments asked, and must never be read as "the model would find these in a repository."
+
+**A cost note that now cuts the other way.** The fear was an unmanageably large model inventory. The measured
+risk is the opposite: on production code the model adds **zero items and 31.7% non-answers**, so the marginal
+value of running it over a repository is not small — it is nil, at ~$0.23 per file.
+
+Instrument `run_production_inventory.py`, artefact `production-inventory-260727.json`. 41 readings + canary.
+
+---
+
+## E81 — the global-auth negative control: real apps centralise authentication, and the detector cannot see it
+
+**Why this was the right next test.** Advisory synthesis
+(`docs/plans/reports/2026-07-27-post-reversal-programme-state.md`) named the strongest remaining argument
+against shipping the free layer: production precision is plausibly far worse than the corpus's 12.5%,
+because **real applications enforce authentication globally** — middleware, app-level dependencies, DRF
+defaults — none of it visible at a route decorator. It proposed the negative control that needs no labels:
+applications whose auth is verifiably app-wide, where **every flag is a false positive by construction**.
+That is the *negative* half of the oracle E77 proved the fix commit cannot supply — per-route negatives are
+unobtainable, whole-application negatives are not.
+
+**Measured on the four production apps from E80:**
+
+| repository | app-wide auth found | detector flagged |
+|---|---|---|
+| marimo-team/marimo | `CustomAuthenticationMiddleware(AuthenticationMiddleware)`, `app.add_middleware(auth_middleware)` | **9/12** |
+| open-webui/open-webui | `app.add_middleware(AuthTokenMiddleware, fastapi_app=app)` (main.py:715) | **11/12** |
+| ethyca/fides | none found | 12/12 |
+| NousResearch/hermes-agent | none found | 5/5 |
+
+The declarations were read, not pattern-matched into existence: both are real authentication enforcement
+registered on the ASGI app in a central module.
+
+**The mechanism, and it is a design limit rather than a vocabulary gap.** `detect_absent_auth` *does* carry
+an `APP_LEVEL` suppressor for exactly these constructs — but it applies **per file**. The middleware lives in
+`main.py` or `asgi.py`; the routes live in `routers/*.py`. Scanning a route file, the detector never sees the
+app factory, so the suppressor cannot fire. **A single-file detector is structurally unable to see
+centralised enforcement, which is how production applications are actually built.**
+
+**The bound this establishes.** In the two apps with confirmed app-wide auth, **20 of 20 sampled flags sit on
+routes behind that middleware**. They are presumptive false positives — not certain ones, because such
+middleware routinely carves out login, health and webhook paths, so some flags may be legitimate. The honest
+reading is a **high false-positive floor on globally-protected applications**, from a cause now identified.
+
+**What it does to the product.** The inventory framing survived E76 on *volume* (27 decisions is a day's
+work). It does not survive *unqualified* on precision: for applications that centralise auth — a large share
+of real ones — a large fraction of those 27 decisions are routes that are already protected. **The free
+layer must become cross-file aware (read the app factory, propagate app- and router-level dependencies)
+before any production precision claim is made.** That is concrete, deterministic, cheap engineering, and it
+is now the top item for the layer that is actually shipping.
+
+**Committed in advance, per the synthesis's own condition:** this result *blocks* the inventory product's
+precision claim until middleware-awareness lands and is re-measured. It does not block the recall claim
+(0.263 where Bandit and Semgrep get 0), which is unaffected.
+
+Instrument: `detect_absent_auth.py` run over the E76 clones; the global-auth scan and its verified
+declarations are recorded in `production-inventory-260727.json` and quoted above. Zero model calls.

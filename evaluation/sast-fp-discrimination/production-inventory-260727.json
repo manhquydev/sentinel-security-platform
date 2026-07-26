@@ -1,0 +1,441 @@
+{
+  "generated_at": "2026-07-26T18:22:32.289205+00:00",
+  "question": "what inventory would the LLM produce on real repositories, next to the free layer's ~27 decisions per production web app (E76/E78)?",
+  "instrument": "corpus instrument verbatim: _BINARY_RUBRIC, 160 tokens, first 4000 chars, scored on trace.redact_persisted output",
+  "asymmetry_disclosed": "the detector reads whole files (free, offline); the model sees the first 4000 chars. That is how each tool would actually run, and it is the comparison a buyer faces, not a handicap invented here",
+  "no_ground_truth": "volume and overlap only; says nothing about which flags are correct",
+  "model": "sast-grok45",
+  "seed": 20260727,
+  "files": 41,
+  "repositories": 4,
+  "model_flag_rate": 0.0,
+  "model_ci": [
+    0.0,
+    0.0857
+  ],
+  "detector_flag_rate": 0.9024,
+  "detector_ci": [
+    0.7745,
+    0.9614
+  ],
+  "both": 0,
+  "model_only": 0,
+  "detector_only": 37,
+  "non_answer_rate": 0.3171,
+  "truncated_fraction": 0.8049,
+  "corpus_clean_arm_rate": 0.01,
+  "canary": {
+    "passed": true,
+    "verdicts": [
+      "flagged",
+      "flagged",
+      "clean"
+    ]
+  },
+  "verdict": "model inventory is no larger than the free layer's",
+  "per_repo": {
+    "NousResearch/hermes-agent": {
+      "route_files": 5,
+      "sampled": 5,
+      "model_flagged": 0,
+      "detector_flagged": 5,
+      "both": 0,
+      "nonanswer": 2
+    },
+    "ethyca/fides": {
+      "route_files": 35,
+      "sampled": 12,
+      "model_flagged": 0,
+      "detector_flagged": 12,
+      "both": 0,
+      "nonanswer": 4
+    },
+    "marimo-team/marimo": {
+      "route_files": 29,
+      "sampled": 12,
+      "model_flagged": 0,
+      "detector_flagged": 9,
+      "both": 0,
+      "nonanswer": 3
+    },
+    "open-webui/open-webui": {
+      "route_files": 31,
+      "sampled": 12,
+      "model_flagged": 0,
+      "detector_flagged": 11,
+      "both": 0,
+      "nonanswer": 4
+    }
+  },
+  "rows": [
+    {
+      "repo": "NousResearch/hermes-agent",
+      "file": "hermes_cli/web_server.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 806205,
+      "truncated": true
+    },
+    {
+      "repo": "NousResearch/hermes-agent",
+      "file": "hermes_cli/dashboard_auth/routes.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 36210,
+      "truncated": true
+    },
+    {
+      "repo": "NousResearch/hermes-agent",
+      "file": "plugins/hermes-achievements/dashboard/plugin_api.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 64869,
+      "truncated": true
+    },
+    {
+      "repo": "NousResearch/hermes-agent",
+      "file": "hermes_cli/memory_oauth.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 3249,
+      "truncated": false
+    },
+    {
+      "repo": "NousResearch/hermes-agent",
+      "file": "plugins/kanban/dashboard/plugin_api.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 100911,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/system_integration_link/routes.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 4414,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/connection_type_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 3768,
+      "truncated": false
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/policy_webhook_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 16936,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/main.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 9471,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/router_factory.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 12093,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/config_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 4102,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/dataset_config_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 22122,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/privacy_request_redaction_patterns_endpoints.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 3071,
+      "truncated": false
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/admin.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 7641,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/generate.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 9141,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/user_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 33353,
+      "truncated": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "file": "src/fides/api/v1/endpoints/storage_endpoints.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 21279,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/ai.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 17108,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "examples/frameworks/flask/main.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": false,
+      "chars": 3677,
+      "truncated": false
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "examples/frameworks/fastapi-endpoint/main.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 2841,
+      "truncated": false
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/export.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 18495,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/cache.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 1939,
+      "truncated": false
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "examples/frameworks/fasthtml/main.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": false,
+      "chars": 2232,
+      "truncated": false
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/health.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 18702,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "examples/frameworks/fastapi/main.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": false,
+      "chars": 4055,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_smoke_tests/custom_server/my_server.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 8198,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/assets.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 27144,
+      "truncated": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/lsp.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 1699,
+      "truncated": false
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "file": "marimo/_server/api/endpoints/packages.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 6897,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/main.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": false,
+      "chars": 101372,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/images.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 46299,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/skills.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 15129,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/retrieval.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 130843,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/folders.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 21687,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/tasks.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 24388,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/scim.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 36404,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/knowledge.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 79117,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/files.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 36966,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/ollama.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 57731,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/configs.py",
+      "verdict": "non-answer",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 29679,
+      "truncated": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "file": "backend/open_webui/routers/users.py",
+      "verdict": "clean",
+      "model_flagged": false,
+      "detector_flagged": true,
+      "chars": 27226,
+      "truncated": true
+    }
+  ]
+}

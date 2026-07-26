@@ -6,6 +6,28 @@ state, not the morning's.
 
 ## What is settled
 
+> **2026-07-27, E80/E81 — two findings that change the product statement, not just its numbers.**
+>
+> **The model cannot be aimed at a repository (E80).** Pointed at production route files with the corpus
+> instrument verbatim it flags **0 of 41** (detector: 37). Truncation is not the cause — in the 28 files
+> where a route was visible it still flags **0** against the detector's 25. E79's 0.300 came from windowing
+> around a route a maintainer had *already localised*. The model is therefore a **commentator on located
+> findings, not a finder**: strictly downstream of the deterministic layer, never an alternative to it.
+> Every union figure here (E58/E62/E63) was computed on pre-narrowed file sets and must never be read as
+> "the model would find these in a repository".
+>
+> **The free layer's production precision claim is BLOCKED (E81).** Real applications centralise
+> authentication — 2 of 4 sampled production apps enforce it with app-wide middleware in a central module
+> (`AuthTokenMiddleware`, `CustomAuthenticationMiddleware`). The detector's `APP_LEVEL` suppressor exists
+> but applies **per file**, so scanning `routers/*.py` it never sees `main.py`. **20 of 20 sampled flags in
+> those apps sit behind app-wide auth.** Single-file scope is structurally blind to how production
+> applications are built. The **recall** claim (0.263 where Bandit+Semgrep get 0) is unaffected; the
+> **precision** claim is blocked until the layer becomes cross-file aware and is re-measured.
+>
+> **Top engineering item for the layer that is actually shipping:** read the app factory; propagate app-
+> and router-level dependencies and middleware across files. Deterministic, cheap, and it is now the
+> binding constraint on the product.
+
 > **2026-07-27: the transfer test is INCONCLUSIVE (E79, correcting E75).** E75 reported a collapse
 > (0.154/0.154); that was an instrument artefact. Re-run with the corpus instrument replicated exactly:
 > on 10 post-cutoff paired sites the model flags the confirmed defect at **0.300** and the fixed version at
