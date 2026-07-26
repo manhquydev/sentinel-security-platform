@@ -760,6 +760,33 @@ PY
 then ok "SM26: the two detector artefacts report the same sites, defects and precision"
 else bad "SM26: two artefacts describing the same detector disagree — one of them is being published"; fi
 
+sect "SM27: the flagship gain still clears its floor under honest (application-level) clustering"
+if run_py <<'PY'
+import json, sys
+# E73: the 63 repos are 33 applications (10 specs x 4 generators are replicates). A repo-clustered
+# interval overstates support; H2 (median gain) already fell to marginal when re-clustered. This pins
+# the two facts that must not silently drift: the re-clustered artefact describes the SAME measurement
+# as the multiengine artefact, and H1's preregistered floor holds under the honest unit.
+H = "evaluation/sast-fp-discrimination/"
+me = json.load(open(H + "multiengine-grouped-260726.json", encoding="utf-8"))
+sc = json.load(open(H + "spec-clustered-260726.json", encoding="utf-8"))
+ok = True
+if abs(sc["point_relative_gain"] - me["relative_recall_gain"]) > 0.005:
+    print("  MISMATCH point gain: spec-clustered=%s multiengine=%s"
+          % (sc["point_relative_gain"], me["relative_recall_gain"])); ok = False
+if not sc["h1_holds_under_application_clustering"]:
+    print("  H1 no longer clears its +10%% floor under application clustering"); ok = False
+if sc["independent_applications"] >= len(me["per_repo"]):
+    print("  clustering degenerated: %s applications vs %s repos"
+          % (sc["independent_applications"], len(me["per_repo"]))); ok = False
+print("  apps=%d  point=%.4f  app-clustered CI=%s  H1=%s"
+      % (sc["independent_applications"], sc["point_relative_gain"],
+         sc["application_clustered_ci"], sc["h1_holds_under_application_clustering"]))
+sys.exit(0 if ok else 1)
+PY
+then ok "SM27: application-clustered support for the flagship claim is present and consistent"
+else bad "SM27: the flagship claim's honest-clustering support broke or drifted"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

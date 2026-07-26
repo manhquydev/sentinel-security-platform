@@ -38,6 +38,14 @@ corpus with the same RealVuln matching (file + CWE + line ±10, claim-once):
 >
 > **Caveat the point estimate hid: 22 of 63 repos (35%) gain nothing** — the union equals Bandit alone
 > there. The supported claim is therefore **portfolio-level**, not a per-application promise.
+>
+> **RE-CLUSTERED (E73, 2026-07-26).** The 63 repositories are **33 independent applications** — the 40
+> LLM-generated ones are 10 specs × 4 generators, replicates sharing structure and seeded-defect
+> placement. Under application clustering the headline **survives**: [+28.5%, +61.7%], lower bound still
+> ~3× the preregistered +10% floor. The **median-per-repo claim does not**: its interval becomes
+> [+0.0000, +0.0690], touching zero, so "the union helps the median application" is **downgraded to
+> MARGINAL** — it was supported by counting four implementations of one spec as four pieces of evidence.
+> (`pool_spec_clustered.py`, `spec-clustered-260726.json`.)
 
 1. **Multi-engine union raises recall +44% relative (0.131 → 0.188) at NO precision cost** (0.133 →
    0.138, marginally better). This is a free, deterministic, reproducible win — the opposite of the LLM

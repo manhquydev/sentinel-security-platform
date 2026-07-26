@@ -42,13 +42,14 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E73 | are 63 repos 63 independent units? | **NO — they are 33 applications (10 specs x 4 generators + 23 human)** — re-clustering the flagship gain by APPLICATION: **H1 survives** ([+28.5%, +61.7%], floor +10% cleared 3x) but **H2 drops to MARGINAL** (median-gain CI [+0.0000, +0.0690] touches zero — four implementations of one spec were being counted as four pieces of evidence). Also fixed: E66/E70's stale 8%-route-landing prose vs the artefact's 52/7/37, and E67's 'two independent measurements agreeing' is withdrawn |
 | E72 | were E59's contamination arms labelled correctly? | **NO — E59 INVERTED (corrected)** — the `human_authored` half is PyGoat/VAmPI/vulpy/DVWA-family: famous teaching apps, **memorisation-MAXIMAL**; the `llm_generated` half was generated **in 2026** (Claude Opus 4.7, GPT-5.5, Kimi K2.6), post-cutoff. So detection HIGHER on human (0.519 vs 0.316) is the direction memorisation **PREDICTS**, not evidence against it. Within-arm fame split leans the same way: famous **0.600** vs obscure **0.333**, p = 0.20. Contamination is NOT ruled out; deterministic results and organic E66-E69 unaffected |
 | E71 | are the free layer's headline numbers right? | **CORRECTED — both were ~2x too PESSIMISTIC** — the recall denominator sums 306+862 and double-counts the **48 entries carrying both** (289 distinct, not 337); the detector emits **2.00 findings per site** (1130 = 2 x 565). Recall **0.226 → 0.263**, precision **6.7% → 12.4%**, and the product sentence named **1,130** handlers where there are **565**. The correct site count was already in `rank-absent-auth-260726.json` and never reconciled. Survived 13 experiments because it made the result look WORSE — the lab's scepticism was asymmetric |
 | E70 | can the free path reach the ~127 repositories E69 requires? | **STANDS (negative) — NO, it saturates at ~9** — sweeping CWE-285/284 as a sources review recommended moved advisories 355→**463** and fix commits 137→**191**, and repositories **8→9** against a projected ~35. Second measurement of the same wall: widening the input by a third moves the output by nothing, because the binding filter is that the fix must attach to a **route handler**. Free advisory mining cannot close owed item 1; the paid options return for scale, now far better informed |
 | E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
 | E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
 | E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
-| E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 355 → 137 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
+| E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 355 → 137 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing 0.850 vs 0.297 — **figures superseded by E68/E70/E73** (final: 0.818 file-level, 0.486 site-level indistinguishable from corpus, 9 repos, and the 8% route-landing figure was an artefact of the narrow extractor) |
 | E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
 | E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
 | E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
@@ -5024,13 +5025,18 @@ distinct total sat unchanged — deduplication hid the error and only the distin
 Fixed to follow the Link header. The sweep grew from 319 advisories to 355 and from 115 fix commits to
 137, and **the site and repository counts did not move at all**.)*
 
-**That non-movement is itself the finding.** "Only 6 repositories" is not an artefact of a bound this probe
-set — widening the sweep to every pip advisory in these classes yields the same 20 sites. The constraint is
-the **8% route-landing rate**: 44 organic fixes add an authentication or authorization marker and only 11
-of them put it on a route decorator. So roughly **two thirds of real-world absence fixes are not
-route-shaped** — they land in middleware, service layers, or decorators defined elsewhere. That is the same
-boundary E67 finds from the other direction, where 54% of the corpus's labelled entries do not sit on a
-route either. Two independent measurements agreeing on where this detector's scope ends.
+**That non-movement is itself the finding** — *as measured with the pre-E68 extractor; correction note
+below.* "Only 6 repositories" is not an artefact of a bound this probe set — widening the sweep yields the
+same sites. At the time this read as an "8% route-landing rate" (44 marker-adding fixes, 11 on a route)
+implying two thirds of real fixes are not route-shaped, agreeing with the corpus's 54% off-route figure
+from E67.
+
+> **Superseded (E68/E73).** The 8% figure was a property of the extractor, not of the fixes: E68 showed the
+> route decorator routinely sits outside the hunk window (signature-level fixes) and resolving against the
+> pre-fix source nearly doubled the sites. The committed artefact now records **52 marker-adding fixes, 7
+> hunk-visible routes, 37 resolved sites**. "Two thirds are not route-shaped" and the "two independent
+> measurements agreeing" claim are **withdrawn**; the genuinely off-route remainder (middleware, service
+> layers, class-based views) has not been separately quantified.
 
 This is a **lower bound**: only fixes expressed in the vocabulary `detect_absent_auth` already knows are
 counted, so a fix written in an unrecognised form is invisible to the probe.
@@ -5428,3 +5434,53 @@ ledger — a pass no single experiment would have triggered, which is the strong
 one periodically.
 
 Instrument `probe_fame_memorisation.py`, artefact `fame-memorisation-260726.json`. Zero model calls.
+
+---
+
+## E73 — 63 repositories are 33 applications. The flagship gain survives re-clustering; the median claim does not
+
+**The structure, verified from the manifest.** The 40 `llm_generated` repositories are exactly **10
+application specs × 4 generators** (claude-code, codex, codex-high, kimi-code), each implementing the same
+spec under the same seeding process. Four implementations of `crm-saas-django` share structure, route names
+and seeded-defect placement — replicates, not independent draws. With the 23 human-authored repositories in
+the fetched set, the benchmark contains **33 independent applications, not 63**.
+
+Every grouped statistic this project has published resamples the 63 repositories as if independent. Per §16
+the check was made against the committed per-repo counts, not a fresh engine run — point estimates cannot
+move, only intervals can.
+
+| | repo-clustered (published basis, n=63) | application-clustered (n=33) |
+|---|---|---|
+| relative recall gain +43.6% | [+31.5%, +58.4%] | **[+28.5%, +61.7%]** (1.25× wider) |
+| median per-repo gain +0.0357 | [+0.0303, +0.0588] | **[+0.0000, +0.0690]** |
+
+**H1 — the flagship claim — is robust.** The application-clustered lower bound is +28.5%, nearly three
+times the preregistered +10% floor. The number this project leads with survives honest clustering, and
+that is worth exactly as much as the two corrections it sits between: a check that could have demoted the
+headline was run, and did not.
+
+**H2 — "the union helps the median repository" — drops to marginal.** Its application-clustered interval
+touches zero: in ≥2.5% of honest resamples the median gain is nothing. The published support for H2 was an
+artefact of counting four implementations of the same application as four pieces of evidence. H2 is hereby
+**downgraded from HOLDS to MARGINAL** — the direction is positive, the claim no longer has interval support
+at 95% under the correct unit of analysis.
+
+**Scope of the correction.** The multiengine instrument's own printout ("H2 HOLDS") is now known to be
+computed under the wrong clustering; its arithmetic is untouched and its artefact unchanged, so this is
+recorded as an interpretation correction here and in 0022 rather than by editing a validated runner at
+night. Grouped statistics elsewhere in the log that bootstrap over llm-generated repositories (E14's
+per-application split already grouped correctly; E59/E72's arms are between-corpus-halves and unaffected in
+direction) should be read with n≈33 in mind. Pinned by **SM27**, which requires the spec-clustered artefact
+to agree with the multiengine artefact on the point estimate and H1's floor to hold under application
+clustering.
+
+**Also corrected in this pass (stale prose vs artefact, the E66 staleness flag).** E66/E70's tables cite
+"44 fixes add a marker, 11 on a route = 8%"; after E68 changed the extraction semantics the committed
+artefact records **52 adds, 7 hunk-visible routes, 37 sites resolved against source**. The "8% route-landing
+rate" and "two thirds of real fixes are not route-shaped" figures were measured with the pre-E68 extractor
+and are superseded; the correct statement is E68's — the constraint was the *extractor*, and what remains
+genuinely off-route (middleware, service layers, class-based views) has not been separately quantified.
+E67's "two independent measurements agreeing" (8% ≈ the corpus's 54% off-route) is **withdrawn** — one side
+of that agreement was an artefact of the narrow extractor.
+
+Instrument `pool_spec_clustered.py`, artefact `spec-clustered-260726.json`. Zero engine and model calls.
