@@ -163,6 +163,23 @@ What does not depend on the comparison: all 53 files carry a real CWE-307 defect
 missing rate limit in **one**. The most common absence class in this corpus is very nearly invisible to
 the model in this role. That number needs no control arm and is the one with commercial consequences.
 
+**And the obvious escape route from that number is now closed (E41).** The natural objection is that the
+model *can* see missing rate limits but spends its one answer on the louder IDOR sitting in the same file
+— which would make this a prompting problem with a known fix. Two attempts to settle it:
+
+- Asking about CWE-307 **directly** could not be turned into an instrument at all. The leading question
+  reported the rate limit absent on code carrying `@limiter.limit('5 per minute')`. Four canary readings
+  across two prompt formats, never once discriminating a present control from an absent one. Abandoned at
+  the gate, before any corpus calls were spent (E40).
+- Removing the competition instead of changing the prompt: the same open-ended question over the 16 corpus
+  files carrying CWE-307 **and no other absence class**. Detection **1/16 = 0.062** against the contested
+  1/53, **p = 0.41 — no recovery** — and the uncontested files are *smaller* (median 84 vs 189 lines), so
+  the confound favoured the salience explanation and it still did not appear (E41).
+
+This rules out a *large* salience effect, not a modest one: the uncontested arm's upper bound is 0.188 on
+n=16, which is all the corpus holds. The practical reading is that **the narrowing is not an artefact of
+how we ask**, and per-class prompting is not an available remedy on this model.
+
 **Specificity strengthened:** two controls were deliberately hidden — one injected as a dependency, one
 applied inside a service `base()` method — and the model correctly stayed silent on both.
 
