@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E59 | is the contamination threat real? | **STANDS — no evidence for it** — the corpus records `authorship` per repo: **26 of 66 are human_authored** (704 real vulns), so 'the corpus is LLM-seeded' was wrong about 40%. Detection is **HIGHER on human code** (0.519 vs 0.316 union, p = 0.062) — opposite to the threat's prediction. Confounded by file size; not a refutation |
 | E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
 | E56 | are absence classes really invisible to deterministic tools? | **STANDS — NO** — ~60 lines of regex gets **77/337 = 0.228 recall** on CWE-306/862 where Bandit+Semgrep get **0**. But precision is **6.5%** — it cannot tell 'public by design' from 'forgot the check'. And model-as-filter is the gate role 0018/0020 already falsified, so the obvious composition is closed |
@@ -4575,3 +4576,64 @@ non-deterministic and broader. They overlap about as much as chance predicts, so
 redundant — and running both is *all* that is licensed, because 0018/0020 and DD1 forbid the arrangement
 where one filters the other. **Two independent, individually weak signals presented to a human, with the
 cheap one carrying more of the load than its reputation suggests.**
+
+---
+
+## E59 — the contamination threat, tested at last: detection is HIGHER on human-written code
+
+Every result in this log carries the same disclaimer, written into the artefacts themselves: *"RealVuln is
+public and LLM-seeded (`llm_generated_corpus=true`); a positive result mixes capability with memorisation
+and cannot transfer to private code."* It has been repeated all day as though nothing could be done about
+it. Protocol §19 was written this evening about exactly that habit — filing an unclosable threat and moving
+on — and it turns out this one was not unclosable at all.
+
+### The corpus records provenance per repository, and it always did
+
+```
+authorship: human_authored          authorship: llm_generated
+authorship_confidence: high         authorship_model: GPT-5.5
+authorship_evidence: "Vulpy is a deliberately vulnerable Flask application created by ..."
+```
+
+**26 of 66 repositories are `human_authored`**, carrying **704 real vulnerabilities** — DVWA-family apps,
+Vulpy, DjanGoat, VAmPI, DSVW, written by people years before this benchmark existed. Forty are
+`llm_generated` (GPT-5.5), carrying 1,199. The blanket "the corpus is LLM-seeded" was **wrong about 40% of
+it**, and the disclaimer has been over-broad in every artefact this project has written.
+
+### What the model does on each
+
+The contamination hypothesis makes a directional prediction: if positives are partly an LLM recognising
+another LLM's injected defect, detection should be **higher** on the seeded half.
+
+| provenance | files read | readings | per-reading | union |
+|---|---|---|---|---|
+| **human_authored** | 27 | 157 | **0.261** | **14/27 = 0.519** [0.340, 0.693] |
+| llm_generated | 57 | 407 | 0.187 | 18/57 = 0.316 [0.210, 0.445] |
+
+**Detection is higher on human-written code**, one-sided Fisher **p = 0.0617**. The effect points the
+opposite way to the threat.
+
+### What this does and does not establish
+
+**It does not refute contamination**, and two things stop it:
+
+- **p = 0.0617 is not significant.** The direction is clear, the evidence is not conclusive.
+- **A real confound runs the same way.** Human-authored files are **half the size** — median 88 lines
+  against 184 — and smaller files are easier. Stratifying by size does not resolve it: within
+  0–80 lines human scores 6/13 against 2/8, within 80–160 it is 5/9 against 10/18, within 160–320 it is
+  3/4 against 6/18. The bands are too thin to separate size from authorship, and the pooled figure is
+  unchanged because almost every file falls in a band containing both.
+
+**What it does establish** is the useful half: **there is no evidence for the feared direction.** The
+worry was that these results are inflated by the model recognising its own kind's output. If that were
+driving the numbers, the seeded half should lead, and it does not — it trails, on a point estimate, with
+a size confound that would have to be working *against* a real contamination effect to hide it.
+
+### Consequence for how the bound is written
+
+The disclaimer must stop saying the corpus is LLM-seeded, because 40% of it is not. The honest version:
+**results are measured on a mixed corpus, 26 human-authored repositories and 40 LLM-generated ones; the
+human-authored subset does not show lower detection, so contamination is not demonstrated — but the subset
+is small, the comparison is confounded by file size, and none of it substitutes for private production
+code.** That is a materially weaker threat than the one carried all day, and it was closable from data
+already on disk.
