@@ -167,13 +167,19 @@ is the most useful thing in it for product design:
 
 | question | reliable core | never answers |
 |---|---|---|
-| *"Is a required control absent somewhere in this file?"* (file verdict) | **2 of 24 files flagged in all four readings** | 15 of 24 |
+| *"Is a required control absent somewhere in this file?"* (file verdict) | **1 of 24 flagged in all six readings, 1 more at 5 of 6** | 14 of 24 |
 | *"Which control is absent?"* (class attribution) | **0 of 53 in five readings** | 38 of 53 |
 
 **The coarser the question, the more reliable the answer.** A product asking *"does this file deserve a
 human look?"* stands on measurably firmer ground than one asking *"what is wrong with this file?"* — and
-the second is what a findings-list interface implicitly promises. Specificity across those four readings:
-**0 flags in 64 clean-control observations.**
+the second is what a findings-list interface implicitly promises. Specificity across those six readings: **0 flags in 96 clean-control observations** — the floor has held
+through ninety-six consecutive opportunities to break it.
+
+**The cost curve, measured rather than modelled.** Union coverage of the positive arm at k readings, as a
+fraction of what an independence model would predict: **100%, 81%, 71%, 65%, 61%, 58%** for k = 1 to 6. At
+k=6 the design surfaces 10.0 of 24 files for six times the cost. Every additional reading is worth less
+than the one before it, by a widening margin — so there is a real ceiling on what buying more readings can
+achieve, and it arrives sooner than a linear or independence-based projection suggests.
 
 **This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
 the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate

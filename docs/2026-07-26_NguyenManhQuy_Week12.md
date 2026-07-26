@@ -115,14 +115,21 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >
 > | Câu hỏi | Phần đáng tin | Không bao giờ trả lời |
 > |---|---|---|
-> | *"File này có thiếu kiểm soát ở đâu đó không?"* | **2/24 file bị nêu ở CẢ 4 lần đọc** | 15/24 |
+> | *"File này có thiếu kiểm soát ở đâu đó không?"* | **1/24 file bị nêu ở cả 6 lần, thêm 1 file 5/6** | 14/24 |
 > | *"Thiếu đúng kiểm soát nào?"* | **0/53 file qua 5 lần đọc** | 38/53 |
 >
 > **Câu hỏi càng thô thì câu trả lời càng đáng tin.** Một sản phẩm hỏi *"file này có đáng để người
 > xem không?"* đứng trên nền vững hơn hẳn một sản phẩm hỏi *"file này sai chỗ nào?"* — mà cái thứ
 > hai mới đúng là thứ một giao diện "danh sách lỗi" ngầm hứa hẹn.
 >
-> Đặc hiệu qua 4 lần đọc đó: **0 lần báo nhầm trên 64 lượt quan sát file sạch.**
+> Đặc hiệu qua 6 lần đọc: **0 lần báo nhầm trên 96 lượt quan sát file sạch** — cái sàn này đã đứng
+> vững qua 96 cơ hội để bị chọc thủng.
+>
+> **Đường cong chi phí, đo chứ không phải mô hình hóa:** đọc k lần thì phủ được bao nhiêu phần so
+> với kỳ vọng lý thuyết — **100%, 81%, 71%, 65%, 61%, 58%** ứng với k = 1 đến 6. Ở k=6 thì phủ
+> được 10/24 file với chi phí gấp sáu. **Mỗi lần đọc thêm đáng giá ít hơn lần trước, khoảng cách
+> ngày một giãn** — nghĩa là có trần thật cho việc "mua thêm lần đọc", và trần đó tới sớm hơn mọi
+> phép tính tuyến tính.
 >
 > **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại nhiều lần
 > trên cùng một file cho thấy **không phải xổ số**: file "có gì đó" thật sự dễ được nêu hơn. Nhưng
