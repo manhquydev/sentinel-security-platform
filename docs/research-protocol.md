@@ -437,3 +437,39 @@ under test.
 it is worse than leaving it alone — the classifier would be reading text the original verdict was never
 based on and would "correct" sound verdicts using evidence that no longer exists. Those artefacts are
 reported as *unverifiable*, never as *clean*. Two of ours are.
+
+## 15. A rate is not a detection (E42–E43, 2026-07-26)
+
+An aggregate rate can replicate perfectly while meaning something entirely different from what everyone
+reading it assumes. Two independent runs of the same experiment over the same 53 files returned the same
+counts — 6/53 and 1/53, difference +0.094, identical to the digit — on responses that were byte-different
+in 52 of 53 cases. It was a genuine second measurement, and the six files it named **overlapped with the
+first six in none**.
+
+Everything downstream had been written as though the number described *detection*: that the model finds
+the missing control in about 11% of such files. It does not. It **reports** at that rate, on a shifting
+set of files. Two runs produce two disjoint worklists, both correct at the published rate, and an engineer
+handed either one has no way to know that.
+
+Repeated readings of the same file then showed why: per-file propensity is a **mixture**. Files reported
+once come back at 0.333 against 0.083 for files never reported — so it is not a lottery, there is a real
+per-file property — but the highest propensity measured on any file is **0.67**, and none is reliable.
+Propensities spread between roughly 0 and 0.67, which is exactly the shape that yields the same count from
+disjoint sets. That the mixture was measured independently and *then* found to predict the earlier
+anomaly is the reason to believe it.
+
+**The rules this leaves.**
+
+- **Before describing a rate as detection, measure whether the same items recur.** Two runs and a set
+  intersection is enough to find out, and it is cheap next to the cost of publishing the wrong claim. A
+  rate that replicates is evidence about the rate and about nothing else.
+- **Report the per-item distribution, not only the mean.** "0.333" concealed a spread from 0.00 to 0.67,
+  and the spread is the finding — the mean alone reads as a modest detector rather than as a process that
+  never reliably identifies anything.
+- **Where per-item propensity is below one, repeated reading is required rather than optional, and every
+  cost figure must carry the k.** A file at 0.33 is found with probability 0.33 at k=1 and 0.70 at k=3.
+  One call per file buys about a third of what a single-run sensitivity implies, and quoting the sensitivity
+  beside a one-call-per-file cost overstates both.
+- **A union-over-k estimand is a different quantity from a single reading, and must be labelled as one.**
+  It is often the honest choice — it matches how the capability actually behaves — but substituting it
+  quietly for a single-reading figure inflates the result while appearing to report the same thing.
