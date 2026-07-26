@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
+| E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
 | E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate** — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
 | E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 14/59, p = 0.000120; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
 | E35 | replicate the headline | **STANDS** — fresh run 14/59 vs 0/40, p = 0.000350 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
@@ -2944,3 +2945,58 @@ not**: it fires almost as often on prose the classifier cleared as on prose it f
 terms are catching ordinary discussion of responses and error paths rather than a claim about a missing
 control. **CWE-200's vocabulary is not specific enough to support a class-attribution claim and is
 excluded from one.** The four that separate may be used; the fifth may not.
+
+---
+
+## E39 — RESULT: the class narrowing is *consistent with* real corpus code, but does not confirm it
+
+E37 cancelled the significance test of this question at the power gate. The question itself did not go
+away: decision 0027 narrows the whole generative-role claim to "absent ownership and absent
+authentication" on the strength of **four authored files** in E34, and CWE-307 — no limit on
+authentication attempts — is the **most common absence class in the corpus**. If that narrowing is right
+it constrains what can be sold; if it is an artefact of four files we wrote ourselves, it undersells.
+
+So this was preregistered as an **estimate, not a test**: report the rates and an interval, claim no
+p-value. That distinction is not cosmetic. A p-value from a design already measured at 43% power would be
+a number with no evidential warrant attached, and writing one down invites a reader to treat it as one.
+
+**Design — paired inside a single file.** All 53 corpus files whose ground truth carries *both* an
+ownership/authentication class and CWE-307. One reading per file; both questions are read off the *same*
+prose. Framework, size, style, difficulty and the instrument's own churn are held fixed by construction,
+because there is only ever one response. This is why one reading per file suffices here and would not in
+an unpaired design.
+
+**A defect in the first version of this run, and what it cost.** The verdicts were scored on the raw
+response while the artefact stored the *redacted* one — so the published number would not have re-derived
+from the committed evidence. The guard written this morning caught it on its first real use. Scoring now
+runs on the persisted text, which makes the artefact reproducible and the estimate **conservative**:
+redaction only ever removes characters, so it can suppress a detection but never invent one. It cost
+three of 53 files — **all three in the ownership arm**, i.e. the error points against the hypothesis under
+test, which is the direction an unavoidable error should point.
+
+| measure | raw prose (not reproducible) | **persisted prose (published)** |
+|---|---|---|
+| named ownership/authn absence | 9/53 = 0.170 | **6/53 = 0.113** |
+| named rate-limit absence | 1/53 = 0.019 | **1/53 = 0.019** |
+| difference | +0.151 [+0.038, +0.264] | **+0.094 [+0.000, +0.189]** |
+
+**The published interval's lower bound sits on zero.** The first number I saw was the stronger one; the
+one that survives being checkable is weaker, and it is the one that stands. Read honestly: the *direction*
+matches E34 and the corpus files agree with the authored ones about which way the asymmetry runs — but
+this does **not** confirm the narrowing, and the power gate said in advance that it would not. Anyone
+citing +0.094 as established is citing an estimate whose interval includes no effect at all.
+
+**The finding that does not depend on the comparison.** Every one of these 53 files carries a real
+CWE-307 defect, and the model named the missing rate limit in **one of them**. That is an absolute
+statement, needs no control arm, and is the practically important one: the most common absence class in
+this corpus is very nearly invisible to the model in the generative role. The comparison is what is
+uncertain; the near-zero is not.
+
+**Also worth recording:** the ownership-arm rate here (0.113) is far below E34's authored-file rate
+(ownership 4/4). Third independent sign that the test material we write ourselves is easier than the code
+we would actually be sold against.
+
+**Status:** decision 0027's narrowing is retained, with its evidence base widened from 4 authored files
+to 53 corpus files, and its confidence explicitly *not* raised. Replication at adequate power needs more
+rate-limit-bearing files than this corpus contains — which is now the concrete blocker on this line of
+work, and a sourcing problem rather than an experimental one.

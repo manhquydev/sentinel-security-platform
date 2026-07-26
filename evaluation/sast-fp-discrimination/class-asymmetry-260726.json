@@ -1,0 +1,751 @@
+{
+  "generated_at": "2026-07-26T04:52:51.771372+00:00",
+  "model": "sast-grok45",
+  "estimand": "within-file difference in class-attribution rate, ownership/authn minus CWE-307",
+  "preregistered_as": "estimation only; the significance test was cancelled at the power gate (43% power at measured rates), so no p-value is claimed",
+  "n": 53,
+  "named_own_authn": 6,
+  "named_rate_limit": 1,
+  "difference": 0.0943,
+  "difference_ci95": [
+    0.0,
+    0.1887
+  ],
+  "discordant_own_only": 6,
+  "discordant_rate_limit_only": 1,
+  "excluded_classes": {
+    "200": "vocabulary fires nearly as often on all-clear prose as on defect claims; cannot carry a class-attribution claim"
+  },
+  "rows": [
+    {
+      "repo": "realvuln-damn-vulnerable-graphql-application",
+      "file": "core/views.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated at `CustomBackend.__init__`. What needed?"
+    },
+    {
+      "repo": "realvuln-dsvpwa",
+      "file": "dsvpwa/attacks.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        287,
+        306,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "What need done with `attacks.py`?"
+    },
+    {
+      "repo": "realvuln-dsvw",
+      "file": "dsvw.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Truncated file. Cuts at `cursor.fetc`. What need?"
+    },
+    {
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/auth_routes.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, LoginAttempt\nfrom datetime import datetime, timedelta\nimport jwt\nfrom auth import token_required\nimport yaml\n\nauth_bp = Blueprint('auth', __name__)\n\n@auth_bp.route('/api/register', methods=['POST'])\ndef register():\n    data = request.get_json() or {}\n    username = data.get('username')\n    [redacted:secret]\n    if not username or not [redacted:secret]\n    if User.query.filter_by(username=username).first():\n        return jsonify({'error': 'Username already exists'}), 400\n    user = User(username=username, balance=0)\n    user.set_password(password)\n    db.session.add(user)\n    db.session.commit()\n    return jsonify({'message': 'User registered successfully', 'id': user.id}), 201\n\n@auth_bp.route('/api/login', methods=['POST'])\ndef login():\n    data = request.get_json() or {}\n    username = data.get('username')\n    [redacted:secret]\n    user = User.query.filter_by(username=username).first()\n    success = bool(user and user.check_password(password))\n    db.session.add(LoginAttempt(\n        username=username or '',\n        ip_address=request.remote_addr,\n        created_at=datetime.utcnow(),\n        success=success\n    ))\n    db.session.commit()\n    if not success:\n        return jsonify({'error': 'Invalid username or password'}), 401\n    [redacted:secret]\n        {'user_id': user.id, 'username': user.username,\n         'exp': datetime.utcnow() + timedelta(days=1)},\n        'secret', algorithm='HS256'\n    )\n    return jsonify({\n        '[redacted:secret]\n        'user': {'id': user.id, 'username': user.username, 'balance': float(user.balance)}\n    })\n\n@auth_bp.route('/api/logout', methods=['POST'])\n@token_required\ndef logout(current_user):\n    return jsonify({'message': 'Logged out successfully'})\n\n@auth_bp.route('/api/me', methods=['GET'])\n@token_required\ndef get_current_user(current_user):\n    return jsonify({\n        'id': current_user.id,\n        'username': current_user.username,\n        'balance': float(current_user.balance),\n        'profile': current_user.get_profile()\n    })\n\n@auth_bp.route('/api/profile', methods=['GET'])\n@token_required\ndef get_profile(current_user):\n    profile_data = current_user.get_profile() or {}\n    return jsonify({\n        'fullName': profile_data.get('fullName', current_user.username),\n        'email': current_user.email,\n        'phone': profile_data.get('phone', ''),\n        'address': profile_data.get('address', '')\n    })\n\n@auth_bp.route('/api/profile', methods=['PUT'])\n@token_required\ndef update_profile(current_user):\n    data = request.get_json() or {}\n    current_user.email = data.get('email')\n    profile_data = {\n        'fullName': data.get('fullName'),\n        'phone': data.get('phone'),\n        'address': data.get('address')\n    }\n    current_user.set_profile(profile_data)\n    db.session.commit()\n    return jsonify({\n        'message': 'Profile updated successfully',\n        'profile': {\n            'fullName': profile_data['fullName'],\n            'email': current_user.email,\n            'phone': profile_data['phone'],\n            'address': profile_data['address']\n        }\n    })\n\n@auth_bp.route('/api/update-password', methods=['POST'])\n@token_required\ndef update_password(current_user):\n    data = request.get_json() or {}\n    new_password = data.get('new_password')\n    if not new_password:\n        return jsonify({'error': 'new_password required'}), 400\n    current_user.set_password(new_password)\n    db.session.commit()\n    return jsonify({'message': 'Password updated'})\n\n@auth_bp.route('/api/profile/import', methods=['POST'])\n@token_required\ndef import_profile(current_user):\n    try:\n        profile_yaml = (request.get_json() or {}).get('profile_yaml', '')\n        profile_data = yaml.safe_load(profile_yaml)\n        if not isinstance(profile_data, dict):\n       "
+    },
+    {
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/views.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        306,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Broken line 38: `[redacted:secret]\n\nSQLi not in views. Check DAOs: `Student.create`, `Course.create`, `Review.create`, `User.get_by_username` \u2014 if f-string/`%`/concat, vulnerable. Use params.\n\nMissing auth: `students`/`courses`/`review` POST open. Anyone creates data.\n\nMissing import: `Application` used, never imported.\n\n`evaluate` validates via schema. Good. Others raw `request.post()`.\n\nNo XSS check here \u2014 templates must escape `review_text`/`name`/`title`."
+    },
+    {
+      "repo": "realvuln-insecure-web",
+      "file": "app/app.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        287,
+        306,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "```python\nfrom flask import Flask, request, render_template, redirect, session, escape\nimport sqlite3\nimport os\n\napp = Flask(__name__)\napp.secret_key = os.environ.get(\"SECRET_KEY\", os.urandom(24))\n\ndef init_db():\n    conn = sqlite3.connect(\"test.db\")\n    c = conn.cursor()\n    c.execute(\"CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT)\")\n    c.execute(\"INSERT OR IGNORE INTO users (username, password) VALUES ('user1', 'password1')\")\n    conn.commit()\n    conn.close()\n\ninit_db()\n\n@app.route(\"/\")\ndef home():\n    return render_template(\"index.html\")\n\n@app.route(\"/login\", methods=[\"POST\"])\ndef login():\n    username = request.form.get(\"username\", \"\")\n    [redacted:secret]\n    conn = sqlite3.connect(\"test.db\")\n    c = conn.cursor()\n    c.execute(\"SELECT * FROM users WHERE username = ? AND [redacted:secret]\n    result = c.fetchone()\n    conn.close()\n    if result:\n        session[\"user\"] = username\n        return redirect(\"/dashboard\")\n    return \"Invalid credentials. <a href='/'>Try again</a>\"\n\n@app.route(\"/dashboard\")\ndef dashboard():\n    user = session.get(\"user\")\n    if not user:\n        return redirect(\"/\")\n    return f\"<h1>Welcome, {escape(user)}!</h1>\"\n\n@app.route(\"/search\", methods=[\"GET\"])\ndef search():\n    query = request.args.get(\"q\", \"\")\n    return f\"<h1>Search Results for {escape(query)}</h1>\"\n\nif __name__ == \"__main__\":\n    app.run(host=\"127.0.0.1\", port=5000)\n```\n\n\u2192 skipped: password hashing (add when real users), CSRF tokens (add when forms matter), HTTPS/cookie flags (add in prod)."
+    },
+    {
+      "repo": "realvuln-intentionally-vulnerable-python-application",
+      "file": "VulnerablePythonScript.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        306
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "```python\nimport os\nimport subprocess\nimport ipaddress\nimport json\nfrom flask import Flask, request\n\napp = Flask(__name__)\n\n@app.route('/ping', methods=['GET'])\ndef ping():\n    ip = request.args.get('ip', '')\n    try:\n        ipaddress.ip_address(ip)\n    except ValueError:\n        return \"Invalid IP\", 400\n    result = subprocess.check_output(['ping', '-c', '4', ip], timeout=10)\n    return result\n\nUSERNAME = os.environ.get('APP_USER', '')\n[redacted:secret]\n\n@app.route('/login', methods=['POST'])\ndef login():\n    username = request.form.get('username', '')\n    [redacted:secret]\n    if not USERNAME or not [redacted:secret]\n    if username == USERNAME and [redacted:secret]\n        [redacted:password] \"Login successful\"\n    return \"Login failed\", 401\n\n@app.route('/unserialize', methods=['POST'])\ndef unserialize():\n    try:\n        obj = json.loads(request.data)\n    except json.JSONDecodeError:\n        return \"Invalid JSON\", 400\n    return str(obj)\n\n@app.route('/user', methods=['GET'])\ndef get_user():\n    user_id = request.args.get('id', '')\n    if not user_id.isdigit():\n        return \"Invalid id\", 400\n    query = \"SELECT * FROM users WHERE id = ?\"\n    result = run_query(query, (user_id,))\n    return str(result)\n\ndef run_query(query, params=None):\n    return f\"Query result for: {query} params={params}\"\n\nif __name__ == '__main__':\n    app.run(debug=False)\n```\n\u2192 skipped: real DB/param lib, add when DB exists. requests route deleted (unused). env secrets only."
+    },
+    {
+      "repo": "realvuln-owasp-web-playground",
+      "file": "python/app.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": ""
+    },
+    {
+      "repo": "realvuln-threatbyte",
+      "file": "server/api/v1/api_v1.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        287,
+        306,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "**Vulns (intentional training app):**\n\n1. **BFLA** `/delete-user/<id>` \u2014 no auth (`@token_required` commented). Anyone deletes anyone.\n2. **IDOR** `/profile?user_id=` \u2014 no auth. Leaks role/permissions.\n3. **SSRF** `/update_picture` \u2014 `requests.get(picture_url)` no allowlist/blocklist. Hits internal hosts.\n4. **Auth inconsistency** \u2014 login issues JWT; `/update-profile` checks `session` only. JWT unused on protected routes.\n5. **Missing auth** \u2014 picture update, profile get, delete all open.\n6. **Priv-esc path** \u2014 admin can set `role`/`permissions` via update; non-admin blocked only if session present.\n\n**Also broken by redaction:** login_model, token parse, jwt.encode, password get \u2014 syntax invalid as pasted.\n\nWhat need? Fix auth? Patch SSRF? Full harden?"
+    },
+    {
+      "repo": "realvuln-threatbyte",
+      "file": "server/routes.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        306,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical bugs (fix first):**\n\n```python\n# login: broken after `with` \u2014 cursor/conn dead\n# signup: same + query after with\n# dashboard: SQLI + cursor after with\n# update_profile: mass-assign role/permissions = priv-esc\n# upload: no secure_filename \u2192 path traversal/overwrite\n# profile_pictures: no auth\n# delete_file: truncated\n```\n\n**login fix (conn scope + param):**\n```python\n@app.route('/login', methods=['GET', 'POST'])\ndef login():\n    if request.method == 'POST':\n        username = request.form.get('username')\n        [redacted:secret]\n        if not username or not [redacted:secret]\n        with get_db_connection() as conn:\n            cursor = conn.cursor()\n            cursor.execute(\"SELECT * FROM users WHERE username = ? OR email = ?\", (username, username))\n            user = cursor.fetchone()\n            if user and user['password'] == custom_hash(password):\n                session['username'] = user['username']\n                session['user_id'] = user['id']\n                cursor.execute(\"UPDATE users SET last_login = ? WHERE username = ?\", (datetime.datetime.now(), username))\n                conn.commit()\n                return redirect(url_for('dashboard'))\n        return render_template('login.html', error='Invalid username or password')\n    return render_template('login.html')\n```\n\n**dashboard search (kill SQLI):**\n```python\nif search_query:\n    cursor.execute(\"SELECT filename FROM files WHERE user_id = ? AND filename LIKE ?\", (user_id, f'%{search_query}%'))\nelse:\n    cursor.execute(\"SELECT filename FROM files WHERE user_id = ?\", (user_id,))\n```\nKeep entire query inside the `with`.\n\n**update_profile:** drop role/permissions from form entirely (or hard-require admin check). Never trust client for those.\n\n**upload:**\n```python\nfrom werkzeug.utils import secure_filename\nfilename = secure_filename(file.filename)\nif not filename: ...\n```\n\n**profile_pictures:** add session check + ownership.\n\n**delete_file:** finish the else:\n```python\nreturn jsonify({'message': 'File not found on disk.', 'type': 'error'})\n```\n\n\u2192 skipped: full rewrite, auth middleware, real password hash (bcrypt), CSRF. Add when prod."
+    },
+    {
+      "repo": "realvuln-vulnerable-flask-app",
+      "file": "app/app.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Vuln app. Intentional?\n\nCritical:\n- SSTI: 404 + `/search` error (`render_template_string` + `dir/help/locals`)\n- SQLi: `/search` string-format query\n- JWT: `/get/<id>` uses `verify=False`\n- `yaml.load` RCE: `/yaml_hammer`\n- MD5 passwords, hardcoded secrets\n\nWhat need? Fix / exploit notes / delete dead routes?"
+    },
+    {
+      "repo": "realvuln-vulnerable-tornado-app",
+      "file": "server.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        287,
+        306
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "What need? Fix vulns / list issues / other."
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "bad/mod_api.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "**Bugs**\n\n1. L16 syntax broken (redaction):\n```python\n\"[redacted:secret]\n```\n\n2. Authz bypass L57\u201362: `data.update(request.get_json())` overwrites auth username. Client posts as anyone.\n\n```python\n@mod_api.route('/post', methods=['POST'])\ndef do_post_create():\n    username = libapi.authenticate(request)\n    if not username:\n        return jsonify({'error': 'invalid authentication'}), 401\n    body = request.get_json() or {}\n    try:\n        validate(body, post_schema)\n    except ValidationError:\n        return jsonify({'error': 'invalid schema', 'schema': post_schema}), 400\n    libposts.post(username, body['text'])\n    return jsonify({'status': 'created'})\n```\n\n3. GET `/post/<username>` no auth (info leak if posts private).\n4. L70 returns plain text; rest JSON.\n\n\u2192 skipped: rate limits, key rotation, add when abuse."
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "bad/mod_user.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        306,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Broken syntax: `[redacted:secret]\n\nBugs:\n- `/chpasswd` no auth gate. Uses `g.session['username']` blind.\n- Create skips complexity check + exists check.\n- Chpasswd no old-password verify.\n- Login pops session on GET too.\n\nFix chpasswd auth first:\n\n```python\n@mod_user.route('/chpasswd', methods=['GET', 'POST'])\ndef do_chpasswd():\n    if 'username' not in g.session:\n        return redirect('/user/login')\n    # rest unchanged; also fix [redacted:secret]\n```\n\n\u2192 skipped: rate limit, CSRF, old-pw check. Add when prod."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        287
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Bugs**\n\n`form_invalid`: `cleaned_data` empty when field fails. Use `form.data.get(\"username\")`.\n\n`form_valid`: `get_client_ip` twice. Cache once.\n\n`invite_accept` sig broken in paste (`[redacted:secret]\n\n**YAGNI**\n\nInline `write_audit` imports fine. Keep.\n\nLoginEvent + audit both fire on login. Drop one if redundant.\n\n**Skipped:** rate limit on invite/login fails. Add when abuse shows.\n\nWhat need? Fix / review / delete?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "crm_project/partner_console.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns** (gate only hides them):\n\n| fn | issue |\n|---|---|\n| `acct_packet_pull_002` | path traversal \u2014 `packet_ref` unsanitized |\n| `acct_vendor_ping_003` | SSRF \u2014 arbitrary URL |\n| `acct_return_lane_149` | open redirect |\n| `acct_workset_rebind_191` | mass assignment |\n| `acct_vault_stash_233` | writes SSN/PAN to disk |\n| `acct_jinja_cast_381` | SSTI |\n| `acct_dock_shelf_388` | arbitrary file write |\n| `acct_shell_probe_399` | command injection |\n| `acct_xml_fold_451` | XXE (`resolve_entities=True`) |\n| `acct_origin_mirror_369` | CORS reflect + credentials |\n| `acct_identity_ping_333` | no `_wrk_gate` |\n| `acct_delta_121` | client sets `state`/amount freely |\n| `acct_digest_fold_273` | MD5 |\n| `acct_nonce_roll_409` | `random` not CSPRNG |\n| `acct_trust_drift_429` | TLS verify off |\n| `acct_badge_gate_439` | [redacted:secret]\n\n**Minimal kills** (delete or clamp):\n\n```python\n# path: resolve + must stay under BASE_EXPORT_DIR\nparcel_path = (BASE_EXPORT_DIR / Path(packet_ref).name).resolve()\nif not str(parcel_path).startswith(str(BASE_EXPORT_DIR.resolve())):\n    return _nope()\n\n# SSRF: allowlist only\n# redirect: allow relative paths starting with / only, no //\n# mass assign: whitelist keys\n# jinja: delete Template(user input) \u2014 use django templates + autoescape\n# shell: delete os.system; use subprocess with list argv + fixed host regex, or drop endpoint\n# XXE: etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False) or defusedxml\n# CORS: fixed origin allowlist, never echo Origin with credentials\n# nonce: secrets.token_urlsafe\n# badge: server session role, not cookie value\n# vault: do not store SSN/PAN; tokenize off-box\n```\n\n\u2192 skipped: full rewrite, add when you own the threat model and want a hardened module.\n\nWhat do you want: delete the dangerous endpoints, or patch in place?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/views.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        287,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": true,
+      "response": "**Broken by redaction \u2014 restore:**\n\n```python\n# L123\n[redacted:secret]\n\n# L129\nf\"Use this link to reset your [redacted:secret]\n\n# L279\ndef invitation_accept(request, [redacted:secret]\n\n# L290\n[redacted:secret]\n```\n\n**Real issues:**\n- Reset email body must include `{url}` (currently missing).\n- `fail_silently=True` hides mail failures \u2014 OK for UX, log if you care.\n- No rate limit on reset/login (add when abuse appears).\n\n\u2192 skipped: rate limits, email queue, invite revoke UI. Add when needed."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "lms/course_operations.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns in `lms/course_operations.py`:**\n\n| fn | issue |\n|---|---|\n| `course_shell_probe_400` | cmd injection (`os.system` + user host) |\n| `course_jinja_cast_382` | SSTI (user fragment into Template) |\n| `course_xml_fold_452` | XXE (resolve_entities + load_dtd) |\n| `course_dock_shelf_389` | path traversal write (`name` unsanitized) |\n| `course_return_lane_150` | open redirect |\n| `course_blurb_card_004` | reflected XSS |\n| `course_vault_stash_234` | writes SSN/card to disk |\n| `course_flag_rollup_005` | mass-assign `is_admin` |\n| `course_identity_ping_334` | no `_wrk_gate` |\n| `course_origin_mirror_370` | CORS reflect + credentials |\n| `course_wire_tally_211` | logs Authorization |\n| `course_roster_packet_006` | hardcodes secrets/PII |\n| `course_identity_hint_360` | hardcodes PINs |\n| `course_digest_fold_274` | MD5 |\n| `course_nonce_roll_410` | `random` not CSPRNG |\n| `course_trust_drift_430` | SSL verify off |\n| `course_badge_gate_440` | [redacted:secret]\n| `course_frame_slip_420` | strips XSS/CSP headers |\n| `course_delta_122` | client-controlled balance/state |\n\nNo fix applied. Say which to kill/patch."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "What need? File = vuln zoo. State goal: audit / fix / delete / map routes."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/payroll_operations.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Audit: 18 vulns. Gate only token-header.**\n\n| fn | issue |\n|---|---|\n| `fold_drop_014` | path traversal read |\n| `broker_tile_015` | SSRF |\n| `delta_124` | untrusted amount/state write |\n| `bundle_thaw_170` | pickle RCE |\n| `workset_rebind_194` | mass assignment |\n| `formula_cast_252` | `eval` |\n| `crumb_lane_290` | cookie no flags |\n| `identity_ping_336` | **no gate** |\n| `identity_hint_363` | enum + static secrets |\n| `origin_mirror_373` | CORS reflect + creds |\n| `jinja_cast_384` | SSTI |\n| `dock_shelf_391` | path traversal write |\n| `shell_probe_402` | cmd injection |\n| `mongo_lane_413` | NoSQL inject |\n| `frame_slip_423` | CSP/XSS off |\n| `trust_drift_433` | TLS verify off |\n| `trace_panel_443` | info leak |\n| `xml_fold_454` | XXE |\n\n**Kill first:** pickle, eval, jinja, shell, path write/read, SSRF, XXE.\n\nNeed: full fix patch? kill list? one fn?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        287
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Auth routes. What need?\n\nIssues spotted:\n- Cookie `secure=False` \u2014 set True behind HTTPS\n- Register 409 leaks email existence\n- `datetime.utcnow()` naive; prefer timezone-aware\n- Reset token console-print mock only\n\nSay: review / fix / add X."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        287,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Auth router. Task?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-crm-saas-django",
+      "file": "config/partner_console.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Vuln farm. Critical:\n\n- path traversal: `acct_vaultlet_pull_062`, `acct_dock_shelf_592`\n- SSRF: `acct_relay_note_063`\n- open redirect: `acct_return_lane_161`\n- mass assignment: `acct_workset_rebind_202`, `acct_delta_133`\n- SSTI: `acct_jinja_cast_585`\n- cmd inject: `acct_shell_probe_633`\n- NoSQL inject: `acct_mongo_lane_613`\n- missing gate: `acct_identity_ping_340`\n- CORS+creds reflect: `acct_origin_mirror_563`\n- weak MD5/random, PII write, SSL verify off\n\nIntent: fix / delete / report?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "education_lms/course_operations.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "**Critical vulns. Delete or fix.**\n\n| Fn | Issue | Fix |\n|---|---|---|\n| `course_shell_probe_634` | cmd injection | delete; or `subprocess.run([\"ping\",\"-c\",\"1\",host], check=False)` + host allowlist |\n| `course_jinja_cast_586` | SSTI | delete; never `Template(user_input)` |\n| `course_xml_fold_616` | XXE | `XMLParser(resolve_entities=False, no_network=True, load_dtd=False)` |\n| `course_dock_shelf_593` | path traversal write | `name = Path(name).name` then reject `..` |\n| `course_return_lane_162` | open redirect | allowlist paths only |\n| `course_preflet_roll_065` | mass-assign `is_admin` | whitelist keys: `display_name` only |\n| `course_origin_mirror_564` | CORS reflect + creds | fixed origin allowlist |\n| `course_vault_stash_245` | writes SSN/card | stop storing PII; encrypt + access control |\n| `course_identity_ping_341` | **no gate** | add `_wrk_gate` |\n| `course_delta_134` | free amount/state | server-side amount sign + state machine |\n| `course_nonce_roll_604` | `random` not CSPRNG | `secrets.token_urlsafe` |\n| `course_digest_fold_283` | MD5 | `hashlib.sha256` (or don't expose) |\n| `course_wire_tally_222` | logs bearer | never log auth headers |\n| `course_memo_badge_064` | XSS | escape `copyline` |\n| `course_badge_gate_624` | forgeable cookie role | server session / signed token |\n| `course_trust_drift_644` | SSL verify off | drop custom ctx |\n| `course_roster_fold_066` | hardcodes secrets/PII | remove from response |\n| `course_identity_hint_554` | hardcodes PINs | real store + rate limit |\n| `course_frame_slip_574` | strips CSP/XSS headers | delete |\n\n**Do first:** delete `634`, `586`, `616`, `593`, `162`. Gate `341`.\n\nWant patches for a subset? Name IDs."
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
+      "file": "app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-function. What needed?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns. Fix or delete.**\n\n| # | Func | Issue | Fix |\n|---|------|-------|-----|\n| 179 | `patient_bundle_thaw_179` | `pickle.loads` \u2192 RCE | Delete. Or JSON only. |\n| 262 | `patient_formula_cast_262` | `eval` | Delete. Or pure AST whitelist. |\n| 587 | `patient_jinja_cast_587` | SSTI | Delete. Or `Template(fragment)` never concat user into template source. |\n| 617 | `patient_xml_fold_617` | XXE | `resolve_entities=False`, `load_dtd=False`, `no_network=True` |\n| 157 | `patient_return_lane_157` | open redirect | Allowlist paths only |\n| 606 | `patient_mongo_lane_606` | NoSQL injection | Whitelist keys; never pass raw dict as filter |\n| 070 | `patient_drop_shelf_070` | unrestricted upload | Allowlist ext/MIME; randomize name; size cap |\n| 204 | `patient_workset_rebind_204` | mass assignment | Whitelist fields; never `update(payload)` on role/approved |\n| 566 | `patient_origin_mirror_566` | reflected CORS + creds | Fixed allowlist origin |\n| 598 | `patient_nonce_roll_598` | `random` not CSPRNG | `secrets.choice` |\n| 646 | `patient_trust_drift_646` | TLS verify off | Drop custom ctx; use default verify |\n| 072 | `patient_care_file_072` | no gate | Add `_wrk_gate` |\n| 342 | `patient_identity_ping_342` | no gate | Add `_wrk_gate` |\n| 626 | `patient_badge_gate_626` | [redacted:secret]\n| 556 | hardcodes secrets | move to env/secret store |\n\n**Nuke first (YAGNI):** 179, 262, 587, 617, 646 \u2014 no legitimate need as written.\n\nMinimal kill for worst three:\n\n```python\ndef patient_bundle_thaw_179(request):\n    return _nope()  # pickle gone\n\ndef patient_formula_cast_262(request):\n    return _nope()  # eval gone\n\ndef patient_jinja_cast_587(request):\n    return _nope()  # SSTI gone\n```\n\n```python\n# patient_xml_fold_617 \u2014 if must keep:\nparser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True)\n```\n\n```python\n# patient_return_lane_157\nfrom django.utils.http import url_has_allowed_host_and_scheme\nlane = request.GET.get(\"lane\") or \"/\"\nif not url_has_allowed_host_and_scheme(lane, allowed_hosts={request.get_host()}, require_https=request.is_secure()):\n    lane = \"/\"\nreturn redirect(lane)\n```\n\n\u2192 skipped: full rewrite of every handler. Add when product actually needs each endpoint."
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        287,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated at `webhook_out(`. What needed?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        287
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`serialize_dispute`. What needed?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        287
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Invite check: prefix only. No real invite store.\nReset: returns raw token. Dev mock only.\nLogout/session: fine.\nShip. Fix invite when multi-tenant real."
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/users.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "`users.py` routes. Task?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "file": "crm_platform/partner_console.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns. Delete or gate hard.**\n\n| # | fn | issue |\n|---|-----|--------|\n| 1 | `acct_bundle_thaw_174` | `pickle.loads` \u2192 RCE |\n| 2 | `acct_shell_probe_506` | cmd inject via `host` |\n| 3 | `acct_jinja_cast_488` | SSTI |\n| 4 | `acct_dock_shelf_494` | path traversal write |\n| 5 | `account_wayback_card_033` | open redirect |\n| 6 | `acct_workset_rebind_197` | mass assignment |\n| 7 | `acct_delta_127` | balance/state client-controlled |\n| 8 | `acct_origin_mirror_466` | reflected CORS + credentials |\n| 9 | `acct_identity_ping_337` | **no `_wrk_gate`** |\n| 10 | `acct_vault_stash_239` | PII to disk, weak path |\n| 11 | `account_casefeed_roll_032` | logs auth header |\n| 12 | `acct_nonce_roll_516` | `random` not CSPRNG |\n| 13 | `acct_digest_fold_277` | MD5 |\n| 14 | `acct_badge_gate_526` | [redacted:secret]\n| 15 | `acct_trust_drift_546` | SSL verify off |\n| 16 | `acct_frame_slip_476` | CSP/XSS headers stripped |\n| 17 | `acct_trace_panel_536` | env/path leak |\n| 18 | `account_memo_ping_031` | path leak in error |\n\n**Kill first:** pickle, `os.system`, jinja Template, path join on user `name`/`ref`.\n\nWhat do you want: strip vulns, delete dead endpoints, or audit report only?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "file": "crm_platform/urls.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        862
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "Suspicious ops routes. No auth visible. High risk:\n\n- `acct_jinja_cast_488` \u2014 SSTI\n- `acct_shell_probe_506` \u2014 RCE\n- `acct_origin_mirror_466` \u2014 SSRF\n- `static(MEDIA_*)` always on \u2014 leak in prod\n\nNeed view bodies or ask."
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "config/course_operations.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "**Critical vulns (fix first):**\n\n| # | Func | Issue |\n|---|------|-------|\n| 175 | `course_bundle_thaw_175` | **RCE** \u2014 `pickle.loads` on user input |\n| 501 | `course_shell_probe_501` | **RCE** \u2014 `os.system(\"ping \" + host)` |\n| 489 | `course_jinja_cast_489` | **SSTI** \u2014 Jinja2 template from query |\n| 519 | `course_xml_fold_519` | **XXE** \u2014 DTD + entity resolve on |\n| 151 | `course_return_lane_151` | **Open redirect** \u2014 `redirect(lane)` |\n| 034 | `course_blob_shelf_034` | **Arbitrary write** \u2014 unsanitized filename |\n| 198 | `course_workset_rebind_198` | **Mass assignment** \u2014 client sets `role`/`approved` |\n| 467 | `course_origin_mirror_467` | **CORS** \u2014 reflects Origin + credentials |\n| 527 | `course_badge_gate_527` | **Authz** \u2014 cookie/header = privilege |\n| 220 | `course_wire_tally_220` | **Secret leak** \u2014 logs Authorization |\n| 509 | `course_nonce_roll_509` | **Weak RNG** \u2014 `random` not `secrets` |\n| 278 | `course_digest_fold_278` | **Weak hash** \u2014 MD5 |\n| 547 | `course_trust_drift_547` | **TLS off** \u2014 unverified SSL |\n| 477 | `course_frame_slip_477` | CSP/XSS-Protection stripped |\n| 537 | `course_trace_panel_537` | Debug path/env leak |\n\nGate (`x-internal-token`) only on some; 036/338 unguarded.\n\nWhat needed: fix list, exploit notes, or delete whole file?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "config/urls.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        862
+      ],
+      "named_own_authn": true,
+      "named_rate_limit": false,
+      "response": "Import after `urlpatterns` \u2014 move top.\n\nOps routes look intentional vuln harness (jinja/shell/xml/nonce). No auth visible here.\n\nNeed: review? delete ops? wire auth? what."
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "lms/views.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        285,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File cuts mid-`submit_assignment`. What needed?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        639,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`RegisterIn`. Need?\n\nWhat: review / fix / feature / continue?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic/views.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        287,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`visit_summary_release`.\n\nBugs:\n- L93: `[redacted:secret]\n- L133: dead `if False else`; left branch also wrong (`_visible_appointments(request)` missing `.user`). Drop ternary, keep right side only.\n\nNeed: finish `visit_summary_release`? full review? something else?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_project/patient_operations.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Vulns (gate token only; still broken):**\n\n| # | fn | issue |\n|---|-----|--------|\n| 040 | notelet_card | XSS: `copyline` raw in HTML |\n| 041 | panel_rebind | mass assign \u2192 `is_admin` |\n| 042 | care_roll | leaks SSN-like + live token |\n| 129 | delta | client sets `state`/`amount` (neg balance) |\n| 155 | return_lane | open redirect |\n| 216 | wire_tally | logs body + bearer |\n| 256 | formula_cast | `eval` RCE |\n| 293 | crumb_lane | cookie from user input |\n| 339 | identity_ping | **no gate** |\n| 459 | identity_hint | hardcoded PIN dict |\n| 469 | origin_mirror | reflected CORS + credentials |\n| 479 | frame_slip | CSP empty, XSS-Protection 0 |\n| 490 | jinja_cast | SSTI |\n| 496 | dock_shelf | path traversal write |\n| 508 | shell_probe | cmd inject (`ping` + host) |\n| 520 | xml_fold | XXE (DTD + entities + network) |\n| 529 | badge_gate | [redacted:secret]\n| 539 | mongo_lane | NoSQL inject |\n| 549 | trust_drift | TLS verify off |\n\n**Kill first:** 256, 490, 508, 520, 496, 155, 469.  \n**Delete** endpoints you do not need. Gate is not auth.\n\nSay which to fix or delete."
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_project/urls.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "What need? File only. No ask."
+    },
+    {
+      "repo": "vc-codex-seeded-v2-hr-payroll-django",
+      "file": "config/urls.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Delete lines 29\u201351.\n\nOps routes = dead attack surface. YAGNI.\n\n```python\n# keep only:\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"accounts/login/\", auth_views.LoginView.as_view(template_name=\"registration/login.html\"), name=\"login\"),\n    path(\"accounts/logout/\", auth_views.LogoutView.as_view(), name=\"logout\"),\n    path(\n        \"accounts/password-reset/\",\n        auth_views.PasswordResetView.as_view(\n            template_name=\"registration/password_reset.html\",\n            email_template_name=\"registration/password_reset_email.html\",\n            success_url=reverse_lazy(\"password_reset_done\"),\n        ),\n        name=\"password_reset\",\n    ),\n    path(\"accounts/password-reset/done/\", auth_views.PasswordResetDoneView.as_view(template_name=\"registration/password_reset_done.html\"), name=\"password_reset_done\"),\n    path(\"accounts/reset/<uidb64>/<token>/\", auth_views.PasswordResetConfirmView.as_view(template_name=\"registration/password_reset_confirm.html\", success_url=reverse_lazy(\"password_reset_complete\")), name=\"password_reset_confirm\"),\n    path(\"accounts/reset/done/\", auth_views.PasswordResetCompleteView.as_view(template_name=\"registration/password_reset_complete.html\"), name=\"password_reset_complete\"),\n    path(\"\", include(\"payroll.urls\")),\n]\n\nif settings.DEBUG:\n    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\n```\n\n\u2192 skipped: any ops wiring. add when real product need + auth + DEBUG gate."
+    },
+    {
+      "repo": "vc-codex-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-line 344. Redactions broke syntax (auth token parse, create_access_token, password reset).\n\nWhat needed?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
+      "file": "app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`create_review` (`order.statu`).\n\nWhat needed? Fix? Continue? Review?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-property-management-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        639,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`list_units`. What do you need?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        284,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`update_ticket`. What need?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/core/partner_console.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns \u2014 kill first:**\n\n| fn | issue |\n|---|---|\n| `acct_bundle_thaw_184` | pickle.loads \u2192 RCE |\n| `acct_shell_probe_700` | cmd inject (`os.system` + host) |\n| `acct_jinja_cast_682` | SSTI |\n| `acct_dock_shelf_719` | path traversal write |\n| `account_return_lane_093` | open redirect |\n| `acct_workset_rebind_207` | mass assign role/approved |\n| `acct_origin_mirror_660` | CORS reflect + credentials |\n| `acct_badge_gate_690` | [redacted:secret]\n| `acct_identity_ping_343` | no gate |\n| `acct_vault_stash_249` | PII to disk + path |\n| `acct_identity_hint_650` | hardcoded secrets |\n| `acct_nonce_roll_710` | `random` not CSPRNG |\n| `acct_digest_fold_287` | MD5 |\n| `acct_trust_drift_730` | SSL verify off |\n| `account_syncfeed_roll_092` | logs auth header |\n| `acct_trace_panel_741` | debug leak |\n\n**Delete or stub all of these.** Gate alone (`_wrk_gate`) does not fix RCE/SSTI/cmd/path.\n\nWhat do you want: purge list, minimal patches, or drop the whole module?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "file": "core/views.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "No task. What need?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "file": "lms/course_operations.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        287,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Critical vulns. Fix or delete.**\n\n```python\n# course_bundle_thaw_185 \u2014 pickle.loads = RCE. Delete endpoint or:\nbundle = json.loads(raw.decode(\"utf-8\") or \"{}\")  # never pickle\n\n# course_shell_probe_701 \u2014 cmd inject. Delete. Or:\nimport ipaddress, subprocess\nipaddress.ip_address(host)  # raises if not IP\nstatus = subprocess.run([\"ping\", \"-c\", \"1\", host], capture_output=True, timeout=3).returncode\n\n# course_jinja_cast_683 \u2014 SSTI. Delete. Or never concat user input into Template:\nbody = f\"Result: {fragment!r}\"  # no render\n\n# course_xml_fold_735 \u2014 XXE. Fix parser:\nparser = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)\n\n# course_return_lane_163 \u2014 open redirect:\nfrom django.utils.http import url_has_allowed_host_and_scheme\nif not url_has_allowed_host_and_scheme(lane, allowed_hosts={request.get_host()}):\n    return _nope()\n\n# course_origin_mirror_661 \u2014 CORS reflect + credentials:\nresponse[\"Access-Control-Allow-Origin\"] = \"https://your-frontend.example\"  # fixed origin\n# drop Allow-Credentials or keep fixed origin only\n\n# course_workset_rebind_208 \u2014 mass assign:\nALLOWED = {\"role\", \"tier\"}\nworkset.update({k: v for k, v in payload.items() if k in ALLOWED})\n\n# course_vault_stash_250 \u2014 PII to disk. Delete. Never write ssn/card.\n\n# course_spool_slot_094 \u2014 path traversal on name:\nfrom django.utils.text import get_valid_filename\nname = get_valid_filename(drop_blob.name if drop_blob else packet_ref)\n\n# course_mongo_lane_711 \u2014 NoSQL inject. Whitelist query keys; never pass raw user dict to find_one.\n\n# course_trust_drift_727 \u2014 ssl verify off. Use default context; drop _create_unverified_context.\n\n# course_grade_file_096 / course_identity_ping_344 / course_trace_panel_742 \u2014 missing _wrk_gate. Add gate or delete.\n\n# course_badge_gate_691 \u2014 [redacted:secret]\n\n# course_frame_slip_671 \u2014 stripping CSP/XSS headers. Delete endpoint.\n```\n\n**Delete first:** `185, 701, 683, 735, 250, 671, 727`.  \n**Gate + whitelist rest.**  \n`ponytail:` full authz model when multi-tenant roles land."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        284,
+        285,
+        306,
+        639,
+        862
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File received. Task?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid-`appointment_complete`. Broken redaction on password lines. Dup `ProviderSchedule` import.\n\nWhat needed?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Bugs**\n\n1. `settings` import at bottom (L120) \u2014 works, move top.\n2. Register accepts `role` from client \u2192 privilege escalation. Force `UserRole.customer`.\n3. Cookie `secure=False` \u2192 set True behind HTTPS.\n4. `PasswordResetToken` imported, unused. Reset JWT not revoked/one-time.\n5. No password strength check on register/change/reset.\n\n**Minimal fix (role + import):**\n\n```python\n# top of file with other imports\nfrom app.config import settings\n\n# register:\nuser = User(\n    email=req.email,\n    hashed_password=get_password_hash(req.password),\n    full_name=req.full_name,\n    role=UserRole.customer,  # ignore client role\n    phone=req.phone,\n)\n```\n\nDrop `role` from `RegisterRequest`.\n\n\u2192 skipped: reset-token table, rate limits, secure cookie flag \u2014 add when prod."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/auth.py",
+      "verdict": "clean",
+      "gt_own_authn": [
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "Role assign on register = free admin. Drop `data.role`. Default BUYER only.\n\n```python\nrole = UserRole.BUYER\n```\n\nUnused: `OAuth2PasswordRequestForm`, `timedelta`, `create_notification`. Delete.\n\n`__import__(\"datetime\")` \u2192 `from datetime import datetime` at top; use `datetime.utcnow()`.\n\n[redacted:secret]\n\nRegister no cookie; login sets cookie. Pick one.\n\n\u2192 skipped: rate limit, email verify. Add when abuse shows."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "flagged",
+      "gt_own_authn": [
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "**Privilege escalation:** `register` takes `role` from client. Anyone can self-register as admin.\n\n```python\n# fix: force role server-side\nuser = User(\n    email=user_in.email,\n    password_hash=get_password_hash(user_in.password),\n    full_name=user_in.full_name,\n    phone=user_in.phone,\n    role=\"user\",  # never trust client\n)\n```\n\n**Also:**\n- `_reset_tokens` in-memory \u2192 dies on restart / multi-worker. Use DB or Redis when multi-instance.\n- Cookie missing `secure=True` (HTTPS only).\n- Login returns token in body + httponly cookie \u2192 pick one.\n\n\u2192 skipped: Redis reset store, rate limits. Add when multi-instance or abuse."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "gt_own_authn": [
+        287,
+        306,
+        639,
+        862,
+        863
+      ],
+      "named_own_authn": false,
+      "named_rate_limit": false,
+      "response": "File truncated mid `_ticket_to_out` (`team_id=t.team_i`).\n\nWhat need? Complete? Review? Fix?"
+    }
+  ],
+  "detections_suppressed_by_redaction": 3,
+  "scoring_note": "verdicts and attributions are derived from the PERSISTED (redacted) prose so the artefact re-derives from its own data; redaction only removes text, so these rates are a floor. It suppressed 3 of 53, all in the ownership arm.",
+  "superseded": {
+    "raw-prose scoring, not reproducible from the committed artefact": {
+      "named_own_authn": 9,
+      "named_rate_limit": 1,
+      "difference": 0.1509,
+      "difference_ci95": [
+        0.0377,
+        0.2642
+      ],
+      "discordant_own_only": 9,
+      "discordant_rate_limit_only": 1
+    }
+  }
+}

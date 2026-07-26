@@ -147,6 +147,22 @@ exposure and re-authentication were missed in every instance tested. A deploymen
 classes would see far less than the headline rate — and CWE-307 is the *most common* absence class in
 the RealVuln corpus.
 
+**The narrowing now rests on corpus code, not only on four files we wrote (E39).** The four authored
+files were the weakest part of this decision, so the same question was put to all 53 *corpus* files whose
+ground truth carries both an ownership/authentication class and CWE-307 — paired inside each file, so one
+response answers both questions and nothing about the file can differ between the two arms. Result:
+ownership/authn named on **6/53**, rate limit on **1/53**, difference **+0.094, 95% CI [+0.000, +0.189]**.
+
+Read this precisely, because it is easy to over-read. The **direction agrees** with E34 and the evidence
+base for the narrowing widens from 4 authored files to 53 real ones — but **the interval's lower bound is
+zero, so this does not confirm the narrowing and the confidence behind it is not raised.** The powered
+test of the same question was cancelled beforehand at 43% power, and this estimate came out exactly as
+that gate predicted it would.
+
+What does not depend on the comparison: all 53 files carry a real CWE-307 defect and the model named the
+missing rate limit in **one**. The most common absence class in this corpus is very nearly invisible to
+the model in this role. That number needs no control arm and is the one with commercial consequences.
+
 **Specificity strengthened:** two controls were deliberately hidden — one injected as a dependency, one
 applied inside a service `base()` method — and the model correctly stayed silent on both.
 
