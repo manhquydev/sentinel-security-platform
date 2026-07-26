@@ -559,6 +559,31 @@ PY
 then ok "the estimate keeps its interval, declares itself an estimate, and carries no p-value"
 else bad "SM21: the class-asymmetry estimate has gained a p-value or lost its interval"; fi
 
+sect "SM22: the propensity result keeps its per-file spread, not just a mean"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/attribution-propensity-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run the attribution-propensity experiment"); sys.exit(1)
+d = json.load(open(p))
+rows = d["rows"]
+# The mean alone reads as a modest detector. The spread is the actual finding: no file is reliably
+# reported, which is what forces repeated reading and puts a k into every cost figure. A future edit
+# that keeps `ever_mean` and drops the per-file numbers would erase the result while looking tidy.
+per_file = [r["propensity"] for r in rows]
+has_spread = len(set(per_file)) > 1
+top = max(per_file)
+groups = {r["group"] for r in rows}
+# The central claim: nothing reached reliability. If a rerun ever produces a file at 1.0, this guard
+# should fail and the conclusion be rewritten rather than quietly retained.
+print("  n=%d groups=%s max_propensity=%.3f distinct_values=%d"
+      % (len(rows), sorted(groups), top, len(set(per_file))))
+sys.exit(0 if (has_spread and top < 1.0 and groups == {"ever", "never"}
+               and all("hits" in r and "k" in r for r in rows)) else 1)
+PY
+then ok "per-file propensities are retained, both groups present, and no file reached reliability"
+else bad "SM22: the propensity result lost its per-file spread, or a file now reads as reliably detected"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
