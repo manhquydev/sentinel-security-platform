@@ -64,14 +64,18 @@ def main() -> int:
         return 2
 
     print(f"pooled from {len(used)} runs over {len(pooled)} files\n")
-    print(f"{'group':6} {'file':44} {'hits/k':>8} {'propensity':>11}  95% CI")
+    # The repo is printed, not just the path. Two repos in this corpus both contain `app/app.py` and
+    # `backend/app/main.py`; without the repo the table reads as if one file sat in both groups at once,
+    # which would look like a design error rather than a naming coincidence.
+    print(f"{'group':6} {'repo/file':58} {'hits/k':>8} {'propensity':>11}  95% CI")
     rows = []
     for (repo, f), v in sorted(pooled.items(), key=lambda kv: (kv[1]["group"], -kv[1]["hits"] / kv[1]["k"])):
         p = v["hits"] / v["k"]
         lo, hi = wilson(v["hits"], v["k"])
         rows.append({"repo": repo, "file": f, "group": v["group"], "hits": v["hits"], "k": v["k"],
                      "propensity": round(p, 3), "ci95": [round(lo, 3), round(hi, 3)]})
-        print(f"{v['group']:6} {f[:44]:44} {v['hits']:3}/{v['k']:<4} {p:11.3f}  [{lo:.3f}, {hi:.3f}]")
+        label = f"{repo}/{f}"
+        print(f"{v['group']:6} {label[-58:]:58} {v['hits']:3}/{v['k']:<4} {p:11.3f}  [{lo:.3f}, {hi:.3f}]")
 
     pe = [r["propensity"] for r in rows if r["group"] == "ever"]
     pn = [r["propensity"] for r in rows if r["group"] == "never"]

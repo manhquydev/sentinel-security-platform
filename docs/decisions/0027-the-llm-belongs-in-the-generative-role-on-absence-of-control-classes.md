@@ -172,9 +172,10 @@ come back at **0.333**, files never reported at **0.083** — so it is not a lot
 propensity measured on any file is 0.67, and none is reliable**. Propensities sit in a mixture roughly
 between 0 and 0.67, which is exactly what produces the same count from disjoint file sets.
 
-Deepened to k=9 readings per file, both edges of that result hardened: the group difference is
-**+0.250 [+0.028, +0.500]**, now excluding zero, and the best file tops out at **0.667 [0.354, 0.879]**,
-excluding one. So the per-file signal is established, and so is the ceiling.
+Deepened and widened — 3 runs over 16 files — both edges of that result hardened: the group difference is
+**+0.271 [+0.104, +0.437]**, excluding zero, and the best file tops out at **0.667**, excluding one. So the
+per-file signal is established, and so is the ceiling. **Seven of eight never-reported files sit at exactly
+zero across every reading**, while reported files spread from zero to two thirds.
 
 **A correction to how the headline rate must be read.** Never-reported files sit at 0.028, far below the
 0.113 population rate, while a minority sit at 0.33-0.67. **0.113 does not mean "each file has an 11%

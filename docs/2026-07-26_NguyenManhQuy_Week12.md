@@ -107,11 +107,14 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > buộc phải đọc lặp**, và **mọi con số chi phí phải nhân với số lần đọc**. Một lời gọi một file
 > chỉ mua được khoảng **một phần ba** những gì con số "tỉ lệ trúng" gợi ra.
 >
-> **Em đã đọc sâu thêm (9 lần mỗi file) và kết quả sắc hơn — kèm một đính chính về cách hiểu con
-> số 11%.** Nhóm file từng được phát hiện: **0,278**. Nhóm chưa từng: **0,028**. Chênh lệch
-> **+0,250, khoảng tin cậy [0,028 – 0,500]**, tức **đã tách khỏi 0** (trước đó còn chạm 0). File
-> tốt nhất đạt **0,667**, khoảng [0,354 – 0,879] — **không chạm tới 1**, nghĩa là **không file nào
-> được phát hiện chắc chắn**, và giờ đây đó là số đo chứ không phải nhận xét.
+> **Em đã đọc sâu và rộng thêm (3 lần chạy, 16 file) và kết quả sắc hơn — kèm một đính chính về
+> cách hiểu con số 11%.** Nhóm file từng được phát hiện: **0,291**. Nhóm chưa từng: **0,021**.
+> Chênh lệch **+0,271, khoảng tin cậy [0,104 – 0,437]**, tức **đã tách hẳn khỏi 0** (trước đó còn
+> chạm 0). File tốt nhất đạt **0,667** — **không chạm tới 1**, nghĩa là **không file nào được phát
+> hiện chắc chắn**, và giờ đây đó là số đo chứ không phải nhận xét.
+>
+> Con số nói rõ nhất bản chất: **7 trong 8 file thuộc nhóm chưa từng được phát hiện đứng đúng ở 0
+> qua mọi lần đọc.** Không phải "ít khi được phát hiện" — mà là **không bao giờ**.
 >
 > **Đính chính quan trọng:** con số 11% **không có nghĩa là "mỗi file có 11% cơ hội được phát
 > hiện"**. Thực tế là **phần lớn file gần như bằng 0**, và một thiểu số nằm ở mức 33–67%. Số 11%

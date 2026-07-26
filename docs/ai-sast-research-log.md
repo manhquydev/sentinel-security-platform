@@ -43,7 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
-| E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled to k=9: ever 0.278 vs never 0.028, **+0.250 [+0.028, +0.500] (excludes 0)**; best file **0.667 [0.354, 0.879] (excludes 1.0)**. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
+| E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled over 3 runs, 16 files: ever 0.291 vs never 0.021, **+0.271 [+0.104, +0.437] (excludes 0)**; best file **0.667 (excludes 1.0)**; 7 of 8 never-reported files at exactly 0. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
 | E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
@@ -3340,8 +3340,33 @@ reading converts the capability from a sampler into something usable on part of 
 nothing whatsoever for the rest. The honest promise is coverage of a subset, at k× cost, with no way to
 know in advance which subset.
 
-**Honest bounds.** Four files per group is still small, and the per-file intervals remain wide — 0.667 is
-[0.354, 0.879], so "two thirds" could be half or could be seven eighths. The propensity
+### Widened to 16 files: the estimate tightens and the shape holds
+
+Eight more files (four per group) were then read at k=3 and pooled with the rest — 16 files, 3 runs. The
+per-file numbers move, as they must at these k values; the shape does not.
+
+| | k=9 on 8 files | **pooled, 16 files** |
+|---|---|---|
+| EVER mean | 0.278 | **0.291** |
+| NEVER mean | 0.028 | **0.021** |
+| difference | +0.250 [+0.028, +0.500] | **+0.271 [+0.104, +0.437]** |
+| highest per-file | 0.667 | **0.667** |
+
+The interval on the difference **narrows by a third and moves further from zero**. The full EVER
+distribution is `0, 0, 0.083, 0.333, 0.333, 0.333, 0.583, 0.667`; NEVER is `0, 0, 0, 0, 0, 0, 0, 0.167`.
+That is the mixture stated as plainly as the data allows: **seven of eight never-reported files sit at
+exactly zero across every reading, while reported files spread from zero to two thirds.**
+
+Note two files carry no signal despite being in EVER — they were reported once and never again across
+twelve and three further readings. Selection into that group came from a *single* earlier reading, so some
+of its members are simply files that got one lucky draw. This is regression to the mean operating exactly
+as the lottery hypothesis predicted it would, on a minority of the group, while the group as a whole still
+separates from NEVER. Both things are true at once, and the mixture is what makes them compatible.
+
+**Honest bounds.** Per-file intervals remain wide — 0.667 is [0.208, 0.939] on the newest file and
+[0.320, 0.807] on the best-measured one, so "two thirds" could be a third or could be nine tenths. The
+group means are far better determined than any individual file, which is the usual shape of this kind of
+measurement and the reason the claims above are about the distribution rather than about any file in it. The propensity
 values are each estimated from three readings, so a "0.33" is one hit in three and carries large
 uncertainty of its own. What is solid: the lottery is excluded, no file reached reliability, and the
 mixture predicts E42. What is not: where exactly the distribution sits, which needs more files and larger
