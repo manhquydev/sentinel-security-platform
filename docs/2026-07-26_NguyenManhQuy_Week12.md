@@ -122,8 +122,24 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > xem không?"* đứng trên nền vững hơn hẳn một sản phẩm hỏi *"file này sai chỗ nào?"* — mà cái thứ
 > hai mới đúng là thứ một giao diện "danh sách lỗi" ngầm hứa hẹn.
 >
-> Đặc hiệu qua 6 lần đọc: **0 lần báo nhầm trên 96 lượt quan sát file sạch** — cái sàn này đã đứng
-> vững qua 96 cơ hội để bị chọc thủng.
+> **⚠️ ĐÍNH CHÍNH NGAY TRONG PHIÊN — con số em vừa gọi là "chắc chắn nhất dự án" đã bị phá.**
+> Trên bộ file cũ: 0 báo nhầm trên 96 lượt. Nhưng em lấy **một bộ file HOÀN TOÀN MỚI** mà thiết kế
+> này chưa từng gặp (đã kiểm: **không trùng file nào**) — và ngay lần thử đầu tiên đã có **1 lần
+> báo nhầm trên 48 lượt**. Cộng lại: **1/184**, tức khoảng **0,5%**, **không phải 0**.
+>
+> Nguyên nhân đã tìm ra và rất cụ thể: file đó là **file test**. Model viết *"Gaps: ... No unauth
+> 302/403"* — nó đang nói **thiếu ca kiểm thử**, còn bộ phân loại của em đọc thành **thiếu kiểm
+> soát bảo mật**. Trong 56 file sạch thì có 8 file test, nên lỗi này còn đất để tái diễn.
+>
+> **Em cố ý KHÔNG sửa bộ phân loại ngay hôm nay.** Lỗi là có thật và cách sửa thì rõ, nhưng sửa
+> dụng cụ đo ngay sau khi nó cho ra kết quả đầu tiên làm xấu tuyên bố của mình — theo đúng hướng
+> làm cái xấu đó biến mất — chính là kiểu làm mà cả ngày hôm nay em dựng hàng rào để chặn. Con số
+> xấu được giữ nguyên, việc sửa được ghi vào nợ kèm yêu cầu kiểm cả xem nó có xóa mất phát hiện
+> thật ở nhóm file có lỗi hay không.
+>
+> **Tin tốt đi kèm:** trần 41,7% thì **có suy rộng được** — bộ file mới cho trần 37,5% với cùng
+> dạng đường cong, dù bộ mới còn *dễ hơn*. Trần là tính chất của phương pháp, không phải của bộ
+> file đầu tiên.
 >
 > **Đường cong chi phí, đo chứ không phải mô hình hóa:** đọc k lần thì phủ được bao nhiêu phần so
 > với kỳ vọng lý thuyết — **100%, 81%, 71%, 65%, 61%, 58%** ứng với k = 1 đến 6. Ở k=6 thì phủ

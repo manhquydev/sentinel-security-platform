@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
-| specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive); **replicated again E47: 0 of 16 in both readings** | it is not flagging indiscriminately — and this is the firmest number in the project, never having moved in any run |
+| specificity | **1 flag in 184 clean-control observations** (E49 — was reported as an unbroken zero until a disjoint sample breached it) | it is not flagging indiscriminately: a false-positive rate of ~0.5%, with the single breach traced to a known classifier failure mode, not a floor at zero |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
@@ -172,13 +172,25 @@ is the most useful thing in it for product design:
 
 **The coarser the question, the more reliable the answer.** A product asking *"does this file deserve a
 human look?"* stands on measurably firmer ground than one asking *"what is wrong with this file?"* — and
-the second is what a findings-list interface implicitly promises. Specificity across those six readings: **0 flags in 96 clean-control observations** — the floor has held
-through ninety-six consecutive opportunities to break it.
+the second is what a findings-list interface implicitly promises. **Specificity, corrected (E49).** Across six readings of the original sample: 0 flags in 96 clean-control
+observations. Then a **disjoint** sample — files this design had never seen — produced **one flag in 48**,
+and the "unbroken zero" claim died on the first genuinely fresh test it faced. Combined: **1 in 184**.
+
+The cause is identified: the file is a **test file**, and the model was describing gaps in *test coverage*
+("No unauth 302/403") which the classifier read as absent security controls. Eight of 56 distinct
+clean-control files are test files, so the exposure is real. **The defensible claim is a false-positive
+rate near 0.5% with one known cause — not zero.** The classifier fix is owed and was deliberately not
+applied the same day, because changing an instrument immediately after it produces the first result that
+damages a claim is the pattern the guards exist to prevent.
 
 **The cost curve, measured rather than modelled.** Union coverage of the positive arm at k readings, as a
 fraction of what an independence model would predict: **100%, 81%, 71%, 65%, 61%, 58%** for k = 1 to 6. At
 k=6 the design surfaces 10.0 of 24 files for six times the cost. Every additional reading is worth less
 than the one before it, by a widening margin.
+
+**The ceiling generalises (E49).** A disjoint sample, zero overlap, gave a ceiling of 0.375 against the
+original 0.417 with the same decay signature — and did so while being slightly *easier* per reading. The
+saturation is a property of the method rather than of the first file set.
 
 **And on this sample the curve does not merely flatten — it stops.** Ten of the 24 positive files ever
 produce a flag, and union coverage at k=6 is exactly those 10. **The capability saturates at 0.417 by the

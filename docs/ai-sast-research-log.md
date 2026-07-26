@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Classifier fix owed, deliberately not applied same-day |
 | E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6 and SATURATES there** — all 10 files that can ever fire have fired, so more readings add cost only; **0 flags in 96 clean-control observations** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
@@ -3798,3 +3799,63 @@ this file set*; nothing about it predicts where the ceiling sits on other code. 
 that the ceiling exists and is reached quickly, which is the part that matters for a cost model: the
 question is not "how many readings can we afford" but "we can afford more readings than this method can
 use.
+
+---
+
+## E49 — the specificity floor breaks on a disjoint sample, and the ceiling holds
+
+Two questions on one run: does the 0.417 saturation ceiling generalise beyond the 24 files it was measured
+on, and does the specificity floor survive files it has never seen? A fresh sample was drawn with the
+already-used files excluded — **zero overlap with the original**, verified — and read three times.
+
+### The ceiling generalises
+
+| | original sample (k=6) | disjoint sample (k=3) |
+|---|---|---|
+| single-reading rate | 0.188 | 0.278 |
+| files ever flagged (ceiling) | 10/24 = **0.417** | 9/24 = **0.375** |
+| never flagged | 14/24 = 0.583 | 15/24 = 0.625 |
+| union delivered vs independence | 58% at k=6 | 60% at k=3 |
+
+Two independent file sets, ceilings of 0.417 and 0.375, and the same decay signature. **The ceiling is a
+property of the method, not of the first sample.** The disjoint sample is also slightly *easier* — a higher
+single-reading rate and 4 files at 3-of-3 — which makes the agreement more informative, not less: the
+ceiling held even where the model did better per reading.
+
+### The specificity floor did not survive
+
+**One flag on a clean control**, in 48 observations. The claim written an hour earlier — "zero flags in
+every observation this project has ever taken", called the firmest number in the project — **is now false**,
+and it failed on the first sample of files it had not already seen.
+
+The cause is specific and reproducible. The file is `cases/tests.py`, a **test file** with no ground-truth
+entries. The model wrote:
+
+> Auth tests: client isolation, privileged block, shared download+audit, archived write reject.
+> **Gaps: Note never asserted. No attorney/paralegal allow paths. No unauth 302/403.**
+
+It is describing **missing test coverage** — tests that were not written — and the classifier read "No
+unauth 302/403" and "No attorney/paralegal allow paths" as absent security controls. The model was not
+wrong about anything; the instrument mapped one kind of absence onto another.
+
+Eight of the 56 distinct clean-control files across all runs are test files, so this failure mode has real
+surface area and this is unlikely to be the last instance.
+
+**Corrected claim:** clean-control false positives run at **1 in 184 observations**, with one known cause,
+not at zero. SM23 now pins that rate rather than a floor, with the threshold set so a *second* breach fails
+— because one documented false positive with an identified cause is a bound, while two would mean the cause
+is not what we think it is.
+
+### Why the classifier was NOT fixed in the same breath
+
+The defect is real and the fix is obvious — prose about untested paths should not count as an absent
+control. It was not applied, and the reason is the timing rather than the merits. **Changing the instrument
+immediately after it produces the first result that damages a claim, in the direction that makes the damage
+disappear, is the exact pattern this lab has spent the day building guards against.** E44's canary fix was
+acceptable because it was symmetric and was validated against a planted dead harness before use; this one
+would delete an unflattering number.
+
+So: the breach stands as measured, the corrected rate is published, and the classifier fix is owed work
+that must be validated on the full corpus — including a check of how many *positive*-arm flags it also
+removes — before it is applied to anything. If it turns out to remove positive-arm detections too, that is
+a second finding and the specificity correction was cheap by comparison.

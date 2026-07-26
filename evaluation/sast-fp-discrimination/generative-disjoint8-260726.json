@@ -1,0 +1,304 @@
+{
+  "generated_at": "2026-07-26T08:16:22.690769+00:00",
+  "model": "sast-grok45",
+  "granularity": "file-level (line-level unobtainable: see conformance finding)",
+  "counts": {
+    "positive": {
+      "clean": 11,
+      "non-answer": 4,
+      "flagged": 8,
+      "file-missing": 1
+    },
+    "negative": {
+      "non-answer": 5,
+      "clean": 10,
+      "flagged": 1
+    }
+  },
+  "flag_rate_vulnerable": 0.4211,
+  "flag_rate_clean": 0.0909,
+  "separation": 0.3301,
+  "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
+  "rows": [
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/tickets.py",
+      "verdict": "clean",
+      "response": "Bug `assign_ticket` L224\u2013226: status set before history. `from_status` always `assigned`.\n\n```python\nold = ticket.status\nticket.assignee_id = target.id\nif old in (TicketStatus.open, TicketStatus.triaged):\n    ticket.status = TicketStatus.assigned\n    db.add(TicketStatusHistory(ticket_id=ticket.id, from_status=old.value, to_status=TicketStatus.assigned.value, changed_by_id=user.id))\n```\n\nWhat need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/accounts/views.py",
+      "verdict": "clean",
+      "response": "Task? File only. No ask."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "courses/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-line 378: `return render(reques`\n\nWhat needed? Complete? Review? Fix?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-damn-vulnerable-graphql-application",
+      "file": "core/security.py",
+      "verdict": "clean",
+      "response": "```python\ndef allowed_cmds(cmd):\n  if helpers.is_level_easy():\n    return True\n  elif helpers.is_level_hard():\n    if cmd.startswith(('echo', 'ps', 'whoami', 'tail')):\n      return True\n  return False\n\ndef check_creds(username, password, real_password):\n  if username != 'admin':\n    return (False, 'Username is invalid')\n  if [redacted:secret]\n    return (True, 'Password Accepted.')\n  return (False, 'Password Incorrect')\n```\n\n\u2192 fixed: missing comma `'ps' 'whoami'` \u2192 `'pswhoami'`. broken `=[redacted:password]` \u2192 `==`.  \nskipped: bare except, denylist gaps, strip only `;`/`&`. add when hardening."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "scheduling/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated L370: `conflict = Appoi`. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "good/mod_user.py",
+      "verdict": "clean",
+      "response": "**Bugs:**\n\n```\n# create: email wrong field + never creates user\nemail = request.form.get('password')   # \u2192 'email'\nsession['username'] = libuser.login(...)  # login \u2260 create\n\n# chpasswd: dead flash\nreturn redirect('/')\nflash(\"Password changed\")  # unreachable\n```\n\n**Minimal fix:**\n\n```python\n@mod_user.route('/create', methods=['GET', 'POST'])\ndef do_create():\n    session.pop('username', None)\n    if request.method == 'POST':\n        username = request.form.get('username')\n        [redacted:secret]\n        email = request.form.get('email')\n        if libuser.create(username, password, email):  # assume exists\n            return redirect('/login')\n        flash(\"Create failed\")\n    return render_template('user.create.html')\n\n@mod_user.route('/chpasswd', methods=['POST'])\ndef do_chpasswd_post():\n    if 'username' not in g.session:\n        return redirect('/')\n    current_password = request.form.get('current_password')\n    new_password = request.form.get('new_password')\n    new_password_again = request.form.get('new_password_again')\n    if not libuser.login(g.session['username'], current_password):\n        flash(\"Invalid current password\")\n        return render_template('user.chpasswd.html')\n    if new_password != new_password_again:\n        flash(\"The passwords don't match\")\n        return render_template('user.chpasswd.html')\n    if not libuser.is_password_allowed(new_password):\n        flash(\"The password don't comply our requirements, please, choose another one.\")\n        return render_template('user.chpasswd.html')\n    libuser.password_set(g.session['username'], new_password)\n    flash(\"Password changed\")\n    return redirect('/')\n```\n\n\u2192 skipped: full create API shape, CSRF, rate limits. add when libuser.create signature known / abuse seen."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "Broken by redaction. Restore:\n\n```python\ndef invite_accept(request: HttpRequest, [redacted:secret]\n    ...\n    invite = ContactInvite.objects.filter([redacted:secret]\n    ...\n                    [redacted:secret]\n    ...\n            user = authenticate(request, username=user.email, [redacted:secret]\n```\n\nReal issues:\n- Existing user path ignores `phone`/`title` from form.\n- `form_invalid`: `cleaned_data` may lack `username` if that field failed validation \u2014 use `form.data.get(\"username\")`.\n- Double `get_client_ip` in `form_valid`.\n\n\u2192 skipped: lockout/rate-limit on failed logins, add when abuse appears."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "verdict": "clean",
+      "response": "Critical vulns. Gate alone not enough.\n\n| fn | issue |\n|---|---|\n| `patient_bundle_thaw_169` | `pickle.loads` \u2192 RCE |\n| `patient_shell_probe_395` | cmd inject via `host` |\n| `patient_formula_cast_251` | `eval` |\n| `patient_jinja_cast_383` | SSTI |\n| `patient_xml_fold_453` | XXE (`resolve_entities`) |\n| `patient_return_lane_145` | open redirect |\n| `patient_filebox_slot_010` | path/upload abuse |\n| `patient_mongo_lane_412` | NoSQL inject |\n| `patient_workset_rebind_193` | mass assign |\n| `patient_origin_mirror_372` | CORS reflect + creds |\n| `patient_nonce_roll_403` | `random` not CSPRNG |\n| `patient_trust_drift_432` | TLS verify off |\n| `patient_roster_fold_012` / `patient_identity_ping_335` | no gate |\n\nKill first: pickle, shell, eval, jinja, xxe.\n\n```python\n# patient_bundle_thaw_169 \u2014 delete pickle path; use json only\nbundle = json.loads((request.body or b\"{}\").decode())\n\n# patient_shell_probe_395 \u2014 no shell; use stdlib\nimport socket\nsocket.getaddrinfo(host, None)  # or drop endpoint\n\n# patient_formula_cast_251 \u2014 whitelist ops only; no eval\nALLOWED = {\"amount\": 42, \"fee\": 7}\n# map expr \u2192 fixed keys, never eval\n\n# patient_jinja_cast_383 \u2014 no user Template; escape + static\nfrom django.utils.html import escape\nreturn HttpResponse(f\"Result: {escape(fragment)}\")\n\n# patient_xml_fold_453\nparser = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)\n\n# patient_return_lane_145\nfrom django.utils.http import url_has_allowed_host_and_scheme\nif not url_has_allowed_host_and_scheme(lane, allowed_hosts={request.get_host()}):\n    return _nope()\n```\n\nSay which to patch."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/support_operations.py",
+      "verdict": "flagged",
+      "response": "**Security review** `support_operations.py`\n\n| Endpoint | Issue |\n|---|---|\n| `ticket-copy-badge-028` | XSS \u2014 `copyline` into HTML unescaped |\n| `ticket-workset-rebind-029` | Mass assignment \u2014 client can set `is_admin` |\n| `ticket-agent-packet-030` | Secrets leak \u2014 live token + SSN in response |\n| `ticket-return-lane-148` | Open redirect \u2014 `lane` unchecked |\n| `ticket-tally-210` | Logs auth header + body |\n| `ticket-stash-232` | Writes SSN/PAN to disk; path via `ref` |\n| `ticket-fold-272` | MD5 for digest |\n| `ticket-fan-307` | Unbounded `count` \u2192 memory DoS |\n| `ticket-probe-354` | SSRF \u2014 user `endpoint` to `urlopen` |\n| `ticket-mirror-368` | CORS reflect `Origin` + credentials |\n| `ticket-cast-378` | SSTI \u2014 Jinja `Template(user input)` |\n| `ticket-shelf-387` | Path traversal \u2014 `name` under export dir |\n| `ticket-probe-398` | Command injection \u2014 `host` in `os.system` |\n| `ticket-roll-408` | `random` not CSPRNG |\n| `ticket-lane-418` | NoSQL injection \u2014 raw `filter` to `find_one` |\n| `ticket-drift-428` | TLS verify off |\n| `ticket-gate-438` | Privilege via cookie/header only |\n| `ticket-panel-448` | Env/path disclosure |\n\nGate `_wrk_gate` shared; still not enough for these.\n\nSay which ticket to fix (or all)."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulnerable-python-apps",
+      "file": "SQLI/main.py",
+      "verdict": "clean",
+      "response": "Broken. Second `get_db_connection` overwrites first, infinite recursion, no `post_id` param, syntax trash.\n\nSafe path already works: keep first `get_db_connection` + `get_post` with `?`. Delete lines 55\u201376.\n\nVulnerable demo (if you need it):\n\n```python\ndef get_post(post_id):\n    conn = get_db_connection()\n    post = conn.execute('SELECT * FROM posts WHERE id = ' + str(post_id)).fetchone()\n    conn.close()\n    if post is None:\n        abort(404)\n    return post\n```\n\n`\u2192 skipped: regex \u201cfilter\u201d, add never (false security). SECRET_KEY hardcode: rotate if real deploy.`"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/pay/views.py",
+      "verdict": "flagged",
+      "response": "**IDOR + missing authz. Fix ownership checks.**\n\n```python\n# user_pay \u2014 anyone can DELETE any pay_id\nPay.objects.get(id=pay_id).delete()  # no user=curr_user\n```\n\n```python\n# update_dd_info / user_pay_index / decrypt \u2014 user_id path ignored\ncurr_user = utils.current_user(request)  # never compared to user_id\n```\n\n**Minimal fix:**\n\n```python\n@require_http_methods([\"DELETE\"])\n@user_is_authenticated\ndef user_pay(request, user_id, pay_id):\n    curr_user = utils.current_user(request)\n    if str(curr_user.id) != str(user_id):\n        return HttpResponse(status=403)\n    pay = Pay.objects.filter(id=pay_id, user=curr_user).first()\n    if not pay:\n        return HttpResponse(status=404)\n    pay.delete()\n    return HttpResponse(\"Success!\")\n```\n\nSame pattern for create/decrypt/index: reject when `str(curr_user.id) != str(user_id)`.\n\n**Also broken:**\n- No form validation (bank nums, percent)\n- Decrypt returns full account num in body (sensitive)\n- `Pay.objects.get(user=..., bank_account_num=account_num)` fails if num stored encrypted\n\n\u2192 skipped: form validation, rate-limit decrypt, add when prod hardening."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-property-management-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`list_units`. Redaction broke syntax (logout, register invite, password-reset).\n\nWhat need? Fix, complete, review, or something else."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/admin/views.py",
+      "verdict": "clean",
+      "response": "`is_admin_user(current_user)` \u2014 confirm it returns bool, not decorator.\n\nQuery lazy OK for Jinja.\n\nNo other bugs. What change?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "legalcase/case_operations.py",
+      "verdict": "flagged",
+      "response": "**Critical vulns (gate token only; still RCE/injection):**\n\n| fn | issue |\n|---|---|\n| `case_bundle_thaw_187` | `pickle.loads` \u2192 RCE |\n| `case_shell_probe_695` | `os.system(\"ping \" + host)` \u2192 cmd inject |\n| `case_formula_cast_269` | `eval(expr)` \u2192 RCE |\n| `case_jinja_cast_686` | Jinja SSTI |\n| `case_xml_fold_736` | XXE (`resolve_entities`, `no_network=False`) |\n| `case_mongo_lane_715` | NoSQL inject via raw filter |\n| `case_return_lane_164` | open redirect |\n| `case_blob_shelf_106` | unvalidated upload path/name |\n| `case_origin_mirror_665` | reflected CORS + credentials |\n| `case_client_fold_108` | **no gate** \u2014 public data leak |\n| `case_wire_tally_228` | logs body + Authorization |\n| `case_pulse_spill_352` / `case_trace_panel_745` | path/settings leak |\n| `case_nonce_roll_705` | `random` not CSPRNG |\n| `case_trust_drift_728` | TLS verify off |\n| `case_frame_slip_675` | CSP/XSS headers stripped |\n| `case_spool_fan_315` | unbounded response DoS |\n| `case_identity_hint_655` | static secrets + enum |\n\n**Delete first:** thaw, shell_probe, formula_cast, jinja_cast, xml_fold, mongo_lane raw query, return_lane open redirect.\n\nGate (`x-internal-token`) is single shared secret \u2014 not auth for these surfaces.\n\nWhat do you want: kill list PR, harden diffs, or threat model only?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "assignments/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`release_grade` (line 332). What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/api/users/views.py",
+      "verdict": "flagged",
+      "response": "**Vulns**\n\n1. Broken regex token check (`(.*?)-(.*)`) \u2014 bypassable. Comment admits it.\n2. SHA1 + salt concat \u2014 weak MAC.\n3. `api(id_number)` ignores path id; always returns token user. Dead param.\n4. Admin path dumps all users; no scope check beyond flag.\n5. Token parse fragile (`split`/`re.split`); no constant-time compare.\n\n**Min fix path**\n\n- Drop custom token. Use signed token (Django signing / HMAC-SHA256) or existing auth.\n- Enforce: requested id == token user **or** admin.\n- Constant-time hash compare.\n- Delete unused `id_number` or wire it with authz.\n\n```python\n# sketch only \u2014 replace check_if_valid_token + extrapolate_user\nfrom django.core import signing\nfrom hmac import compare_digest\n\ndef check_if_valid_token(request):\n    auth = request.META.get(\"HTTP_AUTHORIZATION\", \"\")\n    if not auth.startswith(\"[redacted:secret]\n        return True\n    except signing.BadSignature:\n        return False\n```\n\n\u2192 skipped: full JWT/OAuth, rate limits, audit log. Add when multi-service / compliance needs them.\n\nWhat do you want: fix patch, exploit explanation (high-level only), or delete this auth entirely?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/libmfa.py",
+      "verdict": "flagged",
+      "response": "```python\nimport pyotp\nimport sqlite3\n\ndef _db():\n    conn = sqlite3.connect('db_users.sqlite')\n    conn.row_factory = sqlite3.Row\n    return conn\n\ndef mfa_is_enabled(username):\n    with _db() as c:\n        return c.execute(\n            \"SELECT 1 FROM users WHERE username=? AND mfa_enabled=1\", (username,)\n        ).fetchone() is not None\n\ndef mfa_disable(username):\n    with _db() as c:\n        c.execute(\"UPDATE users SET mfa_enabled=0 WHERE username=?\", (username,))\n        c.commit()\n    return True\n\ndef mfa_enable(username):\n    with _db() as c:\n        c.execute(\"UPDATE users SET mfa_enabled=1 WHERE username=?\", (username,))\n        c.commit()\n    return True\n\ndef mfa_get_secret(username):\n    with _db() as c:\n        row = c.execute(\n            \"SELECT mfa_secret FROM users WHERE username=?\", (username,)\n        ).fetchone()\n    return row['mfa_secret'] if row else False\n\ndef mfa_reset_secret(username):\n    [redacted:secret]\n    with _db() as c:\n        c.execute(\n            \"UPDATE users SET mfa_secret=? WHERE username=?\", (secret, username)\n        )\n        c.commit()\n    return secret\n\ndef mfa_validate(username, otp):\n    [redacted:secret]\n    return bool(secret) and pyotp.TOTP(secret).verify(otp)\n```\n\n\u2192 skipped: rate-limit/lockout, add when brute-force risk. secret rotation audit, add when compliance needs it."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n1. `employee_id` empty never checked \u2014 blank IDs pass.\n2. Profile email update skips uniqueness \u2014 collision possible.\n3. Line 51 `[redacted:secret]\n\n**Minimal fix**\n\n```python\n# register \u2014 after password checks\nif not employee_id:\n    errors.append('Employee ID is required.')\n\n# profile POST\nemail = request.POST.get('email', '').strip()\nif email != user.email and User.objects.filter(email=email).exists():\n    messages.error(request, 'Email already registered.')\n    return redirect('profile')\nuser.email = email\n# ... rest of fields\n```\n\n\u2192 skipped: Django Form/ModelForm, password validators beyond len, rate limit. Add when abuse or multi-field validation grows."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "template/users/work_info/index.html",
+      "verdict": "clean",
+      "response": "**SSN client-masked. View-source leaks full value. Mask server-side. Drop JS.**\n\n```html\n<td class=\"ssn\">*****[redacted:target-raw]</td>\n```\n\nDelete lines 44\u201351.\n\n\u2192 skipped: view-layer mask / never pass full SSN, add when threat model requires zero client exposure."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/messages.py",
+      "verdict": "flagged",
+      "response": "**Bugs:**\n\n1. **PM sees all internal notes** (L43) \u2014 `is_internal_note == True` unbounded. Scope to managed tenants only.\n2. **get_message / list_replies** \u2014 no ACL for PM/worker. Any ID readable.\n3. **create_message** \u2014 no recipient existence/role check. Tenant can message anyone.\n4. **`.in_([])`** when `managed` empty \u2192 SQLAlchemy oddity; filter becomes false-ish or error-prone.\n\n**Minimal fix (list PM filter):**\n```python\n# replace L38-44\nconds = [\n    Message.sender_id == current_user.id,\n    Message.recipient_id == current_user.id,\n]\nif tenant_user_ids:\n    conds += [\n        Message.sender_id.in_(tenant_user_ids),\n        Message.recipient_id.in_(tenant_user_ids),\n    ]\n    # internal notes only involving managed tenants or self\n    conds.append(\n        (Message.is_internal_note == True)\n        & (\n            (Message.sender_id.in_(tenant_user_ids + [current_user.id]))\n            | (Message.recipient_id.in_(tenant_user_ids + [current_user.id]))\n        )\n    )\nquery = query.filter(or_(*conds))\n```\n\n\u2192 skipped: full recipient ACL on create/get, pagination. Add when abuse appears.\n\nWhat do you want done?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/loan_operations.py",
+      "verdict": "clean",
+      "response": "**Vulns (delete endpoints preferred):**\n\n| Route | Issue |\n|---|---|\n| `loan-stash-card-098` | path traversal `packet_ref` |\n| `lendapi-bridge-note-099` | SSRF `url` |\n| `loan-nudge-140` | no limit/sign check on `amount` |\n| `loan-lane-166` | open redirect `lane` |\n| `loan-rebind-209` | mass assignment |\n| `loan-cast-266` | `eval` RCE |\n| `loan-tile-330` | XSS `\\|safe` |\n| `loan-mirror-662` | CORS reflect + credentials |\n| `loan-cast-680` | SSTI |\n| `loan-gate-692` | priv via cookie/header |\n| `loan-probe-702` | cmd injection `host` |\n| `loan-lane-712` | NoSQL injection |\n| `loan-shelf-720` | arbitrary write `name` |\n| `loan-drift-731` | TLS verify off |\n| `loan-fold-740` | XXE |\n\n**Ship:** drop `/ops` surface. Gate alone not enough.\n\nIf must keep one: whitelist path basename, block private URL schemes, no `eval`/`system`/user Jinja/XML entities."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/mod_mfa.py",
+      "verdict": "flagged",
+      "response": "**Disable MFA via GET. CSRF kills MFA. No re-auth.**\n\n```python\n# critical: /disable is GET \u2192 any <img src=\"/mfa/disable\"> logs user out of MFA\n@mod_mfa.route('/disable', methods=['GET'])  # bad\ndef do_mfa_disable():\n    libmfa.mfa_disable(g.session['username'])  # no OTP, no password, no CSRF token\n```\n\n**Other:**\n- L23: secret reset every enable-page GET\n- L54: dead code\n- L24/L41: broken (`libmfa.mfa_get_secret(g.session['username'])` likely)\n- no OTP rate limit\n\n**Min fix disable:**\n```python\n@mod_mfa.route('/disable', methods=['POST'])\ndef do_mfa_disable():\n    if 'username' not in g.session:\n        return redirect('/user/login')\n    otp = request.form.get('otp')\n    [redacted:secret]\n    if not pyotp.TOTP(secret).verify(otp):\n        flash(\"The OTP was incorrect\")\n        return redirect('/mfa/')\n    libmfa.mfa_disable(g.session['username'])\n    return redirect('/mfa/')\n```\n\n\u2192 skipped: CSRF token, rate limit, password re-prompt. Add when prod."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-owasp-web-playground",
+      "file": "python/app.py",
+      "verdict": "file-missing",
+      "response": "\u0000FILE-MISSING"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/mod_user.py",
+      "verdict": "flagged",
+      "response": "**Bugs / risks**\n\n1. `/chpasswd` no auth gate. Anyone hits it; `g.session['username']` KeyError or wrong user.\n2. Create skips `password_complexity`. Change enforces; create does not.\n3. Login oracle: password OK then MFA fail \u2192 attacker knows password valid.\n4. `g.session` vs `session` / `libsession` inconsistent.\n5. `libuser.create` return ignored \u2014 no \u201cuser exists\u201d handling.\n6. Dead commented block L56\u201359.\n\n**Minimal fix (auth on chpasswd + complexity on create):**\n\n```python\n@mod_user.route('/chpasswd', methods=['GET', 'POST'])\ndef do_chpasswd():\n    if not g.get('session') or not g.session.get('username'):\n        return redirect('/user/login')\n    # ... rest unchanged, keep password_complexity + match checks\n\n# in do_create POST, after empty check:\nif not libuser.password_complexity(password):\n    flash(\"The password don't comply our complexity requirements\")\n    return render_template('user.create.html')\n```\n\n\u2192 skipped: CSRF tokens, rate-limit, MFA-before-password-oracle redesign, add when threat model requires."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "employees/migrations/0001_initial.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / models / fix / something else."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/views/test_users_retirement.py",
+      "verdict": "clean",
+      "response": "Bug: class `PasswordResetPep8Tests` wrong name. Path is retirement.\n\n```python\nclass UserRetirementPep8Tests(TestCase, Pep8ViewsTests):\n```\n\nRest: routing mixin setup fine. No other change needed."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "cases/tests.py",
+      "verdict": "flagged",
+      "response": "Auth tests: client isolation, privileged block, shared download+audit, archived write reject.\n\nGaps: Note never asserted. No attorney/paralegal allow paths. No unauth 302/403.\n\n`self.client` vs model `Client` fine (TestCase.client).\n\nWhat needed?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/migrations/0001_initial.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix / explain / change?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "portal_core/management/commands/run_scheduled.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n1. `review_notes` None \u2192 TypeError\n```python\ntask.review_notes = ((task.review_notes or \"\") + \" [OVERDUE_REMINDER_SENT]\").strip()[:255]\n```\n\n2. N+1 / O(employees\u00d7policies\u00d7queries). Policy loop hits DB 2\u00d7 per pair. Comp loop hits DB per (req\u00d7admin).\n\n3. Stale body: `req.employee.user` \u2014 no `select_related`. Extra queries + possible AttributeError if missing.\n\n**Minimal fixes only**\n\n```python\n# overdue mark\ntask.review_notes = ((task.review_notes or \"\") + \" [OVERDUE_REMINDER_SENT]\").strip()[:255]\n\n# stale queryset\nstale = CompensationChangeRequest.objects.filter(\n    status__in=[ChangeRequestStatus.DRAFT, ChangeRequestStatus.SUBMITTED],\n    created_at__lt=cutoff,\n).select_related(\"employee__user\")\n```\n\n**Skip for now** (add when scale hurts): bulk prefetch acks/notifications, single notify fan-out, transaction.atomic around mark+notify.\n\nWhat do you want done \u2014 fix bugs, rewrite for perf, or something else?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "integrations/migrations/0001_initial.py",
+      "verdict": "clean",
+      "response": "Migration fine. No action needed.\n\n`default=secrets.token_urlsafe` correct (callable).\n`default=dict` correct (callable).\n\nskipped: unique(event,target_url), status choices on last_delivery_status \u2014 add when duplicates/status filter hurt."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/schemas/product.py",
+      "verdict": "clean",
+      "response": "Float money/rate. Use `Decimal`. No range validators.\n\n```python\nfrom datetime import datetime\nfrom decimal import Decimal\nfrom typing import Optional\nfrom pydantic import BaseModel, Field, model_validator\n\nclass LendingProductBase(BaseModel):\n    name: str\n    description: Optional[str] = None\n    min_amount: Decimal = Field(gt=0)\n    max_amount: Decimal = Field(gt=0)\n    min_term_months: int = Field(gt=0)\n    max_term_months: int = Field(gt=0)\n    base_interest_rate: Decimal = Field(ge=0)\n    is_active: bool = True\n\n    @model_validator(mode=\"after\")\n    def ranges(self):\n        if self.min_amount > self.max_amount:\n            raise ValueError(\"min_amount > max_amount\")\n        if self.min_term_months > self.max_term_months:\n            raise ValueError(\"min_term > max_term\")\n        return self\n\nclass LendingProductCreate(LendingProductBase):\n    pass\n\nclass LendingProductUpdate(BaseModel):\n    name: Optional[str] = None\n    description: Optional[str] = None\n    min_amount: Optional[Decimal] = Field(default=None, gt=0)\n    max_amount: Optional[Decimal] = Field(default=None, gt=0)\n    min_term_months: Optional[int] = Field(default=None, gt=0)\n    max_term_months: Optional[int] = Field(default=None, gt=0)\n    base_interest_rate: Optional[Decimal] = Field(default=None, ge=0)\n    is_active: Optional[bool] = None\n\nclass LendingProductOut(LendingProductBase):\n    id: int\n    created_at: datetime\n    updated_at: datetime\n    model_config = {\"from_attributes\": True}\n```\n\n\u2192 skipped: Update cross-field check (needs both values), add when partial updates hit DB."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-vulpy",
+      "file": "utils/rsa-sign.py",
+      "verdict": "clean",
+      "response": "Broken load. Redaction ate `serialization.load_pem_private_key`.\n\n```python\n#!/usr/bin/env python3\nimport sys\nfrom binascii import hexlify\nfrom cryptography.hazmat.backends import default_backend\nfrom cryptography.hazmat.primitives import serialization, hashes\nfrom cryptography.hazmat.primitives.asymmetric import padding, utils\n\nmsg = sys.argv[1].encode()\nwith open(\"/tmp/acme.key\", \"rb\") as f:\n    [redacted:secret]\n\nchosen_hash = hashes.SHA256()\ndigest = hashes.Hash(chosen_hash, default_backend())\ndigest.update(msg)\nsig = private_key.sign(\n    digest.finalize(),\n    padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),\n    utils.Prehashed(chosen_hash),\n)\nprint(msg.decode(), hexlify(sig).decode())\n```\n\n\u2192 skipped: password arg, error handling. Add when key encrypted / prod."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/services.py",
+      "verdict": "clean",
+      "response": "File loaded. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/views/test_user_work_info.py",
+      "verdict": "non-answer",
+      "response": "No ask. What need?\n\nReview: mixin-driven route tests. GET/POST 200, rest 405. Path `/users/55/work_info`. Typo comment L16 \"that that\".\n\nSay: fix / extend / write view / other."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "crm/views/apikeys.py",
+      "verdict": "non-answer",
+      "response": "What need? File broken: `[redacted:secret]` not valid call."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "accounts/migrations/0001_initial.py",
+      "verdict": "clean",
+      "response": "Custom User migration. UUID PK. Role CharField.\n\nRedundant: `is_active` (AbstractUser already). `created_at` (use `date_joined`).\n\nDrop both. Email unique? Phone validate?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "onboarding/forms.py",
+      "verdict": "clean",
+      "response": "Forms fine. No change needed.\n\nDuplicate assignee queryset: extract only if third copy appears.\n\n`TaskCreateForm.assignee` override only needed if custom label/widget; else drop, use Meta fields alone.\n\nWhat do you want done?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "compensation/models.py",
+      "verdict": "clean",
+      "response": "Models received. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "portal_api/urls.py",
+      "verdict": "non-answer",
+      "response": "No task. What need?"
+    }
+  ]
+}
