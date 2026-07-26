@@ -53,9 +53,12 @@ deterministic layer and position the model as the thing that covers what no rule
 
 **What it specifically invalidates.** Not "the results" — these claims, this much:
 
-- **Positive claims do not transfer.** Detection rates, the k=1 rule increment, coverage curves: all
-  measured on LLM-seeded defects plus self-authored matched pairs that three measurements show are easier
-  than corpus files. Nothing here licenses a number on private, human-written code.
+- **Positive claims do not transfer — but the threat is weaker than stated (E59).** The corpus is *mixed*:
+  **26 of 66 repositories are `human_authored`** (704 real vulnerabilities), not LLM-seeded, and detection
+  on that half is **higher** (0.519 vs 0.316 union, p = 0.062) — the opposite of what memorisation
+  predicts. Not a refutation (p > 0.05, and human files are half the size), but there is **no evidence for
+  the feared direction**. What still does not transfer is the step from *any* deliberately-vulnerable
+  application to *private production code*, which no repository in this corpus represents.
 - **Negative claims are far more robust.** CWE-307 being near-invisible, no file reaching reliability, the
   union bounded around two thirds — a defect the model misses on easy seeded code will not appear on harder
   real code. These survive the threat; the selling points do not.
@@ -90,6 +93,11 @@ its bias is nameable; Option 1 is what a publishable claim would require.
 **Who owns it.** Corpus acquisition is a project-level decision (licensing, budget, possibly a data
 partnership) and sits above a research session. This file records the requirement and the options; the
 choice is not one this lab makes alone.
+
+**Partially closed already, for free (E59).** The single largest component of this threat — "the defects
+are LLM-generated, so the model may be recognising its own kind" — was testable from data already on disk
+and does not survive contact with it. What remains is the narrower and still-real gap between
+deliberately-vulnerable teaching applications and real production code.
 
 **If it is never closed.** The work still stands as a negative result and as a methodology: the protocol,
 the guards, and every retraction in the log are corpus-independent. What must never be published without
