@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
+| E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
 | E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
 | E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate** — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
@@ -3093,3 +3094,50 @@ design is the entire reason this is a paragraph in a log rather than a retractio
 passed is the one that would have been reported, and the canary that failed is the one that was true.**
 Any probe whose prompt argues for a particular answer needs a control that can only pass if the model is
 reading the code, and it needs to be built before the run, not after a surprising result.
+
+---
+
+## E41 — RESULT: removing the competition does not recover CWE-307. The explanation is not salience.
+
+E39 left the question that matters commercially unresolved: across 53 corpus files all carrying a real
+missing rate limit, the model named it in **one** — but every one of those files also carried an ownership
+or authentication defect. An IDOR is a louder finding, and one open-ended answer has room for one
+headline. If the near-zero were competition for attention, per-class prompting would fix it and this would
+be an orchestration problem with a known remedy. E40 tried to settle that by asking directly and was
+abandoned at the canary gate, so the question survived intact.
+
+This settles it without touching the prompt. Same open-ended rubric, same classifier, same everything —
+run over the **16 corpus files whose ground truth carries CWE-307 and no other absence class at all**.
+Nothing competes for the answer.
+
+| arm | named the missing rate limit | 95% CI |
+|---|---|---|
+| uncontested (nothing else absent, n=16) | **1/16 = 0.062** | [0.000, 0.188] |
+| contested (E39, n=53) | 1/53 = 0.019 | [0.000, 0.057] |
+
+One-sided Fisher **p = 0.41**. No recovery.
+
+**The confound points the wrong way for the comfortable conclusion, which is what makes this readable.**
+Files with a single absence class are markedly smaller — median **84** source lines against **189** in the
+contested arm. Smaller files are *easier*, so the confound biases toward finding a recovery. The design
+was stacked in favour of the salience explanation and the salience explanation still did not appear.
+
+**What this rules out and what it does not.** Powered at 86% for a recovery to 0.30 and 74% to 0.25, the
+result excludes a *large* salience effect: it is not the case that the model sees missing rate limits
+easily and merely declines to mention them when something else is in the file. A *modest* effect is not
+excluded — the uncontested arm's own upper bound is 0.188, and n=16 is what the corpus provides. The
+honest ceiling on this line of reasoning is that interval, not the point estimate.
+
+**Converging evidence, three independent measurements.** E34 authored files 0/4, E39 corpus contested
+1/53, E41 corpus uncontested 1/16. Different file sources, different competition conditions, different
+sizes; detection never rises above 6%. Decision 0027's narrowing to absent ownership and absent
+authentication is supported on the negative side by this, and the negative side is the side that
+constrains what can be promised.
+
+**A defect in the measurement, disclosed.** One of E39's 53 rows holds an empty response: the runner
+catches an API exception and returns the empty string, which the classifier reads as "said nothing" and
+the analysis counts as a miss. A dead call and a real miss are therefore **indistinguishable** in that
+arm, and the error runs toward the null. It is one row of 53 and does not move any conclusion here, but
+the pattern is exactly the one that produced this lab's `RECALL=0.000` incident, and a call that failed
+must never be scoreable as a model that declined. A guard now counts empty responses and the runners fail
+loudly instead of quietly.

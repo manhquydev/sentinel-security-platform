@@ -1,0 +1,143 @@
+{
+  "generated_at": "2026-07-26T05:21:19.843137+00:00",
+  "model": "sast-grok45",
+  "question": "is CWE-307's near-invisibility competition for the answer, or capability?",
+  "preregistered": "one-sided Fisher vs E39's contested arm; power 86% at 0.30, 74% at 0.25",
+  "n": 16,
+  "named_rate_limit": 1,
+  "contested_named": 1,
+  "contested_n": 53,
+  "fisher_p_one_sided": 0.412617,
+  "median_loc_uncontested": 84,
+  "median_loc_contested": 189,
+  "rows": [
+    {
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/signup.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 69,
+      "response": "**SQLi in `validate_token`.** `code` string-interpolated into SQL.\n\n```python\ndef validate_token(code: str, session: Session) -> Union[str, None]:\n    try:\n        result = session.query(RegistrationCode).filter_by(code=code).first()\n        return result.id if result else None\n    except OperationalError:\n        return None\n```\n\nLine 51 broken (`[redacted:token]`). Fix:\n```python\n[redacted:secret]\n```\n\nAlso: delete token only after user-exists check succeeds. Order now burns codes on duplicate email.\n\n\u2192 skipped: CSRF, rate limit, email verify. add when prod."
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/login/views.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 30,
+      "response": "Plaintext password compare. Fix:\n\n```python\nfrom werkzeug.security import check_password_hash\n# ...\n[redacted:secret]\nuser = User.query.filter_by(username=username).first()\nif user and password and check_password_hash(user.password, password):\n    login_user(user)\n```\n\n\u2192 skipped: rate limit/CSRF, add when prod. Store hashes only (generate_password_hash)."
+    },
+    {
+      "repo": "realvuln-vampi",
+      "file": "config.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 27,
+      "response": "**Hardcoded SECRET_KEY.** Weak, committed. Steal \u2192 session forge.\n\n```python\nvuln_app.app.config['SECRET_KEY'] = os.environ['SECRET_KEY']\n```\n\n\u2192 skipped: fallback default, add when local-dev only."
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "good/mod_api.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 67,
+      "response": "Bugs:\n\n```python\n# L39: jsonify status wrong\nreturn jsonify({'error': 'invalid schema', 'schema': key_schema}), 400\n\n# L46: invalid login \u2192 401 not 200\nreturn jsonify({'error': 'invalid login'}), 401\n\n# L57-65: stub. Minimal fix:\n@mod_api.route('/post', methods=['POST'])\ndef do_post_create():\n    username = libapi.authenticate(request)\n    if not username:\n        return jsonify({'error': 'invalid authentication'}), 401\n\n    data = request.get_json()\n    try:\n        validate(data, post_schema)\n    except ValidationError:\n        return jsonify({'error': 'invalid schema', 'schema': post_schema}), 400\n\n    libposts.post(username, data['text'])\n    return jsonify({'ok': True}), 200\n```\n\n\u2192 skipped: rate limit, length cap on `text`. Add when abuse shows."
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "good/mod_user.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 88,
+      "response": "Bugs:\n\n1. L48: `email = request.form.get('password')` \u2192 should be `'email'`\n2. L50-53: create never creates user; only `libuser.login`\n3. L87: `flash` after `return` \u2192 dead\n4. L18/L47: form get mangled (`[redacted:password]'password')`) \u2192 `request.form.get('password')`\n5. L66: `g.session` vs `session` elsewhere \u2014 inconsistent\n\nFix create:\n\n```python\n@mod_user.route('/create', methods=['GET', 'POST'])\ndef do_create():\n    session.pop('username', None)\n    if request.method == 'POST':\n        username = request.form.get('username')\n        [redacted:secret]\n        email = request.form.get('email')\n        if libuser.create(username, password, email):  # assume exists\n            return redirect('/login')\n        flash(\"Create failed\")\n    return render_template('user.create.html')\n```\n\nFix chpasswd flash order:\n\n```python\n    libuser.password_set(g.session['username'], new_password)\n    flash(\"Password changed\")\n    return redirect('/')\n```\n\n\u2192 skipped: full libuser API, add when create/password_set signatures known."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/urls.py",
+      "verdict": "non-answer",
+      "named_rate_limit": false,
+      "loc": 65,
+      "response": "What need? File only."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "non-answer",
+      "named_rate_limit": false,
+      "loc": 397,
+      "response": "File truncated mid-`admin_user_toggle_active`. What needed?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "accounts/urls.py",
+      "verdict": "non-answer",
+      "named_rate_limit": false,
+      "loc": 63,
+      "response": "accounts/urls.py. What need?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 242,
+      "response": "Redaction broke syntax. Reconstruct:\n\n```python\n# L31\ndef _set_session_cookie(response: Response, [redacted:secret]\n\n# L86, L119\n[redacted:secret]\n\n# L199-205\nraw = generate_token()\n[redacted:secret]\n    user_id=user.id,\n    token_hash=hash_token(raw),\n    expires_at=datetime.now(timezone.utc) + timedelta(hours=1),\n)\n\n# L225\n[redacted:secret]\n    models.PasswordResetToken.token_hash == token_hash\n).one_or_none()\n```\n\nReal issues:\n- `update_me` / `confirm_password_reset`: `hash_password` no `ValueError` catch (register has it).\n- password change deletes all sessions incl current; cookie stays, next req 401. Intentional? Re-issue session if not.\n- `update_me` always writes `profile_updated` even password-only change.\n\nWhat need? Fix file / review only / something else?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/routers/admin.py",
+      "verdict": "non-answer",
+      "named_rate_limit": false,
+      "loc": 325,
+      "response": "File truncated at L325 `data =`.\n\nWhat needed? Complete `new_api_key`? Review? Fix?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/routers/auth.py",
+      "verdict": "non-answer",
+      "named_rate_limit": false,
+      "loc": 131,
+      "response": "What need? Review, fix, or change?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "cases/urls.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 50,
+      "response": "Hardcoded `success_url` paths. Use `reverse_lazy`.\n\n```python\nfrom django.urls import path, reverse_lazy\n# ...\npath(\"password-reset/\", auth_views.PasswordResetView.as_view(\n    template_name=\"cases/form.html\",\n    success_url=reverse_lazy(\"password_reset_done\"),\n), name=\"password_reset\"),\npath(\"reset/<uidb64>/<token>/\", auth_views.PasswordResetConfirmView.as_view(\n    template_name=\"cases/form.html\",\n    success_url=reverse_lazy(\"password_reset_complete\"),\n), name=\"password_reset_confirm\"),\n```\n\n\u2192 skipped: LogoutView next_page, add when post-logout redirect needed."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/accounts/views.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 184,
+      "response": "Task? File only. No ask."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "flagged",
+      "named_rate_limit": true,
+      "loc": 84,
+      "response": "Broken lines (redaction artifacts):\n\n```python\n[redacted:secret]\n```\n\n```python\n[redacted:secret]\n```\n\nIssues:\n- `secure=False` \u2192 set True prod (HTTPS only)\n- reset token never emailed (mock only)\n- no rate limit login/reset\n- cookie + body token both returned (pick one)\n\n\u2192 skipped: rate limit, email send, secure flag env. Add when prod."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 74,
+      "response": "Bug: `[redacted:secret]\nMissing: empty `employee_id` check.\nProfile: no email uniqueness / empty email guard.\n\n```python\n# register \u2014 replace create_user block + add employee_id check\nif not employee_id:\n    errors.append('Employee ID is required.')\n# ...\nuser = User.objects.create_user(\n    username=username, email=email,\n    first_name=first_name, last_name=last_name,\n    [redacted:secret]\n)\n```\n\n```python\n# profile \u2014 before save\nemail = request.POST.get('email', '').strip()\nif not email:\n    messages.error(request, 'Email is required.')\n    return render(request, 'accounts/profile.html')\nif User.objects.exclude(pk=user.pk).filter(email=email).exists():\n    messages.error(request, 'Email already registered.')\n    return render(request, 'accounts/profile.html')\nuser.email = email\n```\n\n\u2192 skipped: form classes / password validators / race-safe unique, add when multi-user load or Django forms needed."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "named_rate_limit": false,
+      "loc": 151,
+      "response": "**State-changing on GET** (toggle, mark-read). CSRF risk.\n\n```python\n# user_toggle_active, notification_mark_read, notification_mark_all_read\n# require POST:\nif request.method != 'POST':\n    return redirect('user_list')  # or 405\n```\n\nUnused imports: `PasswordResetView`, `PasswordResetConfirmView`, `update_session_auth_hash`.\n\n\u2192 skipped: pagination, POST-only decorators. Add when traffic/abuse hits."
+    }
+  ]
+}

@@ -120,7 +120,7 @@ def main() -> int:
     files = paired_files()
     print(f"{len(files)} files carrying BOTH an ownership/authn class and CWE-307, model={model}\n")
 
-    rows, pairs, suppressed = [], [], 0
+    rows, pairs, suppressed, empty = [], [], 0, 0
     for slug, relpath, cwes in files:
         raw = query(slug, relpath)
         # Score the text that is actually persisted, not the raw response. Secrets cannot be committed,
@@ -129,6 +129,10 @@ def main() -> int:
         # suppress a detection, never invent one: the resulting rates are a floor. On this run it cost 3
         # of 53 files, all of them in the ownership arm, which biases the estimate AGAINST the
         # hypothesis under test. That is the right direction for the error to point.
+        # A failed call returns "", which reads as "said nothing" and would be scored as a miss — a dead
+        # call indistinguishable from a model that declined, with the error running toward the null.
+        if not raw.strip():
+            empty += 1
         kept = trace.redact_persisted(raw[:4000])
         if classify_prose(raw) != classify_prose(kept):
             suppressed += 1
@@ -154,6 +158,8 @@ def main() -> int:
     print(f"named rate-limit absence      : {n_rl}/{n} = {n_rl/n:.3f}")
     print(f"difference = {n_own/n - n_rl/n:+.3f}  95% CI [{lo:+.3f}, {hi:+.3f}] (paired bootstrap over files)")
     print(f"discordant: ownership-only={b}  rate-limit-only={c}")
+    if empty:
+        print(f"WARNING: {empty}/{n} calls returned nothing; they bias this measurement toward the null.")
     print(f"detections suppressed by redaction (floor, not bias in our favour): {suppressed}/{n}")
     print("\nNo p-value is reported: this question was cancelled at the power gate as a test and is")
     print("run here as an estimate. An interval excluding zero is suggestive and needs replication.")
@@ -166,11 +172,14 @@ def main() -> int:
            "difference": round(n_own / n - n_rl / n, 4),
            "difference_ci95": [round(lo, 4), round(hi, 4)],
            "discordant_own_only": b, "discordant_rate_limit_only": c,
-           "detections_suppressed_by_redaction": suppressed,
+           "detections_suppressed_by_redaction": suppressed, "empty_responses": empty,
            "excluded_classes": {"200": "vocabulary fires nearly as often on all-clear prose as on "
                                        "defect claims; cannot carry a class-attribution claim"},
            "rows": rows}
-    with open(os.path.join(_HERE, "class-asymmetry-260726.json"), "w", encoding="utf-8") as fh:
+    # An independent re-run must not overwrite the run it is meant to be compared against. The default
+    # keeps the original filename; a replication passes its own.
+    name = os.environ.get("ASYMMETRY_OUT", "class-asymmetry-260726.json")
+    with open(os.path.join(_HERE, name), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     return 0
 

@@ -747,5 +747,6 @@
       "discordant_own_only": 9,
       "discordant_rate_limit_only": 1
     }
-  }
+  },
+  "empty_responses": 1
 }
