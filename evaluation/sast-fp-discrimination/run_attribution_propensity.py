@@ -12,16 +12,18 @@ cannot separate the explanations, and they lead to opposite product decisions:
 The discriminator is the SHAPE of the per-file propensity distribution, which needs repeated readings of
 the same file — E31's design, applied to class attribution rather than to the file-level verdict.
 
-DESIGN. Two groups, k readings each. Group EVER = the 12 files reported by either E39 or E42. Group NEVER
-= 12 files reported by neither, drawn with a fixed seed. Under the lottery hypothesis the two groups have
+DESIGN. Two groups, k readings each. Group EVER = files reported by either E39 or E42; group NEVER = an
+equal number reported by neither, drawn with a fixed seed. Both groups are capped so the run fits a
+bounded call budget — when the budget binds, group size gives way rather than k, because k is what decides
+whether a propensity distribution can be told apart from a flat rate at all. Under the lottery hypothesis the two groups have
 the SAME underlying propensity and any gap is regression to the mean — EVER was selected precisely
 because it fired, so a lottery predicts it falls back toward 0.11 on fresh readings. Under the signal
 hypothesis EVER stays high and NEVER stays near zero.
 
-PREREGISTERED AS ESTIMATION. 12 files per group is what the prior runs define, not a number chosen for
-power, so the output is two propensity distributions with bootstrap intervals on their difference. No
-p-value. What the estimate has to be able to do is distinguish "both groups near 0.11" from "EVER far
-above NEVER", and an interval does that honestly while a significance test on 24 files would overstate it.
+PREREGISTERED AS ESTIMATION. Group size is set by the prior runs and the call budget, not chosen for
+power, so the output is two propensity distributions with a bootstrap interval on their difference and no
+p-value. What the estimate must do is separate "both groups near 0.11" from "EVER far above NEVER"; an
+interval does that honestly, where a significance test on a dozen files would dress it up as more.
 
     rag/.venv/bin/python -W ignore evaluation/sast-fp-discrimination/run_attribution_propensity.py
 """
@@ -47,6 +49,10 @@ from run_generative import (MAX_BYTES, _BINARY_RUBRIC, _CANARY_SRC, classify_pro
                             names_class_absence)  # noqa: E402
 
 K = int(os.environ.get("PROPENSITY_K", "5"))
+# Group size is capped so the run fits a bounded call budget. k is the parameter that decides whether a
+# propensity distribution can be told apart from a flat rate, so when the budget binds it is the group
+# size that gives way, not the number of readings per file.
+GROUP_CAP = int(os.environ.get("PROPENSITY_GROUP", "6"))
 _RUNS = ("class-asymmetry-260726.json", "class-asymmetry-replication-260726.json")
 
 
@@ -61,6 +67,9 @@ def groups(seed: int = 21) -> tuple[list[dict], list[dict]]:
             if r["named_own_authn"]:
                 ever.add(key)
     ever_rows = [seen[k] for k in sorted(ever)]
+    if len(ever_rows) > GROUP_CAP:
+        random.Random(seed).shuffle(ever_rows)
+        ever_rows = ever_rows[:GROUP_CAP]
     never = sorted(k for k in seen if k not in ever)
     rnd = random.Random(seed)
     rnd.shuffle(never)
