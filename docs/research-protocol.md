@@ -473,3 +473,27 @@ anomaly is the reason to believe it.
 - **A union-over-k estimand is a different quantity from a single reading, and must be labelled as one.**
   It is often the honest choice — it matches how the capability actually behaves — but substituting it
   quietly for a single-reading figure inflates the result while appearing to report the same thing.
+
+## 16. Ask the committed data before scheduling a run (E45, 2026-07-26)
+
+A handover plan written at 13:08 listed "what fraction of the corpus carries no signal" as owed work
+requiring fresh model calls. Thirty minutes later it was answered from artefacts already in the
+repository, at zero cost, and it turned out to be the most commercially consequential number in the whole
+line of work.
+
+The reframing that unlocked it: **two independent single readings of a corpus are a propensity measurement
+of that corpus at k=2.** They had been filed as "the replication" and read only for whether the headline
+reproduced. Weak per file, strong in aggregate — and aggregate was exactly the question being deferred.
+
+**The rule.** Before scheduling a run, state the quantity you want and ask which committed artefacts
+already constrain it. Runs cost time and money and consume the instrument; re-reading is free and cannot
+fail a canary. This is not an argument against running experiments — it is an argument against running one
+whose answer is already on disk under a different name.
+
+**The corollary that keeps it honest.** Re-analysis of existing data is exactly where a lab is most free to
+find the answer it wants, because the analyst already knows the data. So a re-analysis must be held to the
+same standards as a run: state the estimand first, report the model-free number as the headline and any
+model-based refinement second, and prefer a bound you can defend to a point estimate you cannot. In E45
+the model-free figure (0.774 never named, an upper bound) leads, and the two model-based corrections
+disagreed by 0.09 — that disagreement was reported, because it is the honest measure of how much the model
+deserved to be trusted.
