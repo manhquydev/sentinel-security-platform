@@ -4422,7 +4422,7 @@ to be public. That is not recoverable from syntax at any level of the framework.
 
 The complementarity looks perfect on paper: determinism supplies recall for almost nothing, the model
 supplies precision — clean-arm false positives run at 0.96% — so run the detector for coverage and let the
-model triage its 1,242 findings down to the real ones.
+model triage its ~1,200 findings down to the real ones.
 
 **This project has already measured that arrangement and it failed.** Putting the model on the output of a
 deterministic tool is the verdict/gate role: decision 0020 measured an LLM verifier **hiding 3 of 8 real
