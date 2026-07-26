@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E54 | does corpus incompleteness rescue precision? | **STANDS (negative)** — confirmed-but-unlabelled defects flagged **2/9 = 0.222** vs clean **2/30 = 0.067**, **p = 0.22, null NOT rejected** (upper bound, n=9). **`audit.py` itself came back 0/3** — the flag that opened this thread would not reproduce. Corpus gap is real; the headroom is not |
 | E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
 | E52 | k=15 and a second specificity breach | **STANDS** — union flat for 6 readings at **0.708** (not a plateau claim, per §18); never-surfaced **7/24**. **SECOND clean-arm flag, NOT a test file**: an uncapped `limit` param — possibly a REAL absent control the corpus fails to label. Documented cause withdrawn; specificity 2/328 = 0.61% |
 | E51 | how far does the union actually go? | **STANDS** — at k=12 union **0.667 and still rising** (flat for k=8-11, then a new file); never-surfaced falls a THIRD time **0.583 → 0.458 → 0.333**; **0/24 files flagged in every reading** — the reliable core is gone, top of distribution ~0.9. Specificity unmoved: **0/192**, pooled 1/280 |
@@ -4224,3 +4225,55 @@ this capability is no longer the model — it is the yardstick.** Two consequenc
 2. **The genuinely valuable direction is adjudication, not more readings.** Another k costs calls and
    moves coverage a point or two. Reading the flags against the source found a real unlabelled defect
    class, a third more correct attributions, and two classifier defects — for zero model calls.
+
+---
+
+## E54 — RESULT: the corpus really is incomplete, but that does NOT rescue the model's precision
+
+E53 established two things and I conflated their consequences. Separating them was the point of this run.
+
+**Fact about the corpus (E53, deterministic, stands):** an unbounded client-controlled `limit` is a real
+absent control, CWE-770, and the ground truth labels it **zero times** across every endpoint that has it.
+The clean-arm flag on `audit.py` was the model being right.
+
+**The hypothesis that fact invited:** if the model systematically finds real defects the corpus never
+labels, then every precision figure in this project is a floor with meaningful headroom, and the labels —
+not the model — are the bottleneck. That is a comfortable story and it needed testing.
+
+**It did not survive.** Nine files carrying a deterministically confirmed absent control that ground truth
+records nothing about, against thirty clean controls, k=3 each:
+
+| arm | union-flagged | rate |
+|---|---|---|
+| S — confirmed defect, unlabelled | 2/9 | 0.222 |
+| C — clean control | 2/30 | 0.067 |
+
+One-sided Fisher **p = 0.223. The null is not rejected**, and arm S sits below the 0.40 the power gate was
+set at, so this is an **upper bound on how well the model tracks unlabelled defects** rather than a
+powered null. The direction is right — roughly three times the control rate — and the design cannot
+distinguish that from noise at n=9.
+
+### The detail that says the most
+
+**`audit.py` — the file that started this entire line of inquiry — came back 0 of 3.** The flag that
+exposed the corpus gap was a low-propensity draw, not a repeatable detection. That is exactly the mixture
+E43/E51 measured: most files sit at zero, a few carry propensity, and a single reading of a single file
+tells you almost nothing. **The finding that opened this thread would not have reproduced.**
+
+### What this settles, and what it costs
+
+The corpus-incompleteness fact is real and worth keeping: any flag outside the labelled class set is
+scored wrong by construction, so measured precision **is** a floor. But the headroom above that floor is
+**not demonstrated to be large**, and the honest position is that the labels being incomplete does not, on
+this evidence, materially change what the model is worth. A comfortable narrative was available and the
+data declined to support it.
+
+Two things this does not license. It does not license "the model is bad at CWE-770" — that is E39–E41,
+already established. And it does not license dismissing the corpus gap: the gap is a measured property of
+the yardstick and still means published precision understates by an unknown amount. What changed is that
+the amount is now bounded above by a small number rather than assumed to be generous.
+
+**Method note.** This is the second time today that reading one striking result and generalising from it
+would have produced a wrong conclusion, and the second time repeated measurement caught it. The first was
+the saturation retraction (E50). The pattern is identical: a single observation, a plausible story, and no
+falsification attempt until one was deliberately run.

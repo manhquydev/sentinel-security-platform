@@ -1,0 +1,657 @@
+{
+  "generated_at": "2026-07-26T10:36:21.939698+00:00",
+  "model": "sast-grok45",
+  "k": 3,
+  "question": "does the model flag real absent controls the corpus never labelled?",
+  "preregistered": "one-sided Fisher on the k=3 union; power 84% at S=0.50, 94% at 0.60; below 0.40 report as an upper bound",
+  "n_shadow": 9,
+  "n_clean": 30,
+  "shadow_union_flagged": 2,
+  "clean_union_flagged": 2,
+  "fisher_p_one_sided": 0.222563,
+  "empty_responses": 0,
+  "rows": [
+    {
+      "arm": "shadow",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/tests.py",
+      "detectors": [
+        1004
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Broken syntax from redaction. Restore `_password()`:\n\n```python\n# L35\n[redacted:secret]\n\n# L82\nok = client.login(username=user.email, [redacted:secret]\n\n# L261\n{\"email\": u.email, \"[redacted:secret]\n```\n\nWhat next \u2014 run tests, review coverage, or something else?",
+      "all_responses": [
+        "Broken syntax from redaction. Restore `_password()`:\n\n```python\n# L35\n[redacted:secret]\n\n# L82\nok = client.login(username=user.email, [redacted:secret]\n\n# L261\n{\"email\": u.email, \"[redacted:secret]\n```\n\nWhat next \u2014 run tests, review coverage, or something else?",
+        "Redaction broke syntax. `_password()` exists; placeholders incomplete.\n\nWhat need? Fix / review / implement?",
+        "No ask. What need\u2014review, fix, run, extend?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-djangoat",
+      "file": "app/models/User/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Useless import. No reexport. Delete file or:\n\n```python\nfrom .user import *\n```\n\nskipped: explicit names, add when public API needed.",
+      "all_responses": [
+        "Useless import. No reexport. Delete file or:\n\n```python\nfrom .user import *\n```\n\nskipped: explicit names, add when public API needed.",
+        "Absolute import in package. Circular risk. Fix:\n\n```python\nfrom . import user\n```\n\n\u2192 skipped: reexports, add when public API needed.",
+        "```python\nfrom . import user\n```\n\u2192 skipped: re-exports/__all__, add when consumers need them."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/audit.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Dead code: `total = q.count()` never returned. Unused imports: `Request`, `log_audit`.\n\n```python\nfrom fastapi import APIRouter, Depends, HTTPException\nfrom sqlalchemy.orm import Session\nfrom typing import List, Optional\nfrom datetime import datetime, date\nfrom app.core.database import get_db\nfrom app.core.security import require_user\nfrom app.models.user import User, UserRole\nfrom app.models.audit import AuditLog\nfrom app.schemas.audit import AuditLogOut\n\nrouter = APIRouter(prefix=\"/api/audit\", tags=[\"audit\"])\n\n@router.get(\"/\", response_model=List[AuditLogOut])\ndef list_audit_logs(\n    action: Optional[str] = None,\n    entity_type: Optional[str] = None,\n    user_id: Optional[int] = None,\n    start_date: Optional[date] = None,\n    end_date: Optional[date] = None,\n    limit: int = 100,\n    offset: int = 0,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_user),\n):\n    if current_user.role != UserRole.admin:\n        raise HTTPException(status_code=403, detail=\"Admin access required\")\n\n    q = db.query(AuditLog)\n    if action:\n        q = q.filter(AuditLog.action == action)\n    if entity_type:\n        q = q.filter(AuditLog.entity_type == entity_type)\n    if user_id:\n        q = q.filter(AuditLog.user_id == user_id)\n    if start_date:\n        q = q.filter(AuditLog.created_at >= datetime.combine(start_date, datetime.min.time()))\n    if end_date:\n        q = q.filter(AuditLog.created_at <= datetime.combine(end_date, datetime.max.time()))\n\n    return q.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()\n\n@router.get(\"/stats\")\ndef audit_stats(db: Session = Depends(get_db), current_user: User = Depends(require_user)):\n    if current_user.role != UserRole.admin:\n        raise HTTPException(status_code=403, detail=\"Admin access required\")\n\n    total = db.query(AuditLog).count()\n    today = db.query(AuditLog).filter(\n        AuditLog.created_at >= datetime.combine(date.today(), datetime.min.time())\n    ).count()\n    return {\"total\": total, \"today\": today}\n```\n\n\u2192 skipped: admin dep extract, paginated `{items,total}` wrapper. add when client needs total/meta.",
+      "all_responses": [
+        "Dead code: `total = q.count()` never returned. Unused imports: `Request`, `log_audit`.\n\n```python\nfrom fastapi import APIRouter, Depends, HTTPException\nfrom sqlalchemy.orm import Session\nfrom typing import List, Optional\nfrom datetime import datetime, date\nfrom app.core.database import get_db\nfrom app.core.security import require_user\nfrom app.models.user import User, UserRole\nfrom app.models.audit import AuditLog\nfrom app.schemas.audit import AuditLogOut\n\nrouter = APIRouter(prefix=\"/api/audit\", tags=[\"audit\"])\n\n@router.get(\"/\", response_model=List[AuditLogOut])\ndef list_audit_logs(\n    action: Optional[str] = None,\n    entity_type: Optional[str] = None,\n    user_id: Optional[int] = None,\n    start_date: Optional[date] = None,\n    end_date: Optional[date] = None,\n    limit: int = 100,\n    offset: int = 0,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_user),\n):\n    if current_user.role != UserRole.admin:\n        raise HTTPException(status_code=403, detail=\"Admin access required\")\n\n    q = db.query(AuditLog)\n    if action:\n        q = q.filter(AuditLog.action == action)\n    if entity_type:\n        q = q.filter(AuditLog.entity_type == entity_type)\n    if user_id:\n        q = q.filter(AuditLog.user_id == user_id)\n    if start_date:\n        q = q.filter(AuditLog.created_at >= datetime.combine(start_date, datetime.min.time()))\n    if end_date:\n        q = q.filter(AuditLog.created_at <= datetime.combine(end_date, datetime.max.time()))\n\n    return q.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()\n\n@router.get(\"/stats\")\ndef audit_stats(db: Session = Depends(get_db), current_user: User = Depends(require_user)):\n    if current_user.role != UserRole.admin:\n        raise HTTPException(status_code=403, detail=\"Admin access required\")\n\n    total = db.query(AuditLog).count()\n    today = db.query(AuditLog).filter(\n        AuditLog.created_at >= datetime.combine(date.today(), datetime.min.time())\n    ).count()\n    return {\"total\": total, \"today\": today}\n```\n\n\u2192 skipped: admin dep extract, paginated `{items,total}` wrapper. add when client needs total/meta.",
+        "Dead code: `total = q.count()` unused. Unused imports: `Request`, `log_audit`. Admin check duplicated.\n\nFix list endpoint \u2014 return total for pagination:\n\n```python\n@router.get(\"/\")\ndef list_audit_logs(\n    action: Optional[str] = None,\n    entity_type: Optional[str] = None,\n    user_id: Optional[int] = None,\n    start_date: Optional[date] = None,\n    end_date: Optional[date] = None,\n    limit: int = 100,\n    offset: int = 0,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_user),\n):\n    if current_user.role != UserRole.admin:\n        raise HTTPException(status_code=403, detail=\"Admin access required\")\n\n    q = db.query(AuditLog)\n    if action:\n        q = q.filter(AuditLog.action == action)\n    if entity_type:\n        q = q.filter(AuditLog.entity_type == entity_type)\n    if user_id:\n        q = q.filter(AuditLog.user_id == user_id)\n    if start_date:\n        q = q.filter(AuditLog.created_at >= datetime.combine(start_date, datetime.min.time()))\n    if end_date:\n        q = q.filter(AuditLog.created_at <= datetime.combine(end_date, datetime.max.time()))\n\n    total = q.count()\n    logs = q.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()\n    return {\"items\": logs, \"total\": total}\n```\n\nDrop unused imports. \u2192 skipped: shared admin dep, add when more admin routes.",
+        "Unused: `Request`, `log_audit`.  \n`total = q.count()` never returned. Drop it or return `{\"items\": logs, \"total\": total}`."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/main.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask.",
+      "all_responses": [
+        "What need? File only. No ask.",
+        "What need? File only. No ask.",
+        "What need? File only. No ask."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/customers.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 1,
+      "k": 3,
+      "union_flagged": true,
+      "verdict": "clean",
+      "response": "Auth gap `list_customer_locations`: any role lists any customer. Tighten to ops/dispatcher or own.\n\n`limit` unbounded. Cap e.g. 100.\n\nRoute order OK (`/me` before `/{id}`).\n\nWhat change?",
+      "all_responses": [
+        "Auth gap `list_customer_locations`: any role lists any customer. Tighten to ops/dispatcher or own.\n\n`limit` unbounded. Cap e.g. 100.\n\nRoute order OK (`/me` before `/{id}`).\n\nWhat change?",
+        "Route order OK (`/me` before `/{id}`).\n\nIssues:\n1. `list_customer_locations` \u2014 any auth user (not just ops/dispatcher) can read any customer's locations if not `UserRole.customer`. Tighten roles or keep ownership check for all non-admin.\n2. Double query when customer: reuse `cp` after auth check.\n3. No update/delete location endpoints (YAGNI until needed).\n\nFix auth if intentional:\n\n```python\n@router.get(\"/{customer_id}/locations\", response_model=List[ServiceLocationOut])\ndef list_customer_locations(\n    customer_id: int,\n    db: Session = Depends(get_db),\n    user: User = Depends(get_current_user),\n):\n    cp = db.query(CustomerProfile).filter(CustomerProfile.id == customer_id).first()\n    if not cp:\n        raise HTTPException(status_code=404, detail=\"Customer not found\")\n    if user.role == UserRole.customer and cp.user_id != user.id:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n    if user.role not in (UserRole.customer, UserRole.ops_admin, UserRole.dispatcher):\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n    return cp.locations\n```\n\n\u2192 skipped: pagination on locations, customer self-create. Add when product asks.\n\nWhat need?",
+        "**Auth hole** `list_customer_locations`: any authed role except customer can hit any `customer_id`. Tighten if only ops/dispatcher should.\n\n```python\nuser: User = Depends(require_roles(UserRole.ops_admin, UserRole.dispatcher, UserRole.customer)),\n```\n\nCustomer branch already gates own id. Rest fine.\n\n`/me` before `/{id}`: correct order.\n\n`ilike(f\"%{search}%\")`: safe (SQLA binds). No SQLI.\n\nskipped: pagination caps, update/delete locations \u2014 add when needed."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "education_lms/asgi.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Standard Django ASGI. No change needed.\n\nWhat do you need?",
+      "all_responses": [
+        "Standard Django ASGI. No change needed.\n\nWhat do you need?",
+        "Stock Django ASGI. No change needed.",
+        "Stock Django ASGI. No change needed."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/incidents.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 2,
+      "k": 3,
+      "union_flagged": true,
+      "verdict": "flagged",
+      "response": "**Bugs**\n\n1. **Customers get `internal_notes`** \u2014 `IncidentOut` returns full model; comment admits it. Strip server-side.\n2. **`get_incident` no dispatcher auth** \u2014 any dispatcher reads any incident by ID. List filters regions; get does not.\n3. **Customer path NPE** \u2014 `job` can be `None` after delete \u2192 `job.customer_id` crashes.\n4. **`Request = None`** \u2014 FastAPI won\u2019t inject; use `request: Request` (no default) or drop.\n\n**Fix (minimal)**\n\n```python\n# get_incident \u2014 after load, before return:\n\nif user.role == UserRole.customer:\n    from app.models import CustomerProfile\n    customer = db.query(CustomerProfile).filter(CustomerProfile.user_id == user.id).first()\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not customer or not job or job.customer_id != customer.id:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n    incident.internal_notes = None  # never leak\nelif user.role == UserRole.field_worker:\n    # existing logic OK\n    pass\nelif user.role == UserRole.dispatcher:\n    permitted = [dr.region_id for dr in db.query(DispatcherRegion).filter(DispatcherRegion.dispatcher_id == user.id).all()]\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not job or job.region_id not in permitted:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n# admin/manager: allow\n\n# create/update signatures:\nrequest: Request,  # required, no = None\n```\n\n\u2192 skipped: shared auth helper, customer-only schema, query join rewrite. add when more roles/endpoints share same checks.",
+      "all_responses": [
+        "**Bugs**\n\n1. **Customers get `internal_notes`** \u2014 `IncidentOut` returns full model; comment admits it. Strip server-side.\n2. **`get_incident` no dispatcher auth** \u2014 any dispatcher reads any incident by ID. List filters regions; get does not.\n3. **Customer path NPE** \u2014 `job` can be `None` after delete \u2192 `job.customer_id` crashes.\n4. **`Request = None`** \u2014 FastAPI won\u2019t inject; use `request: Request` (no default) or drop.\n\n**Fix (minimal)**\n\n```python\n# get_incident \u2014 after load, before return:\n\nif user.role == UserRole.customer:\n    from app.models import CustomerProfile\n    customer = db.query(CustomerProfile).filter(CustomerProfile.user_id == user.id).first()\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not customer or not job or job.customer_id != customer.id:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n    incident.internal_notes = None  # never leak\nelif user.role == UserRole.field_worker:\n    # existing logic OK\n    pass\nelif user.role == UserRole.dispatcher:\n    permitted = [dr.region_id for dr in db.query(DispatcherRegion).filter(DispatcherRegion.dispatcher_id == user.id).all()]\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not job or job.region_id not in permitted:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n# admin/manager: allow\n\n# create/update signatures:\nrequest: Request,  # required, no = None\n```\n\n\u2192 skipped: shared auth helper, customer-only schema, query join rewrite. add when more roles/endpoints share same checks.",
+        "**Bugs / security**\n\n1. **Customer sees `internal_notes`** \u2014 trust-frontend is not a control. Strip or use separate out schema.\n2. **`get_incident` / `update_incident` no dispatcher region check** \u2014 list filters regions; get/update do not. IDOR.\n3. **`job` None \u2192 AttributeError** \u2014 customer/field_worker paths: `job.customer_id` / `job.assigned_worker_id` if job deleted.\n4. **`request: Request = None`** \u2014 drop default; FastAPI injects `Request`.\n\n**Minimal fix (auth + strip + null job):**\n\n```python\n# get_incident \u2014 after load, before return\nif user.role == UserRole.customer:\n    from app.models import CustomerProfile\n    customer = db.query(CustomerProfile).filter(CustomerProfile.user_id == user.id).first()\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not customer or not job or job.customer_id != customer.id:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n    incident.internal_notes = None  # or response_model that excludes it\nelif user.role == UserRole.field_worker:\n    from app.models import WorkerProfile\n    wp = db.query(WorkerProfile).filter(WorkerProfile.user_id == user.id).first()\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    assigned = wp and job and job.assigned_worker_id == wp.id\n    if not assigned and incident.reported_by != user.id:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\nelif user.role == UserRole.dispatcher:\n    permitted = [dr.region_id for dr in db.query(DispatcherRegion).filter(DispatcherRegion.dispatcher_id == user.id).all()]\n    job = db.query(Job).filter(Job.id == incident.job_id).first() if incident.job_id else None\n    if not job or job.region_id not in permitted:\n        raise HTTPException(status_code=403, detail=\"Not authorized\")\n```\n\nSame region gate on `update_incident` before mutations.\n\n```python\n# schemas: IncidentCustomerOut without internal_notes; pick by role\n```\n\n\u2192 skipped: query join rewrite (list N+1), add when load hurts.",
+        "No ask. What need?\n\nObvious bugs:\n- Customer gets `internal_notes` (trust frontend = leak). Strip or separate schema.\n- `cp = db.query(User)...` line 40 unused. Delete.\n- `get_incident`: dispatcher/admin fall-through OK; field_worker path allows if reported_by even when job assigned elsewhere \u2014 intentional?\n- No create role gate \u2014 any auth user can open incidents.\n\nSay fix target."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-vulpy",
+      "file": "utils/aes-encrypt.py",
+      "detectors": [],
+      "flagged_in": 1,
+      "k": 3,
+      "union_flagged": true,
+      "verdict": "flagged",
+      "response": "AES-CFB encrypt. SHA256(key)\u2192AES-256. Random IV. Hex IV+ct out.\n\nGaps:\n- No auth. CFB malleable \u2192 use AES-GCM.\n- SHA256 \u2260 KDF. Password input \u2192 PBKDF2/scrypt.\n- No decrypt.\n\nNeed?",
+      "all_responses": [
+        "AES-CFB encrypt. SHA256(key)\u2192AES-256. Random IV. Hex IV+ct out.\n\nGaps:\n- No auth. CFB malleable \u2192 use AES-GCM.\n- SHA256 \u2260 KDF. Password input \u2192 PBKDF2/scrypt.\n- No decrypt.\n\nNeed?",
+        "**Broken crypto.** CFB no MAC \u2192 bit-flip malleable. SHA256(key) no salt/KDF \u2192 weak password hash.\n\n```python\n# fix: AES-GCM + scrypt\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\nfrom cryptography.hazmat.primitives.kdf.scrypt import Scrypt\nimport os, binascii\n\ndef aes_encrypt([redacted:secret]\n    salt = os.urandom(16)\n    key = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1).derive(password.encode())\n    nonce = os.urandom(12)\n    ct = AESGCM(key).encrypt(nonce, message.encode(), None)\n    return binascii.hexlify(salt + nonce + ct).decode()\n```\n\n\u2192 skipped: CLI/click, add when needed.  \n\u2192 skipped: decrypt, add when needed.  \n\u2192 never skip: AEAD + proper KDF.",
+        "**Issues**\n\n- CFB unauthenticated. Ciphertext malleable. Use AES-GCM.\n- SHA256(key) \u2260 KDF. Password \u2192 use PBKDF2/scrypt + salt.\n- Key/msg in argv \u2192 process list leak.\n- `click` overkill for 2 args.\n\n**Minimal fix (GCM + hex out):**\n\n```python\n#!/usr/bin/env python3\nimport os, sys\nfrom binascii import hexlify\nfrom cryptography.hazmat.primitives.ciphers.aead import AESGCM\nfrom cryptography.hazmat.primitives import hashes\nfrom cryptography.hazmat.backends import default_backend\n\nkey, msg = sys.argv[1], sys.argv[2]\nd = hashes.Hash(hashes.SHA256(), backend=default_backend())\nd.update(key.encode())\nk = d.finalize()\nnonce = os.urandom(12)\nct = AESGCM(k).encrypt(nonce, msg.encode(), None)\nprint(hexlify(nonce).decode(), hexlify(ct).decode())\n```\n\n\u2192 skipped: PBKDF2/salt, decrypt CLI, auth AAD. add when key is user password or need decrypt."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/jobs.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "**Bugs:**\n\n1. **Route order** \u2014 `/dashboard/stats` after `/{job_id}` \u2192 FastAPI matches `\"dashboard\"` as job_id \u2192 422. Move stats route above `/{job_id}`.\n\n2. **Date filter L85** \u2014 broken:\n```python\nJob.scheduled_date < datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt\n```\nday\u226528 \u2192 `>= dt AND < dt` \u2192 empty. day+1 overflows months. Fix:\n```python\nfrom datetime import timedelta\nquery = query.filter(Job.scheduled_date >= dt, Job.scheduled_date < dt + timedelta(days=1))\n```\n\n3. **dashboard_stats** \u2014 `by_status`/`by_priority` ignore role filter on `query`. Use filtered base:\n```python\nby_status = dict(query.with_entities(Job.status, func.count(Job.id)).group_by(Job.status).all())\n```\nsame for priority.",
+      "all_responses": [
+        "**Bugs:**\n\n1. **Route order** \u2014 `/dashboard/stats` after `/{job_id}` \u2192 FastAPI matches `\"dashboard\"` as job_id \u2192 422. Move stats route above `/{job_id}`.\n\n2. **Date filter L85** \u2014 broken:\n```python\nJob.scheduled_date < datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt\n```\nday\u226528 \u2192 `>= dt AND < dt` \u2192 empty. day+1 overflows months. Fix:\n```python\nfrom datetime import timedelta\nquery = query.filter(Job.scheduled_date >= dt, Job.scheduled_date < dt + timedelta(days=1))\n```\n\n3. **dashboard_stats** \u2014 `by_status`/`by_priority` ignore role filter on `query`. Use filtered base:\n```python\nby_status = dict(query.with_entities(Job.status, func.count(Job.id)).group_by(Job.status).all())\n```\nsame for priority.",
+        "**Bugs:**\n\n1. Route order: `/dashboard/stats` after `/{job_id}` \u2192 FastAPI treats `\"dashboard\"` as job_id \u2192 422.\nMove stats route above `/{job_id}`.\n\n2. Date filter L85 broken:\n```python\nJob.scheduled_date < datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt,\n```\nFails month-end; `else dt` excludes whole day.\nFix:\n```python\nfrom datetime import timedelta\nquery = query.filter(\n    Job.scheduled_date >= dt,\n    Job.scheduled_date < dt + timedelta(days=1),\n)\n```\n\n3. `dashboard_stats`: `by_status`/`by_priority` ignore role filter (query all jobs). Dispatcher has no region filter.\n\n\u2192 skipped: full rewrite, add when product asks.",
+        "**Bugs:**\n\n1. Route order: `/dashboard/stats` after `/{job_id}` \u2192 FastAPI treats `\"dashboard\"` as job_id. Move stats above.\n\n2. Date filter L85 broken:\n```python\nJob.scheduled_date < datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt\n```\nMonth overflow + wrong bound when day\u226528. Fix:\n```python\nfrom datetime import timedelta\nquery = query.filter(Job.scheduled_date >= dt, Job.scheduled_date < dt + timedelta(days=1))\n```\n\n3. `dashboard_stats`: `by_status`/`by_priority` ignore role filter \u2014 query raw `Job`, not filtered `query`.\n\n4. `Request = None` default useless; use `request: Request` (FastAPI injects).\n\n\u2192 skipped: full rewrite, add when more endpoints break."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/routers/tickets.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "```python\n    return FileResponse(path, filename=attachment.original_filename, media_type=attachment.content_type)\n```\n\nTruncated `retur` \u2192 complete return.\n\nAlso: move `/attachments/{attachment_id}/download` above `/{ticket_id}` so path never hits int parse.",
+      "all_responses": [
+        "```python\n    return FileResponse(path, filename=attachment.original_filename, media_type=attachment.content_type)\n```\n\nTruncated `retur` \u2192 complete return.\n\nAlso: move `/attachments/{attachment_id}/download` above `/{ticket_id}` so path never hits int parse.",
+        "File truncated mid-`return`. Finish:\n\n```python\n    return FileResponse(path, filename=attachment.original_filename, media_type=attachment.content_type or \"application/octet-stream\")\n```\n\n\u2192 skipped: escalations routes (schemas imported, unused). Add when needed.",
+        "```python\n    return FileResponse(path, filename=attachment.stored_filename)\n```\n\nTruncated `retur` \u2192 complete return. Add `media_type`/original name when Attachment model exposes them."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/messages.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "**Bugs**\n\n1. `request: Request = None` \u2014 FastAPI won't inject. Use `request: Request`.\n2. `job_ids = []` \u2192 `in_([])` always false. OK fallback, but wasteful full Job scan.\n3. No recipient existence check. Orphan `recipient_id` allowed.\n4. Staff/admin: no scope filter. Lists all messages. Intentional?\n\n**Smell**\n\nCustomer/worker filter blocks duplicated. Extract once if you touch this again.\n\n**Fix (request only):**\n```python\nrequest: Request,\n```\n\nWhat do you want? Review / harden / delete / something else.",
+      "all_responses": [
+        "**Bugs**\n\n1. `request: Request = None` \u2014 FastAPI won't inject. Use `request: Request`.\n2. `job_ids = []` \u2192 `in_([])` always false. OK fallback, but wasteful full Job scan.\n3. No recipient existence check. Orphan `recipient_id` allowed.\n4. Staff/admin: no scope filter. Lists all messages. Intentional?\n\n**Smell**\n\nCustomer/worker filter blocks duplicated. Extract once if you touch this again.\n\n**Fix (request only):**\n```python\nrequest: Request,\n```\n\nWhat do you want? Review / harden / delete / something else.",
+        "**Bugs**\n\n1. `request: Request = None` \u2014 FastAPI won't inject. Use `request: Request`.\n2. Customer/worker paths load all job IDs into Python. Use subquery/join.\n3. No check recipient exists / is valid for job.\n\n**Minimal fix for #1:**\n\n```python\nrequest: Request,\n```\n\n**#2 (customer branch example):**\n\n```python\nif user.role == UserRole.customer:\n    query = query.filter(Message.is_internal == False)\n    cp = db.query(CustomerProfile).filter(CustomerProfile.user_id == user.id).first()\n    if cp:\n        query = query.filter(\n            (Message.job_id.in_(db.query(Job.id).filter(Job.customer_id == cp.id)))\n            | (Message.recipient_id == user.id)\n            | (Message.author_id == user.id)\n        )\n    else:\n        query = query.filter((Message.recipient_id == user.id) | (Message.author_id == user.id))\n```\n\nSame pattern for field_worker.\n\n\u2192 skipped: recipient validation, shared filter helper. Add when abuse/spam appears.\n\nWhat do you want done?",
+        "**Bugs**\n\n1. `request: Request = None` \u2014 FastAPI never injects. Use `request: Request`.\n2. Customer/worker load every job id into RAM. Use subquery.\n3. Dup filter logic customer vs field_worker.\n\n**Fix request + subquery (minimal):**\n\n```python\n@router.get(\"/\", response_model=List[MessageOut])\ndef list_messages(\n    job_id: int | None = None,\n    is_internal: bool | None = None,\n    skip: int = 0,\n    limit: int = 100,\n    db: Session = Depends(get_db),\n    user: User = Depends(get_current_user),\n):\n    query = db.query(Message)\n\n    if user.role == UserRole.customer:\n        query = query.filter(Message.is_internal == False)\n        cp = db.query(CustomerProfile).filter(CustomerProfile.user_id == user.id).first()\n        if cp:\n            job_ids = db.query(Job.id).filter(Job.customer_id == cp.id)\n            query = query.filter(\n                (Message.job_id.in_(job_ids)) | (Message.recipient_id == user.id) | (Message.author_id == user.id)\n            )\n        else:\n            query = query.filter((Message.recipient_id == user.id) | (Message.author_id == user.id))\n    elif user.role == UserRole.field_worker:\n        from app.models import WorkerProfile\n        wp = db.query(WorkerProfile).filter(WorkerProfile.user_id == user.id).first()\n        if wp:\n            job_ids = db.query(Job.id).filter(Job.assigned_worker_id == wp.id)\n            query = query.filter(\n                (Message.job_id.in_(job_ids)) | (Message.recipient_id == user.id) | (Message.author_id == user.id)\n            )\n        else:\n            query = query.filter((Message.recipient_id == user.id) | (Message.author_id == user.id))\n\n    if job_id:\n        query = query.filter(Message.job_id == job_id)\n    if is_internal is not None:\n        query = query.filter(Message.is_internal == is_internal)\n\n    return query.order_by(Message.created_at.desc()).offset(skip).limit(limit).all()\n\n\n@router.post(\"/\", response_model=MessageOut)\ndef create_message(\n    req: MessageCreate,\n    db: Session = Depends(get_db),\n    request: Request = None,  # still broken \u2014 fix below\n    user: User = Depends(get_current_user),\n):\n```\n\n```python\ndef create_message(\n    req: MessageCreate,\n    request: Request,\n    db: Session = Depends(get_db),\n    user: User = Depends(get_current_user),\n):\n```\n\n\u2192 skipped: extract shared role filter, recipient existence check. add when roles grow or spam appears."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "crm/forms.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "What need? Review / bug / change?",
+      "all_responses": [
+        "What need? Review / bug / change?",
+        "`crm/forms.py` received. Task?",
+        "What need? Review / bug / change?"
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/users.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "`request: Request = None` broken \u2014 FastAPI never injects. Use `request: Request`.\n\nDouble `commit` on create (user + profile). One commit.\n\nenable/disable = PATCH `is_active`. Delete those routes.\n\nRole change skips profile create/delete.\n\nWhat needed?",
+      "all_responses": [
+        "`request: Request = None` broken \u2014 FastAPI never injects. Use `request: Request`.\n\nDouble `commit` on create (user + profile). One commit.\n\nenable/disable = PATCH `is_active`. Delete those routes.\n\nRole change skips profile create/delete.\n\nWhat needed?",
+        "No ask. What need?\n\nQuick scan:\n- `request: Request = None` broken \u2014 FastAPI never injects. Use `request: Request`.\n- create: two commits; one txn enough.\n- role change: no profile create/delete.\n- update: no password path.\n\nSay fix / review / change.",
+        "Task? File only. No ask."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-crm-saas-django",
+      "file": "crm/signals.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Signal fine. Wire in `apps.py`:\n\n```python\ndef ready(self):\n    from . import signals  # noqa: F401\n```\n\n\u2192 skipped: User manager override, add when create paths multiply.",
+      "all_responses": [
+        "Signal fine. Wire in `apps.py`:\n\n```python\ndef ready(self):\n    from . import signals  # noqa: F401\n```\n\n\u2192 skipped: User manager override, add when create paths multiply.",
+        "Standard. Wire import in `apps.py` `ready()`.\n\n```python\n# crm/apps.py\ndef ready(self):\n    import crm.signals  # noqa: F401\n```\n\nskipped: custom profile fields, add when model needs them.",
+        "Signal fine. Wire import in `AppConfig.ready()` or never runs.\n\n```python\n# crm/apps.py\ndef ready(self):\n    from . import signals  # noqa: F401\n```\n\n\u2192 skipped: custom UserManager.create_user hook, add when signals bite (tests/migrations)."
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/workers.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "**Issues**\n\n1. `update_worker` takes bare `req: dict` \u2014 no validation at trust boundary.\n2. `list_worker_jobs` \u2014 non-field_worker roles get free access to any worker\u2019s jobs (only field_worker gated).\n3. `availability` filter unvalidated free string.\n\n**Minimal fix for #1** (rest YAGNI until needed):\n\n```python\nfrom pydantic import BaseModel\nfrom typing import Optional, Any\n\nclass WorkerUpdate(BaseModel):\n    region_id: Optional[int] = None\n    availability: Optional[str] = None\n    certifications: Optional[Any] = None\n    vehicle_info: Optional[Any] = None\n\n@router.patch(\"/{worker_id}\", response_model=WorkerProfileOut)\ndef update_worker(\n    worker_id: int,\n    req: WorkerUpdate,\n    db: Session = Depends(get_db),\n    user: User = Depends(require_roles(UserRole.ops_admin)),\n):\n    wp = db.query(WorkerProfile).filter(WorkerProfile.id == worker_id).first()\n    if not wp:\n        raise HTTPException(status_code=404, detail=\"Worker not found\")\n    for k, v in req.model_dump(exclude_unset=True).items():\n        setattr(wp, k, v)\n    db.commit()\n    db.refresh(wp)\n    return wp\n```\n\n\u2192 skipped: role tighten on jobs list, enum for availability. add when abuse/real filter needed.\n\nWhat do you want done with this file?",
+      "all_responses": [
+        "**Issues**\n\n1. `update_worker` takes bare `req: dict` \u2014 no validation at trust boundary.\n2. `list_worker_jobs` \u2014 non-field_worker roles get free access to any worker\u2019s jobs (only field_worker gated).\n3. `availability` filter unvalidated free string.\n\n**Minimal fix for #1** (rest YAGNI until needed):\n\n```python\nfrom pydantic import BaseModel\nfrom typing import Optional, Any\n\nclass WorkerUpdate(BaseModel):\n    region_id: Optional[int] = None\n    availability: Optional[str] = None\n    certifications: Optional[Any] = None\n    vehicle_info: Optional[Any] = None\n\n@router.patch(\"/{worker_id}\", response_model=WorkerProfileOut)\ndef update_worker(\n    worker_id: int,\n    req: WorkerUpdate,\n    db: Session = Depends(get_db),\n    user: User = Depends(require_roles(UserRole.ops_admin)),\n):\n    wp = db.query(WorkerProfile).filter(WorkerProfile.id == worker_id).first()\n    if not wp:\n        raise HTTPException(status_code=404, detail=\"Worker not found\")\n    for k, v in req.model_dump(exclude_unset=True).items():\n        setattr(wp, k, v)\n    db.commit()\n    db.refresh(wp)\n    return wp\n```\n\n\u2192 skipped: role tighten on jobs list, enum for availability. add when abuse/real filter needed.\n\nWhat do you want done with this file?",
+        "`req: dict` no schema. OpenAPI blind. Validation gone.\n\n```python\n# schemas.py \u2014 add\nclass WorkerProfileUpdate(BaseModel):\n    region_id: int | None = None\n    availability: str | None = None\n    certifications: list | None = None\n    vehicle_info: dict | None = None\n```\n\n```python\n# workers.py update_worker\ndef update_worker(\n    worker_id: int,\n    req: WorkerProfileUpdate,\n    db: Session = Depends(get_db),\n    user: User = Depends(require_roles(UserRole.ops_admin)),\n):\n    wp = db.query(WorkerProfile).filter(WorkerProfile.id == worker_id).first()\n    if not wp:\n        raise HTTPException(404, \"Worker not found\")\n    for k, v in req.model_dump(exclude_unset=True).items():\n        setattr(wp, k, v)\n    db.commit()\n    db.refresh(wp)\n    return wp\n```\n\n\u2192 skipped: availability enum, cert shape validation. add when abuse/data rot shows.",
+        "**Issues**\n\n1. `update_worker` takes bare `dict` \u2014 no schema, no validation.\n2. `list_worker_jobs` auth: any non-`field_worker` role sees any worker\u2019s jobs. Intentional?\n3. No enum/check on `availability` string.\n\n**Minimal fix for #1**\n\n```python\n# schemas.py\nclass WorkerProfileUpdate(BaseModel):\n    region_id: int | None = None\n    availability: str | None = None\n    certifications: list | None = None\n    vehicle_info: dict | None = None\n\n# workers.py\n@router.patch(\"/{worker_id}\", response_model=WorkerProfileOut)\ndef update_worker(\n    worker_id: int,\n    req: WorkerProfileUpdate,\n    db: Session = Depends(get_db),\n    user: User = Depends(require_roles(UserRole.ops_admin)),\n):\n    wp = db.query(WorkerProfile).filter(WorkerProfile.id == worker_id).first()\n    if not wp:\n        raise HTTPException(404, \"Worker not found\")\n    for k, v in req.model_dump(exclude_unset=True).items():\n        setattr(wp, k, v)\n    db.commit()\n    db.refresh(wp)\n    return wp\n```\n\n\u2192 skipped: availability enum, role tighten on jobs list \u2014 add when product defines allowed values / roles."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "cases/management/commands/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty. Correct. Django needs package marker only. No code.",
+      "all_responses": [
+        "Empty. Correct. Django needs package marker only. No code.",
+        "Empty `__init__.py` correct. Django needs it for package discovery. No change.",
+        "Empty. Django needs it for command discovery. What next?"
+      ]
+    },
+    {
+      "arm": "shadow",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/audit.py",
+      "detectors": [
+        770
+      ],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "Audit list endpoint. Filters action/entity/user. Admin only.\n\nWhat need? Review / fix / feature.",
+      "all_responses": [
+        "Audit list endpoint. Filters action/entity/user. Admin only.\n\nWhat need? Review / fix / feature.",
+        "No ask. What need?\n\nIssues if review:\n- `limit` unbounded \u2192 cap `Query(200, le=500)`\n- params need `Optional[...] = None` or `Query(None)` for OpenAPI\n- no date filter (add when needed)\n\nShip as-is unless you want the cap.",
+        "Audit list. Admin-only. Filters action/entity_type/user_id. Offset/limit.\n\nWhat need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "courses/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty `__init__.py`. Task?",
+      "all_responses": [
+        "Empty `__init__.py`. Task?",
+        "Empty package marker. Normal.\n\nNeed?",
+        "Empty package marker. Fine as-is. Need something in it?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "auditlog/apps.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Stock Django `AppConfig`. Fine. Need change?",
+      "all_responses": [
+        "Stock Django `AppConfig`. Fine. Need change?",
+        "Standard Django AppConfig. No change.",
+        "Standard Django AppConfig. No change."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "patients/views.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "File received. Task?",
+      "all_responses": [
+        "File received. Task?",
+        "Redundant gate `patient_create`: `@staff_required` then recheck admin/front_desk. Use `@front_desk_or_admin` like care-team views.\n\n`patient_care_team_remove`: no success message (add has one).\n\nRest fine. Access checks present. No other change needed.\n\n```python\n@front_desk_or_admin\n@csrf_protect\n@require_http_methods([\"GET\", \"POST\"])\ndef patient_create(request: HttpRequest) -> HttpResponse:\n    form = StaffPatientForm(request.POST or None)\n    if request.method == \"POST\" and form.is_valid():\n        patient = form.save()\n        log_event(request, \"patient.created\", target=str(patient.pk))\n        messages.success(request, \"Patient created.\")\n        return redirect(\"patients:chart\", patient_id=patient.pk)\n    return render(request, \"patients/form.html\", {\"form\": form, \"patient\": None})\n```\n\n\u2192 skipped: remove-message, add when UX complains.",
+        "File received. Task?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "file": "lms/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty `__init__.py`. State goal.",
+      "all_responses": [
+        "Empty `__init__.py`. State goal.",
+        "Empty `__init__.py`. Fine for package.\n\nNeed?",
+        "Empty `__init__.py`. Valid package marker. Nothing to add."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/performance/urls.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "```python\nfrom django.urls import path\nfrom app.views.users.performance import views as performance_views\n\nurlpatterns = [\n    path('', performance_views.user_performance_index, name=\"user_performance_index\"),\n]\n```\n\n\u2192 `url()` deprecated. Use `path`.",
+      "all_responses": [
+        "```python\nfrom django.urls import path\nfrom app.views.users.performance import views as performance_views\n\nurlpatterns = [\n    path('', performance_views.user_performance_index, name=\"user_performance_index\"),\n]\n```\n\n\u2192 `url()` deprecated. Use `path`.",
+        "```python\nfrom django.urls import path\nfrom app.views.users.performance import views as performance_views\n\nurlpatterns = [\n    path('', performance_views.user_performance_index, name=\"user_performance_index\"),\n]\n```\n\u2192 skipped: re_path. add when regex needed.",
+        "```python\nfrom django.urls import path\nfrom app.views.users.performance import views as performance_views\n\nurlpatterns = [\n    path('', performance_views.user_performance_index, name='user_performance_index'),\n]\n```\n\u2192 skipped: re_path (regex unused). add when pattern needs it."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-vulnpy",
+      "file": "tests/flask/test_blueprint.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Flask blueprint tests for vulnpy. Roots 200. Triggers GET/POST 200. XSS body check. Header source cmdi only.\n\nBug: header path missing trailing `/` vs other routes. Fix: `\"/vulnpy/cmdi/os-system/\"`\n\nWhat need?",
+      "all_responses": [
+        "Flask blueprint tests for vulnpy. Roots 200. Triggers GET/POST 200. XSS body check. Header source cmdi only.\n\nBug: header path missing trailing `/` vs other routes. Fix: `\"/vulnpy/cmdi/os-system/\"`\n\nWhat need?",
+        "File: flask vulnpy blueprint tests. What need?",
+        "File: flask blueprint tests. What need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "audit/migrations/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty. Standard Django migrations package. State need.",
+      "all_responses": [
+        "Empty. Standard Django migrations package. State need.",
+        "Empty. Django package marker. Leave as-is.",
+        "Empty. Correct for Django migrations package. Nothing to change."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "audit/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "Empty `__init__.py`. Package marker only. What needed?",
+      "all_responses": [
+        "Empty `__init__.py`. Package marker only. What needed?",
+        "Empty. Need?",
+        "Empty file. Need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "legalcase/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty `__init__.py`. Package marker. No action.",
+      "all_responses": [
+        "Empty `__init__.py`. Package marker. No action.",
+        "Empty. Valid package marker. Need?",
+        "Empty package init. Fine as-is.\n\nNeed what?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/sessions/urls.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.sessions_index, name='sessions_index'),\n]\n```\n\u2192 skipped: re_path. add when regex needed.",
+      "all_responses": [
+        "```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.sessions_index, name='sessions_index'),\n]\n```\n\u2192 skipped: re_path. add when regex needed.",
+        "Deprecated. `django.conf.urls.url` gone Django 4+. Use:\n\n```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.sessions_index, name='sessions_index'),\n]\n```\n\n\u2192 skipped: re_path (no regex needed). Add when pattern needs regex.",
+        "```python\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.sessions_index, name='sessions_index'),\n]\n```\n\n\u2192 skipped: re_path (no regex needed). `url()` gone Django 4+."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-vulnpy",
+      "file": "tests/wsgi/test_app.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Inconsistent status attrs: L18 `status_int`, L27 `status_code`. Prefer `status_int` (webtest).\n\nL30: `DATA.get` \u2192 `DATA[]` (key known). Drop `str()`.\n\nNo other issues. What change?",
+      "all_responses": [
+        "Inconsistent status attrs: L18 `status_int`, L27 `status_code`. Prefer `status_int` (webtest).\n\nL30: `DATA.get` \u2192 `DATA[]` (key known). Drop `str()`.\n\nNo other issues. What change?",
+        "WSGI vulnpy tests. Root/triggers \u2192 200. Bad paths \u2192 404.\n\nNeed?",
+        "WSGI tests. Root 200. Triggers + DATA. XSS body check. 404 paths.\n\nWhat need? Review / fix / extend?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "cases/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty `__init__.py`. Package marker. No change.",
+      "all_responses": [
+        "Empty `__init__.py`. Package marker. No change.",
+        "Empty package. Task?",
+        "Empty. No action."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "documents/models.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "Model fine. What need?",
+      "all_responses": [
+        "Model fine. What need?",
+        "Need?",
+        "Got `HRDocument`. Need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "cases/apps.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Standard Django `AppConfig`. No change needed.",
+      "all_responses": [
+        "Standard Django `AppConfig`. No change needed.",
+        "Standard Django AppConfig. No change.",
+        "Standard Django AppConfig. No change."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/password_resets/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Side-effect import. Loads `urls` on package import. Prefer root `urls.py` include. Delete if unused.",
+      "all_responses": [
+        "Side-effect import. Loads `urls` on package import. Prefer root `urls.py` include. Delete if unused.",
+        "Side-effect import. Loads urls on package import. Keep only if registration requires it. Else delete file.",
+        "Side-effect import. Registers routes on package load.\n\nDelete if urls imported elsewhere. Keep only if auto-register required."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
+      "file": "app/__init__.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Empty package init. Task?",
+      "all_responses": [
+        "Empty package init. Task?",
+        "Package init. Docstring only. No code. State goal.",
+        "Empty package init. Fine as-is."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-vulpy",
+      "file": "utils/hashfile.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Delete. Use `sha512sum f | awk '{printf \"%-12s %s\\n\",\"sha512\",$1}'`.\n\nIf pure-Python required:\n\n```python\n#!/usr/bin/env python3\nimport hashlib, sys\nf = sys.stdin.buffer if len(sys.argv) < 2 else open(sys.argv[1], 'rb')\nprint(f'{\"sha512\":<12} {hashlib.sha512(f.read()).hexdigest()}')\n```\n\n\u2192 skipped: streaming/click/cryptography. add when files > RAM or multi-hash.",
+      "all_responses": [
+        "Delete. Use `sha512sum f | awk '{printf \"%-12s %s\\n\",\"sha512\",$1}'`.\n\nIf pure-Python required:\n\n```python\n#!/usr/bin/env python3\nimport hashlib, sys\nf = sys.stdin.buffer if len(sys.argv) < 2 else open(sys.argv[1], 'rb')\nprint(f'{\"sha512\":<12} {hashlib.sha512(f.read()).hexdigest()}')\n```\n\n\u2192 skipped: streaming/click/cryptography. add when files > RAM or multi-hash.",
+        "```python\n#!/usr/bin/env python3\nimport hashlib, sys\nf = open(sys.argv[1], 'rb') if len(sys.argv) > 1 else sys.stdin.buffer\nprint(f\"sha512 {hashlib.sha512(f.read()).hexdigest()}\")\n```\n\u2192 skipped: click/cryptography (stdlib enough), streaming, add when files exceed RAM.",
+        "```python\n#!/usr/bin/env python3\nimport hashlib, sys\n\nf = open(sys.argv[1], \"rb\") if len(sys.argv) > 1 else sys.stdin.buffer\nh = hashlib.sha512()\nwhile c := f.read(1 << 16):\n    h.update(c)\nprint(f\"{'sha512':<12} {h.hexdigest()}\")\n```\n\n\u2192 skipped: click+cryptography deps, full-file read. add when multi-algo or streaming CLI flags needed."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-dvpwa",
+      "file": "run.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "Entry point. Init app from argv config. Bind host/port. Run aiohttp.\n\nWhat needed?",
+      "all_responses": [
+        "Entry point. Init app from argv config. Bind host/port. Run aiohttp.\n\nWhat needed?",
+        "`run.py`: aiohttp entry. `init_app(argv)` \u2192 config host/port. DEBUG log. `run_app`.",
+        "File: aiohttp entry. Loads config, runs app.\n\nWhat need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/models/test_model_user.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "non-answer",
+      "response": "Dead code L83. Print noise L23-24. MD5 password hash insecure. Exception assert needs `str(...)`.\n\nWhat need? Review / fix / run?",
+      "all_responses": [
+        "Dead code L83. Print noise L23-24. MD5 password hash insecure. Exception assert needs `str(...)`.\n\nWhat need? Review / fix / run?",
+        "Issues:\n\n1. MD5 password hash \u2014 broken. Use Django `make_password`/`check_password`.\n2. `print` in `setUp` \u2014 noise. Delete.\n3. L83 dead: `User.objects.order_by(\"-user_id\").first()` \u2014 no-op. Delete.\n4. L54: `\"...\" in incorrectPassword.exception` fails (exception obj not str). Use `str(incorrectPassword.exception)`.\n5. Hardcoded plaintext password in test \u2014 fine for unit test; never ship that hash scheme.\n\nWant fix, model source, or security audit?",
+        "**Issues**\n\nMD5 password hash. Broken. Use PBKDF2/argon2.\n`print` in setUp. Noise. Delete.\nL83 dead. `User.objects.order_by(...).first()` no-op. Delete.\n`\"msg\" in exception` fragile. Use `str(exc.exception)`.\nToken test only checks change. Not value.\n\n**Skip:** rewrite suite. Add when auth redesign lands."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/schemas/borrower.py",
+      "detectors": [],
+      "flagged_in": 1,
+      "k": 3,
+      "union_flagged": true,
+      "verdict": "non-answer",
+      "response": "Mutable default bug L46, L72.\n\n```python\nowners: List[BusinessOwnerCreate] = Field(default_factory=list)\n# ...\nowners: List[BusinessOwnerOut] = Field(default_factory=list)\n```\n\nWhat needed?",
+      "all_responses": [
+        "Mutable default bug L46, L72.\n\n```python\nowners: List[BusinessOwnerCreate] = Field(default_factory=list)\n# ...\nowners: List[BusinessOwnerOut] = Field(default_factory=list)\n```\n\nWhat needed?",
+        "No task. Schema dump only. Need?",
+        "**Issues**\n\n1. Mutable default: `owners: List[...] = []` \u2192 use `Field(default_factory=list)`\n2. SSN plain string in schema (PII). Encrypt at rest / never log. Schema itself fine for transport if TLS.\n3. `date_of_birth: datetime` \u2192 prefer `date` unless time needed.\n4. No format checks: EIN/SSN/phone/zip free-form. Add only if API contract requires.\n\n**Minimal fix**\n\n```python\nfrom datetime import date\nfrom pydantic import Field\n\n# BusinessOwnerBase\ndate_of_birth: date\n# ...\n# BorrowerProfileCreate\nowners: List[BusinessOwnerCreate] = Field(default_factory=list)\n# BorrowerProfileOut\nowners: List[BusinessOwnerOut] = Field(default_factory=list)\n```\n\n\u2192 skipped: format validators, Decimal for money/%, encryption helpers. Add when compliance/API contract demands."
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "onboarding/models.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Model fine. Need?",
+      "all_responses": [
+        "Model fine. Need?",
+        "What need?",
+        "OnboardingTask model. Need?"
+      ]
+    },
+    {
+      "arm": "clean",
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "lms/authz.py",
+      "detectors": [],
+      "flagged_in": 0,
+      "k": 3,
+      "union_flagged": false,
+      "verdict": "clean",
+      "response": "Got `lms/authz.py`. Task?",
+      "all_responses": [
+        "Got `lms/authz.py`. Task?",
+        "Authz helpers look fine. Minimal. No change needed.\n\nWhat need?",
+        "Authz helpers. Task?"
+      ]
+    }
+  ]
+}
