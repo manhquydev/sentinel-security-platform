@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E70 | can the free path reach the ~127 repositories E69 requires? | **STANDS (negative) — NO, it saturates at ~9** — sweeping CWE-285/284 as a sources review recommended moved advisories 355→**463** and fix commits 137→**191**, and repositories **8→9** against a projected ~35. Second measurement of the same wall: widening the input by a third moves the output by nothing, because the binding filter is that the fix must attach to a **route handler**. Free advisory mining cannot close owed item 1; the paid options return for scale, now far better informed |
 | E69 | does the organic result survive repo-level grouping, and how many repos are needed? | **STANDS — conclusion robust, and the debt now has a NUMBER** — grouped over 8 repositories the CI is **[0.135, 0.731]**, nearly **2x wider** than the site-level [0.330, 0.644]: 35 correlated sites were being counted as 35 independent ones. Corpus 0.576 still sits inside, so **indistinguishable at repo level too**. One repo (langflow) supplies **43%** of all sites. Projection: **~127 repositories** for a ±0.075 interval, against the 8 the free advisory path reaches |
 | E68 | widen the extractor to non-route-shaped fixes | **CORRECTS E67 — the organic advantage was a SELECTION EFFECT** — requiring the route decorator inside the diff hunk discarded every fix landing in the handler's SIGNATURE (`current_user: User = Depends(...)`), selecting for short simple handlers the detector finds easily. Resolving the enclosing route against the pre-fix SOURCE nearly doubles the sample (18→**35** sites, 6→**8** repos) and organic recall falls **0.722 → 0.486** against the corpus's 0.576 — and the intervals say the two are **INDISTINGUISHABLE** (p = 0.22), so 'better' and 'worse' are both withdrawn. Two accounting errors fixed in the same pass, both flattering. What stands: the detector does not measurably degrade on production code |
 | E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
@@ -5236,3 +5237,60 @@ what determines whether the paid options in the plan come back into play.
 
 Instrument `pool_organic_grouped.py`, artefact `organic-grouped-260726.json`. Zero API and model calls —
 computed entirely from the committed probe artefact.
+
+---
+
+## E70 — the free advisory path has a ceiling at ~9 repositories, and it is not the advisory count
+
+**The proposal.** E69 set the target at ~127 repositories against the 8 the pipeline reached. A sources
+review (`docs/plans/reports/2026-07-26-scaling-organic-absence-corpus-sources.md`) tested the available free
+indexes and recommended one immediate change: sweep **CWE-285 and CWE-284** ("Improper Access Control")
+alongside the four canonical absence classes. Its projection, from repository diversity at the *advisory*
+level, was **~35 repositories** — a 4× gain from a one-line change.
+
+**Measured.** The one-line change was made and the pipeline re-run:
+
+| | before | after |
+|---|---|---|
+| distinct advisories | 355 | **463** |
+| carrying a fix commit | 137 | **191** |
+| diffs adding an auth marker | 44 | 52 |
+| labelled sites | 35 | 37 |
+| **repositories contributing a site** | **8** | **9** |
+| organic recall | 0.486 | 0.486 (p = 0.218) |
+
+**+1 repository, against a projected +27.** The projection was not wrong about advisory diversity — it was
+measuring the wrong stage. Repository diversity at the advisory level does not survive the pipeline, because
+each stage after it discards most of what it receives: a fix commit must exist, it must touch Python, it
+must *add* a control, and that control must attach to a **route handler**. The last filter is the one that
+bites, and it does not care how many CWE classes were swept.
+
+**This is the same wall E66 hit and it is now measured twice.** Widening the *advisory sweep* moved
+319 → 355 advisories for zero new repositories; widening the *CWE set* moved 355 → 463 for one. Both times
+the input grew by roughly a third and the output did not move. **The binding constraint is structural: most
+real absence fixes are not route-decorator-shaped**, which is the same boundary E67 found from the corpus
+side, where 54% of labelled entries do not sit on a route either.
+
+**The consequence for owed item 1 is a real one.** The free advisory path saturates near **9 repositories**
+and the target is **~127**. That gap is not closable by mining GitHub Security Advisories harder — the
+sources review found no other free index that links fix commits at useful volume for Python, and the one
+remaining free avenue, commit search without an advisory (111k+ hits for `Depends(get_current_user)` alone),
+buys volume by **giving up the label that made this approach worth anything**: without an advisory there is
+no confirmation that the commit fixed a real vulnerability, which is exactly the inference that produces
+20–71% label error in prior datasets.
+
+So the honest position is: **the free path delivered the first organic check and cannot deliver a
+publishable one.** The paid options in the plan come back into play for scale, and they are now a much
+better-informed purchase — a buyer knows the target is ~127 repositories, that the extraction is already
+built and validated, and that the labelling itself is free wherever an advisory exists.
+
+The widened CWE sweep is kept: it costs nothing and adds a repository and two sites. Re-running the grouped
+analysis on the 9-repository sample moves the target from ~127 to **~142** — the extra repository widened
+the grouped interval rather than narrowing it, which is what a genuinely heterogeneous population does and
+is a further reason not to read 8 or 9 repositories as settling anything.
+
+**A note on method.** The 4× projection came from a subagent and did not survive contact with the pipeline.
+It was checked rather than adopted, which cost one run. This is the second external claim this session that
+failed verification, after the HARMLESS abandonment story in E64.
+
+Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.

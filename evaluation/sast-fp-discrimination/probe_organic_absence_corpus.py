@@ -51,7 +51,10 @@ for _p in (_HERE,):
 
 import detect_absent_auth as det  # noqa: E402
 
-CWES = (306, 862, 863, 639)
+# 306/862/863/639 are the canonical absence classes. 285 and 284 ("Improper Access Control") were added
+# after a sources review found them indexed by the same API and far denser in DISTINCT repositories — the
+# binding constraint here is repository count, not advisory count (E69).
+CWES = (306, 862, 863, 639, 285, 284)
 ECOSYSTEM = "pip"
 COMMIT_SAMPLE = 600       # bounded diff fetches — this is the expensive stage
 CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "organic-absence-cache")
@@ -204,7 +207,7 @@ def main() -> int:
 
     print(f"advisories in the absence classes, ecosystem={ECOSYSTEM}:")
     adv, per_class = advisories()
-    print(f"\ndistinct advisories across the four classes: {len(adv)}")
+    print(f"\ndistinct advisories across the {len(CWES)} classes: {len(adv)}")
 
     commits = fix_commits(adv)
     print(f"carrying a resolvable GitHub fix commit: {len(commits)} = {len(commits)/max(len(adv),1):.1%}")

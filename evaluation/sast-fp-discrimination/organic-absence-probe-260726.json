@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T14:29:12.960126+00:00",
+  "generated_at": "2026-07-26T14:38:19.498056+00:00",
   "question": "can an organic absence-class corpus be built without paid expert labelling?",
   "method": "GitHub Security Advisories -> fix commit -> diff ADDS an auth/enforcement marker on a route; the maintainer's fix IS the label, so nothing is inferred",
   "ecosystem": "pip",
@@ -7,29 +7,33 @@
     306,
     862,
     863,
-    639
+    639,
+    285,
+    284
   ],
   "advisories_per_class": {
     "306": 82,
     "862": 98,
     "863": 138,
-    "639": 66
+    "639": 66,
+    "285": 39,
+    "284": 97
   },
-  "distinct_advisories": 355,
-  "with_fix_commit": 137,
-  "sampled_commits": 137,
-  "touch_python": 136,
-  "add_auth_marker": 44,
+  "distinct_advisories": 463,
+  "with_fix_commit": 191,
+  "sampled_commits": 191,
+  "touch_python": 187,
+  "add_auth_marker": 52,
   "marker_on_route": 7,
-  "labelled_sites_in_sample": 35,
-  "sites_per_commit": 0.2555,
-  "projected_sites_all_commits": 35,
+  "labelled_sites_in_sample": 37,
+  "sites_per_commit": 0.1937,
+  "projected_sites_all_commits": 37,
   "projection_caveat": "sample is the first n commit-linked advisories, not random; sites cluster by repository so the independent unit is the repo, not the site",
   "limitation": "counts only fixes expressed in the vocabulary detect_absent_auth already knows, so this is a LOWER BOUND on organic yield",
   "transfer_test": {
-    "checked": 22,
-    "fired": 18,
-    "organic_file_level_recall": 0.8182,
+    "checked": 24,
+    "fired": 20,
+    "organic_file_level_recall": 0.8333,
     "note": "pre-fix file versions of organic maintainer-labelled defects; FILE level, not the strict file+CWE+line standard used on the teaching corpus, and a much smaller sample",
     "detail": [
       {
@@ -207,25 +211,41 @@
         "detector_findings": 0,
         "labelled_routes": 1,
         "routes_matched": 0
+      },
+      {
+        "repo": "jupyterlab/jupyterlab",
+        "file": "jupyterlab/tests/test_extensions.py",
+        "commit": "be9303f5bc",
+        "detector_findings": 16,
+        "labelled_routes": 1,
+        "routes_matched": 1
+      },
+      {
+        "repo": "parisneo/lollms",
+        "file": "backend/routers/personalities.py",
+        "commit": "36a5b513df",
+        "detector_findings": 2,
+        "labelled_routes": 1,
+        "routes_matched": 0
       }
     ],
-    "distinct_repositories": 8,
+    "distinct_repositories": 9,
     "teaching_corpus_same_standard": {
       "files": 145,
       "fired": 43,
       "file_level_firing": 0.2966
     },
     "site_level": {
-      "labelled_routes": 35,
-      "matched": 17,
-      "organic_site_recall": 0.4857,
+      "labelled_routes": 37,
+      "matched": 18,
+      "organic_site_recall": 0.4865,
       "line_tolerance": 10,
       "corpus_published_strict_recall": 0.226,
       "organic_ci": [
-        0.32993980391252736,
-        0.6443146037328837
+        0.33446153327211037,
+        0.6410536277401908
       ],
-      "fisher_corpus_gt_organic_p": 0.2226,
+      "fisher_corpus_gt_organic_p": 0.2177,
       "corpus_same_population": {
         "labelled_entries": 289,
         "on_a_route": 132,

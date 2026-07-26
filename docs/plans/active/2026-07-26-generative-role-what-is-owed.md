@@ -173,13 +173,28 @@ independent observations, and one repository (langflow) supplies **43%** of them
 Scaling the measured grouped width at 1/√n:
 
 > **~127 repositories** are needed for a ±0.075 interval — the precision at which a transfer claim would be
-> worth making. The free advisory path currently reaches **8**.
+> worth making. The free advisory path reaches **8**, and **9** after E70's widened sweep, which moves the
+> target to **~142**: the extra repository widened the grouped interval rather than narrowing it, as a
+> genuinely heterogeneous population does.
 
 That number rests on stated assumptions (width scales as 1/√n; further repositories resemble these) and is
-a target, not a promise. But it is the first time this debt has had a size, and it sets the decision:
-**whether ~127 repositories are reachable from free sources determines whether the paid options come back
-into play.** The paid options remain the route to a *publishable* corpus; they are no longer the route to a
-first organic check, which now exists.
+a target, not a promise. But it is the first time this debt has had a size, and it set a decision —
+**which E70 then answered: no.**
+
+Sweeping two further access-control classes (CWE-285, CWE-284), as a sources review recommended with a
+projected ~35 repositories, moved advisories 355 → **463** and fix commits 137 → **191**, and repositories
+**8 → 9**. That is the second measurement of the same wall: widening the advisory sweep earlier moved
+319 → 355 for *zero* new repositories. Growing the input by a third does not move the output, because the
+binding filter is structural — the fix must attach to a **route handler**, and most real absence fixes do
+not. The corpus shows the same boundary from the other side, where 54% of labelled entries are not on a
+route.
+
+**So the free path saturates near 9 repositories against a target of ~142, and the paid options return for
+scale.** They are now a far better-informed purchase than when they were first costed: the extraction is
+built and validated, the target is quantified, the labelling is free wherever an advisory exists, and the
+first organic check already exists and came back null rather than catastrophic. The remaining free avenue —
+commit search with no advisory — buys volume by discarding the confirmation that made this approach
+trustworthy, and would reintroduce exactly the inferred-label error the paid options were meant to avoid.
 
 What still may not be published as applying to customer code is any positive figure resting on **8
 repositories** with sites clustered inside them.
