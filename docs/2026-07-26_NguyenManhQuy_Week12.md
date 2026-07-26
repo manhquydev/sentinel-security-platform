@@ -24,7 +24,24 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > **Bandit + Semgrep tìm được 0/60 file**, còn LLM gọi đúng tên lớp lỗ ở **6/60 file
 > (p = 0.0137)** — cùng một bộ file, nên không phải do "file này bẩn hơn".
 >
-> Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Và
+> Đây là năng lực đầu tiên trong dự án mà **các engine đang dùng** (Bandit, Semgrep) không cung cấp được.
+>
+> **⚠️ ĐÍNH CHÍNH QUAN TRỌNG (đo chiều nay):** em từng viết câu này là "công cụ tất định không cung cấp
+> được", và **câu đó quá mạnh**. Em tự viết **khoảng 60 dòng regex** tìm route không có bất kỳ dấu hiệu
+> xác thực nào, chấm bằng chính thước đo của dự án: **đạt 24,0% recall trên CWE-306/862, trong khi hai
+> engine kia đạt 0**. Nghĩa là hai engine mù ở đây vì **bộ luật của chúng không có luật nào cho lớp này**,
+> chứ không phải vì máy móc không làm được. **Chưa ai viết luật đó, chỉ vậy thôi.**
+>
+> Nhưng cái giá: detector đó phát ra **1242 cảnh báo để lấy 81 cái đúng — precision 6,5%**. Kiểm mẫu thì
+> phần lớn cảnh báo sai là **endpoint công khai có chủ đích** (`/storefront`, `/public`). Máy không phân
+> biệt được *"không có auth vì công khai"* với *"không có auth vì quên"* — phân biệt đó thuộc về **ý
+> định**, mà ý định không nằm trong cú pháp. **Đây mới là chỗ model thật sự hơn một cái luật.**
+>
+> Và ghép hai thứ lại (luật lấy recall, model lọc bớt) **chính là vai trò chốt chặn mà dự án đã đo là
+> hỏng** (0020: verifier giấu mất 3/8 lỗ thật). Nên cách ghép hiển nhiên nhất đã bị chính bằng chứng của
+> dự án đóng lại.
+>
+> Và
 > em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
 > - **Có phải model chỉ "thấy code xấu là kêu"?** Không, và điều này đã **lặp lại độc lập
 >   2 lần**. Trên 80 file có lỗ thật nhưng **không thuộc lớp thiếu-kiểm-soát**, model chỉ

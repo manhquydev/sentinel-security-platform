@@ -28,6 +28,15 @@ Measured recall there is ~0–6.8%.
 That is the one place where a proposer cannot be beaten by the deterministic baseline, because the
 deterministic baseline is approximately nothing.
 
+> **AMENDED 2026-07-26 (E56). The baseline is not nothing — it was unwritten.** A ~60-line deterministic
+> detector for route handlers with no authn/authz marker reaches **24.0% recall on CWE-306/862** where
+> Bandit and Semgrep reach **zero**. The engines' blindness is a property of their *rulesets*, not of
+> pattern analysis. This decision's opening premise is therefore weaker than stated, and the generative
+> role must justify itself on what it does *better* than a rule rather than on having the field to itself.
+> The measured answer: that detector pays **6.5% precision** because it cannot separate a deliberately
+> public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
+> the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
+
 ## Decision
 
 **The LLM's measured place in this system is the generative role on absence-of-control classes: it

@@ -125,3 +125,35 @@ collected to test this hypothesis.
   hardcoded crypto key, 312/256 cleartext storage — currently 0%) are a genuine rule gap that an added
   engine would close; test whether OpenGrep is complementary to Semgrep or largely redundant (it is a
   fork) before adopting it as a third engine.
+
+---
+
+## AMENDED 2026-07-26 (E56) — "SAST cannot see absence" was about the RULESETS, not about SAST
+
+This decision's framing, and the language it exported to 0022, 0024 and 0027, treats the absence classes
+as **structurally** beyond pattern analysis: an absent control writes no token, so there is nothing to
+match. The supporting measurement is real — Bandit and Semgrep emit 33 distinct CWE classes across this
+corpus and **not one is absence-class**.
+
+That measurement supports a narrower claim than the one drawn from it. It shows **the shipped rulesets
+contain no absence-class rule**. It does not show that such a rule cannot be written.
+
+**One can be written, and it works.** About sixty lines that locate route declarations and report handlers
+carrying no authentication or authorization marker, scored with this project's own matcher, reaches
+**81 of 337 = 24.0% recall on CWE-306 and CWE-862**, against a shipped-engine baseline of **zero**.
+
+**What survives unchanged.** The *presence/absence* distinction itself is sound and remains the most useful
+frame this project has produced — the two families really do detect different things, and the engines
+really are blind here. What is withdrawn is the word **structurally**, and with it any roadmap claim that
+this territory can only be reached by an LLM.
+
+**What the amendment costs the AI case.** 0027's opening argument is that the generative role occupies the
+one place "a proposer cannot be beaten by the deterministic baseline, because the deterministic baseline is
+approximately nothing". The baseline is not nothing; it was merely unwritten. The generative role's claim
+now has to rest on what it does *better* than a rule — and E56 measured that too: the detector reaches 24%
+recall at **6.5% precision**, because it cannot distinguish a deliberately public endpoint from a forgotten
+check. That distinction is about intent, and it is the honest residual where the model has an advantage.
+
+**What it does not license.** Composing them — detector for recall, model to filter its output — is the
+verdict/gate role that 0018 and 0020 measured failing (a verifier that hid 3 of 8 real vulnerabilities) and
+that DD1 forbids structurally. The obvious pipeline is closed by this project's own prior evidence.
