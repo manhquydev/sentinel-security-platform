@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E51 | how far does the union actually go? | **STANDS** — at k=12 union **0.667 and still rising** (flat for k=8-11, then a new file); never-surfaced falls a THIRD time **0.583 → 0.458 → 0.333**; **0/24 files flagged in every reading** — the reliable core is gone, top of distribution ~0.9. Specificity unmoved: **0/192**, pooled 1/280 |
 | E50 | **RETRACTION — the saturation claim was circular** | union over k and 'files that ever fired in those k' are the SAME quantity; the test could not fail. Properly tested at k=9 the union is **0.542 and still rising**, never-surfaced falls **0.583 → 0.458**, and 3 files called unreachable fired. No guard caught it: the arithmetic was right, the QUESTION was unfalsifiable |
 | E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Both candidate fixes then FAIL — the prose-level one removes 2 real detections and not the FP; the path-level one removes only the embarrassing observation. Real issue is upstream: test files in a clean-control arm |
 | E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6 and SATURATES there** — all 10 files that can ever fire have fired, so more readings add cost only; 0 flags in 96 clean-control observations **on this sample (broken in E49 on a disjoint one)** |
@@ -4035,3 +4036,54 @@ against exactly this class of self-deception.
 
 **Specificity is unaffected:** 0 flags in 144 clean-control observations on sample A, 1 in 184 overall.
 That half of the claim never depended on the tautology.
+
+---
+
+## E51 — k=12: the never-surfaced fraction falls a third time, and no file survives as reliable
+
+E50 retracted a saturation claim and left an explicit question: with the union still climbing at k=9,
+where does it actually go? Three more readings, sample A now at **k=12**.
+
+### Cumulative union, every reading
+
+| k | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| union | .208 | .333 | .417 | .458 | .458 | .583 | .625 | .625 | .625 | .625 | .625 | **.667** |
+
+**Still climbing.** Four consecutive flat readings (k=8 through k=11) and then a new file at k=12 — the
+same pattern that produced the false saturation call at k=6, now visible for what it is. Flat stretches in
+this curve mean nothing.
+
+### The numbers that moved, for the third time
+
+| | k=6 | k=9 | **k=12** |
+|---|---|---|---|
+| never surfaced | 14/24 = 0.583 | 11/24 = 0.458 | **8/24 = 0.333** [0.180, 0.533] |
+| union coverage | 0.583 | 0.625 | **0.667** |
+| flagged in *every* reading | 2/24 | 1/24 | **0/24** |
+
+Three revisions, all downward, all caused by reading deeper. **The never-surfaced fraction is not a
+property of the corpus — it is a property of the corpus *and the budget*,** and every published version of
+it has been an upper bound that later reading reduced. It should never have been phrased as "files
+unreachable by this method".
+
+**And the reliable core is gone.** At k=4 two files were flagged every time; at k=6 one; at k=9 one; at
+k=12 **none**. The best file now sits at 11 of 12 (0.917) and the second at 10 of 12. Each deepening found
+the previous "always" was "not yet caught missing". The honest statement is that the top of the
+distribution is around 0.9, not 1.0 — high enough to be useful, not high enough to be called reliable.
+
+Full propensity distribution at k=12: **8 files at 0**, then 6, 1, 2, 1, 2, 0, 2, 0, 0, 1, 1, 0 files at
+1/12 through 12/12. A large spike at zero, a long thin tail, nothing at the ceiling.
+
+### Specificity, unchanged and now very well measured
+
+**0 flags in 192 clean-control observations** on sample A. Combined with sample B's single breach:
+**1 in 280 = 0.36%**, 95% CI [0.06%, 2.0%]. That half of the claim has now survived twelve readings without
+moving, and it is the only quantity in this line of work that deepening has not revised.
+
+### What I would tell a buyer, after twelve readings
+
+Read every file twelve times and pay twelve times: **two files in three get surfaced at least once, one in
+three never does, no individual file is dependable, and clean code is essentially never flagged.** The
+coverage figure is still rising slowly with budget and no ceiling has been located — which means it cannot
+be quoted as a maximum, only as what twelve readings bought.

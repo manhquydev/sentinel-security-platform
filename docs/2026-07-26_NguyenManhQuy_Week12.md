@@ -141,8 +141,19 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > dạng đường cong, dù bộ mới còn *dễ hơn*. Trần là tính chất của phương pháp, không phải của bộ
 > file đầu tiên.
 >
-> **CON SỐ QUAN TRỌNG NHẤT CỦA CẢ HƯỚNG NÀY (đã sửa theo độ sâu đọc):**
-> bộ A đọc **9 lần**: **11/24 = 45,8% file có lỗi không bao giờ được nêu**, khoảng [28% – 65%].
+> **CON SỐ QUAN TRỌNG NHẤT CỦA CẢ HƯỚNG NÀY (đã sửa theo độ sâu đọc — LẦN THỨ BA):**
+> bộ A đọc **12 lần**: **8/24 = 33,3% file có lỗi không bao giờ được nêu**, khoảng [18% – 53%].
+> Trước đó: 58,3% (đọc 6 lần) → 45,8% (đọc 9 lần) → **33,3% (đọc 12 lần)**.
+>
+> **Ba lần sửa, đều theo một hướng, đều vì đọc sâu hơn.** Nghĩa là con số này **không phải tính chất
+> của corpus mà là tính chất của corpus CỘNG ngân sách đọc** — mọi phiên bản đã công bố đều là cận
+> trên, và không bao giờ được phát biểu lại thành "những file nằm ngoài tầm".
+>
+> **Và phần lõi đáng tin cũng biến mất:** k=4 có 2 file luôn bị nêu, k=6 còn 1, k=9 còn 1, **k=12
+> còn 0**. File tốt nhất giờ là 11/12. Mỗi lần đọc sâu hơn lại biến một chữ "luôn luôn" thành "chưa
+> bắt được lần trượt". Đỉnh phân bố khoảng 0,9 — đủ dùng, không đủ gọi là chắc chắn.
+>
+> Số cũ giữ lại để đối chiếu: bộ A đọc **9 lần**: 11/24 = 45,8%, khoảng [28% – 65%].
 > Con số 60,4% em báo trước đó là **quá cao** — nó gộp bộ A đọc 6 lần với bộ B đọc 3 lần, mà đọc
 > nông thì đếm nhầm file xu-hướng-thấp thành 0. Bộ B ở k=3 chỉ là **cận trên**, không phải ước
 > lượng, và hai độ sâu khác nhau thì không gộp được.

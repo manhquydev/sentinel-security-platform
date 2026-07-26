@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
-| specificity | **1 flag in 184 clean-control observations = 0.5%, 95% CI [0.1%, 3.0%]**; excluding test files **0/152, CI [0%, 2.5%]** (E49) | it is not flagging indiscriminately. Both sampling frames agree the rate is **below ~3%** — and neither supports a claim of *zero*, which is how "0 of 96" was being read before a disjoint sample breached it |
+| specificity | **1 flag in 280 clean-control observations = 0.36%, 95% CI [0.06%, 2.0%]** (E51; 0/192 on sample A across twelve readings) | it is not flagging indiscriminately. Both sampling frames agree the rate is **below ~3%** — and neither supports a claim of *zero*, which is how "0 of 96" was being read before a disjoint sample breached it |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
@@ -206,8 +206,16 @@ than the one before it, by a widening margin.
 original 0.417 with the same decay signature — and did so while being slightly *easier* per reading. The
 saturation is a property of the method rather than of the first file set.
 
-**The never-surfaced fraction, corrected for depth (E50).** Sample A at **k=9: 11/24 = 0.458, 95% CI
-[0.279, 0.649]**. The earlier pooled figure of 29/48 = 0.604 combined sample A at k=6 with sample B at k=3
+**The never-surfaced fraction, corrected for depth a THIRD time (E51).** Sample A at **k=12: 8/24 = 0.333,
+95% CI [0.180, 0.533]** — after 0.583 at k=6 and 0.458 at k=9. Every deepening has lowered it, so **this
+figure is an upper bound set by the reading budget, not a property of the corpus**, and it must never again
+be phrased as "files unreachable by this method".
+
+**The reliable core is also gone (E51).** Two files were flagged in every reading at k=4, one at k=6 and
+k=9, and **none at k=12** — the best now sits at 11 of 12. Each deepening turned a previous "always" into
+"not yet caught missing". The top of the distribution is ~0.9, which is useful and is not reliability.
+
+Earlier figure retained for the record: sample A at **k=9: 11/24 = 0.458, 95% CI [0.279, 0.649]**. The earlier pooled figure of 29/48 = 0.604 combined sample A at k=6 with sample B at k=3
 and overstated the fraction, because both were shallow and shallow readings misclassify low-propensity
 files as zeros — three of sample A's "zeros" fired by k=9. Sample B at k=3 is an upper bound, not an
 estimate, and the two depths cannot be pooled as if comparable.
