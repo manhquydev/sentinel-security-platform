@@ -2444,3 +2444,36 @@ current width, and the honest phrasing is:
 **Owed, unchanged and now better motivated:** run both mutation levels on one identical file set, at a
 sample size chosen for the ~0.07 effect this run suggests — roughly 300+ files per arm, which this
 corpus can supply but a single session's call budget cannot.
+
+## E33 — CANCELLED at the power gate (Stage 3), before any model call
+
+Proposed 2026-07-26 10:05: run surface-only and surface+structural mutation on **one identical file set**,
+removing the confound that disqualified the E23-vs-E32 comparison.
+
+**Cancelled. The corpus cannot answer it.**
+
+| n per arm | calls | power to detect the 0.07 drop E32 suggests |
+|---|---|---|
+| 41 (E32's set) | 82 | **0.12** |
+| **117 — every file in the corpus supporting both mutation levels** | 234 | **0.32** |
+| 150 | 300 | 0.42 (files do not exist) |
+| 250 | 500 | 0.62 (files do not exist) |
+
+Only **117 of 175** absence-class files support both mutations (a file is excluded when reordering could
+change behaviour). So **32% is the ceiling this corpus allows** at one measurement per file — a design in
+which a true effect is missed two times in three, and a null says nothing.
+
+**Why this is a cancellation and not a smaller run.** The tempting move is to run 117 anyway and report
+"no significant difference". That sentence would be indistinguishable from "we could not have found one",
+and this lab has already published one underpowered result it had to withdraw (E16b). Protocol Stage 3
+exists for exactly this: *a known-underpowered run is cheaper to cancel than to publish and retract.*
+Second cancellation at this gate today; the first was a multi-language trial with 4 JavaScript ground-truth
+entries.
+
+**What would actually answer it,** recorded so the next session does not rediscover the arithmetic:
+repeated measurement (k≥3 per file) to cut per-file noise, at n≈117 — roughly **700 calls**. E31 makes
+this more attractive than it first looks: flag-level churn is only ~1 file in 12, so most files are
+stable and repeated sampling buys real precision rather than averaging noise.
+
+**Consequence:** decision 0027's structural-familiarity item stays exactly where E32 left it —
+inconclusive, point estimate leaning toward structure contributing, transfer bound not narrowed.
