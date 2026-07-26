@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — previously-reported files 0.333 vs never-reported 0.083 (+0.250 [0.000, 0.500]), so not a lottery; but **max propensity 0.67, no file reliable**. Predicts E42. Repeated reading is required, and the cost model must carry k |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
 | E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
@@ -3246,3 +3247,63 @@ design applied to class attribution rather than to the file-level verdict.
 detects absent ownership in 11% of these files" to "the model reports absent ownership at an 11% rate,
 without per-file consistency". Decision 0027's class narrowing is untouched — it was always a statement
 about rates by class, and both classes' rates replicated.
+
+---
+
+## E43 — RESULT: neither a lottery nor detection. A mixture, with no file ever reliable.
+
+E42 showed the class-attribution RATE reproducing exactly while the detected FILES overlapped in none of
+six. Two explanations survived that, and they lead to opposite product decisions: a **lottery**, where
+every file carries the same ~0.11 chance and repeated readings buy only a longer list at the same rate; or
+**signal**, where a few files have high propensity and each single run samples a few of them, so repeated
+readings genuinely recover detections at k times the cost. Two readings of six files cannot separate those.
+Repeated readings of the same file can.
+
+Files reported by either earlier run (**EVER**) against files reported by neither (**NEVER**), k=3
+readings each, same prompt, same classifier, groups interleaved so a truncated run would still leave a
+comparison rather than one finished group:
+
+| group | per-file propensities | mean |
+|---|---|---|
+| EVER | 0.00, 0.33, 0.33, 0.67 | **0.333** |
+| NEVER | 0.00, 0.00, 0.00, 0.33 | **0.083** |
+
+difference **+0.250, 95% CI [+0.000, +0.500]**.
+
+**The lottery hypothesis is the one that fails.** It predicted both groups landing near the population
+rate of 0.113. NEVER did (0.083); EVER came in at three times that. Files that were reported before are
+genuinely more likely to be reported again, so there is a real per-file property here — the model is not
+sampling uniformly at random.
+
+**But "signal" in its strong form fails too, and this is the part that matters.** The highest propensity
+measured on any file is **0.67**. Not one file is reported reliably. The groups overlap heavily: EVER
+contains a 0.00 and NEVER contains a 0.33. What the data show is a **mixture** — per-file propensities
+spread roughly between 0 and 0.67, with none at either extreme.
+
+**That mixture explains E42 exactly, which is the reason to believe it.** If typical propensities sit
+around 0.1–0.35 and none approach 1, then two single-reading runs draw largely disjoint subsets *while
+producing the same count* — which is precisely the otherwise-baffling result E42 reported. The
+explanation was not fitted to E42; it was measured independently and turns out to predict it.
+
+**What it means for cost and for what may be promised.** Detection accumulates with repeated readings,
+which single-run numbers hide entirely:
+
+| file's true propensity | k=1 | k=3 | k=5 |
+|---|---|---|---|
+| 0.083 | 0.08 | 0.23 | 0.35 |
+| 0.333 | 0.33 | 0.70 | 0.87 |
+| 0.667 | 0.67 | 0.96 | 1.00 |
+
+So repeated reading is not merely defensible here, it is **required** for the generative role to mean
+anything at file level — and the cost model must carry the k, because a per-file call count of one buys a
+third of what a naive reading of the sensitivity figure implies. This also independently supports the
+reinstatement of E37 at k=3: the union-over-k estimand is not a statistical convenience, it is the only
+estimand that matches how this capability actually behaves.
+
+**Honest bounds.** Four files per group and k=3 is a small measurement, and the interval on the difference
+touches zero — this establishes the *shape* of the answer, not its precise magnitude. The propensity
+values are each estimated from three readings, so a "0.33" is one hit in three and carries large
+uncertainty of its own. What is solid: the lottery is excluded, no file reached reliability, and the
+mixture predicts E42. What is not: where exactly the distribution sits, which needs more files and larger
+k. Group size was cut rather than k when the call budget bound, because k is what makes the distinction
+visible at all.

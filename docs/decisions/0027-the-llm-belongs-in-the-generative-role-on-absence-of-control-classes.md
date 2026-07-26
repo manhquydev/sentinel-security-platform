@@ -166,6 +166,17 @@ so it was a genuine second measurement and not a cached one. But the **6 files d
 and the 6 in the second overlap in none**. Expected overlap if each run drew independently at the same
 rate is 0.68 files; if detection were a stable property of a file it would be 6.
 
+**Why that happens was then measured directly (E43), and it settles the cost model.** Repeated readings of
+the same file show the per-file propensity is neither uniform nor stable: files reported by an earlier run
+come back at **0.333**, files never reported at **0.083** — so it is not a lottery — but **the highest
+propensity measured on any file is 0.67, and none is reliable**. Propensities sit in a mixture roughly
+between 0 and 0.67, which is exactly what produces the same count from disjoint file sets.
+
+The operational consequence is concrete: detection accumulates with repeated reading (a file at 0.33 is
+found with probability 0.33 at k=1, **0.70 at k=3**, 0.87 at k=5), so **the generative role requires
+repeated readings to mean anything at file level, and every cost figure must carry the k.** One call per
+file buys roughly a third of what the headline sensitivity implies.
+
 So what replicates is a **rate**, not a detection. This model reports an absent ownership control on about
 11% of files of this kind, and does not consistently report it on the *same* files. For a product that
 means two runs yield two disjoint worklists, both at the published rate — which forces either repeated

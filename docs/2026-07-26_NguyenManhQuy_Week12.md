@@ -97,6 +97,16 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > Em xin nói thẳng: đây là phát hiện làm **giảm giá trị bán được** của phần này nhiều nhất trong
 > cả tuần, và nếu không chạy lại lần hai thì đã không ai biết.
 >
+> **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại cùng một
+> file 3 lần: file từng được phát hiện có xác suất **0,333**, file chưa từng được phát hiện là
+> **0,083**. Vậy **không phải xổ số** — file "có gì đó" thật sự dễ được nêu hơn. Nhưng **file cao
+> nhất cũng chỉ 0,67**, tức **không file nào chắc chắn được phát hiện**.
+>
+> Hệ quả rất cụ thể cho chi phí: một file có xác suất 0,33 thì đọc **1 lần** bắt được 33%, đọc
+> **3 lần** bắt được **70%**, đọc 5 lần được 87%. Nghĩa là **muốn dùng được ở mức file thì bắt
+> buộc phải đọc lặp**, và **mọi con số chi phí phải nhân với số lần đọc**. Một lời gọi một file
+> chỉ mua được khoảng **một phần ba** những gì con số "tỉ lệ trúng" gợi ra.
+>
 > **Cách thử thứ hai, và nó khép lại vấn đề:** thay vì đổi câu hỏi, em bỏ hẳn phần tranh chấp —
 > chạy đúng câu hỏi cũ trên **16 file chỉ có mỗi lỗi thiếu rate-limit**, không có lỗi nào khác
 > giành chỗ. Kết quả **1/16**, so với 1/53 lúc có tranh chấp: **không cải thiện** (p = 0,41). Đáng
