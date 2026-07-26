@@ -416,8 +416,9 @@ def _committed_at(path):
     except Exception:
         return 0
 # Two entries cleared 2026-07-26 by E35 regenerating the headline artefact with the current instrument.
-KNOWN_STALE = {"messy-control-260726.json": "E18; predates the E26/E27 classifier corrections",
-               "mutation-transfer-260726.json": "E19, withdrawn; superseded by E23",
+# Down to two, and neither carries a live conclusion: both are superseded records kept for history.
+# Every artefact behind a standing claim is now re-verifiable (E35 and E36 regenerated the last two).
+KNOWN_STALE = {"mutation-transfer-260726.json": "E19, withdrawn; superseded by E23",
                "role-control-v2-260726.json": "E24; superseded by E28 (role-control-v3)"}
 stale = []
 for art, src in pairs:
