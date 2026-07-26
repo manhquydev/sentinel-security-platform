@@ -31,10 +31,21 @@ state, not the morning's.
 > false positives disappear. Cross-file suppression now ships **on by default**; the published corpus
 > figure is **558 route handlers, 0.263 recall, 0.125 site precision**.
 >
-> **E81's block is lifted in mechanism.** The structural false positives are gone and the reason production
-> precision could not be claimed no longer holds. What still cannot be claimed is a production precision
-> *number*: organic labels remain unobtainable (E77), and the two sampled apps without app-wide auth keep
-> 491 flags this work does not resolve.
+> **E81's block is lifted in mechanism, and the 491 leftover flags were then resolved too (E84).** Reading
+> them showed `fides` declares authentication as FastAPI's `Security(verify_oauth_client, scopes=[...])`,
+> which the marker vocabulary did not know — **221 of its 241 flags**. Added, with self-tests pinning that
+> `Security(...)` protects while a generic `Depends(get_db)` does not.
+>
+> **Cumulative, across four production applications and at zero recall cost: 1005 → 276 flags (−72%).**
+> Corpus figures untouched throughout: 0.263 recall, 558 route handlers, 0.125 site precision.
+>
+> **What remains is one stated limit and one unanswerable question.** 250 of the 276 survivors are in a
+> single application that authenticates at an **external gateway** — a source-code detector cannot see
+> infrastructure it never reads, and any product statement must say so. Whether the other 26 are real
+> defects still needs organic labels (E77), so **no production precision number is claimed**.
+>
+> **The carve-out-aware suppression named below was never needed:** enforcement-gating plus directory
+> scoping (E83) reached zero cost without it. It is withdrawn as an owed item.
 >
 > Superseded, kept as record: A
 > repository pre-pass now collects app-wide enforcement and cross-file router mounts before any file is
@@ -45,10 +56,9 @@ state, not the morning's.
 > (measured carve-out counts: 32, 12, 8, 45). Trading a measured loss for a gain nobody can measure (E77)
 > is the trade this project has refused all day, so app-wide suppression ships **off by default**.
 >
-> **E81's block stands and its resolution is now specific:** not blanket suppression but **carve-out-aware
-> suppression** — parse the global guard's exemption list and suppress only the routes it actually covers.
-> That is the reachability step in the standard decomposition, and it is the one remaining deterministic
-> engineering item on the layer that ships.
+> ~~**E81's block stands and its resolution is carve-out-aware suppression**~~ — superseded: E83 reached
+> zero cost via enforcement-gating and directory scoping, and E84 closed the remainder with one vocabulary
+> item. Carve-out parsing was never required.
 >
 > **Positioning note, verified:** Semgrep's interfile analysis is paid-tier only, CodeQL ships no built-in
 > Python auth model, and no open-source tool does cross-file missing-authorization detection for Python

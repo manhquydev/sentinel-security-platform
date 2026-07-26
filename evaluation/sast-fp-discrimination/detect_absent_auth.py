@@ -61,6 +61,11 @@ AUTH_MARKER = re.compile(
     r"login_required|permission_required|user_passes_test|staff_member_required|"
     r"require_role|require_roles|require_user|require_auth|requires_auth|"
     r"Depends\s*\(\s*(?:get_current|require_|verify_|auth)|"
+    # FastAPI's `Security(...)` exists solely to declare a security requirement — it is `Depends` with
+    # scopes, used for OAuth2/API-key/HTTP-auth schemes and nothing else. Missing it cost 221 of 241
+    # false positives on one production application (E84), and unlike a generic `dependencies=[...]`
+    # (which routinely injects a database session) its presence is unambiguous.
+    r"Security\s*\(|"
     r"IsAuthenticated|permission_classes|authentication_classes|"
     r"current_user|request\.user\.is_authenticated|@token_required|@jwt_required|"
     r"api_key|check_permission|has_perm|ensure_\w*auth", re.I)
@@ -283,6 +288,10 @@ SELF_TEST = [
     ("@app.route('/admin')\ndef admin():\n    if not user.is_admin:\n        abort(403)\n"
      "    return 1", False,
      "enforcement in the body: the handler refuses, so the control is present"),
+    ("@router.get('/w')\ndef w(u=Security(verify_oauth_client, scopes=['read'])):\n    return 1", False,
+     "FastAPI Security() is a security declaration, not a generic dependency"),
+    ("@router.get('/w')\ndef w(db=Depends(get_db)):\n    return Data.query.all()", True,
+     "a generic dependency (a db session) is NOT authentication and must still be reported"),
     ("@patch('requests.get')\ndef test_thing(m):\n    assert call() == 1", False,
      "unittest.mock @patch is not a route — it shares the verb 'patch' but is test scaffolding"),
     ("@mock.patch('svc.client')\ndef test_flow(m):\n    do()", False,

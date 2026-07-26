@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E84 | what are the 491 unresolved production flags? | **221 were ONE missing word; 72% cumulative FP reduction at zero recall cost** — reading the cases showed `fides` declares auth as FastAPI's `Security(verify_oauth_client, scopes=[...])`, which `AUTH_MARKER` did not know: **221 of 241** of its flags carry it. Added, with self-tests pinning that `Security(...)` protects while `Depends(get_db)` does NOT. `hermes-agent`'s 250 have no in-code auth at all — it authenticates at an external gateway, a stated limit of source-only analysis. Production flags **1005 → 276**; corpus recall **0.263 unchanged** |
 | E83 | is E82's 21% cost real? | **NO — it was three bugs of mine; the real cost is ZERO** — (1) `APP_LEVEL` matched **CORSMiddleware** via `allow_headers=[..."Authorization"]`; (2) a repo is not one app (`vulpy` ships `good/` and `bad/`) so scoping is now per-directory; (3) the guard must **ENFORCE**, not just load a session — E61's identity-vs-enforcement distinction applied at app scope. After all three: recall **0.263 unchanged**, **508 of 514 production FPs removed**. E82's 'not worth paying' is **withdrawn**; cross-file suppression now ships **on by default**, corpus figure 558 sites / 0.263 / 0.125 |
 | E82 | build cross-file awareness — does it unblock E81? | **PRICING CORRECTED BY E83 — the cost was my own bugs, real cost is zero.** Original (wrong) finding: — `scan_repo` collects app-wide enforcement and cross-file router mounts before judging any file; default path byte-identical so no published number moves. The two mechanisms differ completely in price: **router propagation costs 0 recall** (and is unexercised — none of the 4 production apps use it); **app-wide suppression removes ALL 514 production FPs but costs 16/76 corpus TPs = 21% of recall**, because global guards carve out public paths and defects live there (carve-outs measured: 32/12/8/45). Off by default: a measured loss for an unmeasurable gain. E81's block STANDS; resolution is carve-out-aware suppression |
 | E81 | do real apps centralise auth the detector cannot see? | **YES — high FP floor, cause identified** — 2 of 4 production apps enforce auth via app-wide middleware declared in a CENTRAL file (`AuthTokenMiddleware`, `CustomAuthenticationMiddleware`); the detector's `APP_LEVEL` suppressor exists but applies **per file**, so scanning `routers/*.py` it never sees `main.py`. **20 of 20 sampled flags in those apps sit behind app-wide auth.** Single-file scope is structurally blind to how production apps are built. BLOCKS the precision claim until cross-file awareness lands; recall claim unaffected |
@@ -6063,3 +6064,61 @@ decides a research claim.
 Instrument `detect_absent_auth.py` (`APP_LEVEL` anchored, `_global_guard_enforces`, directory scoping,
 default-on suppression) and `rank_absent_auth.py`; artefacts `absent-auth-detector-260726.json`,
 `rank-absent-auth-260726.json`. Zero model calls.
+
+---
+
+## E84 — the 491 unresolved production flags, inspected: 221 were one missing word. Cumulative FP reduction 72%, recall untouched
+
+**The debt E83 left.** Cross-file awareness removed the false positives in the two applications with
+app-wide auth, but **491 flags remained** in the two without it (`fides` 241, `hermes-agent` 250) and were
+recorded as unresolved. Rather than leave them as an unmeasurable precision question, the specific cases
+were read — the discipline that found the `@patch` bug (E78) and the CORS bug (E83).
+
+**`fides` — one missing vocabulary item, 91.7% of its flags.** Its routes are declared like this:
+
+```python
+@router.get(
+    "/webhook/{key}",
+    dependencies=[Security(verify_oauth_client, scopes=[scopes.WEBHOOK_READ])],
+)
+```
+
+`Security(...)` is **FastAPI's security-specific dependency wrapper** — it is `Depends` plus scopes, and it
+exists for OAuth2, API-key and HTTP-auth schemes and nothing else. `AUTH_MARKER` knew `Depends(verify_...)`
+but not `Security(...)`. Measured: **221 of 241 fides flags carry it**.
+
+Adding it is principled rather than data-fitted, and the distinction is pinned by two new self-tests: a
+handler with `Security(verify_oauth_client, ...)` is protected, while one with `Depends(get_db)` — a generic
+dependency that injects a database session — **must still be reported**. Generic `dependencies=[...]` is not
+treated as authentication for exactly that reason.
+
+**`hermes-agent` — nothing to fix, and worth stating.** Zero of its 250 flags carry `Security(...)` or any
+route-level dependency. Its handlers genuinely declare no in-code authentication; one docstring refers to
+"the gate's transparent cookie rotation", i.e. enforcement by an **external gateway**. A source-code
+detector cannot see infrastructure it never reads. That is a limit of the approach, not a defect in it, and
+it belongs in any product statement: applications that authenticate at the edge will be reported as
+unprotected.
+
+**Cumulative effect of the cross-file work (E83 + E84), all at zero recall cost:**
+
+| application | single-file (E56 behaviour) | after cross-file (E83) | after `Security()` (E84) |
+|---|---|---|---|
+| open-webui | 421 | 0 | 0 |
+| fides | 241 | 241 | **20** |
+| hermes-agent | 250 | 250 | 250 |
+| marimo | 93 | 6 | 6 |
+| **total** | **1005** | 497 | **276** |
+
+**Corpus figures unchanged throughout: recall 76/289 = 0.263, 558 reported route handlers, site precision
+70/558 = 0.125.** Two consecutive improvements removed **72% of production flags** without costing a single
+labelled detection — which is what a real precision gain looks like, as opposed to the 21% trade E82
+mistakenly believed it had to make.
+
+**What remains, precisely.** The 276 surviving flags are 250 in one application whose auth is external and
+26 across the rest. Whether those 26 are real defects is still unanswerable without organic labels (E77),
+so **no production precision number is claimed**. But the honest statement has improved: the flags that
+remain are no longer dominated by a structural blindness this project had already measured.
+
+Instrument `detect_absent_auth.py` (`AUTH_MARKER` + `Security(`, two self-tests), artefacts
+`absent-auth-detector-260726.json`, `rank-absent-auth-260726.json` (both unchanged in value — the corpus is
+untouched). Zero model calls.
