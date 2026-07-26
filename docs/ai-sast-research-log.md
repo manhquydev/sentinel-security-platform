@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E32 | structural familiarity | **INCONCLUSIVE (leaning against)** — anonymised+reordered 8/41 vs 11/41, −0.073 [−0.195,+0.049]; transfer bound does **not** narrow |
 | E31 | per-file propensity | **STANDS** — mixture confirmed: 10/12 stable at 0. Most instability is clean<->non-answer; **flag churn ~1 in 12**; controls theta=0.000 across 18 calls |
 | E30 | propagating noise into intervals | **WITHDRAWN (model error)** — treated a disagreement rate as a flip probability; falsified by E28's measured 0.001 drift |
 | E29 | how unstable is the instrument, really? | **STANDS** — pooled **15/38 = 40%** verdict flips, 95% CI [21%,63%]; **0/38 identical prose**. Replaces the bare "36%" |

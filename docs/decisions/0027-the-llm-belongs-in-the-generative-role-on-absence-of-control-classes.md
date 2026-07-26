@@ -183,6 +183,14 @@ file-role recognition. Both are open questions again.
     **Limits:** n = 8, and the defects are of classes this author chose in this author's style — the
     matched-pair design prevents conspicuousness from inflating the score but cannot make them
     representative of a real client codebase. **Still outstanding:** structural familiarity, and a
+  - **Structural familiarity — TESTED, INCONCLUSIVE, leaning against us (E32, 2026-07-26).** Adding a
+    provably-safe structural mutation (top-level definitions reordered) on top of surface anonymisation
+    gives **8/41 vs 11/41, difference −0.073, 95% CI [−0.195, +0.049]** — the interval spans a 20-point
+    collapse and a 5-point rise, so nothing is established. **But the point estimate is a drop**, so the
+    honest status is no longer "untested": it is *inconclusive with the available evidence pointing at
+    structure contributing*. **The transfer bound does not narrow.** A clean answer needs both mutation
+    levels on one identical file set at ~300 files/arm. The limit of even that: reordering changes
+    file-level shape, never intra-function control flow.
     realistic defect distribution nobody designed to be findable.
 - **Recorded process failure:** the deterministic control arm was preregistered and the implementation
   silently dropped it during a redesign. It was caught before publication and run. The mechanism claim
