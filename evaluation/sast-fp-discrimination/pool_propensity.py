@@ -14,13 +14,17 @@ weight, and averaging them would quietly upweight the smaller one.
 
 from __future__ import annotations
 
+import glob
 import json
 import os
 import random
-import sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_SOURCES = ("attribution-propensity-260726.json", "attribution-propensity-deep-260726.json")
+# Globbed rather than listed: every propensity run over these files is another set of independent draws
+# from the same per-file propensities, so a new run should widen the estimate automatically instead of
+# waiting for someone to remember to add its filename here.
+_SOURCES = tuple(sorted(os.path.basename(p) for p in
+                        glob.glob(os.path.join(_HERE, "attribution-propensity-*.json"))))
 
 
 def wilson(hits: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -56,7 +60,7 @@ def main() -> int:
             slot["hits"] += r["hits"]
             slot["k"] += r["k"]
     if len(used) < 2:
-        print(f"FAIL: need both runs to pool; found {used}")
+        print(f"FAIL: pooling needs at least two runs; found {used}")
         return 2
 
     print(f"pooled from {len(used)} runs over {len(pooled)} files\n")
