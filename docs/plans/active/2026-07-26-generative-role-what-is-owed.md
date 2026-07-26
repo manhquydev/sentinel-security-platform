@@ -1,78 +1,68 @@
-# What the generative-role line of work owes, and in what order
+# The generative-role line of work: what is settled, and what is left
 
-Status: active. Written 2026-07-26 after E37–E44. Everything below is runnable; nothing is blocked on a
-decision. The ordering is by what would change a conclusion, not by cost.
+Status: active. Rewritten 2026-07-26 15:00 after E37 and E44–E48. The earlier version listed three owed
+items; two closed the same afternoon, and one of those needed no model calls at all. This is the current
+state, not the morning's.
 
-## The state this hands over
+## What is settled
 
-Decision 0027 rests on a claim that has been narrowed three times and now reads: on **absent ownership and
-absent authentication**, the model reports at a **rate** of roughly 11% of files, **without per-file
-consistency**, with a measured per-file ceiling of **0.667** and most files at exactly **zero**. Repeated
-reading is required for the capability to mean anything at file level, and every cost figure must carry
-the k.
+**The capability is real, bounded, and has a shape a sensitivity figure alone hides.**
 
-Two things are settled and should not be re-litigated without new evidence:
+| | measured |
+|---|---|
+| Specificity | **0 flags in 96 clean-control observations**, and zero in every run this project has done. Pinned by SM23 across all committed artefacts. |
+| Sensitivity, single reading | ~0.19 on files carrying a real absent control |
+| Per-file structure | a **mixture**: 14 of 24 at propensity zero, a tail reaching 1.0 |
+| Reliable core | **1 file of 24 flagged in all six readings, 1 more at 5 of 6** |
+| Union coverage | saturates at **10 of 24 = 0.417 by k=6**; further readings add cost only |
+| Union vs independence | 100%, 81%, 71%, 65%, 61%, 58% at k = 1…6 |
+| Class asymmetry | ownership/authn ≫ CWE-307, **p = 0.0327** (E37), realized power 61% |
+| CWE-307 | **50 of 53 files never named across five readings**; not recovered by targeted prompting (E40) or by removing competing defects (E41) |
 
-- CWE-307 (missing rate limit) is very nearly invisible in this role — 1 of 53 real defects named (E39),
-  not recovered by removing competing defects (E41), and not addressable by asking directly, because a
-  targeted prompt could not be made to discriminate a present control from an absent one (E40).
-- The per-file result is a mixture, not a lottery and not detection (E42, E43).
+**The two questions that were being conflated, and must not be again:**
 
-## 1. ~~E37 — the powered class-asymmetry test~~ — DONE 2026-07-26
+- *"Is a control absent somewhere in this file?"* — coarse, has a small reliable core.
+- *"Which control is absent?"* — fine, has **no** reliable core: 0 of 53 files across five readings.
 
-**Run, three times, pooled. Null rejected: ownership 9/53 vs rate-limit 2/53 over a k=3 union, exact
-McNemar one-sided p = 0.0327.** Artefacts `class-asymmetry-e37-run{1,2,3}-260726.json`, analysis
-`pool_asymmetry_union.py`, result `asymmetry-union-260726.json`.
+Honest product statement: a **low-noise sampler** that surfaces about 40% of defective files when read six
+times, never fires on clean code, and cannot reliably say what is wrong. Not a scanner.
 
-**Do not treat the magnitude as settled.** Realized power was 61%, not the 94.6% this was reinstated on:
-readings are positively correlated, which E42's six-file overlap was too thin to reveal and which E43's
-propensity mixture had already implied. The direction is established; the effect size is probably
-optimistic. If anyone wants the magnitude, that needs more files, not more readings of these 53.
+## What is left
 
-## 2. Widen the propensity measurement (24–72 calls)
+### 1. A defect distribution not authored by us
 
-E43 now covers 16 files across 3 runs and gives EVER 0.291 vs NEVER 0.021, difference +0.271
-[+0.104, +0.437]. The group means are well determined; **individual files are not** — the best file's
-interval is [0.320, 0.807].
+Still open, still the largest threat to external validity. Every matched-pair result inherits the authoring
+bias E34 disclosed, and three independent measurements show our authored files are easier than corpus files
+(ownership 4/4 authored vs ~0.19 on corpus). The corpus is itself LLM-seeded. **Neither source is clean and
+no current result transfers to private code.** A data-sourcing problem, not an experiment — running things
+cannot close it.
 
-`run_attribution_propensity.py` takes `PROPENSITY_K` and `PROPENSITY_GROUP`; `pool_propensity.py` globs
-every `attribution-propensity-*.json`, so a new run widens the estimate with no code change. The
-interesting question was what fraction of the corpus sits at zero. **That is now answered (E45) and this
-item is closed: 41 of 53 files were never named across two independent readings (0.774, upper bound), with
-the model-corrected zero fraction at roughly 0.60-0.77.** It required no new calls — the two committed
-single-reading runs already were a k=2 propensity measurement of the whole slice.
+### 2. Where the ceiling sits on other code
 
-Extended to CWE-307 on the same free data: **52 of 53 (0.981, [0.901, 0.997]) never named**, and at a rate
-that low the two-reading bound is effectively the answer.
+Saturation at 0.417 is saturation *of these 24 files*; nothing measured predicts the ceiling elsewhere.
+Cheap version: run the k=6 protocol on a second disjoint file set and compare saturation points. ~240 calls.
 
-What remains open here is narrower, and there is one concrete next measurement:
+### 3. Whether the 14 zero-propensity files are truly unreachable
 
-- The per-file intervals for files that DO carry signal are wide (the best is [0.320, 0.807]) — the ceiling
-  is established but not located.
-- ~~The single file ever named for CWE-307 was named in both readings.~~ **Done: read at k=9, came back
-  0/9, combined 2/11 = 0.182 [0.051, 0.478].** The narrow-competence story is dead; CWE-307 is uniformly
-  near-zero. No follow-up needed.
+A file observed at 0 of 6 carries the interval [0.000, 0.390], so some may have small non-zero
+propensities. Separating "unreachable" from "very rare" needs large k on those files: 14 × 20 ≈ 280 calls.
+Worth doing, because the ceiling is the number the commercial case rests on.
 
-## 3. A defect distribution not authored by us
+## Not worth doing, and why
 
-Every matched-pair result in this lab inherits the authoring bias E34 disclosed, and three independent
-measurements now show our authored files are **easier than real corpus files** (ownership 4/4 authored vs
-0.113 on corpus). The corpus itself is LLM-seeded, which is its own contamination bound. Neither source is
-clean, and the honest position is that no current result transfers to private code.
+- **Re-running E40 with a better prompt.** Four canary readings across two formats never discriminated a
+  present control from an absent one; the model rewrote the file instead of answering. A fifth prompt is
+  not evidence until output conformance changes.
+- **More authored test files.** See item 1 — they measure our authoring, and the direction is known.
+- **More readings of the current 24-file set.** The union saturated at k=6; further readings are pure cost.
 
-## 4. Not worth doing, and why
+## Standing constraints
 
-- **Re-running E40 with a better prompt.** Four canary readings across two formats never discriminated. The
-  failure is that this model does not answer the question asked — it rewrote the file on both canaries in
-  both formats. A fifth prompt is not evidence of anything until the conformance problem changes.
-- **More authored test files.** See §3: they measure our authoring, and we already know which direction.
-
-## Standing constraints for whoever picks this up
-
-- Score the text that gets **persisted**, not the raw response (protocol §14). The reproducibility guard
-  SM19 catches violations, but only after the calls are spent.
-- A rate is not a detection (protocol §15). Before describing any rate as detection, run it twice and
-  intersect the sets.
-- The positive control is read **n times, passing on ≥1** (E44). A single reading blocks about one
-  legitimate run in five, and one of the runs behind §2 would have been blocked by the old gate.
-- Empty responses are counted and warned: a failed call must never score as a model that declined.
+- **Score the text you persist, not the raw response** (protocol §14). Violated in `run_generative` for six
+  hours *after* the rule was written; SM19 caught it and every affected figure moved down. Assume other
+  runners carry the same bug until checked.
+- **A rate is not a detection** (protocol §15). Run it twice and intersect before calling anything detection.
+- **Ask the committed data first** (protocol §16). Two questions filed as needing runs were already on disk.
+- The positive control is read **n times, passing on ≥1** (E44). Single-read gates block ~1 legitimate run
+  in 5; three runs this afternoon had tallies of 1/3, 2/3 and 1/3 and would have been blocked.
+- Empty responses are counted and warned — a failed call must never score as a model that declined.
