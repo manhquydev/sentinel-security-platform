@@ -2399,3 +2399,47 @@ Registered 2026-07-26 09:40 +07. **Nothing below was measured before this text w
   if the interval is wide the verdict is inconclusive, exactly as E23's was.
 - **Instrument frozen:** same prompt, corrected classifier (SM13), positive-control gate with the
   transport-failure rule.
+
+## E32 — RESULT: INCONCLUSIVE, and the point estimate leans the unwelcome way
+
+Run 2026-07-26. Positive control passed. 41 files, both arms measured fresh in the same run, responses
+stored in full.
+
+| condition | flagged |
+|---|---|
+| original | 11/41 = **0.268** |
+| surface-anonymised **+ top-level definitions reordered** | 8/41 = **0.195** |
+
+**Difference −0.073, 95% CI [−0.195, +0.049] → INCONCLUSIVE**, exactly as the preregistration said a
+wide interval must be reported.
+
+### What this does and does not say
+
+- **It does NOT show structure is irrelevant.** The interval spans a 20-point collapse and a 5-point
+  increase. Nothing is established in either direction.
+- **The point estimate leans toward structural familiarity mattering.** −0.073 is a drop, not a null.
+- **It does NOT establish a drop either.** A 41-file sample at a ~0.27 base rate cannot resolve an
+  effect this size, which the preregistration stated before the run.
+
+### The comparison with E23 is suggestive and NOT valid as evidence
+
+E23 (surface anonymisation only) gave **+0.057**; E32 (surface **+** structural) gives **−0.073** — a
+swing of 0.13 in the direction of "structure carries something". **This comparison must not be quoted as
+a finding**, for a reason that is disqualifying on its own: **the two runs use different file sets**
+(53 vs 41; E32 only accepts files where reordering is provably safe), and E32's original arm scores 0.268
+against E23's 0.208 on the *same* instrument, which shows the subsets differ in difficulty before any
+mutation is applied. The clean comparison would need both mutations run on one identical file set.
+
+### Consequence for decision 0027 — the bound does NOT narrow, and the earlier narrowing gets a caveat
+
+0027 currently records that surface memorisation is not the driver (E23) with structural familiarity
+listed as outstanding. That stands, with one change: **the outstanding item is now known to be
+non-trivially large in the point estimate**, not merely untested. The transfer bound stays at its
+current width, and the honest phrasing is:
+
+> Surface memorisation is not the driver. **Structural familiarity is untested-to-inconclusive, and what
+> evidence exists points at it contributing rather than not.**
+
+**Owed, unchanged and now better motivated:** run both mutation levels on one identical file set, at a
+sample size chosen for the ~0.07 effect this run suggests — roughly 300+ files per arm, which this
+corpus can supply but a single session's call budget cannot.
