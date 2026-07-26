@@ -46,8 +46,8 @@ for _p in (_ROOT, _HERE):
 import run_spike as rs  # noqa: E402
 from agent import trace  # noqa: E402
 from run_class_asymmetry import OWN_AUTHN  # noqa: E402
-from run_generative import (MAX_BYTES, _BINARY_RUBRIC, _CANARY_SRC, classify_prose,
-                            names_class_absence)  # noqa: E402
+from run_generative import (MAX_BYTES, _BINARY_RUBRIC, _CANARY_SRC, canary_passes,
+                            classify_prose, names_class_absence)  # noqa: E402
 
 K = int(os.environ.get("PROPENSITY_K", "5"))
 # Group size is capped so the run fits a bounded call budget. k is the parameter that decides whether a
@@ -116,9 +116,15 @@ def main() -> int:
         except Exception:
             return ""
 
-    if classify_prose(query("__canary__", "canary.py", literal=_CANARY_SRC)) != "flagged":
-        print("FAIL: positive control did not fire.")
+    ok, tally = canary_passes(lambda: query("__canary__", "canary.py", literal=_CANARY_SRC))
+    print(f"positive control readings: {tally}")
+    if not ok:
+        print("FAIL: positive control never fired across repeated readings — the harness, not the "
+              "hypothesis, would be measured.")
         return 2
+    if tally.count("flagged") < len(tally):
+        print("NOTE: the control fired on some readings and not others. That is the instrument's known "
+              "churn, and it is the reason every per-file figure below uses repeated readings too.")
     print("positive control PASSED")
 
     ever, never = groups()

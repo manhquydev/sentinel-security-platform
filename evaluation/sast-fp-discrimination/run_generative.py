@@ -218,6 +218,27 @@ def names_ground_truth_class(text: str, gt_cwes) -> bool:
                for c in gt_cwes if c in _CLASS_VOCAB)
 
 
+def canary_passes(ask, n: int = 3, need: int = 1) -> tuple[bool, list[str]]:
+    """Read the positive control `n` times; pass if it fires at least `need` times.
+
+    A single reading was the original design, and it is wrong for this instrument. The canary was measured
+    firing on 4 of 5 identical calls at `temperature=0` — the fifth came back as the model echoing the file
+    into a code fence, which the classifier correctly reads as clean. So a one-shot control **blocks about
+    a fifth of legitimate runs by chance**, which is what it did before this existed.
+
+    `need=1` is deliberate and is not a weakening. The job of this control is to catch a DEAD harness — a
+    truncated file, a broken credential, a model answering nothing — and a dead harness scores 0 out of n
+    with certainty, however many times it is read. Against a live one, `need=1` fails spuriously with
+    probability 0.008 rather than 0.2. Raising the threshold would trade that away for no additional power
+    against the failure this is built to detect.
+
+    The tally is returned rather than a bare verdict so a run that passes 1 of 3 leaves a visible record
+    of a degraded instrument instead of looking identical to one that passed 3 of 3.
+    """
+    verdicts = [classify_prose(ask()) for _ in range(n)]
+    return sum(v == "flagged" for v in verdicts) >= need, verdicts
+
+
 def names_class_absence(text: str, cwe: int) -> bool:
     """True if the prose says the control for `cwe` is ABSENT — not merely that the topic came up.
 

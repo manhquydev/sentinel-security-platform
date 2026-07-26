@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
 | E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — previously-reported files 0.333 vs never-reported 0.083 (+0.250 [0.000, 0.500]), so not a lottery; but **max propensity 0.67, no file reliable**. Predicts E42. Repeated reading is required, and the cost model must carry k |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
 | E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
@@ -3307,3 +3308,49 @@ uncertainty of its own. What is solid: the lottery is excluded, no file reached 
 mixture predicts E42. What is not: where exactly the distribution sits, which needs more files and larger
 k. Group size was cut rather than k when the call budget bound, because k is what makes the distinction
 visible at all.
+
+---
+
+## E44 — the positive control was itself a single reading of a churning instrument
+
+The deeper propensity run refused to start: the positive control did not fire, so the harness gate stopped
+it. That gate is the reason this lab no longer publishes zeros from dead harnesses, so the run stayed
+stopped and the cause was investigated instead.
+
+The gateway was healthy. **The canary churns.** Reading the identical canary file five times at
+`temperature=0`:
+
+| reading | verdict | what came back |
+|---|---|---|
+| 1 | flagged | "IDOR on `/api/account/<id>`. No auth/ownership." |
+| 2 | flagged | "**IDOR** … no auth, no owner check" |
+| 3 | flagged | "IDOR on `/api/account`. No auth/ownership." |
+| 4 | **clean** | the model echoed the file back inside a code fence |
+| 5 | flagged | "IDOR on `/api/account`. No auth. No ownership check." |
+
+Four of five. The one failure is E38's exact failure mode — an echoed file, which the classifier correctly
+reads as claiming nothing — reappearing in the control rather than in the data.
+
+**So the gate blocked roughly one legitimate run in five, and had been doing so silently all along.** Every
+experiment in this log used a single-reading positive control, on an instrument this lab had already
+measured as non-deterministic. The control was written to protect against a dead harness and was itself
+built on the assumption the harness was deterministic — the same assumption E22 falsified months of
+experiments ago. It is an odd blind spot: the churn was known, and the control was never revisited.
+
+**Fixed by reading the control `n` times and requiring it to fire at least once.** The threshold is
+deliberate. This control exists to catch a DEAD harness — truncated input, broken credential, a model
+returning nothing — and a dead harness scores 0 of n with certainty no matter how often it is read. So
+`need=1` cuts spurious failure from ~0.2 to 0.008 while losing nothing against the failure mode the
+control is for. A higher threshold would trade real robustness for the appearance of strictness.
+
+Two details that matter more than the threshold. The tally is **printed and kept**, so a run that scraped
+through on 1 of 3 leaves a visible record of a degraded instrument rather than looking identical to one
+that passed cleanly. And the change was verified against a planted dead harness (0 of 3, refuses) and a
+planted intermittent one (1 of 3, proceeds) before being used — because **weakening a control immediately
+after it blocks you is exactly what a lab does wrong**, and the only thing separating this from that is
+whether the negative control still bites. It does.
+
+**Scope, honestly.** This fix is applied where the failure appeared. Other runners in this directory still
+use a single-reading control, which means they too carry a ~20% chance of a spurious stop — an annoyance
+rather than a correctness threat, since the failure direction is refusal rather than false publication.
+The correctness-relevant half is already handled: nothing this control lets through can be a dead harness.
