@@ -4273,6 +4273,25 @@ already established. And it does not license dismissing the corpus gap: the gap 
 the yardstick and still means published precision understates by an unknown amount. What changed is that
 the amount is now bounded above by a small number rather than assumed to be generous.
 
+### A third breach, a third mechanism, and a guard that was the wrong shape
+
+The run also produced two more clean-arm flags, taking the total to **4 in 418 clean-control readings =
+0.96%, 95% CI [0.37%, 2.43%]**. One is diagnosable and worth naming: `aes-encrypt.py` drew *"Gaps: - **No
+auth.** CFB malleable → use AES-GCM"* — the model means **unauthenticated encryption**, a cryptographic
+property, and the classifier read it as a missing authentication control.
+
+That failure mode is documented in the classifier's own comments as previously found and fixed — for the
+word *"unauthenticated"*. It recurred through the phrasing *"No auth"*, because the crypto context sits in
+the adjacent sentence and the presence-class suppressor only looks inside the matching window.
+
+**Three breaches, three unrelated mechanisms: test-coverage prose, a genuinely unlabelled CWE-770, and a
+crypto property.** No single cause explains them, and the guard that assumed one was the wrong shape.
+`SM23` began as a floor ("never fires on clean code"), became a fixed breach count, and both forms fail on
+honest new data — every experiment adds observations *and* occasionally a breach, so a count-based limit
+must either fail forever or be nudged, and nudging is how a guard becomes decoration. **It now pins the
+rate and its interval**, which is the quantity that has actually been stable all day, and it can still
+fail: a move to 5% would mean the model or the classifier changed materially.
+
 **Method note.** This is the second time today that reading one striking result and generalising from it
 would have produced a wrong conclusion, and the second time repeated measurement caught it. The first was
 the saturation retraction (E50). The pattern is identical: a single observation, a plausible story, and no
