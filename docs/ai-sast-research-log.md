@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E35 | replicate the headline | **STANDS** — fresh run 15/59 vs 0/40, p = 0.000185 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
 | E34 | authored-unseen, powered | **STANDS** — 7/12 vs 0-1/12, p = 0.0136. **Class-specific**: ownership+authn 6/6, rate-limit/mass-assignment/error-leak/re-auth 0/4 |
 | E33 | clean 2-level mutation comparison | **CANCELLED at power gate** — 32% power even using all 117 eligible files |
 | E32 | structural familiarity | **INCONCLUSIVE (leaning against)** — anonymised+reordered 8/41 vs 11/41, −0.073 [−0.195,+0.049]; transfer bound does **not** narrow |

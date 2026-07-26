@@ -37,7 +37,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 
 | comparison | result | what it establishes |
 |---|---|---|
-| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** | the model **discriminates** — both arms could have scored |
+| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 15/59 vs 0/40, p = 0.000185** | the model **discriminates**, and the conclusion survives a fresh run |
 | specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive) | it is not flagging indiscriminately |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
