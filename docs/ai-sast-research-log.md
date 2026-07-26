@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E53 | is the corpus a fair yardstick? | **STANDS — no** — the 2nd 'false positive' is a REAL unbounded-`limit` defect (CWE-770) the corpus never labels (0 of 10 such endpoints labelled); and the attribution vocabulary missed 'authz', 'Unauth', 'no admin gate', 'any X edits any Y' — correct attributions **0.509 → 0.673**. 863 widening REJECTED on its own data. Zero model calls |
 | E52 | k=15 and a second specificity breach | **STANDS** — union flat for 6 readings at **0.708** (not a plateau claim, per §18); never-surfaced **7/24**. **SECOND clean-arm flag, NOT a test file**: an uncapped `limit` param — possibly a REAL absent control the corpus fails to label. Documented cause withdrawn; specificity 2/328 = 0.61% |
 | E51 | how far does the union actually go? | **STANDS** — at k=12 union **0.667 and still rising** (flat for k=8-11, then a new file); never-surfaced falls a THIRD time **0.583 → 0.458 → 0.333**; **0/24 files flagged in every reading** — the reliable core is gone, top of distribution ~0.9. Specificity unmoved: **0/192**, pooled 1/280 |
 | E50 | **RETRACTION — the saturation claim was circular** | union over k and 'files that ever fired in those k' are the SAME quantity; the test could not fail. Properly tested at k=9 the union is **0.542 and still rising**, never-surfaced falls **0.583 → 0.458**, and 3 files called unreachable fired. No guard caught it: the arithmetic was right, the QUESTION was unfalsifiable |
@@ -4135,3 +4136,91 @@ mechanisms, one of them possibly not an error. Specificity across everything: **
 [0.17%, 2.2%] — still low, still the most stable quantity here, but no longer explained by a single named
 failure mode. Adjudicating whether the audit.py flag is a corpus gap needs a human reading the file
 against the CWE-770 definition, and that is owed work, not something to settle by adjusting a threshold.
+
+---
+
+## E53 — the corpus cannot adjudicate this capability, and the attribution instrument was understating it by a third
+
+Two owed items met in one investigation, and both turned out to be facets of the same thing: **the
+evaluation has been scoring the model against an incomplete yardstick.**
+
+### Part 1 — the second specificity breach was the model being RIGHT
+
+E52 left `audit.py` unadjudicated. Reading it settles the question:
+
+```python
+limit: int = 200,          # no Query(le=...), no clamp, no max
+...
+return query.order_by(...).offset(skip).limit(limit).all()
+```
+
+There is **no upper bound**. A client can pass `limit=10000000`. The model wrote *"No cap on `limit` —
+client can request millions of rows"*, which is **factually correct** and is CWE-770, unbounded resource
+allocation. It also said *"`require_role` after auth — fine; no other auth gap"*, and that is correct too:
+the authorization check is present.
+
+**It was counted as a false positive for reporting a real defect.**
+
+A deterministic scan (regex for a client-controllable `limit: int` with no `le=`/`lt=`/`min()`/`conint`
+bound, verified against bounded and unbounded forms) finds **10 such endpoints across 3 repos, and
+CWE-770 appears zero times in the ground truth for any of them**. The corpus labels a fixed class list
+and this is not on it. That is a legitimate corpus scope decision — but it means **"false positive"
+here measures label absence, not model error**, and precision measured against these labels is a floor.
+
+### Part 2 — the attribution vocabulary could not express how the model writes
+
+Every one of the 38 distinct flagged files was read against its ground truth. Nineteen were scored as
+"flagged the file for something unrelated". They were not. A representative sample of what the instrument
+was refusing to credit:
+
+| model's actual words | ground truth | old verdict |
+|---|---|---|
+| "**Authz gaps** — no `ensure_enabled`" | 863, 284, 200 | not credited |
+| "**Unauth** status endpoint. Anyone hits `/status` — no `require_user`" | 306, 862 | not credited |
+| "**No admin gate.** Auth only. Any user hits delete/update." | 862, 284, 306 | not credited |
+| "`client_edit` missing access check. **Any attorney edits any client by ID**" | 639, 862, 284 | not credited |
+| "no authz. **Any logged-in user can** send any approved msg by pk" | 639, 862, 863 | not credited |
+
+The vocabulary required the literal string `any user can`; the model writes *any attorney edits any
+client*. It required `authoriz`; the model writes **authz**. It required `no authentication`; the model
+writes **Unauth**. Each miss is a single word, and together they were suppressing roughly a third of all
+correct attributions.
+
+**Fixed, after validation, for CWE-306, 639 and 862.** In-ground-truth firing for 862 rises 0.123 → 0.200
+while out-of-ground-truth firing stays at 0.004 — the gain lands where the class actually is.
+
+**The proposed widening for CWE-863 was REJECTED on its own validation data.** "authz" is generic and
+cannot separate *incorrect* authorization (863) from *missing* authorization (862): widening it fired on
+**12 files without the class against 10 with it**. A change that fires more often where the answer is
+wrong than where it is right is not an improvement, however plausible its rationale, and it was dropped.
+
+### Part 3 — a reassurance the classifier read as a finding
+
+`accounts/urls.py` drew the response *"Looks fine. Stock Django auth views + hardened forms. **No
+change**."* and was scored **flagged** — the window carries an auth concept and the absence word "No",
+from "No change". A file the model had just called fine counted as a detection. Now suppressed, along
+with "no issues", "nothing to fix", "looks good".
+
+### Net effect, both directions reported
+
+| | before | after |
+|---|---|---|
+| flags naming a ground-truth class | 58/114 = **0.509** | 76/113 = **0.673** |
+| flags total (reassurance fix) | 114 | **113** |
+| clean-arm flags | 2/328 | 2/328 (unchanged) |
+
+The attribution fix helps the model; the reassurance fix costs it a flag; specificity is untouched. Both
+were applied together and both are reported, because applying only the favourable one would have been
+the E49 pattern with better manners.
+
+### What this changes about the direction of the work
+
+Three of today's conclusions rest on attribution rates that were understated by about a third, and one
+"false positive" turns out to be a true finding the corpus does not label. **The bottleneck on measuring
+this capability is no longer the model — it is the yardstick.** Two consequences worth acting on:
+
+1. **Precision against these labels is a floor, not an estimate.** Any flag outside the labelled class
+   set is counted wrong by construction, whether or not it is right.
+2. **The genuinely valuable direction is adjudication, not more readings.** Another k costs calls and
+   moves coverage a point or two. Reading the flags against the source found a real unlabelled defect
+   class, a third more correct attributions, and two classifier defects — for zero model calls.

@@ -188,9 +188,17 @@ def _sentences(t: str):
 # so it lives here with a test rather than as a one-off expression in a shell session.
 _CLASS_VOCAB = {
     307: r"rate.?limit|throttl|lockout|brute.?forc",              # no limit on auth attempts
-    639: r"idor|bola|ownership|owner check|any (?:user|one) can", # authz bypass via user-controlled key
+    # "any attorney edits any client", "any logged-in user can send any ..." — the original pattern
+    # required the exact words "any user can" and missed every real phrasing of the same finding.
+    639: (r"idor|bola|ownership|owner check|any (?:user|one) can|"
+          r"any (?:\w+ ){0,3}(?:can|edits|reads|accesses) any"),
     200: r"disclos|leak|exposure|expose|enumerat|reveal",         # information exposure
-    862: r"authoriz|access control|no auth\b|missing auth",       # missing authorization
+    # "authz", "no admin gate" and "any <role> hits/edits/reads ..." are how the model actually writes a
+    # missing authorization finding; the original vocabulary matched none of them. Widening was validated
+    # before adoption: in-ground-truth firing rose 0.123 -> 0.200 while out-of-ground-truth stayed at
+    # 0.004, so the gain is concentrated where the class really is.
+    862: (r"authoriz|access control|no auth\b|missing auth|authz|no admin gate|"
+          r"any (?:\w+ ){0,3}(?:hits|edits|reads|deletes|updates|accesses)"),       # missing authorization
     # CWE-306 "Missing Authentication for Critical Function". The first version of this pattern spelled
     # the concept out in full — "no authentication", "missing authentication" — and matched 0 of 440
     # real responses, because the model writes telegraphically: "no auth", "No admin gate", "Any login
@@ -200,7 +208,7 @@ _CLASS_VOCAB = {
     # appear in a run.
     306: (r"unauthenticated|no authentication|missing authentication|without authentication|"
           r"not authenticated|no ?auth\b|no login|anonymous (?:access|user)|"
-          r"requires? no (?:auth|login|credential)"),
+          r"requires? no (?:auth|login|credential)|unauth\w*|no re-?auth|no api key"),
     284: r"access control|authoriz",
     863: r"authoriz|access control",
     285: r"authoriz|access control",
@@ -216,6 +224,15 @@ def names_ground_truth_class(text: str, gt_cwes) -> bool:
     """
     return any(re.search(_CLASS_VOCAB[c], text or "", re.I)
                for c in gt_cwes if c in _CLASS_VOCAB)
+
+
+# Reassurance the model actually writes when it finds nothing. "No change." was scoring as an ABSENT
+# CONTROL: the window "Stock Django auth views + hardened forms. No change." carries an auth concept and
+# the absence word "No", so the flag rule fired on a file the model had just called fine. Found by reading
+# every flagged response against its ground truth rather than by any guard.
+_EXTRA_PRESENT_OK = re.compile(
+    r"\bno (?:change|changes|issues?|problems?|action|findings?|concerns?)\b|"
+    r"\blooks (?:fine|good|ok|correct)\b|\bnothing (?:wrong|to fix|found)\b", re.I)
 
 
 def canary_passes(ask, n: int = 3, need: int = 1) -> tuple[bool, list[str]]:
@@ -255,7 +272,7 @@ def names_class_absence(text: str, cwe: int) -> bool:
         return False
     sents = _sentences(_strip_code(text or ""))
     for window in sents + [f"{a} {b}" for a, b in zip(sents, sents[1:])]:
-        if _PRESENT_OK.search(window):
+        if _PRESENT_OK.search(window) or _EXTRA_PRESENT_OK.search(window):
             continue
         if re.search(rx, window, re.I) and (_ABSENCE.search(window) or _INHERENT.search(window)):
             return True
@@ -277,6 +294,8 @@ def classify_prose(text: str) -> str:
     # Adjacent pairs are therefore evaluated as well as single sentences.
     windows = sents + [f"{a} {b}" for a, b in zip(sents, sents[1:])]
     for sent in windows:
+        if _EXTRA_PRESENT_OK.search(sent):
+            continue
         # The reassurance test runs FIRST for every branch. A review found _INHERENT short-circuiting
         # ahead of it, so "correct IDOR defense" — prose saying the control IS present — scored as a
         # finding. That single error was the whole of E17's 1/40 clean-arm flag.

@@ -5,17 +5,17 @@
   "counts": {
     "positive": {
       "non-answer": 5,
-      "flagged": 7,
-      "clean": 12
+      "clean": 13,
+      "flagged": 6
     },
     "negative": {
       "clean": 8,
       "non-answer": 8
     }
   },
-  "flag_rate_vulnerable": 0.3684,
+  "flag_rate_vulnerable": 0.3158,
   "flag_rate_clean": 0.0,
-  "separation": 0.3684,
+  "separation": 0.3158,
   "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
   "rows": [
     {
@@ -29,7 +29,7 @@
       "arm": "positive",
       "repo": "vc-claude-code-seeded-v2-legal-case-django",
       "file": "accounts/urls.py",
-      "verdict": "flagged",
+      "verdict": "clean",
       "response": "Looks fine. Stock Django auth views + hardened forms. No change."
     },
     {
@@ -298,5 +298,33 @@
       "verdict": "non-answer",
       "response": "Dead comment L59. Drop it.\n\nBare `admin.site.register` fine until need list_display/filters. No change.\n\nWhat needed?"
     }
-  ]
+  ],
+  "superseded": {
+    "2026-07-26T10:09:05.192273+00:00": {
+      "reason": "verdicts re-derived from stored prose after classifier fixes",
+      "previous": {
+        "counts": {
+          "positive": {
+            "non-answer": 5,
+            "flagged": 7,
+            "clean": 12
+          },
+          "negative": {
+            "clean": 8,
+            "non-answer": 8
+          }
+        },
+        "flag_rate_vulnerable": 0.3684,
+        "flag_rate_clean": 0.0,
+        "separation": 0.3684
+      },
+      "rows_changed": [
+        {
+          "file": "accounts/urls.py",
+          "from": "flagged",
+          "to": "clean"
+        }
+      ]
+    }
+  }
 }
