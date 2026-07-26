@@ -2260,6 +2260,12 @@ Run 2026-07-26. Pure simulation, no model calls.
 | E24 handlers with vs without | [+0.030, +0.326] | [−0.175, +0.246] |
 | E28 replication | [+0.051, +0.302] | [−0.174, +0.243] |
 
+The "published CI" column is left exactly as it stood when this simulation was run, because those are the
+values the simulation was compared against and rewriting them would misrepresent what was actually
+argued. E28's interval has since been corrected to **[+0.027, +0.276]** by the artefact reconciliation.
+That correction *strengthens* the falsification below rather than weakening it: it shrinks the observed
+between-run drift, which is the quantity the noise model overestimated.
+
 Published unexamined, that reads as *"the entire generative-role finding dissolves once measurement
 noise is honestly modelled"* — a dramatic, self-flagellating headline, and **wrong**.
 
