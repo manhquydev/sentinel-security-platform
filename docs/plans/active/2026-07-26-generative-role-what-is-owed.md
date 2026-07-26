@@ -10,11 +10,11 @@ state, not the morning's.
 
 | | measured |
 |---|---|
-| Specificity | **0 flags in 96 clean-control observations**, and zero in every run this project has done. Pinned by SM23 across all committed artefacts. |
+| Specificity | **1 flag in 184 clean-control observations** (~0.5%). Was an unbroken zero until a disjoint sample breached it on the first try; cause is a test file whose *test-coverage* gaps read as absent controls. Pinned by SM23 as a rate. |
 | Sensitivity, single reading | ~0.19 on files carrying a real absent control |
 | Per-file structure | a **mixture**: 14 of 24 at propensity zero, a tail reaching 1.0 |
 | Reliable core | **1 file of 24 flagged in all six readings, 1 more at 5 of 6** |
-| Union coverage | saturates at **10 of 24 = 0.417 by k=6**; further readings add cost only |
+| Union coverage | saturates at **10 of 24 = 0.417 by k=6**; further readings add cost only. **Generalises**: a disjoint sample gave 0.375 with the same decay. |
 | Union vs independence | 100%, 81%, 71%, 65%, 61%, 58% at k = 1…6 |
 | Class asymmetry | ownership/authn ≫ CWE-307, **p = 0.0327** (E37), realized power 61% |
 | CWE-307 | **50 of 53 files never named across five readings**; not recovered by targeted prompting (E40) or by removing competing defects (E41) |
@@ -25,7 +25,8 @@ state, not the morning's.
 - *"Which control is absent?"* — fine, has **no** reliable core: 0 of 53 files across five readings.
 
 Honest product statement: a **low-noise sampler** that surfaces about 40% of defective files when read six
-times, never fires on clean code, and cannot reliably say what is wrong. Not a scanner.
+times, fires on clean code about once in 200 observations, and cannot reliably say what is wrong. Not a
+scanner.
 
 ## What is left
 
@@ -37,10 +38,11 @@ bias E34 disclosed, and three independent measurements show our authored files a
 no current result transfers to private code.** A data-sourcing problem, not an experiment — running things
 cannot close it.
 
-### 2. Where the ceiling sits on other code
+### 2. ~~Where the ceiling sits on other code~~ — DONE 2026-07-26 (E49)
 
-Saturation at 0.417 is saturation *of these 24 files*; nothing measured predicts the ceiling elsewhere.
-Cheap version: run the k=6 protocol on a second disjoint file set and compare saturation points. ~240 calls.
+A disjoint sample (zero overlap, verified) gave a ceiling of **0.375** against the original **0.417**, with
+the same decay signature, while being slightly *easier* per reading. **The ceiling is a property of the
+method, not of the first file set.** Artefacts `generative-disjoint{7,8,9}-260726.json`.
 
 ### 3. Do test files belong in either arm? (blocks every specificity number)
 
