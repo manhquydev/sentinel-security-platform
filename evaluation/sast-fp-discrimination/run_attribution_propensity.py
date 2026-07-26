@@ -123,9 +123,13 @@ def main() -> int:
     ever, never = groups()
     print(f"EVER-reported n={len(ever)}   NEVER-reported n={len(never)}   k={K} readings each\n")
 
+    # Interleaved, not group-after-group. If the run is cut short it must still leave a COMPARISON rather
+    # than one finished group and nothing to compare it against — the entire design is the contrast
+    # between the two, so the ordering is what makes partial output survivable.
+    ordered = [pair for a, b in zip(ever, never) for pair in (("ever", a), ("never", b))]
     rows, empty = [], 0
-    for label, group in (("ever", ever), ("never", never)):
-        for r in group:
+    if True:
+        for label, r in ordered:
             slug, relpath = r["repo"], r["file"]
             own = r["gt_own_authn"]
             hits, keeps = 0, []
