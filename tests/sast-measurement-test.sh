@@ -610,6 +610,42 @@ PY
 then ok "per-file propensities are retained, both groups present, and no file reached reliability"
 else bad "SM22: the propensity result lost its per-file spread, or a file now reads as reliably detected"; fi
 
+sect "SM23: the clean-control arm has never produced a flag, in any run"
+if run_py <<'PY'
+import glob, json, sys
+# Decision 0027's specificity claim is now stated as a FLOOR, not a low rate: across every discrimination
+# run this lab has done, no file with zero ground-truth vulnerabilities has ever been flagged. That is the
+# half of the primary claim carrying "it is not flagging indiscriminately", and it is asserted over every
+# artefact at once rather than one number in one file, because a floor is only a floor if nothing breaches
+# it anywhere.
+CLEAN_ARMS = {"negative", "clean", "C_handlers_without_absence"}
+total, flagged, where = 0, 0, []
+for path in sorted(glob.glob("evaluation/sast-fp-discrimination/*.json")):
+    doc = json.load(open(path))
+    for value in doc.values():
+        if not isinstance(value, list):
+            continue
+        for r in value:
+            if not isinstance(r, dict) or r.get("arm") not in CLEAN_ARMS:
+                continue
+            # role-control's C arm is "handlers without an absence-class defect" — not defect-free code,
+            # so it is a different control and is counted separately rather than folded in.
+            if r["arm"] == "C_handlers_without_absence":
+                continue
+            total += 1
+            if r.get("verdict") == "flagged":
+                flagged += 1
+                where.append((path.split("/")[-1], r.get("file")))
+print("  clean-control rows across all artefacts=%d  flagged=%d" % (total, flagged))
+for w in where:
+    print("    BREACH: %s %s" % w)
+# Negative control: the check must be looking at real rows, not an empty set it can trivially pass.
+print("  guard is non-vacuous (rows found)=%s" % (total > 50))
+sys.exit(0 if flagged == 0 and total > 50 else 1)
+PY
+then ok "no clean-control file has ever been flagged, across every committed discrimination run"
+else bad "SM23: the specificity floor has been breached, or the guard found no rows to check"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
