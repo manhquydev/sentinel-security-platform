@@ -82,6 +82,100 @@ PROTECTED_ROUTER = re.compile(
 # Which router object a decorator belongs to: @admin.get(...) -> "admin".
 ROUTE_OWNER = re.compile(r"^\s*@(\w+)\.(?:route|get|post|put|patch|delete)\s*\(")
 
+# --- CROSS-FILE PROTECTION (E81) -------------------------------------------------------------------
+# Production applications centralise authentication. Measured on four real apps: two enforce it with
+# app-wide middleware declared in `main.py`/`asgi.py` while their routes live in `routers/*.py`, and the
+# per-file APP_LEVEL suppressor above can never see it — 20 of 20 sampled flags in those apps sat on
+# routes that were already protected. A single-file detector is structurally blind to how real
+# applications are built, and that blindness, not the vocabulary, is what caps production precision.
+#
+# The fix is a repository-level pre-pass that answers two questions before any file is scanned:
+#   1. does this application enforce authentication for every request? (middleware / before_request)
+#   2. which router objects are mounted with a dependency, anywhere in the tree?
+# `include_router(chat_router, dependencies=[Depends(get_verified_user)])` in main.py protects handlers
+# written on `chat_router` in another module entirely.
+#
+# What this deliberately does NOT do: prove reachability. App-wide middleware routinely carves out
+# login, health and webhook paths, so "the app has auth middleware" is not "every route is protected".
+# Suppressing on it trades recall for precision, and the trade is stated rather than hidden — see the
+# `carve_outs` field, which records the exemption paths found so the cost is visible.
+MOUNT_WITH_DEPS = re.compile(
+    r"include_router\s*\(\s*([\w.]+)[^)]*dependencies\s*=\s*\[[^\]]*(?:Depends|require|auth)",
+    re.I)
+APP_DEPS = re.compile(r"FastAPI\s*\([^)]*dependencies\s*=\s*\[[^\]]*(?:Depends|require|auth)", re.I)
+DRF_DEFAULT = re.compile(r"DEFAULT_PERMISSION_CLASSES\s*[:=]\s*[\[(][^\])]*(?:IsAuthenticated|"
+                         r"DjangoModelPermissions|IsAdminUser)", re.I)
+# Paths a global guard typically exempts. Their presence means suppression is over-broad, so they are
+# counted and reported rather than silently ignored.
+CARVE_OUT = re.compile(r"['\"]/(?:login|signin|auth|health|healthz|ping|docs|openapi|redoc|static|"
+                       r"metrics|webhook|public)[\w/]*['\"]", re.I)
+
+
+class RepoContext:
+    """What protects routes in this repository, gathered before any single file is judged.
+
+    Backward compatible by design: `findings_for(src, rel)` without a context behaves exactly as before,
+    so every existing caller and every published corpus number is unaffected until it opts in.
+
+    The two mechanisms it carries have very different prices, measured on the corpus (E82) rather than
+    assumed, so they are controlled separately:
+
+      * **router propagation** — a router mounted with a dependency in another module. Precise, and it
+        costs **nothing**: zero corpus true positives lost. On by default.
+      * **app-wide suppression** — the application registers auth middleware, so every request is
+        authenticated. This removed 514 production false positives across two real apps, and cost
+        **16 of 76 corpus true positives (21% of recall)**, because applications that install global auth
+        still carve out public paths and defects live in exactly those carve-outs. **Off by default**: a
+        21% recall cost is not payable against a benefit nobody can currently measure (production
+        precision is unobtainable, E77).
+    """
+
+    def __init__(self, app_wide: bool = False, routers: set[str] | None = None,
+                 carve_outs: int = 0, evidence: list[str] | None = None,
+                 suppress_app_wide: bool = False) -> None:
+        self.app_wide = app_wide
+        self.routers = routers or set()
+        self.carve_outs = carve_outs
+        self.evidence = evidence or []
+        self.suppress_app_wide = suppress_app_wide
+
+    def protects(self, owner: str | None) -> bool:
+        return ((self.app_wide and self.suppress_app_wide)
+                or (owner is not None and owner in self.routers))
+
+    def __repr__(self) -> str:
+        return (f"RepoContext(app_wide={self.app_wide}, routers={sorted(self.routers)}, "
+                f"carve_outs={self.carve_outs})")
+
+
+def scan_repo(root: str, skip_dirs: set[str] | None = None) -> RepoContext:
+    """One pass over a repository to find centralised protection before judging any route."""
+    skip = skip_dirs or {".git", "node_modules", ".venv", "venv", "__pycache__"}
+    app_wide, routers, carve, evidence = False, set(), 0, []
+    for dp, dirs, fns in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in skip]
+        for fn in fns:
+            if not fn.endswith(".py"):
+                continue
+            path = os.path.join(dp, fn)
+            try:
+                src = open(path, encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            rel = os.path.relpath(path, root)
+            # Tests declare mock middleware and fixture routers; they protect nothing in production.
+            if "/tests/" in rel.replace("\\", "/") or fn.startswith("test_"):
+                continue
+            if APP_LEVEL.search(src) or APP_DEPS.search(src) or DRF_DEFAULT.search(src):
+                app_wide = True
+                evidence.append(rel)
+            for m in MOUNT_WITH_DEPS.finditer(src):
+                routers.add(m.group(1).split(".")[-1])
+            routers.update(PROTECTED_ROUTER.findall(src))
+            carve += len(CARVE_OUT.findall(src))
+    return RepoContext(app_wide, routers, carve, evidence[:8])
+# ---------------------------------------------------------------------------------------------------
+
 # Protection written in the body rather than as a decorator. Two kinds of construct turn up there and
 # only ONE of them is a control:
 #
@@ -153,11 +247,21 @@ def _handler_span(lines: list[str], i: int) -> tuple[int, int]:
     return start, min(end, len(lines))
 
 
-def findings_for(src: str, relpath: str) -> list[dict]:
-    """Report every route handler with no authentication or authorization marker on it."""
+def findings_for(src: str, relpath: str, ctx: "RepoContext | None" = None) -> list[dict]:
+    """Report every route handler with no authentication or authorization marker on it.
+
+    `ctx` carries repository-level protection discovered by `scan_repo` — app-wide middleware and routers
+    mounted with a dependency in another module. Without it the function behaves exactly as it always has,
+    so every published corpus number stands unchanged; with it the structural false positives measured in
+    E81 are suppressed.
+    """
+    if ctx is not None and ctx.app_wide and ctx.suppress_app_wide:
+        return []                      # opt-in: every request is authenticated (21% recall cost, E82)
     if APP_LEVEL.search(src):
         return []                      # every handler in the module sits behind app-wide auth
     protected = set(PROTECTED_ROUTER.findall(src))
+    if ctx is not None:
+        protected |= ctx.routers       # mounted with a dependency somewhere else in the tree
     lines = src.splitlines()
     out = []
     for m in ROUTE.finditer(src):

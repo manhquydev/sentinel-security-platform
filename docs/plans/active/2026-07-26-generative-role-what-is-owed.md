@@ -24,9 +24,23 @@ state, not the morning's.
 > applications are built. The **recall** claim (0.263 where Bandit+Semgrep get 0) is unaffected; the
 > **precision** claim is blocked until the layer becomes cross-file aware and is re-measured.
 >
-> **Top engineering item for the layer that is actually shipping:** read the app factory; propagate app-
-> and router-level dependencies and middleware across files. Deterministic, cheap, and it is now the
-> binding constraint on the product.
+> **Cross-file awareness was then built and PRICED (E82), and the obvious fix is not payable.** A
+> repository pre-pass now collects app-wide enforcement and cross-file router mounts before any file is
+> judged. The two mechanisms cost very differently: router propagation costs **zero** recall (and is
+> unexercised — none of the four production apps mount routers with dependencies), while app-wide
+> suppression removes **all 514** production false positives and costs **16 of 76 corpus true positives,
+> 21% of recall** — because global guards carve out public paths and defects live in the carve-outs
+> (measured carve-out counts: 32, 12, 8, 45). Trading a measured loss for a gain nobody can measure (E77)
+> is the trade this project has refused all day, so app-wide suppression ships **off by default**.
+>
+> **E81's block stands and its resolution is now specific:** not blanket suppression but **carve-out-aware
+> suppression** — parse the global guard's exemption list and suppress only the routes it actually covers.
+> That is the reachability step in the standard decomposition, and it is the one remaining deterministic
+> engineering item on the layer that ships.
+>
+> **Positioning note, verified:** Semgrep's interfile analysis is paid-tier only, CodeQL ships no built-in
+> Python auth model, and no open-source tool does cross-file missing-authorization detection for Python
+> (`docs/plans/reports/2026-07-27-cross-file-auth-analysis-practice.md`).
 
 > **2026-07-27: the transfer test is INCONCLUSIVE (E79, correcting E75).** E75 reported a collapse
 > (0.154/0.154); that was an instrument artefact. Re-run with the corpus instrument replicated exactly:

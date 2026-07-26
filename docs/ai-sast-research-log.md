@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E82 | build cross-file awareness — does it unblock E81? | **BUILT AND PRICED — NO, the obvious fix costs too much** — `scan_repo` collects app-wide enforcement and cross-file router mounts before judging any file; default path byte-identical so no published number moves. The two mechanisms differ completely in price: **router propagation costs 0 recall** (and is unexercised — none of the 4 production apps use it); **app-wide suppression removes ALL 514 production FPs but costs 16/76 corpus TPs = 21% of recall**, because global guards carve out public paths and defects live there (carve-outs measured: 32/12/8/45). Off by default: a measured loss for an unmeasurable gain. E81's block STANDS; resolution is carve-out-aware suppression |
 | E81 | do real apps centralise auth the detector cannot see? | **YES — high FP floor, cause identified** — 2 of 4 production apps enforce auth via app-wide middleware declared in a CENTRAL file (`AuthTokenMiddleware`, `CustomAuthenticationMiddleware`); the detector's `APP_LEVEL` suppressor exists but applies **per file**, so scanning `routers/*.py` it never sees `main.py`. **20 of 20 sampled flags in those apps sit behind app-wide auth.** Single-file scope is structurally blind to how production apps are built. BLOCKS the precision claim until cross-file awareness lands; recall claim unaffected |
 | E80 | what inventory does the LLM produce on a real repo? | **ZERO — and it reframes the architecture** — pointed at production route files with the corpus instrument verbatim: model **0/41**, detector 37/41, overlap 0, non-answers 31.7%. Truncation checked and rejected as the cause: in the **28 files where a route WAS visible** the model still flags **0** vs the detector's 25. E79's 0.300 came from windowing around a route a maintainer had already localised — so the model is a **commentator on located findings, not a finder**; it cannot be aimed at a repository. Marginal value of running it over a repo: nil |
 | E79 | RE-CHECK of E75 under a corrected instrument | **REVERSES E75 — collapse was an artefact, result is INCONCLUSIVE** — E75's 0.154 came from the wrong prompt (`_RUBRIC` not the corpus's `_BINARY_RUBRIC`), truncation hiding routes, and a duplicated/test site. Corrected: pre **0.300** [0.108, 0.603], post **0.200**, 33% non-answers, 10 sites. Above the 0.229 collapse line so NOT collapse; but post 0.200 >> corpus ~1% specificity so arms don't separate — the model flags production code at a base rate. Neither transfer nor collapse. Memorisation now UNRESOLVED |
@@ -5926,3 +5927,60 @@ precision claim until middleware-awareness lands and is re-measured. It does not
 
 Instrument: `detect_absent_auth.py` run over the E76 clones; the global-auth scan and its verified
 declarations are recorded in `production-inventory-260727.json` and quoted above. Zero model calls.
+
+---
+
+## E82 — cross-file awareness, built and priced: the obvious fix for E81 costs 21% of recall and is not worth paying
+
+**The debt.** E81 blocked the free layer's production precision claim: real applications centralise
+authentication in `main.py`/`asgi.py` while their routes live in `routers/*.py`, and a single-file detector
+cannot see the middleware — 20 of 20 sampled flags in two production apps sat on already-protected routes.
+The named fix was cross-file awareness. This builds it and, more usefully, **prices it**.
+
+**External practice first** (`docs/plans/reports/2026-07-27-cross-file-auth-analysis-practice.md`, verified
+sources). The standard decomposition is route inventory → enforcement points → reachability → carve-outs.
+Semgrep's interfile analysis is **paid-tier only**; CodeQL ships **no built-in auth model** for Python web
+frameworks; the review found **no open-source tool doing cross-file missing-authorization detection for
+Python**. It also predicted the trade this experiment then measured: suppressing on middleware misses
+defects in carved-out paths, which it put at 5–15% with no published benchmark.
+
+**Built.** A repository pre-pass (`scan_repo`) collects, before any file is judged: app-wide enforcement
+(`before_request`, `add_middleware(...Auth...)`, `FastAPI(dependencies=[...])`, DRF
+`DEFAULT_PERMISSION_CLASSES`), routers mounted with a dependency anywhere in the tree
+(`include_router(chat_router, dependencies=[Depends(...)])`), and a count of carve-out paths so the cost of
+suppression stays visible. `findings_for(src, rel, ctx)` consumes it; **called without a context it behaves
+exactly as before**, so every published corpus number is untouched. Two self-tests on synthetic two-file
+apps pin both mechanisms.
+
+**Priced — and the two mechanisms turn out to have completely different costs:**
+
+| mode | corpus recall | corpus sites | production sites (2 apps with middleware) |
+|---|---|---|---|
+| single-file (published baseline) | 0.263 | 561 | 514 |
+| **cross-file, router propagation (default)** | **0.263** | **561** | 514 |
+| cross-file + app-wide suppression (opt-in) | **0.208** | 460 | **0** |
+
+**App-wide suppression removes every production false positive E81 identified — and costs 16 of 76 corpus
+true positives, 21% of recall.** The mechanism is exactly what the external review predicted: four corpus
+applications install global auth *and still contain real missing-auth defects*, because global guards carve
+out public paths and defects live in the carve-outs. Measured carve-out counts in the production apps
+(32, 12, 8, 45) say the same thing from the other side.
+
+**So the obvious fix is not payable.** A 21% recall cost buys a precision improvement **nobody can currently
+measure** — organic precision is unobtainable for free (E77). Trading a measured loss for an unmeasured gain
+is the trade this project has refused all day (E55's 1:9, E60's inverted ranker). App-wide suppression is
+therefore implemented but **off by default**, with its price in the docstring.
+
+**What was actually delivered, stated honestly.** Not a precision improvement: the default mode changes
+**nothing measurable** on either the corpus or the four production apps, because none of them mount routers
+with dependencies — the router-propagation path is correct by construction and self-tested, but **unexercised
+in the wild**. What was delivered is the **price of the fix**, which is what the decision needed.
+
+**E81's block therefore stands, and its resolution is now specific.** The route to production precision is
+not blanket suppression but **carve-out-aware suppression**: parse the global guard's exemption list and
+suppress only routes it actually covers. That is harder, it is what the external decomposition calls the
+reachability step, and it is the one remaining deterministic engineering item on the layer that ships.
+
+Instrument `detect_absent_auth.py` (`scan_repo`, `RepoContext`, gated `findings_for`), artefacts
+`absent-auth-detector-260726.json`, `rank-absent-auth-260726.json` (both unchanged — the default path is
+byte-identical in behaviour). Zero model calls.
