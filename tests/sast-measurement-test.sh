@@ -701,6 +701,35 @@ PY
 then ok "the never-surfaced fraction still derives from the artefacts and sits in its published band"
 else bad "SM24: the never-surfaced fraction moved out of band, or can no longer be derived"; fi
 
+sect "SM25: every experiment entry from E60 on cites the instrument or artefact behind it"
+if run_py <<'PY'
+import re, sys
+# E58 was computed inline, quoted in the ledger and in decision 0027, and could not be re-derived when the
+# detector changed. An inline figure writes no artefact and has no instrument, so SM17 and
+# rescore_artefacts.py — which both operate on artefacts — cannot see it at all. It is not merely unchecked
+# but outside the domain of every check here, while being cited as though it had passed them.
+#
+# Deliberately NOT retroactive. 55 of the 86 entries predate the rule; rewriting them to satisfy a new
+# guard would destroy the record of how the work actually went. The guard starts where the rule starts.
+s = open("docs/ai-sast-research-log.md", encoding="utf-8").read()
+parts = re.split(r"\n## (E\d+[^\n]*)\n", s)
+bad, seen = [], 0
+for i in range(1, len(parts), 2):
+    n = int(re.match(r"E(\d+)", parts[i]).group(1))
+    if n < 60:
+        continue
+    seen += 1
+    # A filename mentioned in passing is not an attribution — E62 discusses rescore_artefacts.py while
+    # describing the defect, and an earlier version of this guard accepted that as its citation. The entry
+    # must DECLARE what produced its numbers, on its own line.
+    if not re.search(r"(?im)^(?:instrument|artefact)s?\b[^\n]*`[\w./-]+\.(?:json|py|sh)`", parts[i + 1]):
+        bad.append(n)
+print("  entries at or after E60: %d   uncited: %s" % (seen, sorted(set(bad)) or "none"))
+sys.exit(1 if bad else 0)
+PY
+then ok "SM25: every entry since the rule was written names what produced its numbers"
+else bad "SM25: an entry publishes numbers with no instrument or artefact to re-derive them from"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

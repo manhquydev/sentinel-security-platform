@@ -46,6 +46,29 @@ generalise the way an LLM does — each detector covers one condition and had to
 what it covers, it covers exactly, repeatably and for free. Any honest product story should lead with the
 deterministic layer and position the model as the thing that covers what no rule can express.
 
+**Its precision does not yield, and that decides the product shape (E60–E62).** The absence detector
+reaches CWE-306/862 at **22.6% recall** where Bandit and Semgrep reach zero, at **6.7% precision**. Three
+routes to fixing that are now closed by measurement rather than by argument:
+
+- **Ordering it** — four prespecified security signals rank real defects **worse than shuffling**
+  (recall@10% 0.029 vs 0.100, permutation p = 0.9975), precision falling monotonically 0.250 → 0.062 as
+  signals accumulate. Source line number, which carries no security content, beats the designed ranker
+  **6.5×**. The intuition that you look hardest where the code looks most critical is backwards here.
+- **Better markers** — the enforcement/identity split is real and worth having (−73 false positives for
+  −1 true positive), and it moves precision by **0.33 percentage points**.
+- **A model filter** — the gate role, already falsified in 0018/0020.
+
+So the layer is a **recall instrument**, and the product built on it must be an **inventory, not an alert
+stream**: *"here are 1,130 route handlers with no visible access control — confirm which are public by
+design."* Compliance attestation runs on exactly that shape, and the ~93% that are not defects are cheap
+for a human to dismiss. What must never be shipped is a claim that this is a list of vulnerabilities.
+
+**And it is not a rounding error next to the model.** Rebuilt with a committed instrument over 22 readings
+(E62), the rule adds **+0.103 [0.042, 0.125]** to the model on all positive-arm files and **+0.157
+[0.062, 0.200]** on the files it can actually reach — about **57% of what the model delivers**, for free,
+with no k and no non-determinism. Observed overlap sits at the independence expectation, so the two are
+genuinely finding different files.
+
 ## What is left
 ## What is left
 

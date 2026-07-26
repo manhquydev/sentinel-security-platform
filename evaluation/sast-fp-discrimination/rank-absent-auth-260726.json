@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-07-26T13:13:10.366013+00:00",
+  "question": "can a free, unfitted ordering lift the absence detector's real defects?",
+  "unit": "finding site (file+line); TP fixed once in canonical order, identical for all rankers",
+  "sites": 565,
+  "real_defects": 70,
+  "site_precision": 0.1239,
+  "signals": [
+    "write_method",
+    "sensitive_name",
+    "object_id",
+    "touches_data"
+  ],
+  "fitted_parameters": 0,
+  "seed": 20260726,
+  "depths": {
+    "0.05": {
+      "observed": 0.0,
+      "chance_p95": 0.1,
+      "p_value": 1.0,
+      "lift_over_chance": 0.0,
+      "grouped_ci": [
+        0.0,
+        0.0
+      ],
+      "negative_control_line": 0.0143
+    },
+    "0.10": {
+      "observed": 0.0286,
+      "chance_p95": 0.1571,
+      "p_value": 0.9975,
+      "lift_over_chance": 0.286,
+      "grouped_ci": [
+        0.0,
+        0.09302325581395349
+      ],
+      "negative_control_line": 0.1857
+    },
+    "0.20": {
+      "observed": 0.1571,
+      "chance_p95": 0.2714,
+      "p_value": 0.8655,
+      "lift_over_chance": 0.786,
+      "grouped_ci": [
+        0.07407407407407407,
+        0.2535211267605634
+      ],
+      "negative_control_line": 0.4143
+    },
+    "0.50": {
+      "observed": 0.4429,
+      "chance_p95": 0.5857,
+      "p_value": 0.861,
+      "lift_over_chance": 0.886,
+      "grouped_ci": [
+        0.3384615384615385,
+        0.5573770491803278
+      ],
+      "negative_control_line": 0.6857
+    }
+  },
+  "negative_control": "source line number \u2014 no security content",
+  "negative_control_beats_designed_ranker_by": 6.49,
+  "verdict": "INVERTED \u2014 the ordering is significantly WORSE than shuffling; the signals anti-correlate with real defects",
+  "stratum_precision": {
+    "3": {
+      "sites": 65,
+      "real": 4
+    },
+    "2": {
+      "sites": 176,
+      "real": 19
+    },
+    "1": {
+      "sites": 304,
+      "real": 42
+    },
+    "0": {
+      "sites": 20,
+      "real": 5
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-07-26T13:17:54.052439+00:00",
+  "question": "what does the deterministic rule add to the model, per reading?",
+  "supersedes": "E58's +0.104, which had no committed instrument and a denominator of 48 that matches neither statable file set",
+  "matcher": "run_spike.match \u2014 file + CWE + line tolerance, claim-once; correctness, not firing",
+  "results": [
+    {
+      "denominator": "all positive-arm files",
+      "mean_files_per_reading": 26,
+      "readings": 22,
+      "rule_correct_mean": 4,
+      "rule_recall": 0.1538,
+      "model_mean": 0.2246,
+      "model_range": [
+        0.125,
+        0.3333
+      ],
+      "union_mean": 0.328,
+      "increment_mean": 0.1034,
+      "increment_range": [
+        0.0417,
+        0.125
+      ],
+      "increment_covers_zero": false,
+      "overlap_mean": 0.818,
+      "overlap_expected_if_independent": 0.781
+    },
+    {
+      "denominator": "files carrying a GT CWE-306/862 entry",
+      "mean_files_per_reading": 17,
+      "readings": 22,
+      "rule_correct_mean": 3,
+      "rule_recall": 0.1765,
+      "model_mean": 0.2742,
+      "model_range": [
+        0.0625,
+        0.4667
+      ],
+      "union_mean": 0.4309,
+      "increment_mean": 0.1566,
+      "increment_range": [
+        0.0625,
+        0.2
+      ],
+      "increment_covers_zero": false,
+      "overlap_mean": 0.818,
+      "overlap_expected_if_independent": 0.963
+    }
+  ]
+}

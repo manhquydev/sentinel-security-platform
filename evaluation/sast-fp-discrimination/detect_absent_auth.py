@@ -75,6 +75,28 @@ PROTECTED_ROUTER = re.compile(
 # Which router object a decorator belongs to: @admin.get(...) -> "admin".
 ROUTE_OWNER = re.compile(r"^\s*@(\w+)\.(?:route|get|post|put|patch|delete)\s*\(")
 
+# Protection written in the body rather than as a decorator. Two kinds of construct turn up there and
+# only ONE of them is a control:
+#
+#   ENFORCEMENT — the handler refuses. `abort(403)`, `raise HTTPException(401)`, an `is_admin` test, a
+#   comparison of the object's owner against the caller, a token actually verified. These deny the
+#   request, so the control is present and reporting the handler is a false positive.
+#
+#   IDENTITY — the handler merely learns who is calling: `session['user_id']`, a redirect to login.
+#   Knowing the caller is not checking their permission, and a handler that reads the session and then
+#   acts on any object it is handed is the textbook shape of CWE-862. These must NOT suppress.
+#
+# The split is semantic, and the corpus agrees with it: across 602 finding sites the enforcement
+# constructs appear on 1 of 71 real defects while the identity constructs appear on 9 — so treating
+# identity as protection would silently discard real findings, which is the failure mode that matters.
+ENFORCEMENT = re.compile(
+    r"abort\s*\(\s*40[13]|"
+    r"HTTPException\s*\([^)]*(?:401|403|status\.HTTP_40[13])|"
+    r"\bis_admin\b|\.is_admin|is_superuser|is_staff|"
+    r"\.(?:user_id|owner_id|author_id)\s*(?:!=|==)|"
+    r"\bauthorize\s*\(|\bcan_\w+\s*\(|\bcheck_\w*(?:access|owner|admin)|"
+    r"jwt\.decode|decode_token|verify_token|validate_token", re.I)
+
 # Handlers that are meant to be public. Reporting these would be noise, not a finding.
 PUBLIC_OK = re.compile(r"\b(login|logout|signup|register|healthz?|health_check|ping|status|"
                        r"index|home|docs|openapi|metrics|robots|favicon|static|webhook)\b", re.I)
@@ -93,6 +115,12 @@ SELF_TEST = [
     ("adm = APIRouter(dependencies=[Depends(require_user)])\npub = APIRouter()\n"
      "@pub.get('/secrets')\ndef s():\n    return 1", True,
      "a DIFFERENT, unprotected router in the same file must still be reported"),
+    ("@app.route('/admin')\ndef admin():\n    if not user.is_admin:\n        abort(403)\n"
+     "    return 1", False,
+     "enforcement in the body: the handler refuses, so the control is present"),
+    ("@app.route('/doc/<int:i>')\ndef doc(i):\n    u = session['user_id']\n"
+     "    return Doc.query.get(i)", True,
+     "IDENTITY IS NOT AUTHORIZATION: reading the session then serving any object is CWE-862"),
 ]
 
 
@@ -128,7 +156,7 @@ def findings_for(src: str, relpath: str) -> list[dict]:
             continue                   # this particular router carries the dependency
         start, end = _handler_span(lines, i)
         block = "\n".join(lines[start:end])
-        if AUTH_MARKER.search(block):
+        if AUTH_MARKER.search(block) or ENFORCEMENT.search(block):
             continue
         head = "\n".join(lines[i:min(i + 3, len(lines))])
         if PUBLIC_OK.search(head):

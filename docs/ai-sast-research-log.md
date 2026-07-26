@@ -42,6 +42,9 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E62 | can E58's number be re-derived? | **CORRECTED (accountability, not arithmetic)** — E58 was computed **inline with no committed instrument**, on a denominator of 48 that matches neither statable file set; invisible to SM17 and to `rescore_artefacts`. Rebuilt as `pool_rule_model_union.py` over **22 readings**: rule adds **+0.103 [0.042, 0.125]** on all positive-arm files and **+0.157 [0.062, 0.200]** on absence-class files. **E58's +0.104 replicates.** Overlap sits at independence (0.82 vs 0.78) |
+| E61 | is the FP population protection the detector cannot see? | **STANDS — partly, and it does not rescue precision** — sensitive-looking FPs hide unrecognised protection at **0.143 vs 0.077**, explaining only 14%. Split the constructs on a principle: **enforcement** (handler refuses) fires on **1 of 71** real defects, **identity** (`session['user']`) on **9** — so enforcement joins the vocabulary, identity must not. Applied: **-73 FP for -1 TP**, precision 6.40% → **6.73%** |
+| E60 | can a free ordering rescue the free layer's precision? | **STANDS (negative, inverted)** — four prespecified security signals rank real defects **worse than shuffling**: recall@10% **0.029 vs 0.100**, permutation p(>=obs) = **0.9975**; precision falls monotonically 0.250 → 0.062 as signals accumulate (p = 0.0344). **Source line number, which has no security content, beats the designed ranker 6.5×.** Authorship split cannot separate corpus artefact from real effect (1.32× human vs 1.56× LLM, both n.s.) |
 | E59 | is the contamination threat real? | **STANDS — no evidence for it** — the corpus records `authorship` per repo: **26 of 66 are human_authored** (704 real vulns), so 'the corpus is LLM-seeded' was wrong about 40%. Detection is **HIGHER on human code** (0.519 vs 0.316 union, p = 0.062) — opposite to the threat's prediction. Confounded by file size; not a refutation |
 | E58 | is the model/rule complementarity real? | **STANDS — yes, independent but small** — overlap 4 observed vs 4.7 under independence. At k=18 the rule adds **+0.042**; at **k=1 it adds +0.104** (0.208 → 0.312), **replicated on a disjoint sample at +0.125**. First pass counted file-firing not correctness and overstated it 3x — caught by spot-check |
 | E57 | where does the union actually stop? | **STANDS** — k=18: union **0.667**, last increase at k=9, **nine flat readings since**. Never-surfaced **8/24 = 0.333**; still **0/24 flagged in all 18**. Stated as a BOUND not a ceiling: the 8 remaining files are jointly **ruled out above ~3%** propensity, compatible with ~1%. Falsifiable by one new file at k=25 |
@@ -4637,3 +4640,161 @@ human-authored subset does not show lower detection, so contamination is not dem
 is small, the comparison is confounded by file size, and none of it substitutes for private production
 code.** That is a materially weaker threat than the one carried all day, and it was closable from data
 already on disk.
+
+---
+
+## E60 — can a free ordering rescue the free layer's precision? **NO — the ordering is inverted**
+
+**Why this was the next question.** E56's deterministic detector is the cheapest real security value this
+project has produced: it reaches CWE-306/862 at 22.8% recall where Bandit and Semgrep together reach
+**zero**. And it is unusable as an alert stream, because those 77 real defects arrive inside ~1200 reports
+— **6.4% precision**. Every other lever on that number is already closed: suppressing findings with a model
+is the gate role, and 0018/0020 falsified it (E2 hid 3 of 8 real vulnerabilities). So this asks the one
+question that requires suppressing nothing — **leave every finding in, and order it**. A ranking cannot
+hide a defect; a bad ranking merely leaves the list as unusable as it already was.
+
+**Why it is not a re-run of E3.** E3 tested an LLM ranker against a CWE prior and the **prior won**. That
+comparator cannot exist here: every finding in this set is the same class by construction, so a CWE prior
+is a constant and orders nothing. The baseline that beat the model last time is structurally unavailable.
+Per E3's actual lesson and §16, the free ranker is tested first, at zero model cost.
+
+**Design, and the trap it had to avoid.** With 71 positives, any ranker whose weights are fitted to these
+labels looks excellent and means nothing. So the ranker has **zero fitted parameters**: a count of four
+prespecified signals, each worth 1, written from what "missing authentication for a critical function"
+means — a state-changing method, a sensitive path or handler name, an object identifier in the route, a
+body that reaches data. Nothing is trained, so there is nothing to overfit. TP/FP labels are fixed **once**
+in canonical order and shared by every ranker compared, because the matcher is claim-once and would
+otherwise let a ranking rewrite its own labels.
+
+**Result — the signals point the wrong way, and monotonically.**
+
+| signals present | sites | real | precision |
+|---|---|---|---|
+| 3 | 65 | 4 | **0.062** |
+| 2 | 176 | 19 | 0.108 |
+| 1 | 304 | 42 | 0.138 |
+| 0 | 20 | 5 | **0.250** |
+
+Low-signal sites are richer in real defects than high-signal sites: **47/334 = 0.141 vs 24/268 = 0.090,
+Fisher one-sided p = 0.0344**. Ranked best-first, recall@10% is **0.029 against 0.100 from shuffling**, and
+the permutation test puts p(observed or better) at **0.9975 — significantly worse than chance.**
+
+**The control is the sharpest line in the result.** Source line number carries no security content and was
+included only to prove the pipeline manufactures nothing. It scores **0.186 at 10% depth — it beats the
+designed ranker by 6.5×.** Four deliberately-chosen security signals order these findings worse than a
+number that means nothing. (Line number is not "misbehaving": it has weak real structure, since the first
+routes in a file are declared before the protected ones. The original ±0.10 tolerance band would have
+recorded this as "behaves" and buried the comparison that matters; the check now reports the ratio.)
+
+**Mechanism, tested rather than asserted — and inconclusive.** Two explanations fit: either labels cluster
+on simple planted routes while the signals track application realism (a corpus artefact), or sensitive
+routes really are FP-rich. E59's `authorship` split tests this for free, since a didactic artefact should
+be stronger on the seeded half:
+
+- `human_authored`: 12 repos, 109 sites — inversion **1.32×**, p = 0.38
+- `llm_generated`: 20 repos, 493 sites — inversion **1.56×**, p = 0.067
+
+Same direction on both halves, neither significant alone, and the human half has 19 positives. **The test
+does not separate the mechanisms** — but it finds no evidence the inversion is confined to seeded code,
+which is the outcome that would have made it dismissible.
+
+**What it means.** The intuition every security tool is built on — *look hardest where the code looks most
+critical* — is **backwards on this instrument**. The most plausible reading is that developers do protect
+the routes that look important, in forms the detector cannot see, so its errors concentrate exactly there.
+That is measured in E61, and it is true of only 14% of them.
+
+Artefact `rank-absent-auth-260726.json`. Zero model calls.
+
+---
+
+## E61 — is the FP population protection the detector cannot see? **PARTLY — and fixing it changes nothing**
+
+**Hypothesis from E60.** If sensitive-looking routes are FP-rich because they carry protection outside
+`AUTH_MARKER`'s vocabulary, the precision problem is a marker-coverage defect rather than a limit.
+
+**Measured.** Ten candidate protection constructs, searched in the handler bodies the detector reports:
+
+| | sites | carry an unrecognised protection construct |
+|---|---|---|
+| high-signal FP (2–3) | 244 | 35 = **0.143** |
+| low-signal FP (0–1) | 287 | 22 = 0.077 |
+| true positives | 71 | 6 = 0.085 |
+
+So the hypothesis holds in direction — sensitive-looking FPs are ~1.9× more likely to hide real protection
+— and explains only **14% of them**.
+
+**The finding worth keeping is which constructs.** They split on a principle, and the split predicts the
+counts rather than being read off them:
+
+- **Enforcement** — `abort(403)`, `HTTPException(401/403)`, an `is_admin` test, an owner comparison, a
+  token actually verified, `authorize(...)`. The handler **refuses**. Fires on **1 of 71** real defects.
+- **Identity** — `session['user_id']`, redirect-to-login. The handler merely learns **who** is calling.
+  Fires on **9**.
+
+Reading the session is not checking a permission, and a handler that loads `session['user_id']` and then
+serves whatever object id it is handed is the textbook shape of CWE-862. So enforcement belongs in the
+marker vocabulary and identity must stay out — treating identity as protection would **silently discard
+real findings**, which is the failure mode that matters. Both directions are now pinned by self-test cases,
+so the distinction cannot be lost to a later edit.
+
+**Effect, measured end to end:** 1204 findings/77 TP → **1130 findings/76 TP**. Seventy-three false
+positives removed for one real detection. **Accepted** — a 73:1 trade on a principled basis, against the
+1:9 trade E55 rejected. Recall 0.2285 → **0.2255**; precision 6.40% → **6.73%**.
+
+**And that is the point.** The best available repair, applied, moves precision by a third of a percentage
+point. Together with E60 this closes the question:
+
+> **The deterministic absence detector is a recall instrument. Its precision does not yield — not to
+> ordering (worse than chance), not to better markers (+0.33pp), and not to a model filter (falsified as
+> the gate role).**
+
+**The consequence is a product-shape claim, not a defeat.** 22.6% recall at 6.7% precision is fatal for an
+alert stream and unremarkable for an **inventory**: *"here are 1,130 route handlers with no visible access
+control — confirm which are public by design."* Compliance attestation workflows run on exactly that shape,
+the 93% that are not defects are cheap for a human to dismiss, and nothing else in this project's toolbox
+reaches these classes at all. What must never be claimed is that this is a list of vulnerabilities.
+
+Instrument `detect_absent_auth.py` (the `ENFORCEMENT` vocabulary and its two self-test cases), artefact
+`absent-auth-detector-260726.json`. Zero model calls.
+
+---
+
+## E62 — E58 had no instrument. Rebuilt: the number survives, the reproducibility gap was real
+
+**How this surfaced.** E61 changed the detector, so every figure derived from it had to be re-checked —
+the correction-propagation law. E58's claim (*the rule adds **+0.104** to the model at k=1, 0.208 → 0.312*)
+is quoted in the ledger and in decision 0027. It could not be re-checked, because **it was computed inline
+and no instrument was ever committed.** Its denominator implies 48 files. The two statable file sets in the
+committed artefacts are 60 (every distinct positive-arm file) and 40 (those carrying a ground-truth
+CWE-306/862 entry). **Neither is 48**, and no reconstruction attempted here produced it.
+
+That is a failure of exactly the kind this project's guards exist to prevent, and the guards did not catch
+it: SM17 and `rescore_artefacts.py` police artefacts against their instruments, and an inline computation
+has neither. **A number with no instrument is invisible to every check we run.**
+
+**A second defect, found while rebuilding.** The first replacement pooled all readings against one fixed
+file set. That is wrong here: the disjoint-sample readings (`generative-disjoint7/8/9`) cover a different
+file set *by design*, so intersecting them with another reading's files scores them as "the model flagged
+nothing" and inflates the rule's increment. The tell was the model's own mean — **0.081 with range
+[0.000, 0.233]**, against a model that has never measured below ~0.12 on files it actually read. Each
+reading now carries its own denominator: the files that reading read, and the rule re-measured on those.
+
+**Result — 22 readings, both denominators, the rule deterministic throughout:**
+
+| denominator | files/reading | rule | model | union | **rule adds** | overlap obs / indep |
+|---|---|---|---|---|---|---|
+| all positive-arm files | 26 | 0.154 | 0.225 [0.125, 0.333] | 0.328 | **+0.103 [0.042, 0.125]** | 0.82 / 0.78 |
+| carries a GT CWE-306/862 entry | 17 | 0.176 | 0.274 [0.062, 0.467] | 0.431 | **+0.157 [0.062, 0.200]** | 0.82 / 0.96 |
+
+**E58's number replicates.** +0.103 against a published +0.104, now from a committed script, averaged over
+22 readings instead of taken from one, and with a range that excludes zero on both denominators. The
+complementarity claim also holds: observed overlap sits at the independence expectation (0.82 vs 0.78) and
+slightly *below* it on eligible files (0.82 vs 0.96) — the two instruments are not finding the same files.
+
+**What was actually wrong was not the answer but the accountability.** Reporting both denominators matters
+more than it looks: on all positive-arm files the rule adds +0.103, on the files it can actually reach it
+adds **+0.157**, and quoting either without naming the denominator is the error E58 made. The rule is not
+a rounding error next to the model — on absence-class files it delivers about **57% of what the model
+delivers**, deterministically, for free, with no k and no non-determinism.
+
+Instrument `pool_rule_model_union.py`, artefact `rule-model-union-260726.json`. Zero model calls.

@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-07-26T11:00:12.813873+00:00",
+  "generated_at": "2026-07-26T13:12:32.184058+00:00",
   "detector": "absent-auth (route handler with no authn/authz marker)",
   "scored_with": "run_spike.match \u2014 file + CWE + line tolerance, claim-once",
   "gt_306": 121,
   "gt_862": 216,
-  "matched": 77,
-  "unmatched": 1127,
-  "recall": 0.2285,
+  "matched": 76,
+  "unmatched": 1054,
+  "recall": 0.2255,
   "per_repo": [
     {
       "repo": "realvuln-damn-vulnerable-flask-application",
@@ -40,7 +40,7 @@
     },
     {
       "repo": "realvuln-threatbyte",
-      "findings": 20,
+      "findings": 18,
       "tp": 2
     },
     {
@@ -90,37 +90,37 @@
     },
     {
       "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
-      "findings": 42,
+      "findings": 40,
       "tp": 2
     },
     {
       "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
-      "findings": 80,
+      "findings": 60,
       "tp": 3
     },
     {
       "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
-      "findings": 44,
+      "findings": 42,
       "tp": 1
     },
     {
       "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
-      "findings": 86,
+      "findings": 72,
       "tp": 3
     },
     {
       "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
-      "findings": 38,
+      "findings": 36,
       "tp": 2
     },
     {
       "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
-      "findings": 60,
+      "findings": 56,
       "tp": 2
     },
     {
       "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
-      "findings": 90,
+      "findings": 72,
       "tp": 4
     },
     {
@@ -130,7 +130,7 @@
     },
     {
       "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
-      "findings": 40,
+      "findings": 38,
       "tp": 2
     },
     {
@@ -140,8 +140,8 @@
     },
     {
       "repo": "vc-codex-seeded-v2-support-desk-fastapi",
-      "findings": 40,
-      "tp": 5
+      "findings": 38,
+      "tp": 4
     },
     {
       "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
@@ -150,17 +150,17 @@
     },
     {
       "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
-      "findings": 44,
-      "tp": 3
-    },
-    {
-      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
       "findings": 42,
       "tp": 3
     },
     {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "findings": 40,
+      "tp": 3
+    },
+    {
       "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
-      "findings": 38,
+      "findings": 36,
       "tp": 2
     },
     {

@@ -619,3 +619,28 @@ and case 3's re-run reproduced all eight committed totals exactly.
 **The rule.** The suite runs between `commit` and `push`, always, including for documentation-only and
 comment-only changes. If a run is too slow to sit through, push nothing until it has finished — a delayed
 push costs minutes, a red `main` costs whoever pulls next.
+
+## 21. A number computed inline is invisible to every guard you have (E62)
+
+E58 published "the rule adds +0.104 to the model at k=1". The figure was quoted in the ledger and in a
+decision record, and when the detector changed it had to be re-checked — at which point it emerged that it
+had been **computed in a throwaway command and no instrument was ever committed**. Its denominator implies
+48 files; the file sets that exist in the committed artefacts are 60 and 40. Nothing reconstructed 48.
+
+Rebuilt properly the number replicated (+0.103 [0.042, 0.125] over 22 readings), so this rule is not about
+a wrong answer. It is about the fact that **nobody could have found out either way.**
+
+**Why the existing guards could not help.** `SM17` compares each artefact against the instrument that
+writes it. `rescore_artefacts.py` re-derives stored verdicts from persisted prose. Both operate on
+artefacts. An inline computation produces no artefact and no instrument, so it is not merely unchecked —
+it is **outside the domain of every check the project runs**, permanently, and it stays that way while
+being cited as though it had passed them.
+
+**The rule.** Any number that reaches the log, a decision record, or a stakeholder report is written by a
+committed script that persists an artefact. Exploratory commands are fine and are how most of these
+findings start — but the moment a figure is going to be quoted, the command becomes a file. If that feels
+disproportionate for a one-line calculation, note that E58's was one line.
+
+**Pinned by `SM25`**, which requires every log entry from E60 onward to cite an instrument or artefact.
+It is not retroactive: 55 of the 86 earlier entries would fail it, and rewriting history to satisfy a new
+guard would destroy the record of how the work actually went. The guard starts where the rule starts.
