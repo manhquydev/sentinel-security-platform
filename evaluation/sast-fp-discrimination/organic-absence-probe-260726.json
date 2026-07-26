@@ -1,0 +1,164 @@
+{
+  "generated_at": "2026-07-26T14:07:03.326678+00:00",
+  "question": "can an organic absence-class corpus be built without paid expert labelling?",
+  "method": "GitHub Security Advisories -> fix commit -> diff ADDS an auth/enforcement marker on a route; the maintainer's fix IS the label, so nothing is inferred",
+  "ecosystem": "pip",
+  "cwes": [
+    306,
+    862,
+    863,
+    639
+  ],
+  "advisories_per_class": {
+    "306": 82,
+    "862": 98,
+    "863": 300,
+    "639": 66
+  },
+  "distinct_advisories": 319,
+  "with_fix_commit": 115,
+  "sampled_commits": 115,
+  "touch_python": 114,
+  "add_auth_marker": 42,
+  "marker_on_route": 11,
+  "labelled_sites_in_sample": 20,
+  "sites_per_commit": 0.1739,
+  "projected_sites_all_commits": 20,
+  "projection_caveat": "sample is the first n commit-linked advisories, not random; sites cluster by repository so the independent unit is the repo, not the site",
+  "limitation": "counts only fixes expressed in the vocabulary detect_absent_auth already knows, so this is a LOWER BOUND on organic yield",
+  "transfer_test": {
+    "checked": 20,
+    "fired": 17,
+    "organic_file_level_recall": 0.85,
+    "note": "pre-fix file versions of organic maintainer-labelled defects; FILE level, not the strict file+CWE+line standard used on the teaching corpus, and a much smaller sample",
+    "detail": [
+      {
+        "repo": "maziggy/bambuddy",
+        "file": "backend/app/api/routes/api_keys.py",
+        "commit": "a82f9278d2",
+        "detector_findings": 0
+      },
+      {
+        "repo": "maziggy/bambuddy",
+        "file": "backend/app/api/routes/archives.py",
+        "commit": "a82f9278d2",
+        "detector_findings": 98
+      },
+      {
+        "repo": "maziggy/bambuddy",
+        "file": "backend/app/api/routes/print_queue.py",
+        "commit": "a82f9278d2",
+        "detector_findings": 10
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/log_router.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 4
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/chat.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 10
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/endpoints.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 12
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/files.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 12
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/models.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 4
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/monitor.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 2
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/validate.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 2
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v2/registration.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 4
+      },
+      {
+        "repo": "apache/airflow",
+        "file": "airflow/www/api/experimental/endpoints.py",
+        "commit": "21cedff205",
+        "detector_findings": 2
+      },
+      {
+        "repo": "open-webui/open-webui",
+        "file": "backend/open_webui/routers/images.py",
+        "commit": "e038bab66d",
+        "detector_findings": 6
+      },
+      {
+        "repo": "open-webui/open-webui",
+        "file": "backend/open_webui/main.py",
+        "commit": "e7ff4768f8",
+        "detector_findings": 46
+      },
+      {
+        "repo": "janeczku/calibre-web",
+        "file": "cps/shelf.py",
+        "commit": "bcdc976414",
+        "detector_findings": 0
+      },
+      {
+        "repo": "jupyterlab/jupyterlab",
+        "file": "jupyterlab/tests/test_extensions.py",
+        "commit": "be9303f5bc",
+        "detector_findings": 16
+      },
+      {
+        "repo": "open-webui/open-webui",
+        "file": "backend/open_webui/routers/utils.py",
+        "commit": "6d736d3c59",
+        "detector_findings": 10
+      },
+      {
+        "repo": "open-webui/open-webui",
+        "file": "backend/open_webui/routers/chats.py",
+        "commit": "2e52ad8ff2",
+        "detector_findings": 70
+      },
+      {
+        "repo": "open-webui/open-webui",
+        "file": "backend/open_webui/main.py",
+        "commit": "de3317e26b",
+        "detector_findings": 48
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/api_key.py",
+        "commit": "fdc1b3b144",
+        "detector_findings": 0
+      }
+    ],
+    "distinct_repositories": 6,
+    "teaching_corpus_same_standard": {
+      "files": 145,
+      "fired": 43,
+      "file_level_firing": 0.2966
+    },
+    "not_established": "whether the detector lands on the SPECIFIC route the maintainer fixed \u2014 file-level firing only"
+  }
+}

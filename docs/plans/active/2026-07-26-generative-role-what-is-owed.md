@@ -113,9 +113,37 @@ Costed options, ranked (figures are the researcher's estimates, not quotes):
 Option 3 should be rejected on evidence this project already owns. Option 2 is the cheap first move and
 its bias is nameable; Option 1 is what a publishable claim would require.
 
-**Who owns it.** Corpus acquisition is a project-level decision (licensing, budget, possibly a data
-partnership) and sits above a research session. This file records the requirement and the options; the
-choice is not one this lab makes alone.
+**Who owns it.** Corpus *acquisition at publishable scale* is a project-level decision (licensing, budget,
+possibly a data partnership) and sits above a research session. This file records the requirement and the
+options; that choice is not one this lab makes alone.
+
+**But the debt was over-scoped, and E66 reduced it for free.** The part that costs money is *expert
+labelling*. For this defect class it is not needed, because **the fix commit is the label**: a maintainer
+who adds an authentication check to a route has already ruled that the pre-fix file was missing one, and
+the file and line come from the diff. Nothing is inferred — which is precisely where the 20–71% label
+inaccuracy in prior datasets comes from. Measured yield from GitHub Security Advisories (`pip`, four
+absence CWEs): 319 advisories → 115 with a resolvable fix commit → **20 labelled organic sites across 6
+repositories**, at zero cost, and that is a lower bound because only fixes written in the vocabulary the
+detector already knows are counted.
+
+That bought the measurement this project had never been able to make. On the pre-fix versions of those
+organic production files (langflow, airflow, bambuddy and others) the detector's **file-level firing is
+0.850, against 0.297 on the teaching corpus at the same standard**. Three limits are load-bearing and
+stated in E66: only **6 independent repositories**, an uncontrolled route-density confound (one organic
+file produced 98 findings), and **site level is not established** — whether the detector lands on the
+specific route the maintainer fixed needs diff-to-line mapping that does not exist yet.
+
+**So what is actually owed has changed shape.** Not "$30–50k or nothing", but engineering: diff-to-line
+mapping, ecosystems beyond `pip`, and enough repositories that the unit of analysis is the repository. The
+paid options remain the route to a *publishable* corpus; they are no longer the route to a first organic
+check, and no positive per-file number may be published as applying to customer code until site-level
+organic recall exists.
+
+**E65 gave this debt a second, independent reason.** The headroom for any prioritisation method is bounded
+by defect concentration, and on this corpus the oracle sits 6.5 points from a trivial density ordering
+because 38% of files carry a defect. Production code, where missing authorization is rare, would have a
+different concentration and therefore different headroom. **This corpus cannot answer that question at
+all**, so "is prioritisation worth building?" is now blocked on the same organic data.
 
 **Partially closed already, for free (E59).** The single largest component of this threat — "the defects
 are LLM-generated, so the model may be recognising its own kind" — was testable from data already on disk

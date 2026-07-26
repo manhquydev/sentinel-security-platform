@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 319 → 115 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
 | E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
 | E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
 | E63 | what does the LLM layer cost ON TOP of the free layer? | **OVERTURNS E13 for the generative role** — E13's 'zero extra findings' tested the gate role. Here the model adds **+0.500 strict / +0.583 loose** over the free rule layer at ~**$0.23 per file the free layer missed**. Operationally decisive: the union stops moving at **k=9** and readings 10-18 burn **51% of the budget for nothing**. Both scoring standards reported because the rule is matched on file+CWE+line while a model flag only asserts 'something is missing here' |
@@ -4971,3 +4972,72 @@ cannot answer that question**, which makes it a validity threat with an owner ra
 (§19), and it attaches to the same external-corpus requirement already recorded as owed item 1.
 
 Instrument `run_active_triage.py`, artefact `active-triage-260726.json`. Zero model calls.
+
+---
+
+## E66 — owed item 1, attacked for free: the fix commit is the label
+
+**The debt, and why the framing was wrong.** Owed item 1 is the one validity threat no experiment here
+closes: every positive result rests on deliberately-vulnerable teaching applications, and nothing in the
+corpus represents production code. Sourcing research priced the options at $30–50k, $5–10k or $15–25k and
+the item was recorded as a project-level budget decision above a research session. **That was too quick.**
+The part that costs money is *expert labelling*, and for this class of defect there is a free oracle:
+
+> If a maintainer's security fix **adds** an authentication or authorization check to a route handler, the
+> parent commit's version of that file is a confirmed absence site. The judgement was already made, by the
+> person who owned the code. Nothing is inferred — which is exactly where prior datasets' 20–71% label
+> inaccuracy comes from.
+
+**Yield, measured rather than assumed** (GitHub Security Advisories, ecosystem `pip`, CWE-306/862/863/639):
+
+| stage | count |
+|---|---|
+| distinct advisories in the absence classes | 319 |
+| carrying a resolvable GitHub fix commit | 115 = 36.1% |
+| commit touches a Python file | 114/115 = 99.1% |
+| diff **adds** an auth/enforcement marker | 42/115 = 36.5% |
+| ...and that marker lands on a route | 11/115 = 9.6% |
+| **labelled absence sites extracted** | **20**, across **6 repositories** |
+
+This is a **lower bound**: only fixes expressed in the vocabulary `detect_absent_auth` already knows are
+counted, so a fix written in an unrecognised form is invisible to the probe.
+
+**And then the measurement this project has never been able to make.** Every number published about the
+detector comes from teaching applications. These 20 sites are the opposite — real defects in production
+code (langflow, airflow, bambuddy and others), labelled by the maintainer who fixed them. Fetching each
+file *as it was before the fix* and asking the detector the same question:
+
+| | file-level firing |
+|---|---|
+| **organic production code** | **17/20 = 0.850** |
+| teaching corpus, same standard | 43/145 = 0.297 |
+
+**The comparison is deliberately re-derived at the same standard**, because quoting 0.850 against the
+published 0.226 would be wrong twice: that figure is site-level (file AND CWE AND line, claim-once) and
+this is "fired somewhere in the file". Both columns above are file-level firing on files known to carry a
+defect.
+
+**What this does and does not establish.** It is the third independent result pointing away from the feared
+direction — after E59 (detection *higher* on human-authored repos) and E56 (absence classes are not
+invisible to determinism). But it is an **indication, not an established transfer**, and three limits are
+load-bearing:
+
+- **6 independent repositories**, not 20. Two of them contribute most of the sites, so the effective
+  sample is the repository count.
+- **An uncontrolled confound**: organic API modules are large and route-dense — one produced **98
+  findings** — so file-level firing is close to guaranteed on them. This is the same size confound that
+  qualified E59, unresolved here for the same reason.
+- **Site-level is not established.** Whether the detector lands on the *specific route the maintainer
+  fixed* needs diff-to-line mapping this probe does not do. Until that exists, no organic recall figure
+  comparable to the published 0.226 may be quoted.
+
+**Status of the debt.** Not closed, and materially reduced. The free path is demonstrated to work and to
+produce genuinely organic, maintainer-labelled sites at zero cost, which is a different situation from
+"$30–50k or nothing". What is now needed is engineering, not budget: line mapping, more ecosystems than
+`pip`, and enough repositories for the unit of analysis to be the repository. The paid options remain the
+route to a *publishable* corpus; they are no longer the route to a first organic check.
+
+Fetched data is cached outside the repository and never committed, following the corpus policy already in
+force.
+
+Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.
