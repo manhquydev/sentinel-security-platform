@@ -81,7 +81,7 @@ Measured: widening the context to one sentence either side fixes the false posit
 detections to remove 1**. Rejected. The false positive is kept as a named cost, and the clean-arm rate it
 feeds (0.96%) is small enough that buying it down at 9:1 is the wrong purchase.
 
-### 4. Do test files belong in either arm?
+### 5. Do test files belong in either arm?
 
 The clean-control arm is defined as "files with no ground-truth entries", which makes it **14% test files**
 (8 of 56) while the positive arm has none (0 of 84). A test file has no production controls, so *"is a

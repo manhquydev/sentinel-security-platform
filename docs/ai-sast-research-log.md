@@ -4389,6 +4389,24 @@ They are **genuinely public endpoints**. The detector cannot tell "no authentica
 public" from "no authentication because somebody forgot", because that distinction is about **intent**,
 and intent is not in the syntax.
 
+### Two attempts to rescue the precision, both measured, both failed
+
+Before concluding the 6.5% is intrinsic, the two plausible alternatives were tested rather than assumed.
+
+**Could a better public-endpoint heuristic fix it?** No. The route paths behind unmatched findings are
+almost all distinct — there is no recurring "public" shape to filter on, and any list long enough to help
+would be a list fitted to these particular repositories.
+
+**Could the detector be missing router- or app-level protection?** A real gap: the scan reads only the
+handler, while FastAPI routers carry `dependencies=[Depends(...)]`, Flask has `before_request`, Django has
+authentication middleware. Measured: of 101 files producing findings, **9** carry router- or app-level
+auth, accounting for **28 of 621 findings — 4.5%**. Worth fixing for correctness; nowhere near enough to
+move a 6.5% precision.
+
+**So the low precision is intrinsic.** Most unauthenticated routes in this corpus genuinely have no
+authentication marker anywhere, and whether that is a defect depends on whether the endpoint was *meant*
+to be public. That is not recoverable from syntax at any level of the framework.
+
 ### Why this closes the obvious product idea rather than opening it
 
 The complementarity looks perfect on paper: determinism supplies recall for almost nothing, the model
