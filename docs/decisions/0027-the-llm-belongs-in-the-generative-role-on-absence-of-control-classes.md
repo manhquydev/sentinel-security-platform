@@ -177,8 +177,14 @@ observations. Then a **disjoint** sample — files this design had never seen �
 and the "unbroken zero" claim died on the first genuinely fresh test it faced. Combined: **1 in 184**.
 
 The cause is identified: the file is a **test file**, and the model was describing gaps in *test coverage*
-("No unauth 302/403") which the classifier read as absent security controls. Eight of 56 distinct
-clean-control files are test files, so the exposure is real. **The defensible claim is a false-positive
+("No unauth 302/403") which the classifier read as absent security controls.
+
+**And the arm composition turns out never to have been audited.** Test files make up **8 of 56 (14%) of the
+clean-control arm and 0 of 84 of the positive arm** — structurally, because the arms are defined by ground
+truth and ground truth records defects in production code only. So the clean arm is not "production code
+whose controls are present"; it is "any file with no ground-truth entries", one in seven of which is test
+code where the question this design asks has no well-formed answer. The specificity claim was partly
+measuring that subpopulation, and the first breach came from precisely it. **The defensible claim is a false-positive
 rate near 0.5% with one known cause — not zero.** The classifier fix is owed and was deliberately not
 applied the same day, because changing an instrument immediately after it produces the first result that
 damages a claim is the pattern the guards exist to prevent.

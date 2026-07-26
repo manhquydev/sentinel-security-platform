@@ -42,7 +42,20 @@ cannot close it.
 Saturation at 0.417 is saturation *of these 24 files*; nothing measured predicts the ceiling elsewhere.
 Cheap version: run the k=6 protocol on a second disjoint file set and compare saturation points. ~240 calls.
 
-### 3. Whether the 14 zero-propensity files are truly unreachable
+### 3. Do test files belong in either arm? (blocks every specificity number)
+
+The clean-control arm is defined as "files with no ground-truth entries", which makes it **14% test files**
+(8 of 56) while the positive arm has none (0 of 84). A test file has no production controls, so *"is a
+required control absent here?"* is ill-posed for it — and the single specificity breach measured so far
+came from exactly that subpopulation.
+
+Neither candidate repair works: the prose-level rule removes 2 genuine positive-arm detections and misses
+the false positive; the path-level rule removes only the one embarrassing observation, which is a
+retraction rather than a fix. **The decision is about the sampling frame, not the classifier**, and it
+changes every specificity figure this project has published — so it must be made deliberately. Cost: no
+model calls, only a decision and a re-derivation.
+
+### 4. Whether the 14 zero-propensity files are truly unreachable
 
 A file observed at 0 of 6 carries the interval [0.000, 0.390], so some may have small non-zero
 propensities. Separating "unreachable" from "very rare" needs large k on those files: 14 × 20 ≈ 280 calls.

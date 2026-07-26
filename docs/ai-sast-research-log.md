@@ -3885,6 +3885,25 @@ absent things — but that **a test file was placed in a clean-control arm whose
 should have had controls and does"**. That is a corpus construction decision, and 8 of 56 clean-control
 files are test files.
 
+### The clean-control arm was never audited for what is in it
+
+Checking the composition of both arms across every run — 84 distinct positive files, 56 clean:
+
+| | test files | share |
+|---|---|---|
+| positive arm | **0 of 84** | 0.0% |
+| clean-control arm | **8 of 56** | **14.3%** |
+
+Test files appear **only** in the clean arm, and this is structural rather than accidental. The arms are
+defined by ground truth, which records vulnerabilities in production code; a test file has no entries, so
+it lands in "clean" automatically. The clean arm is therefore not "production code that correctly has its
+controls" — it is **"any file with no ground-truth entries"**, and one file in seven of it is test code
+where *"is a required control absent here?"* has no well-formed answer.
+
+That reframes the specificity claim retrospectively. "It never fires on clean files" was in part "it never
+fires on test files" — and the first time it did fire, it fired on exactly that subpopulation. The claim
+was weaker than it read, in a way nobody had checked, for as long as it held.
+
 **Status: no fix applied, and the owed work is now a different question** — whether test files belong in
 either arm of this design. Changing that changes the sampling frame and therefore every specificity number
 this project has published, so it needs deciding deliberately rather than as a patch. The measured rate of
