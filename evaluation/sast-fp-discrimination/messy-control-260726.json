@@ -1,104 +1,104 @@
 {
-  "generated_at": "2026-07-25T20:37:46.436236+00:00",
+  "generated_at": "2026-07-26T04:01:24.807769+00:00",
   "model": "sast-grok45",
   "arm": "messy-no-absence",
   "n": 80,
   "counts": {
-    "non-answer": 22,
-    "clean": 55,
-    "flagged": 3
+    "non-answer": 20,
+    "clean": 58,
+    "flagged": 2
   },
-  "flag_rate": 0.0375,
+  "flag_rate": 0.025,
   "rows": [
     {
       "repo": "vc-codex-seeded-v2-hr-payroll-django",
       "file": "payroll/forms.py",
       "verdict": "non-answer",
-      "response": "What need? Review, bug, simplify, security?"
+      "response": "What need? Review / fix / feature?"
     },
     {
       "repo": "realvuln-vulpy",
       "file": "bad/db_init.py",
       "verdict": "clean",
-      "response": "SQL injection line 20. String format into query.\n\n```python\nc.execute(\n    \"INSERT INTO users (username, password, failures, mfa_enabled, mfa_secret) VALUES (?, ?, ?, ?, ?)\",\n    (u, p, 0, 0, ''),\n)\n```\n\n\u2192 skipped: password hashing, add when auth real."
+      "response": "**SQL injection** line 20. String format builds INSERT. Fix:\n\n```python\nc.execute(\n    \"INSERT INTO users (username, password, failures, mfa_enabled, mfa_secret) VALUES (?, ?, ?, ?, ?)\",\n    (u, p, 0, 0, ''),\n)\n```\n\n**Plaintext passwords** in DB. Hash before insert (stdlib):\n\n```python\nimport hashlib, secrets\n\ndef hash_pw(p):\n    salt = secrets.token_hex(16)\n    return salt + ':' + hashlib.pbkdf2_hmac('sha256', p.encode(), salt.encode(), 100_000).hex()\n```\n\nThen `(u, hash_pw(p), 0, 0, '')`.\n\n\u2192 skipped: bcrypt/argon2, add when real auth ships."
     },
     {
       "repo": "realvuln-insecure-web",
       "file": "app/templates/index.html",
-      "verdict": "clean",
-      "response": "Broken label L12. Missing `</label>`. CSRF missing both forms. Search XSS if `/search` echoes `q` raw.\n\nFix label:\n```html\n<label for=\"password\">[redacted:secret]\n```"
+      "verdict": "flagged",
+      "response": "Broken label L12 (unclosed). No CSRF tokens. Search reflects `q` \u2192 XSS if unsanitized. Login POST no rate-limit/CSRF.\n\nFix: close label. Add CSRF. Escape search output."
     },
     {
       "repo": "realvuln-vulnpy",
       "file": "src/vulnpy/falcon/vulnerable.py",
       "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "response": "What need? Review, fix, explain, or other."
     },
     {
       "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
       "file": "backend/app/routers/tickets.py",
       "verdict": "clean",
-      "response": "Task? File truncated mid-`grant_sla_exception`."
+      "response": "File truncated mid-`grant_sla_exception`. Need: complete? review? fix?"
     },
     {
       "repo": "realvuln-extremely-vulnerable-flask-app",
       "file": "templates/base.html",
       "verdict": "clean",
-      "response": "**Issues in `templates/base.html`:**\n\n1. **Navbar ignores dark mode** \u2014 always `navbar-light bg-light`. Dark users get light bar.\n2. **Profile image XSS surface** \u2014 `current_user.profile_image.decode()` dumped into `data=`. If that field is user-controlled (upload/path/data URI) and autoescape ever off or content is `data:`/`[redacted:target-raw]`, XSS. `<object>` + user data is a bad pattern.\n3. **Hardcoded light classes** on nav while `data-bs-color-scheme` and night CSS exist \u2014 inconsistent.\n\n**Minimal fix (dark nav only):**\n\n```html\n<nav class=\"navbar navbar-expand-lg {{ 'navbar-dark bg-dark' if g.p"
+      "response": "XSS risk L61: `profile_image.decode()` raw into `data=`. Breakout if user-controlled bytes.\n\nFix: serve via `/media/<id>` endpoint + `Content-Type` + no inline. Or base64 data-URI only after strict image validation.\n\n```html\ndata=\"[redacted:target-raw]\"\n```\n\nskipped: full avatar route, add when upload exists."
     },
     {
       "repo": "realvuln-vulpy",
       "file": "bad/vulpy.py",
       "verdict": "clean",
-      "response": "Hardcoded `SECRET_KEY`. `debug=True`. Fix:\n\n```python\nimport os\napp.config['SECRET_KEY'] = os.environ['SECRET_KEY']\n# ...\napp.run(host='127.0.0.1', port=5000, extra_files='csp.txt')  # no debug\n```\n\n\u2192 skipped: env validation, add when deploy."
+      "response": "```python\n#!/usr/bin/env python3\nimport os\nfrom pathlib import Path\nfrom flask import Flask, g, redirect, request\nimport libsession\nfrom mod_api import mod_api\nfrom mod_csp import mod_csp\nfrom mod_hello import mod_hello\nfrom mod_mfa import mod_mfa\nfrom mod_posts import mod_posts\nfrom mod_user import mod_user\n\napp = Flask('vulpy')\napp.config['SECRET_KEY'] = os.environ['SECRET_KEY']\n\napp.register_blueprint(mod_hello, url_prefix='/hello')\napp.register_blueprint(mod_user, url_prefix='/user')\napp.register_blueprint(mod_posts, url_prefix='/posts')\napp.register_blueprint(mod_mfa, url_prefix='/mfa')\napp.register_blueprint(mod_csp, url_prefix='/csp')\napp.register_blueprint(mod_api, url_prefix='/api')\n\ncsp = ''\np = Path('csp.txt')\nif p.is_file():\n    csp = ''.join(\n        ln.replace('\\n', '')\n        for ln in p.read_text().splitlines()\n        if ln and not ln.startswith('#')\n    )\nif csp:\n    print('CSP:', csp)\n\n@app.route('/')\ndef do_home():\n    return redirect('/posts')\n\n@app.before_request\ndef before_request():\n    g.session = libsession.load(request)\n\n@app.after_request\ndef add_csp_headers(response):\n    if csp:\n        response.headers['Content-Security-Policy'] = csp\n    return response\n\nif __name__ == '__main__':\n    app.run(debug=False, host='127.0.0.1', port=5000, extra_files='csp.txt')\n```\n\n\u2192 skipped: secret rotation/vault, add when multi-env deploy."
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "Other/url_fetch.py",
       "verdict": "clean",
-      "response": "```python\n#!/usr/bin/env python3\nimport urllib.request\nfrom urllib.parse import urlparse\nfrom flask import Flask, request\n\napp = Flask(__name__)\n\n@app.route('/fetch')\ndef fetch():\n    url = request.args.get('url', '')\n    p = urlparse(url)\n    if p.scheme == 'https' and p.netloc == 'insecurewebapp.com':\n        with urllib.request.urlopen(url) as r:\n            return r.read()\n    return b''\n```\n\u2192 skipped: timeouts/errors, add when prod. exact host only."
+      "response": "SSRF. `startswith` host check bypassable. Fix:\n\n```python\n#!/usr/bin/env python3\nfrom urllib.parse import urlparse\nfrom urllib.request import urlopen\nfrom flask import Flask, request\n\napp = Flask(__name__)\n\n@app.route('/fetch')\ndef fetch():\n    url = request.args.get('url', '')\n    try:\n        p = urlparse(url)\n        if p.scheme == 'https' and p.hostname == 'insecurewebapp.com':\n            return urlopen(url, timeout=5).read()\n    except Exception:\n        pass\n    return \"\"\n```\n\n\u2192 skipped: allowlist multi-host, add when needed. Dead imports gone."
     },
     {
       "repo": "vc-codex-high-seeded-v2-legal-case-django",
       "file": "legalcase/settings.py",
       "verdict": "clean",
-      "response": "Broken line 67. Syntax invalid.\n\n```python\n\"[redacted:secret]\n```\n\n\u2192 skipped: rest of settings review, add when asked."
+      "response": "Line 67 syntax broken. Redaction mangled `os.environ.get`.\n\n```python\n\"[redacted:secret]\n```\n\nRest fine."
     },
     {
       "repo": "realvuln-vampi",
       "file": "models/user_model.py",
       "verdict": "non-answer",
-      "response": "No ask. What need? Review / fix / explain?"
+      "response": "File received. What need?"
     },
     {
       "repo": "vc-claude-code-seeded-v2-crm-saas-django",
       "file": "crm/templatetags/crm_extras.py",
-      "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "verdict": "clean",
+      "response": "File only. Need? Review / fix / change?"
     },
     {
       "repo": "realvuln-flask-xss",
       "file": "app/blueprints/sandboxes/templates/sandboxes/unsafe_cookies.html",
       "verdict": "clean",
-      "response": "`[redacted:target-raw]` XSS. User input unescaped.\n\nFix: drop `| safe`."
+      "response": "XSS. `| safe` disables escape on `name`.\n\nFix:\n```html\n<h1>Hello, [redacted:target-raw]</h1>\n```\n\n\u2192 skipped: cookie hardening (HttpOnly/Secure/SameSite). add when cookie code present."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
       "file": "backend/app/routers/proofs.py",
       "verdict": "clean",
-      "response": "**Bugs**\n\n1. `request: Request = None` \u2014 FastAPI never injects. Use `request: Request`.\n2. Full `file.file.read()` then size check \u2014 memory DoS. Check `Content-Length` first; stream write.\n3. `file.filename` can be `None` \u2192 `splitext` crash.\n4. No `os.makedirs(settings.UPLOAD_DIR, exist_ok=True)`.\n5. Ext from user name only; no mime/allowlist (optional).\n\n**Minimal fix (upload):**\n```python\n@router.post(\"/job/{job_id}\", response_model=ProofUploadOut)\ndef upload_proof(\n    job_id: int,\n    category: str = Form(...),\n    visibility: ProofVisibility = Form(ProofVisibility.customer_visible),\n    d"
+      "response": "**Bugs:**\n\n1. `request: Request = None` \u2014 FastAPI won't inject. Use `request: Request`.\n2. `file.filename` can be `None` \u2192 `splitext`/`ProofUpload` blow up.\n3. No mime/ext allowlist \u2014 arbitrary upload.\n4. Write-then-commit: DB fail leaves orphan file.\n\n**Minimal fix (1\u20132):**\n```python\nrequest: Request,  # drop = None (both handlers)\n# ...\nif not file.filename:\n    raise HTTPException(400, \"Missing filename\")\next = os.path.splitext(file.filename)[1].lower()\n```\n\n**skipped:** mime allowlist, atomic write+commit, add when abuse/prod."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-education-lms-django",
       "file": "core/forms.py",
       "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "response": "forms.py. What need?"
     },
     {
       "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
       "file": "backend/app/routes/imports_exports.py",
-      "verdict": "non-answer",
-      "response": "Broken line 59: `[redacted:secret]\n\nLikely meant: `[redacted:secret]\n\nWhat do you want done with this file?"
+      "verdict": "clean",
+      "response": "Bug L59: redaction broke syntax.\n\n```python\n[redacted:secret]\n```\n\nRest fine."
     },
     {
       "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
@@ -110,385 +110,385 @@
       "repo": "realvuln-vulnpy",
       "file": "src/vulnpy/aiohttp/vulnerable_routes.py",
       "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "response": "Intentional vuln routes for aiohttp (vulnpy). XSS raw path concatenates user input into HTML.\n\nWhat need? Review / fix / port / delete?"
     },
     {
       "repo": "vc-codex-high-seeded-v2-crm-saas-django",
       "file": "crm/views.py",
-      "verdict": "clean",
-      "response": "File truncated mid-`contact_edit`. Missing GET render.\n\nBugs:\n1. L113: `timezone.timedelta` \u2014 no such attr. Use `timedelta` from `datetime`.\n2. L329: `[redacted:secret]\n\nWhat do you want? Fix, finish file, review?"
+      "verdict": "non-answer",
+      "response": "What need done with `crm/views.py`? File cuts mid-`contact_edit`."
     },
     {
       "repo": "realvuln-vulpy",
       "file": "bad/templates/messages.html",
       "verdict": "clean",
-      "response": "**XSS:** `[redacted:target-raw]` disables auto-escape. Flash content runs as HTML/JS.\n\nFix \u2014 drop filter:\n\n```html\n<p>[redacted:target-raw]</p>\n```\n\nNeed HTML in flashes? Sanitize server-side before flash. Never `| safe` on untrusted input."
+      "response": "**XSS:** `[redacted:target-raw]` disables auto-escape. Any attacker-controlled flash (query param, form, etc.) runs as HTML/JS.\n\nDrop the filter:\n\n```html\n<p>[redacted:target-raw]</p>\n```\n\n\u2192 skipped: message categories / typed panels, add when you need success vs error styling."
     },
     {
       "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
       "file": "clinic_portal/settings.py",
       "verdict": "clean",
-      "response": "Broken `_database_config` (redaction mangled PASSWORD lines). Fix:\n\n```python\ndef _database_config() -> dict:\n    url = os.environ.get(\"DATABASE_URL\")\n    if url:\n        parsed = urlparse(url)\n        return {\n            \"ENGINE\": \"django.db.backends.postgresql\",\n            \"NAME\": parsed.path.lstrip(\"/\") or os.environ.get(\"POSTGRES_DB\", \"clinic_portal\"),\n            \"USER\": parsed.username or os.environ.get(\"POSTGRES_USER\", \"\"),\n            \"[redacted:secret]\n            \"HOST\": parsed.hostname or os.environ.get(\"POSTGRES_HOST\", \"loc"
+      "response": "Broken syntax L90/L98 (redaction artifacts). Real code:\n\n```python\n\"[redacted:secret]\n# ...\n\"[redacted:secret]\n```\n\nIssues:\n- `SECRET_KEY` weak default \u2014 crash if missing in prod, not soft-default.\n- `DEBUG=True` default \u2014 same.\n- No `CONN_MAX_AGE` / SSL opts for Postgres.\n- Console email only \u2014 fine local.\n\nWhat need?"
     },
     {
       "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
       "file": "app/main.py",
       "verdict": "clean",
-      "response": "**Bug:** `support_operations` router registered after SPA catch-all `/{path:path}` \u2192 routes never hit.\n\n**Fix:** move include before SPA block; use same import style as others.\n\n```python\nfrom app.routers import admin, auth, core, escalations, integrations, kb, reports, tickets\nfrom app import support_operations  # or app.routers if moved\n\n# ... middleware ...\n\napp.include_router(auth.router)\napp.include_router(core.router)\napp.include_router(tickets.router)\napp.include_router(escalations.router)\napp.include_router(kb.router)\napp.include_router(kb.public_router)\napp.include_router(reports.rout"
+      "response": "Bug: `support_operations` after SPA catch-all. `/{path:path}` eats its routes.\n\nFix: move include before SPA block.\n\n```python\napp.include_router(integrations.router)\nfrom . import support_operations\napp.include_router(support_operations.router)\n\nfrontend_dist = Path(\"frontend/dist\").resolve()\nif frontend_dist.exists():\n    app.mount(\"/assets\", StaticFiles(directory=frontend_dist / \"assets\"), name=\"assets\")\n\n    @app.get(\"/{path:path}\", include_in_schema=False)\n    def spa(path: str):\n        file_path = frontend_dist / path\n        if file_path.exists() and file_path.is_file():\n            return FileResponse(file_path)\n        return FileResponse(frontend_dist / \"index.html\")\n```\n\n\u2192 skipped: relative\u2192absolute import cleanup, add when style pass."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
       "file": "backend/app/main.py",
       "verdict": "clean",
-      "response": "Catch-all `/{path:path}` registered before `dispatch_operations` \u2192 shadows its GET routes.\n\nFix: move include above SPA block.\n\n```python\nfrom . import dispatch_operations\napp.include_router(dispatch_operations.router)\n\n# Catch-all for frontend SPA (in production build)\nfrontend_build = os.path.join(os.path.dirname(__file__), \"[redacted:target-raw]frontend/dist\")\nif os.path.exists(frontend_build):\n    @app.get(\"/{path:path}\")\n    def serve_frontend(path: str):\n        file_path = os.path.join(frontend_build, path)\n        if os.path.exists(file_path) and os.path.isfile(file_path):\n            return FileResp"
+      "response": "Bug: `dispatch_operations` router after SPA catch-all. Catch-all steals its routes in prod.\n\nFix: move include with other routers (before line 70).\n\n```python\napp.include_router(imports.router, prefix=\"/api/imports\", tags=[\"imports\"])\nfrom . import dispatch_operations\napp.include_router(dispatch_operations.router)\n```\n\nDelete lines 80\u201381."
     },
     {
       "repo": "realvuln-vulnpy",
       "file": "src/vulnpy/flask/blueprint.py",
-      "verdict": "clean",
-      "response": "Deliberate vuln Flask blueprint. Registers `/vulnpy/{name}/` + `/vulnpy/{name}/{trigger}/` from `TRIGGER_MAP`. Input: header `User-Input` else query/form `user_input`. Calls `get_trigger` then returns template. XSS raw: unsanitized concat into HTML.\n\nNeed?"
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
     },
     {
       "repo": "vc-codex-high-seeded-v2-crm-saas-django",
       "file": "config/settings.py",
       "verdict": "clean",
-      "response": "Broken line 72 (redaction artifact or real syntax error):\n\n```python\n\"[redacted:secret]\n```\n\nRest: fine for local. Ship as-is.\n\nSkipped: prod SSL/HSTS/cookie Secure flags \u2014 add when deploy behind HTTPS."
+      "response": "```python\n\"[redacted:secret]\n```\n\nLine 72 mangled by redaction. Rest fine."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
       "file": "backend/app/main.py",
-      "verdict": "clean",
-      "response": "File: FastAPI loan portal bootstrap. Creates tables on import, CORS localhost, mounts `/uploads`, wires 12 routers + `loan_operations`.\n\nWhat do you need?"
+      "verdict": "flagged",
+      "response": "Import order messy. `loan_operations` at bottom; rest top.\n\n```python\nfrom app.routers import auth, users, borrowers, applications, documents, decisions, messages, audit, admin, notifications, api_keys, notes, loan_operations\n```\n\nThen drop lines 42\u201343; add `app.include_router(loan_operations.router)` with the others.\n\n`create_all` on import: fine for local MVP. Use Alembic when you ship.\n\n`/uploads` StaticFiles: no auth. Anyone with URL gets file. Gate if docs private.\n\nCORS localhost only: OK dev. Prod: set real origins.\n\nNo other change needed. What broken?"
     },
     {
       "repo": "realvuln-lets-be-bad-guys",
       "file": "badguys/templates/vulnerable/xss/form.html",
       "verdict": "clean",
-      "response": "XSS sink: `[redacted:target-raw]` line 28. Escaping off. Form GET reflects into value.\n\nWant fix (drop `|safe`) or something else? No exploit payload."
+      "response": "**XSS:** `[redacted:target-raw]` line 28. Escaping off. Attribute breakout.\n\n**Fix:**\n```django\n<input type=\"text\" name=\"qs\" id=\"qs\" value=\"[redacted:target-raw]\">\n```\nDrop `|safe`. Django auto-escapes.\n\n**Payload (exercise):**\n```\n\"><img src=x onerror=\"document.getElementById('cookie').innerHTML=document.cookie\">\n```\n\n\u2192 skipped: CSP/headers, add when hardening beyond lab."
     },
     {
       "repo": "realvuln-threatbyte",
       "file": ".github/workflows/dast-zap.yml",
       "verdict": "clean",
-      "response": "Bug: upload path wrong. Scan writes `zap-output/`, upload reads `zap-results/`.\n\n```yaml\npath: zap-output/\n```\n\nAlso: wait loop never fails if app down. Add after loop:\n\n```bash\ncurl -sf http://localhost:5000 > /dev/null || { cat server.log; exit 1; }\n```\n\n\u2192 skipped: fail-on-warn, auth scan, add when prod gate needed."
+      "response": "**Bug:** upload path wrong. Scan writes `zap-output/`, artifact reads `zap-results/`.\n\n```yaml\n      - name: Upload ZAP reports\n        uses: actions/upload-artifact@v4\n        with:\n          name: zap-dast-report\n          path: zap-output/\n```\n\nAlso: wait loop never fails if app dead. Add after loop:\n\n```yaml\n          if ! curl -s http://localhost:5000 > /dev/null; then\n            echo \"App never came up\" >&2\n            cat server.log\n            exit 1\n          fi\n```\n\nDrop `chmod 777` \u2014 Docker user can write with default perms if dir owned by runner.\n\n\u2192 skipped: ZAP rules/auth config, add when you need authenticated scan."
     },
     {
       "repo": "realvuln-extremely-vulnerable-flask-app",
       "file": "templates/personal_notes.html",
       "verdict": "clean",
-      "response": "Empty table still renders. Move check:\n\n```html\n{% if personal_notes | length == 0 %}\n<p>No notes yet</p>\n{% else %}\n[redacted:target-raw]\n{% endif %}\n```\n\n`safe_columns=['text']` \u2192 XSS if notes unsanitized server-side. Fix input, not template.\n\nCSV JS fine for small tables. Skip server export until needed."
+      "response": "CSV formula injection risk. Cells start `=+@-` run as Excel formulas.\n\nFix (after clean, before quote):\n```js\nif (/^[=+\\-@]/.test(data)) data = \"\\t\" + data;\n```\n\u2192 skipped: server-side export, add when notes large/sensitive."
     },
     {
       "repo": "vc-claude-code-seeded-v2-crm-saas-django",
       "file": "crm/models.py",
-      "verdict": "non-answer",
-      "response": "No task stated. File truncated mid-`_document_upload_path`. What needed?"
+      "verdict": "clean",
+      "response": "File truncated mid `_document_upload_path`. `ContactInvite.token` field + `create_for` redacted/broken.\n\nWhat do you need?"
     },
     {
       "repo": "realvuln-vulpy",
       "file": "bad/templates/posts.view.html",
       "verdict": "clean",
-      "response": "XSS: `[redacted:target-raw]` renders raw HTML.\n\nFix:\n```html\n[redacted:target-raw]\n```\n\nskipped: CSRF token on form, add when auth matters."
+      "response": "```html\n<li><span class=\"w3-h3\">[redacted:target-raw]</span></li>\n```\n\u2192 skipped: CSRF token on form, add when auth matters."
     },
     {
       "repo": "realvuln-vulpy",
       "file": "good/libsession.py",
       "verdict": "clean",
-      "response": "Bug: `getcountry(request.remote_addr)` wrong. Expects request obj. Always yields `XX`. Sessions die.\n\nFix:\n```python\nif country == getcountry(request):\n```\n\nAlso: hardcoded key forgeable. Cookie/token redacts \u2192 `request.cookies.get('vulpy_session')` / `fernet.decrypt(cookie, ttl=ttl).decode()`. Encrypt bytes \u2192 `.decode()` for set_cookie."
+      "response": "Bug: `load` calls `getcountry(request.remote_addr)`. Expects request obj. Fails.\n\nFix:\n```python\nif country == getcountry(request):\n```\n\nAlso: create encrypt returns bytes. set_cookie needs str.\n```python\nresponse.set_cookie('vulpy_session', fernet.encrypt(\n    (username + '|' + country).encode()\n).decode())\n```\n\nHardcoded key. Rotate. Env var.\n\nprint(e) leaks. Drop.\n\n\u2192 skipped: key rotation, secure cookie flags. Add when prod."
     },
     {
       "repo": "vc-claude-code-seeded-v2-education-lms-django",
       "file": "lms/settings.py",
       "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "response": "What need? Review / fix / extract / other."
     },
     {
       "repo": "realvuln-flask-xss",
       "file": "app/blueprints/account_area/views.py",
       "verdict": "clean",
-      "response": "**Bugs**\n\nL26: syntax broken (`=` + redacted). Need hash check.  \nL24\u201330: plain `if`s overwrite; last error wins.  \nL35: password write redacted \u2014 must hash.  \nL65: debug `print`.  \nEmail: no format/uniqueness check.\n\n**Minimal fix**\n\n```python\nfrom flask import Blueprint, render_template, request\nfrom flask_login import login_required, current_user\nfrom werkzeug.security import check_password_hash, generate_password_hash\n\nfrom app.models import User, Message, db\n\naccount_area = Blueprint('account_area', __name__, template_folder='templates')\n\n\n@account_area.route('/')\n@login_required\ndef inde"
+      "response": "**Broken.**\n\nL26 syntax dead: `[redacted:secret]\n\nLikely meant:\n```python\nif not check_password_hash(current_user.password, current_password):\n```\nand L35:\n```python\n'[redacted:secret]\n```\n\nAlso:\n- errors overwrite (use `elif` / early return)\n- no email format/uniqueness\n- `print(request.form)` left in\n- no strength check on new password\n\nMinimal fix path: werkzeug `check_password_hash` / `generate_password_hash`. Drop print. Chain validations with `elif`.\n\nWhat do you want: fix patch, security review, or something else?"
     },
     {
       "repo": "realvuln-dsvpwa",
       "file": "dsvpwa/server.py",
       "verdict": "clean",
-      "response": "Init only. Plaintext passwords. Shared mem SQLite. XXE risk if XML untrusted.\n\nNeed: vulns? fix? next file?"
+      "response": "Task? File only. No ask."
     },
     {
       "repo": "realvuln-extremely-vulnerable-flask-app",
       "file": "routes/registration_codes.py",
-      "verdict": "flagged",
-      "response": "Duplicate admin gate. Extract `@admin_required` if more admin routes.\n\n```python\n# routes/registration_codes.py \u2014 keep as-is otherwise\n# only change if you add more admin endpoints:\nfrom functools import wraps\ndef admin_required(f):\n    @wraps(f)\n    def wrapped(*a, **k):\n        if not current_user.is_admin:\n            flash(\"Not authorized\", \"error\")\n            return redirect(\"/home\")\n        return f(*a, **k)\n    return login_required(wrapped)\n```\n\n\u2192 skipped: CSRF, rate limit, code expiry/max-uses. Add when abuse or multi-use codes needed."
+      "verdict": "clean",
+      "response": "Duplicate admin gate. `expire_on_commit=False` unneeded.\n\n```python\n#!/usr/bin/env python3\n\nfrom uuid import uuid4\n\nfrom flask_login import login_required, current_user\nfrom flask import render_template, redirect, flash\n\nfrom app import app\nfrom models import RegistrationCode, Session\n\n\ndef _require_admin():\n    if not current_user.is_admin:\n        flash(\"Not authorized\", \"error\")\n        return redirect(\"/home\")\n    return None\n\n\n@app.route(\"/registration-codes\", methods=[\"GET\"])\n@login_required\ndef registration_codes():\n    if (r := _require_admin()):\n        return r\n    with Session() as session:\n        codes = session.query(RegistrationCode).all()\n    return render_template(\"registration_codes.html\", registration_codes=codes)\n\n\n@app.route(\"/registration-codes\", methods=[\"POST\"])\n@login_required\ndef add_registration_codes():\n    if (r := _require_admin()):\n        return r\n    code_str = str(uuid4())\n    with Session() as session:\n        session.add(RegistrationCode(code_str))\n        session.commit()\n    flash(f\"Code added: {code_str}\", \"success\")\n    return redirect(\"/registration-codes\")\n```\n\n\u2192 skipped: decorator/CSRF/rate-limit, add when multi-route admin or abuse shows."
     },
     {
       "repo": "vc-codex-seeded-v2-legal-case-django",
       "file": "legalcase/settings.py",
       "verdict": "clean",
-      "response": "Line 62 broken. Redaction mangled `os.getenv`.\n\n```python\n\"[redacted:secret]\n```\n\nRest fine. No other change needed."
+      "response": "Broken L62 (redaction artifact). Fix:\n\n```python\n\"[redacted:secret]\n```\n\n\u2192 skipped: prod security (SECURE_*, HSTS), STATIC_ROOT. Add when deploy."
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/services/db.py",
       "verdict": "clean",
-      "response": "No SQLi surface. Pool setup only.\n\nDSN `.format(**conf)` fine if config trusted.\n\nNeed query code / handlers for injection review."
+      "response": "No SQLi here. Pool setup only.\n\nNeed: review? fix? find inject points elsewhere?"
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "SQLI/main_safe.py",
       "verdict": "clean",
-      "response": "Safe. All queries use `?` params. SQLi blocked.\n\nDrop unused `import re`.\n`SECRET_KEY` hardcode weak \u2014 load from env."
+      "response": "Safe. All queries parameterized (`?`). No string concat.\n\nDead: `import re` unused. Drop it.\n\nWeak: `SECRET_KEY = '55555'`. Change for prod.\n\nNo other SQLi surface."
     },
     {
       "repo": "realvuln-vulnpy",
       "file": "apps/flask_app.py",
-      "verdict": "non-answer",
-      "response": "File received. What need?"
+      "verdict": "clean",
+      "response": "**Issues**\n\n1. XSS: `user_input` rendered raw into Jinja (`xss.html`). No autoescape force.\n2. Cookies: `SESSION_COOKIE_SECURE=False`, `HTTPONLY=False` \u2014 session theft via XSS/MITM.\n3. `vulnerable_blueprint` \u2014 intentional vulns (SSRF/SQLi/etc. depending on vulnpy).\n\n**Intentional?** Yes \u2014 vulnpy + ContrastMiddleware. Lab app, not prod.\n\n**If fix (not lab):**\n```python\nenvironment = Environment(loader=loader, autoescape=True)\napp.config[\"SESSION_COOKIE_SECURE\"] = True\napp.config[\"SESSION_COOKIE_HTTPONLY\"] = True\n```\n+ escape/sanitize `user_input` at boundary.\n\nWhat do you want: audit, harden, or run path?"
     },
     {
       "repo": "vc-claude-code-seeded-v2-support-desk-fastapi",
       "file": "backend/app/services/webhooks.py",
       "verdict": "non-answer",
-      "response": "What need? Review / bug / change?"
+      "response": "Signing with `secret_hash` not secret. Mock only.\n\nQuery loads all active hooks then filters events in Python.\n\nSync `httpx` blocks request path.\n\nWhat need? Review / fix / change?"
     },
     {
       "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
       "file": "hr_payroll/settings.py",
       "verdict": "clean",
-      "response": "Line 74 broken. Syntax error.\n\n```python\n'[redacted:secret]\n```\n\nAlso: default SECRET_KEY + DB password in repo. Prod must set env vars. DEBUG defaults True.\n\nWhat need?"
+      "response": "**Line 74 broken.** Syntax error. Redaction mangled `os.environ.get`.\n\n```python\n'[redacted:secret]\n```\n\nDefault password in source. Drop default; require env in prod."
     },
     {
       "repo": "vc-codex-high-seeded-v2-education-lms-django",
       "file": "lms/views.py",
-      "verdict": "clean",
-      "response": "File truncated mid-line 372 (`if s`). What do you need?"
+      "verdict": "non-answer",
+      "response": "Broken L165: `[redacted:secret]\n\nFile truncated mid `cohort_list` L372 (`if s`).\n\nWhat need?"
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/utils/jinja2.py",
-      "verdict": "non-answer",
-      "response": "CSRF + auth Jinja processors. No SQLi here. Token gen OK.\n\nWhat need?"
+      "verdict": "clean",
+      "response": "CSRF + auth Jinja context. Fine as-is. Need change?"
     },
     {
       "repo": "realvuln-vulnpy",
       "file": "src/vulnpy/trigger/pt.py",
-      "verdict": "non-answer",
-      "response": "Path traversal sinks. Unsanitized `user_input` \u2192 open/tar/bz2. What need?"
+      "verdict": "clean",
+      "response": "Path traversal sinks. All take raw `user_input` as path.\n\n| fn | sink |\n|---|---|\n| do_tarfile_open | TarFile.open |\n| do_tarfile_class | TarFile() |\n| do_tarfile_bz2 | tarfile.open r:bz2 |\n| do_bz2_class | BZ2File |\n| do_bz2_open | bz2.open |\n| do_io_open | io.open |\n| do_open | open |\n| do_execfile | execfile (PY2) |\n\nNo sanitize. Intentional vulns (vulnpy).\n\nWhat need? Fix / test / map?"
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/middlewares.py",
       "verdict": "clean",
-      "response": "**Bugs:**\n- `httponly=False` \u2192 session cookie XSS-stealable\n- error handlers return 200 (no `response.set_status`)\n- RedisStorage rebuilt every request\n- CSRF: plain `!=` (timing leak)\n\n```python\n# session_middleware: set once at app start, not per-req\nstorage = RedisStorage(app['redis'], httponly=True)  # fix\n\n# csrf\nimport secrets\nif not token or not secrets.compare_digest(token, formdata.get('_csrf_token', '')):\n    ...\n\n# handlers\nasync def handle_40x(request, exc):\n    response = render_template('errors/40x.jinja2', request, {'error': exc})\n    response.set_status(exc.status)\n    return r"
+      "response": "Line 30 broken. Fix:\n```python\n[redacted:secret]\n```\n\n`httponly=False` \u2192 XSS steals session. Set `True`.\n\nHandlers drop status:\n```python\nasync def handle_40x(request, exc):\n    response = render_template('errors/40x.jinja2', request, {'error': exc})\n    response.set_status(exc.status)\n    return response\n```\nSame for `handle_50x`.\n\nStorage recreated every request. Move `RedisStorage` to app init.\n\n\u2192 skipped: SameSite/CSRF on non-POST, add when multi-method writes."
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/templates/course.jinja2",
-      "verdict": "non-answer",
-      "response": "No ask. What need?\n\nTemplate: Jinja2 course page. Reviews list. Admin evaluate form. Autoescape on (no `|safe`). SQLi lives in backend, not here."
+      "verdict": "clean",
+      "response": "Mismatch: `course.name` (title block) vs `course.title` (rest).\nNo CSRF on evaluate form.\nXSS if autoescape off: `review.review_text`, `course.description`.\nNo SQLi in template. Check backend for `course.id`/`student.id`/`points` concat."
     },
     {
       "repo": "vc-claude-code-seeded-v2-crm-saas-django",
       "file": "crm_project/settings.py",
-      "verdict": "clean",
-      "response": "Broken L75 (redaction artifact). Real form:\n\n```python\n\"[redacted:secret]\n```\n\nRest OK for CRM. Prod risks: default `SECRET_KEY`, `DEBUG=True`, default DB creds. Env-override those before deploy.\n\nWhat need?"
+      "verdict": "non-answer",
+      "response": "Line 75 broken. Redaction ate `os.environ.get(`.\n\n```python\n\"[redacted:secret]\n```\n\nWhat need?"
     },
     {
       "repo": "realvuln-djangoat",
       "file": "app/management/commands/seed.py",
-      "verdict": "clean",
-      "response": "Goal? Review, fix, rewrite, or what."
+      "verdict": "non-answer",
+      "response": "Task? File only. What need."
     },
     {
       "repo": "realvuln-djangoat",
       "file": "app/models/Analytics/analytics.py",
       "verdict": "clean",
-      "response": "**SQL injection** in `hits_by_ip`. `ip` + `col` string-interpolated into SQL.\n\n```python\n@classmethod\ndef hits_by_ip(cls, ip, col='*'):\n    allowed = ['ip_address', 'referrer', 'user_agent', 'created_at', 'updated_at']\n    cols = allowed if col == '*' else [c.strip() for c in col.split(',') if c.strip() in allowed]\n    if not cols:\n        return {}\n    rows = cls.objects.filter(ip_address=ip).order_by('-id').values_list(*cols)\n    return {c: [r[i] for r in rows] for i, c in enumerate(cols)}\n```\n\nDelete `format_raw_sql`. Drop raw cursor path.\n\n\u2192 skipped: callers of `format_raw_sql` / `col` mul"
+      "response": "**SQL injection** in `hits_by_ip`. `ip` + `col` string-interpolated into query.\n\n```python\n@classmethod\ndef hits_by_ip(cls, ip, col='*'):\n    allowed = {'*', 'ip_address', 'referrer', 'user_agent', 'created_at', 'updated_at'}\n    if col not in allowed:\n        col = '*'\n    table = connection.ops.quote_name(cls._meta.db_table)\n    sql = \"SELECT {} FROM {} WHERE ip_address = %s ORDER BY id DESC\".format(col, table)\n    with connection.cursor() as cursor:\n        cursor.execute(sql, [ip])\n        raw = cursor.fetchall()\n    return Analytics.format_raw_sql(sql, raw, col)\n```\n\n\u2192 skipped: ORM rewrite, add when you drop raw SQL entirely.  \n\u2192 `parse_field` still returns `'1'` (truthy junk); wire it or delete."
     },
     {
       "repo": "realvuln-flask-xss",
       "file": "app/flask_xss.py",
-      "verdict": "non-answer",
-      "response": "What need? File only. No ask."
+      "verdict": "clean",
+      "response": "Hardcoded SECRET_KEY. DEBUG=True. SQLite /tmp. Intentional XSS sandbox (header toggle).\n\nNeed?"
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/templates/review.jinja2",
       "verdict": "clean",
-      "response": "Bug: line 26 `[redacted:target-raw]` undefined. Loop var is `errors`.\n\n```jinja2\n{% for fieldname, errs in errors.items() %}\n    <span>[redacted:target-raw]: [redacted:target-raw]</span>\n{% endfor %}\n```\n\nAlso: line 32 `course.title` missing `| e` (XSS). Line 10 has it.\n\n\u2192 skipped: rating field, add when product asks."
+      "response": "Bug: line 25\u201326. `errors.items` \u2192 `errors.items()`. `[redacted:target-raw]` undefined \u2192 `[redacted:target-raw]` (or join).\n\n```jinja2\n{% for fieldname, errs in errors.items() %}\n    <span>[redacted:target-raw]: [redacted:target-raw]</span>\n{% endfor %}\n```\n\nAlso: line 32 `[redacted:target-raw]` unescaped. Use `| e` like breadcrumb.\n\n\u2192 skipped: rating field, add when product asks."
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "Other/vuln_payment_code.py",
       "verdict": "clean",
-      "response": "Length-extension vuln. `sha256(secret||msg)` forgeable. Fix: HMAC.\n\n```python\nimport hashlib\nimport hmac\nfrom flask import Flask, redirect\nfrom secrets import token_hex\n\n[redacted:secret]\napp = Flask(__name__)\n\ndef sign_for_payment(payment_information):\n    return hmac.new(\n        secret.encode('utf-8'),\n        payment_information.encode('utf-8'),\n        hashlib.sha256,\n    ).hexdigest()\n\n@app.route('/redirect_for_payment')\ndef redirect_for_payment():\n    tx_id = token_hex(16)\n    payment_info = \"transaction_id=\" + tx_id + \"&amount=20.00\"\n    params = payment_info + \"&sign=\" + sign"
+      "response": "**Length-extension vuln.** `SHA256(secret\u2016msg)` forgeable. Use HMAC.\n\n```python\nimport hashlib\nimport hmac\nfrom flask import Flask, redirect\nfrom secrets import token_hex\n\n[redacted:secret]\napp = Flask(__name__)\n\n\ndef sign_for_payment(payment_information):\n    return hmac.new(\n        secret.encode(\"utf-8\"),\n        payment_information.encode(\"utf-8\"),\n        hashlib.sha256,\n    ).hexdigest()\n\n\n@app.route(\"/redirect_for_payment\")\ndef redirect_for_payment():\n    tx_id = token_hex(16)\n    payment_info = \"transaction_id=\" + tx_id + \"&amount=20.00\"\n    params = payment_info + \"&sign=\" + sign_for_payment(payment_info)\n    return redirect(\"https://onlineshop/payment?\" + params, code=302)\n```\n\n\u2192 skipped: constant-time verify on receive side, amount/tx binding checks. add when payment callback lands."
     },
     {
       "repo": "realvuln-vulnpy",
       "file": "src/vulnpy/trigger/xpath.py",
-      "verdict": "non-answer",
-      "response": "XPath inj sinks. `user_input` \u2192 `findall`/`findtext`. Dead `tree.xpath` L20. What need?"
+      "verdict": "clean",
+      "response": "XPath/ElementPath injection sinks. `user_input` unsanitized into `findall`/`findtext`.\n\n```python\n# sinks: root.findall(user_input), root.findtext(user_input), node.findall(user_input)\n```\n\nNo fix unless asked. Sanitize/escape or use parameterized queries when needed."
     },
     {
       "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
       "file": "app/security.py",
-      "verdict": "flagged",
-      "response": "**Issues**\n\n1. Cookie `secure=False` \u2014 session over HTTP. Set `secure=True` in prod.\n2. `iat` set, never checked \u2014 cookie `max_age` only. Stolen token lives full 12h even if you intended shorter.\n3. No absolute session expiry in `get_current_user`.\n\n**Fix (minimal)**\n\n```python\ndef set_session(response: Response, user_id: int) -> None:\n    [redacted:secret]\n    response.set_cookie(\n        get_settings().session_cookie,\n        token,\n        httponly=True,\n        secure=get_settings().cookie_secure,  # True in prod\n        samesite"
+      "verdict": "clean",
+      "response": "**Issues:**\n\n1. Cookie `secure=False` \u2014 session theft over HTTP. Set `True` in prod.\n2. `iat` set, never checked \u2014 cookie `max_age` client-only. Server must reject expired tokens.\n3. No absolute session expiry / idle timeout.\n\n**Fix session load:**\n\n```python\ndef get_current_user(request: Request, db: Session = Depends(get_db)) -> User:\n    [redacted:secret]\n    if not [redacted:secret]\n    try:\n        data = serializer().loads(token)\n    except BadSignature:\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=\"Invalid session\")\n    iat = datetime.fromisoformat(data[\"iat\"])\n    if datetime.utcnow() - iat > timedelta(hours=12):\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=\"Session expired\")\n    user = db.get(User, int(data[\"uid\"]))\n    if not user or not user.is_active:\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=\"Inactive or missing user\")\n    return user\n```\n\n```python\n# set_session\nresponse.set_cookie(\n    get_settings().session_cookie,\n    token,\n    httponly=True,\n    secure=get_settings().cookie_secure,  # True in prod\n    samesite=\"lax\",\n    max_age=60 * 60 * 12,\n)\n```\n\n\u2192 skipped: CSRF tokens, refresh rotation \u2014 add when multi-origin or high-value actions."
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "Directory_Traversal/Dir_Traversal.py",
       "verdict": "clean",
-      "response": "```python\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom pathlib import Path\n\nROOT = Path.cwd().resolve()\n\nclass MyServer(BaseHTTPRequestHandler):\n    def do_GET(self):\n        req = self.path.split(\"?\", 1)[0]\n        if req.endswith(\"/\"):\n            req += \"index.html\"\n        try:\n            path = (ROOT / req.lstrip(\"/\")).resolve()\n            path.relative_to(ROOT)  # raises if escapes ROOT\n        except (ValueError, OSError):\n            self.send_error(404)\n            return\n        if not path.is_file():\n            self.send_error(404)\n            return\n        se"
+      "response": "```python\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom os.path import exists, join, realpath, commonpath, isfile\nimport os\n\nROOT = realpath(os.getcwd())\n\nclass MyServer(BaseHTTPRequestHandler):\n    def do_GET(self):\n        req = self.path.split('?', 1)[0]\n        if req.endswith('/'):\n            req += 'index.html'\n        path = realpath(join(ROOT, req.lstrip('/')))\n        if commonpath([ROOT, path]) != ROOT:\n            self.send_response(404)\n            return\n        if exists(path) and isfile(path):\n            self.send_response(200)\n            self.send_header(\"Content-type\", \"text/html\")\n            self.end_headers()\n            with open(path, 'rb') as f:\n                self.wfile.write(f.read())\n        else:\n            self.send_response(404)\n\nif __name__ == \"__main__\":\n    webServer = HTTPServer(('0.0.0.0', 1337), MyServer)\n    try:\n        webServer.serve_forever()\n    except KeyboardInterrupt:\n        pass\n    webServer.server_close()\n    print(\"Server stopped.\")\n```\n\n\u2192 skipped: MIME by extension, auth, rate limits. add when needed.\n\u2192 root cause: cwd+path concat + weak `/\\.\\.\\/\\.\\.\\/` regex. fix: realpath under fixed ROOT."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
       "file": "employees/models.py",
-      "verdict": "non-answer",
-      "response": "Models fine. Sensitive fields (bank/tax) plain text \u2014 encrypt at rest if prod. Custom `view_internal_notes` perm good.\n\nWhat needed?"
+      "verdict": "clean",
+      "response": "Task?"
     },
     {
       "repo": "realvuln-extremely-vulnerable-flask-app",
       "file": "db_seed.py",
       "verdict": "clean",
-      "response": "Seed: reg codes + user/admin + notes.\n\nNested `Note` seed inside `User` empty-check \u2014 notes skip if users already exist.\n\nHardcoded: `[redacted:pii:email]`/`user`, `[redacted:pii:email]`/`admin`.\n\nNo change needed unless notes must seed independently."
+      "response": "Seed creates: 1 static + 10 random reg codes; users `[redacted:pii:email]`/`user`, `[redacted:pii:email]`/`admin` (admin=True); 1 public user note, 1 private admin note.\n\nHardcoded weak creds + static reg code. Intent?"
     },
     {
       "repo": "vc-claude-code-seeded-v2-legal-case-django",
       "file": "cases/views_matters.py",
-      "verdict": "clean",
-      "response": "Got `views_matters.py`. Task?"
+      "verdict": "non-answer",
+      "response": "Client check after queries. Move role gate first.\n\n`closed_at` never cleared on reopen.\n\n`message_approve` no atomic.\n\nWhat need?"
     },
     {
       "repo": "vc-codex-seeded-v2-education-lms-django",
       "file": "lms/forms.py",
       "verdict": "non-answer",
-      "response": "forms.py. What need?"
+      "response": "What need? Review, bug, change, test?"
     },
     {
       "repo": "realvuln-lets-be-bad-guys",
       "file": "badguys/templates/vulnerable/csrf/gift_card.html",
       "verdict": "clean",
-      "response": "Missing `{% csrf_token %}`. CSRF vuln. Fix:\n\n```html\n<form method=\"POST\">\n    {% csrf_token %}\n    <label for=\"email\">Send a giftcard to email:</label><input type=\"text\" name=\"email\" id=\"email\"><br>\n    <label for=\"amount\">Giftcard amount:</label><input type=\"text\" name=\"amount\" id=\"amount\"><br>\n    <input type=\"submit\" value=\"Buy Now\">\n</form>\n```\n\n\u2192 skipped: view-side `@csrf_protect`/middleware check (assume on), add when form posts fail."
+      "response": "Missing `{% csrf_token %}`. CSRF open.\n\nFix:\n```django\n<form method=\"POST\">\n    {% csrf_token %}\n    <label for=\"email\">Send a giftcard to email:</label><input type=\"text\" name=\"email\"><br>\n    <label for=\"amount\">Giftcard amount:</label><input type=\"text\" name=\"amount\"><br>\n    <input type=\"submit\" value=\"Buy Now\">\n</form>\n```\n\n\u2192 skipped: view-side checks, add when hardening beyond demo."
     },
     {
       "repo": "realvuln-vulpy",
       "file": "good/vulpy-ssl.py",
       "verdict": "clean",
-      "response": "Weak SECRET_KEY. Hardcoded. Rotate via env.\ndebug=True. Info leak. Off for prod.\nSSL /tmp paths. World-readable risk. Move + chmod 600.\nhost 127.0.1.1. Odd. Use 127.0.0.1 or 0.0.0.0 if needed.\n\nNo other change. YAGNI."
+      "response": "Weak SECRET_KEY hardcoded. Use env.\ndebug=True. Off for prod.\nSSL certs in /tmp. Use real paths/CA."
     },
     {
       "repo": "realvuln-vampi",
       "file": "config.py",
       "verdict": "clean",
-      "response": "Hardcoded `SECRET_KEY = 'random'`. Session forge risk.\n\nFix:\n```python\nvuln_app.app.config['SECRET_KEY'] = os.environ['SECRET_KEY']\n```\n\n\u2192 skipped: env validation, add when deploy."
+      "response": "Hardcoded `SECRET_KEY='random'`. Weak. Load from env:\n\n```python\nvuln_app.app.config['SECRET_KEY'] = os.environ['SECRET_KEY']\n```\n\n\u2192 skipped: key rotation/docs, add when deploy."
     },
     {
       "repo": "realvuln-vulpy",
       "file": "good/mod_mfa.py",
       "verdict": "clean",
-      "response": "**Issues:**\n\n1. Disable via GET \u2014 CSRF. Referer check weak/spoofable.\n2. Dead code L55 after returns.\n3. L25/L42 redacted/broken: `[redacted:secret]\n4. No CSRF token on enable POST.\n5. Referer exact-match `vulpy.com` misses scheme/path; fails real browsers.\n\n**Minimal fix disable:**\n```python\n@mod_mfa.route('/disable', methods=['POST'])\ndef do_mfa_disable():\n    if 'username' not in g.session:\n        return redirect('/user/login')\n    libmfa.mfa_disable(g.session['username'])\n    return redirect('/mfa/')\n```\n\u2192 skipped: CSRF token, add when forms exist"
+      "response": "**Bugs:**\n\n1. Disable on GET \u2014 CSRF via `<img>`/`<a>`. State change needs POST + token.\n2. Referer check broken: browsers send full URL (`http://vulpy.com/...`), never bare `vulpy.com`. Always fails or always passes if spoofed.\n3. No CSRF token on enable POST.\n4. Dead code L55.\n5. Secret reset every GET when MFA off \u2014 re-scan QR each load.\n\n**Minimal fix (disable):**\n```python\n@mod_mfa.route('/disable', methods=['POST'])\ndef do_mfa_disable():\n    if 'username' not in g.session:\n        return redirect('/user/login')\n    # assume CSRF already validated by app middleware / form token\n    libmfa.mfa_disable(g.session['username'])\n    return redirect('/mfa/')\n```\n\n\u2192 skipped: full CSRF middleware, rate-limit OTP, add when prod hardening."
     },
     {
       "repo": "realvuln-dvblab",
       "file": "backend/models.py",
       "verdict": "clean",
-      "response": "MD5 password hash broken. Use werkzeug (already Flask dep).\n\n```python\nfrom werkzeug.security import generate_password_hash, check_password_hash\n# drop: import hashlib\n\n# password_hash column: String(128) \u2192 String(255)\n\ndef set_password(self, password):\n    self.password_hash = generate_password_hash(password)\n\ndef check_password(self, password):\n    return check_password_hash(self.password_hash, password)\n```\n\n\u2192 skipped: rehash migration for existing users, add when prod has rows."
+      "response": "**MD5 passwords. Broken. No salt.**\n\n```python\n# replace set_password / check_password\nfrom werkzeug.security import generate_password_hash, check_password_hash\n\ndef set_password(self, password):\n    self.password_hash = generate_password_hash(password)\n\ndef check_password(self, password):\n    return check_password_hash(self.password_hash, password)\n```\n\nAlso:\n- `float(self.balance)` loses money precision \u2192 keep `str(self.balance)` or Decimal\n- `json.loads` on profile/details: catch `JSONDecodeError` or corrupt data crashes\n- `role` free string \u2192 no enum/check constraint\n\n\u2192 skipped: full auth rewrite, add when you ship login."
     },
     {
       "repo": "vc-codex-seeded-v2-legal-case-django",
       "file": "cases/forms.py",
-      "verdict": "clean",
-      "response": "`[redacted:secret]\n\nDup `clean_upload` DocumentForm/DocumentVersionForm \u2192 extract mixin or one helper if you care; else leave.\n\nRest fine. No change needed."
+      "verdict": "non-answer",
+      "response": "What need? Review, fix, extend?"
     },
     {
       "repo": "realvuln-flask-xss",
       "file": "app/blueprints/xss_protection/views.py",
       "verdict": "clean",
-      "response": "Open redirect. `next` from query used raw in `redirect()`.\n\n```python\nfrom flask import Blueprint, session, request, url_for, redirect\n\nxss_protection = Blueprint('xss_protection', __name__)\n\n\n@xss_protection.route('/')\ndef index():\n    session['xss_protection_enabled'] = not session.get('xss_protection_enabled', False)\n    next_url = request.args.get('next') or url_for('index')\n    if not next_url.startswith('/') or next_url.startswith('//'):\n        next_url = url_for('index')\n    return redirect(next_url)\n```\n\n\u2192 skipped: full same-origin parse, add when external allowlist needed."
+      "response": "Open redirect. `next` unsanitized. State change on GET.\n\n```python\nfrom flask import Blueprint, session, request, url_for, redirect\nfrom urllib.parse import urlparse, urljoin\n\nxss_protection = Blueprint('xss_protection', __name__)\n\ndef _safe_url(target):\n    if not target:\n        return False\n    ref = urlparse(request.host_url)\n    test = urlparse(urljoin(request.host_url, target))\n    return test.scheme in ('http', 'https') and ref.netloc == test.netloc\n\n@xss_protection.route('/', methods=['POST'])\ndef index():\n    session['xss_protection_enabled'] = not session.get('xss_protection_enabled', False)\n    next_url = request.form.get('next') or request.args.get('next')\n    if not _safe_url(next_url):\n        next_url = url_for('index')\n    return redirect(next_url)\n```\n\n\u2192 skipped: CSRF token, add when forms hit this."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
       "file": "crm/core/settings.py",
-      "verdict": "clean",
-      "response": "**Issues**\n\n1. `SECRET_KEY` default insecure \u2014 never ship that fallback.\n2. `DEBUG` defaults `True` \u2014 flip default to `False`.\n3. DB DSN embeds password in source \u2014 use env only, no default with creds.\n4. `ALLOWED_HOSTS` split leaves empty string if env blank \u2014 fine for local, not prod.\n\n**Minimal fix**\n\n```python\nSECRET_KEY = os.environ['SECRET_KEY']  # fail hard if missing\nDEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'\nDATABASES = {\n    'default': dj_database_url.config(conn_max_age=600)  # require DATABASE_URL\n}\n```\n\n\u2192 skipped: prod email/SMTP, redis cache, S3 media. Add when de"
+      "verdict": "non-answer",
+      "response": "Settings look fine for local CRM.\n\nIssues:\n- `SECRET_KEY` default insecure (dev only OK)\n- `DEBUG` defaults True\n- DB DSN has password in default string (use env only)\n\nWhat need?"
     },
     {
       "repo": "realvuln-damn-vulnerable-graphql-application",
       "file": "core/middleware.py",
       "verdict": "clean",
-      "response": "**Bugs**\n\nDepthProtectionMiddleware L35: `parser.get_depth(query)` on mutation branch. Uses wrong var \u2192 depth always from None/prior. Fix: `parser.get_depth(mutation)`.\n\nprocessMiddleware: list batch ignored. Only dict path fills `array_qry`. List queries skip denylist.\n\nIGQLProtectionMiddleware: redacted lines \u2192 syntax dead. Was likely `request.cookies.get(...)` + `==`.\n\nOpNameProtectionMiddleware: bare `except:` swallows all.\n\nCostProtectionMiddleware: mutation path correct.\n\n```python\n# DepthProtectionMiddleware fix only\nelif mutation:\n  depth = parser.get_depth(mutation)\n```\n\n\u2192 skipped: fu"
+      "response": "**Bugs:**\n\n1. `DepthProtectionMiddleware` L35: `parser.get_depth(query)` \u2192 use `mutation`. Mutation path always wrong/None.\n2. `processMiddleware`: only handles `dict`, ignores batch `list` (unlike siblings).\n3. `IGQLProtectionMiddleware` L123: assignment/`=` (or mangled compare) + cookie check. Hard level always blocks; else cookie gate.\n4. Bare `except:` in `OpNameProtectionMiddleware`.\n5. `CostProtectionMiddleware`/`DepthProtectionMiddleware`: mutation vs query handling inconsistent.\n\nNo other change needed. YAGNI."
     },
     {
       "repo": "vc-codex-high-seeded-v2-legal-case-django",
       "file": "cases/views.py",
       "verdict": "non-answer",
-      "response": "Truncated `@login_requ`. Line 211 syntax broken (`[redacted:secret]\n\nWhat need? Review / finish / fix?"
+      "response": "File truncated mid-`@login_required`. Syntax break L211: `[redacted:secret]\n\nWhat need? Fix / continue / review?"
     },
     {
       "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
       "file": "backend/app/config.py",
       "verdict": "clean",
-      "response": "Secrets hardcoded. Drop defaults for `database_url`/`secret_key`. Force env.\n\n```python\nimport os\nfrom pydantic_settings import BaseSettings\n\nclass Settings(BaseSettings):\n    database_url: str\n    secret_key: str\n    algorithm: str = \"HS256\"\n    access_token_expire_minutes: int = 480\n    upload_dir: str = \"uploads\"\n    max_upload_size: int = 10 * 1024 * 1024\n    environment: str = \"development\"\n\n    class Config:\n        env_file = \".env\"\n        env_file_encoding = \"utf-8\"\n\nsettings = Settings()\n```\n\n\u2192 skipped: validation extras, add when multi-env deploy."
+      "response": "Hardcoded secrets in defaults. Kill them.\n\n```python\nimport os\nfrom pydantic_settings import BaseSettings\n\nclass Settings(BaseSettings):\n    database_url: str\n    secret_key: str\n    algorithm: str = \"HS256\"\n    access_token_expire_minutes: int = 480\n    upload_dir: str = \"uploads\"\n    max_upload_size: int = 10 * 1024 * 1024\n    environment: str = \"development\"\n\n    class Config:\n        env_file = \".env\"\n        env_file_encoding = \"utf-8\"\n\nsettings = Settings()\n```\n\n\u2192 skipped: validation helpers, add when multi-env deploy needs them.\nPut real values in `.env` only. Never commit."
     },
     {
       "repo": "realvuln-threatbyte",
       "file": "server/config.py",
       "verdict": "clean",
-      "response": "**Hardcoded secret. Cookie not HttpOnly. DEBUG on.**\n\n```python\n# server/config.py\nimport os\n\nclass Config:\n    DEBUG = False\n    SESSION_COOKIE_HTTPONLY = True\n    SECRET_KEY = os.environ[\"SECRET_KEY\"]\n    DATABASE_URI = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../db/database.db')\n    UPLOADS_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')\n    PROFILE_PICTURES_UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads/profile_pictures')\n```\n\n\u2192 skipped: env validation, add when deploy. Set `SECRET_KEY` in env."
+      "response": "**Security bugs:**\n\n```python\nDEBUG = False\nSESSION_COOKIE_HTTPONLY = True\nSECRET_KEY = os.environ[\"SECRET_KEY\"]  # never hardcode\n```\n\nHardcoded secret + HttpOnly off + DEBUG on = session theft + key leak."
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "Insecure_Deserialization/serialize_server.py",
       "verdict": "clean",
-      "response": "Broken: `get` not `do_GET`. Cookie branch incomplete. Pickle on [redacted:secret]\n\nNever pickle untrusted data. Use signed string + `html.escape`. Bind `127.0.0.1` unless remote needed.\n\n```python\n#!/usr/bin/env python3\nfrom http.cookies import SimpleCookie\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom html import escape\nimport base64, hmac, hashlib, os\n\n[redacted:secret]\n\ndef sign(name: str) -> str:\n    data = base64.b64encode(name.encode()).decode()\n    sig = hmac.new(SECRET, data.en"
+      "response": "**Audit**\n\n`get` not `do_GET` \u2014 never runs.  \nCookie path: no response + `Username.pickle()` noop.  \nPickle on [redacted:secret]\n`% username` = XSS.  \n`0.0.0.0` bind (B104).\n\n**Fix (minimal)**  \nDrop pickle. [redacted:secret]\n\n```python\n#!/usr/bin/env python3\nfrom http.cookies import SimpleCookie\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom html import escape\n\nclass MyServer(BaseHTTPRequestHandler):\n    def do_GET(self):\n        cookies = SimpleCookie(self.headers.get(\"Cookie\"))\n        username = \"stranger\"\n        if c := cookies.get(\"username\"):\n            username = c.value  # plain string only; never pickle/loads\n        self.send_response(200)\n        self.send_header(\"Content-type\", \"text/html\")\n        self.end_headers()\n        self.wfile.write(f\"<html><body><h1>Hello {escape(username)}</h1></body></html>\".encode())\n\nif __name__ == \"__main__\":\n    HTTPServer((\"127.0.0.1\", 1337), MyServer).serve_forever()\n```\n\n\u2192 skipped: Encrypt/Username, signing, sessions. Add when auth required."
     },
     {
       "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
       "file": "hr_portal/settings.py",
       "verdict": "clean",
-      "response": "Line 111 broken. Redaction ate `os.environ.get(`. Fix:\n\n```python\n\"[redacted:secret]\n```"
+      "response": "Line 111 broken. Redaction ate `os.environ.get(`.\n\n```python\n\"[redacted:secret]\n```\n\nRest fine. No other change needed."
     },
     {
       "repo": "realvuln-lets-be-bad-guys",
       "file": "badguys/templates/vulnerable/xss/query.html",
       "verdict": "clean",
-      "response": "**XSS sink:** `[redacted:target-raw]` dumps raw query into JS string.\n\n**Fix:**\n```html\nvar myvar = \"[redacted:target-raw]\";\n```\n\n\u2192 skipped: exploit payload. Not providing XSS PoCs."
+      "response": "**Payload (qs):**\n```\n\";var i=document.createElement('img');i.setAttribute('src','http://test/image.jpg');i.style.display='none';document.body.appendChild(i);//\n```\n\n**URL:**\n```\n?qs=%22%3Bvar%20i%3Ddocument.createElement(%27img%27)%3Bi.setAttribute(%27src%27%2C%27http%3A%2F%2Ftest%2Fimage.jpg%27)%3Bi.style.display%3D%27none%27%3Bdocument.body.appendChild(i)%3B%2F%2F\n```\n\nBreaks `var myvar=\"...\"` \u2192 injects createElement/setAttribute/appendChild. `display:none` hides. `//` kills trailing quote."
     },
     {
       "repo": "realvuln-djangoat",
       "file": "pygoat/docker_settings.py",
       "verdict": "clean",
-      "response": "Hardcoded DB password. Leak risk.\n\n```python\nimport os\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.mysql',\n        'NAME': os.environ.get('MYSQL_DATABASE', 'testDb'),\n        'USER': os.environ.get('MYSQL_USER', 'root'),\n        '[redacted:secret]\n        'HOST': os.environ.get('MYSQL_HOST', 'db'),\n        'PORT': os.environ.get('MYSQL_PORT', ''),\n    }\n}\n```\n\n\u2192 skipped: vault/secrets manager, add when multi-env prod."
+      "response": "Hardcoded DB creds. Risk: secret in source.\n\nFix: env vars.\n\n```python\nimport os\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.mysql',\n        'NAME': os.environ['MYSQL_DATABASE'],\n        'USER': os.environ['MYSQL_USER'],\n        '[redacted:secret]\n        'HOST': os.environ.get('MYSQL_HOST', 'db'),\n        'PORT': os.environ.get('MYSQL_PORT', ''),\n    }\n}\n```\n\n\u2192 skipped: secrets manager, add when prod multi-env."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
       "file": "portal/models.py",
       "verdict": "non-answer",
-      "response": "What need? Models only. No task."
+      "response": "Models loaded. What need?"
     },
     {
       "repo": "realvuln-vulnerable-python-apps",
       "file": "SQLI/sqli_example.py",
       "verdict": "clean",
-      "response": "```python\ncursor.execute(\"SELECT securitycoaches FROM users WHERE username = %s\", (username,))\n```\n\u2192 skipped: full app/DB setup, add when real query needed."
+      "response": "```python\ncursor.execute(\"SELECT securitycoaches FROM users WHERE username = %s\", (username,))\n```\n\u2192 skipped: driver-specific placeholders (`?` sqlite), add when not psycopg/MySQLdb. Never concat/format/f-string."
     },
     {
       "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
       "file": "backend/app/routers/exports.py",
       "verdict": "clean",
-      "response": "Duplication x3. Extract stream helper.\n\n```python\nimport csv\nimport io\nimport json\nfrom fastapi import APIRouter, Depends\nfrom fastapi.responses import StreamingResponse\nfrom sqlalchemy.orm import Session\nfrom app.database import get_db\nfrom app.auth import get_current_active_user\nfrom app.models import User, Lease, Unit, Building, Property, MaintenanceTicket, Inspection\nfrom app.utils.enums import UserRole\nfrom app.utils.permissions import require_role, get_managed_property_ids\nfrom app.services.audit_service import log_action\n\nrouter = APIRouter(prefix=\"/api/exports\", tags=[\"exports\"])\n\n\ndef"
+      "response": "Dead imports: `PaymentRecord`, `Tenant`. Triple-copy stream logic.\n\n```python\ndef _stream(data, fmt, name):\n    if fmt == \"json\":\n        return StreamingResponse(\n            io.BytesIO(json.dumps(data, indent=2).encode()),\n            media_type=\"application/json\",\n            headers={\"Content-Disposition\": f\"attachment; filename={name}.json\"},\n        )\n    out = io.StringIO()\n    w = csv.DictWriter(out, fieldnames=data[0].keys() if data else [])\n    w.writeheader()\n    w.writerows(data)\n    out.seek(0)\n    return StreamingResponse(\n        io.BytesIO(out.getvalue().encode()),\n        media_type=\"text/csv\",\n        headers={\"Content-Disposition\": f\"attachment; filename={name}.csv\"},\n    )\n```\n\nReplace each format branch with `return _stream(data, format, \"rent_roll\")` etc.\n\n\u2192 skipped: shared query/role helper, add when 4th export appears."
     },
     {
       "repo": "realvuln-dvpwa",
       "file": "sqli/app.py",
       "verdict": "non-answer",
-      "response": "`autoescape=False` \u2192 XSS open.  \n`csrf_middleware` commented out.  \n`debug=True` hardcoded.\n\nWhat do you want done?"
+      "response": "`autoescape=False` \u2192 XSS open. CSRF middleware commented out. `debug=True`.\n\nNo SQLi here \u2014 only app bootstrap. Queries live elsewhere.\n\nWhat do you want?"
     },
     {
       "repo": "realvuln-djangoat",
       "file": "app/models/utils.py",
-      "verdict": "flagged",
-      "response": "Broken crypto. Fixed IV+CBC leaks patterns, no auth. Pad/unpad str not bytes (Py3 fail). Global key.\n\nDelete class. Use `cryptography.fernet.Fernet` (or django-fernet-fields). Per-value random IV+HMAC built-in.\n\n```python\nfrom cryptography.fernet import Fernet\nfrom django.conf import settings\n\ndef encrypt(value: bytes) -> bytes:\n    return Fernet(settings.KEY).encrypt(value)\n\ndef decrypt([redacted:secret]\n    return Fernet(settings.KEY).decrypt(token)\n```\n\n\u2192 skipped: per-user keys, add when multi-tenant isolation required."
+      "verdict": "clean",
+      "response": "**Broken crypto. Do not use.**\n\n- CBC + fixed IV per user \u2192 reuse = broken\n- No MAC \u2192 padding oracle / malleable\n- Shared global key, string pad (Py2), dead pycrypto\n\n**Replace whole class:**\n\n```python\nfrom cryptography.fernet import Fernet\nfrom django.conf import settings\n\ndef encrypt_sensitive_value(value: str) -> bytes:\n    return Fernet(settings.KEY).encrypt(value.encode())\n\ndef decrypt_sensitive_value(value: bytes) -> str:\n    return Fernet(settings.KEY).decrypt(value).decode()\n```\n\n\u2192 skipped: per-user keys, add when multi-tenant isolation required.  \nKEY must be `Fernet.generate_key()` bytes. Drop KeyManagement.iv."
     }
   ]
 }

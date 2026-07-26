@@ -37,7 +37,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 
 | comparison | result | what it establishes |
 |---|---|---|
-| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | 10/60 = 0.167 vs 1/40 = 0.025, **p = 0.024** | the model **discriminates** — both arms could have scored |
+| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 15/59 vs 0/40, p = 0.000185** | the model **discriminates**, and the conclusion survives a fresh run |
 | specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive) | it is not flagging indiscriminately |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
@@ -118,6 +118,64 @@ respectively, with perfect specificity, against a deterministic layer that has n
 expressing this class. **What no longer stands:** that this is not memorisation, and that it is not
 file-role recognition. Both are open questions again.
 
+## REFINEMENT (E34, 2026-07-26) — the capability is class-specific, and the aggregate rate hides that
+
+E26's transfer demonstration (3/4, n = 8, p = 0.071 — not significant) was scaled to **12 matched pairs
+across Flask, FastAPI and Django**, blinded, with exact ground truth: **sensitivity 7/12, model false
+positives 1/12 by classifier, p = 0.0136** — the **conservative** figure, quoted here deliberately. An
+independent audit later found **2 of 12 control variants carried unplanted defects** (a rate-limit gap
+and a missing-authentication gap the author never planted); on the 10 pairs with valid ground truth the
+result is 7/10 with 0 false positives (p = 0.0015). **The weaker number is the one this decision
+rests on**, because the exclusion — however well justified — improves the result. The transfer claim is now powered
+rather than illustrated.
+
+**The refinement that matters more than the number:**
+
+| absence class | planted | detected |
+|---|---|---|
+| ownership / IDOR (639) | 4 | **4** |
+| missing authentication (306) | 2 | **2** |
+| missing authorization (862) | 2 | 1 |
+| rate limit / lockout (307) | 1 | **0** — also missed in E26 |
+| mass assignment (915) | 1 | **0** |
+| error-path exposure (209) | 1 | **0** |
+| missing re-authentication (620) | 1 | **0** |
+
+**This decision's claim is therefore narrowed from "absence-of-control classes" to what was actually
+measured: absent ownership and absent authentication.** Rate limiting, mass assignment, error-path
+exposure and re-authentication were missed in every instance tested. A deployment weighted toward those
+classes would see far less than the headline rate — and CWE-307 is the *most common* absence class in
+the RealVuln corpus.
+
+**Specificity strengthened:** two controls were deliberately hidden — one injected as a dependency, one
+applied inside a service `base()` method — and the model correctly stayed silent on both.
+
+**A flaw in the test method, disclosed:** a matched `_b` variant is only "controlled" for its *planted*
+class and may carry an unplanted defect. E34's `email_b` does — the model correctly flagged a real
+missing rate limit there, and it was scored as a false positive. Every matched-pair result in this lab
+inherits this, and future sets must audit controls against the full class list.
+
+## REPLICATED ON BOTH HALVES (E35 + E36, 2026-07-26)
+
+Both legs of this decision's mechanism argument now rest on **two independent runs each**, not on single
+measurements:
+
+| claim | first run | independent replication |
+|---|---|---|
+| discriminates absence-class from **clean** files | 9/60 vs 0/40, p = 0.0078 | **15/59 vs 0/40, p = 0.000185** |
+| discriminates absence-class from **merely defective** files | 9/60 vs 0/80, p = 0.0003 | **15/59 vs 2/80, p = 0.0000494** |
+
+**Specificity across both runs: 0/40 clean files flagged — 80 consecutive, no false claim.** Defective
+files with no absent control sit at 2/80, **statistically indistinguishable from files with nothing
+wrong** (p = 0.44), while every one of those 80 carries a real confirmed vulnerability.
+
+Sensitivity rose from 0.150 to 0.254 between runs. Two instrument corrections since the first run push
+that way — the classifier now recognises findings its earlier vocabulary missed, and unreadable files
+are no longer counted as model failures — which is the "published rates are a **floor**" caveat paying
+out in the predicted direction rather than a change in the model.
+
+**Every artefact behind a standing claim in this decision is now re-verifiable from the repository.**
+
 ## The bounds are part of the claim
 
 1. **It is a weak detector — but every published rate is a FLOOR, not an estimate.** The measured
@@ -183,6 +241,14 @@ file-role recognition. Both are open questions again.
     **Limits:** n = 8, and the defects are of classes this author chose in this author's style — the
     matched-pair design prevents conspicuousness from inflating the score but cannot make them
     representative of a real client codebase. **Still outstanding:** structural familiarity, and a
+  - **Structural familiarity — TESTED, INCONCLUSIVE, leaning against us (E32, 2026-07-26).** Adding a
+    provably-safe structural mutation (top-level definitions reordered) on top of surface anonymisation
+    gives **8/41 vs 11/41, difference −0.073, 95% CI [−0.195, +0.049]** — the interval spans a 20-point
+    collapse and a 5-point rise, so nothing is established. **But the point estimate is a drop**, so the
+    honest status is no longer "untested": it is *inconclusive with the available evidence pointing at
+    structure contributing*. **The transfer bound does not narrow.** A clean answer needs both mutation
+    levels on one identical file set at ~300 files/arm. The limit of even that: reordering changes
+    file-level shape, never intra-function control flow.
     realistic defect distribution nobody designed to be findable.
 - **Recorded process failure:** the deterministic control arm was preregistered and the implementation
   silently dropped it during a redesign. It was caught before publication and run. The mechanism claim

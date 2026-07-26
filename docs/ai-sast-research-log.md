@@ -42,6 +42,11 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 15/59, p = 0.0000494; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
+| E35 | replicate the headline | **STANDS** — fresh run 15/59 vs 0/40, p = 0.000185 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
+| E34 | authored-unseen, powered | **STANDS** — 7/12 vs 0-1/12, p = 0.0136. **Class-specific**: ownership+authn 6/6, rate-limit/mass-assignment/error-leak/re-auth 0/4 |
+| E33 | clean 2-level mutation comparison | **CANCELLED at power gate** — 32% power even using all 117 eligible files |
+| E32 | structural familiarity | **INCONCLUSIVE (leaning against)** — anonymised+reordered 8/41 vs 11/41, −0.073 [−0.195,+0.049]; transfer bound does **not** narrow |
 | E31 | per-file propensity | **STANDS** — mixture confirmed: 10/12 stable at 0. Most instability is clean<->non-answer; **flag churn ~1 in 12**; controls theta=0.000 across 18 calls |
 | E30 | propagating noise into intervals | **WITHDRAWN (model error)** — treated a disagreement rate as a flip probability; falsified by E28's measured 0.001 drift |
 | E29 | how unstable is the instrument, really? | **STANDS** — pooled **15/38 = 40%** verdict flips, 95% CI [21%,63%]; **0/38 identical prose**. Replaces the bare "36%" |
@@ -2365,3 +2370,421 @@ Every place citing instability is updated to distinguish the two.
 k = 3 estimates θ to ±0.29 at best, and n = 12 is a sketch. This establishes the *shape* — a mixture,
 dominated by stable-at-zero, with control files the stablest — not any individual file's θ, and not a
 precise churn rate. Proper propagation still wants larger k, which stays recorded as owed.
+
+## E32 — PREREGISTRATION: structural familiarity, the last untested memorisation channel (written before measuring)
+
+Registered 2026-07-26 09:40 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E23 showed detection survives *surface* anonymisation (identifiers, route literals,
+  filename). Its stated limit — carried in decision 0027 ever since — is that **mutation changed names,
+  not shapes**: a model could still recognise a distinctive code structure. That is the last untested
+  memorisation channel, and it is the reason 0027 still cannot promise transfer.
+- **This also pays two recorded debts.** E23's artefact is non-re-verifiable (responses truncated at 400
+  chars, E27) and is one of the four artefacts SM17 lists as known-stale. This run stores responses in
+  full and produces a fresh artefact.
+- **Method.** On top of E23's surface anonymisation, add a **structural** change: **reorder top-level
+  function and class definitions**. Applied only where provably safe — a file qualifies only if it has
+  ≥2 top-level definitions and **no non-definition statement sits between the first and last** (module-
+  level assignments or decorated registrations could depend on order). **41 of 53** arm-A files qualify.
+  Verified per file: the mutated source must still parse, preserve the import set byte-identically, and
+  preserve the AST node-type profile.
+- **Design (per the determinism rule).** **Both arms measured fresh, in the same run**, compared as
+  **aggregate rates**. Nothing reused; per-file verdicts never compared.
+- **Hypothesis.** Detection is reasoning, not structural recall: the flag rate survives combined
+  surface + structural anonymisation.
+- **Falsifying result.** A materially lower rate on the mutated arm ⇒ structural familiarity contributes,
+  and decision 0027's transfer bound must widen again.
+- **THE LIMIT, STATED FIRST because it decides what this can claim.** Reordering top-level definitions
+  changes the file's **global** shape — it defeats whole-file n-gram recall. It does **not** change the
+  **intra-function control flow**, which is where a "this is that vulnerable handler I've seen" judgement
+  would most plausibly live. So E32 can weaken structural memorisation at the file level and **cannot
+  eliminate** it at the function level. Anything stronger needs semantics-preserving control-flow
+  rewriting, which cannot be automated safely at this scale and stays recorded as owed.
+- **Power.** 41 files at a ~0.2 base rate detects only a large collapse. A null is **not** equivalence;
+  if the interval is wide the verdict is inconclusive, exactly as E23's was.
+- **Instrument frozen:** same prompt, corrected classifier (SM13), positive-control gate with the
+  transport-failure rule.
+
+## E32 — RESULT: INCONCLUSIVE, and the point estimate leans the unwelcome way
+
+Run 2026-07-26. Positive control passed. 41 files, both arms measured fresh in the same run, responses
+stored in full.
+
+| condition | flagged |
+|---|---|
+| original | 11/41 = **0.268** |
+| surface-anonymised **+ top-level definitions reordered** | 8/41 = **0.195** |
+
+**Difference −0.073, 95% CI [−0.195, +0.049] → INCONCLUSIVE**, exactly as the preregistration said a
+wide interval must be reported.
+
+### What this does and does not say
+
+- **It does NOT show structure is irrelevant.** The interval spans a 20-point collapse and a 5-point
+  increase. Nothing is established in either direction.
+- **The point estimate leans toward structural familiarity mattering.** −0.073 is a drop, not a null.
+- **It does NOT establish a drop either.** A 41-file sample at a ~0.27 base rate cannot resolve an
+  effect this size, which the preregistration stated before the run.
+
+### The comparison with E23 is suggestive and NOT valid as evidence
+
+E23 (surface anonymisation only) gave **+0.057**; E32 (surface **+** structural) gives **−0.073** — a
+swing of 0.13 in the direction of "structure carries something". **This comparison must not be quoted as
+a finding**, for a reason that is disqualifying on its own: **the two runs use different file sets**
+(53 vs 41; E32 only accepts files where reordering is provably safe), and E32's original arm scores 0.268
+against E23's 0.208 on the *same* instrument, which shows the subsets differ in difficulty before any
+mutation is applied. The clean comparison would need both mutations run on one identical file set.
+
+### Consequence for decision 0027 — the bound does NOT narrow, and the earlier narrowing gets a caveat
+
+0027 currently records that surface memorisation is not the driver (E23) with structural familiarity
+listed as outstanding. That stands, with one change: **the outstanding item is now known to be
+non-trivially large in the point estimate**, not merely untested. The transfer bound stays at its
+current width, and the honest phrasing is:
+
+> Surface memorisation is not the driver. **Structural familiarity is untested-to-inconclusive, and what
+> evidence exists points at it contributing rather than not.**
+
+**Owed, unchanged and now better motivated:** run both mutation levels on one identical file set, at a
+sample size chosen for the ~0.07 effect this run suggests — roughly 300+ files per arm, which this
+corpus can supply but a single session's call budget cannot.
+
+## E33 — CANCELLED at the power gate (Stage 3), before any model call
+
+Proposed 2026-07-26 10:05: run surface-only and surface+structural mutation on **one identical file set**,
+removing the confound that disqualified the E23-vs-E32 comparison.
+
+**Cancelled. The corpus cannot answer it.**
+
+| n per arm | calls | power to detect the 0.07 drop E32 suggests |
+|---|---|---|
+| 41 (E32's set) | 82 | **0.12** |
+| **117 — every file in the corpus supporting both mutation levels** | 234 | **0.32** |
+| 150 | 300 | 0.42 (files do not exist) |
+| 250 | 500 | 0.62 (files do not exist) |
+
+Only **117 of 175** absence-class files support both mutations (a file is excluded when reordering could
+change behaviour). So **32% is the ceiling this corpus allows** at one measurement per file — a design in
+which a true effect is missed two times in three, and a null says nothing.
+
+**Why this is a cancellation and not a smaller run.** The tempting move is to run 117 anyway and report
+"no significant difference". That sentence would be indistinguishable from "we could not have found one",
+and this lab has already published one underpowered result it had to withdraw (E16b). Protocol Stage 3
+exists for exactly this: *a known-underpowered run is cheaper to cancel than to publish and retract.*
+Second cancellation at this gate today; the first was a multi-language trial with 4 JavaScript ground-truth
+entries.
+
+**What would actually answer it,** recorded so the next session does not rediscover the arithmetic:
+repeated measurement (k≥3 per file) to cut per-file noise, at n≈117 — roughly **700 calls**. E31 makes
+this more attractive than it first looks: flag-level churn is only ~1 file in 12, so most files are
+stable and repeated sampling buys real precision rather than averaging noise.
+
+**Consequence:** decision 0027's structural-familiarity item stays exactly where E32 left it —
+inconclusive, point estimate leaning toward structure contributing, transfer bound not narrowed.
+
+## E34 — PREREGISTRATION: scale the authored-unseen test to a measurement (written before measuring)
+
+Registered 2026-07-26 10:08 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E26 measured sensitivity on genuinely unseen code — 3/4 planted defects found, 0/4
+  false claims — and was explicitly labelled a **demonstration, not a rate** (n = 8, no p-value quoted).
+  It is the strongest transfer evidence this lab has and the weakest-powered. The corpus cannot fix the
+  structural question (E33 cancelled), but this one is fixable: the test set is **authored**, so n is a
+  choice rather than a constraint.
+- **Method.** Extend `evaluation/authored-unseen/` from 4 matched pairs to **12** (24 modules), written
+  in this session and therefore outside any deployed model's training set. Each pair implements the same
+  feature twice, differing only in whether the required control is present.
+- **Deliberate changes from E26, to attack author bias rather than repeat it:**
+  1. **New CWE classes** not used in E26 — mass assignment, missing tenant scope on a bulk endpoint,
+     unauthenticated internal admin route, missing re-authentication on a sensitive change, missing
+     object-level check on delete, information exposure through an error path.
+  2. **Three frameworks** (Flask, FastAPI, Django) rather than one, so "this author's Flask style" is
+     not the thing being detected.
+  3. **Subtle controls** in some `_b` variants — a control that is present but easy to overlook (a
+     dependency-injected guard, a queryset filter in a base class) — so specificity is tested against
+     near-misses, not only against obvious guards.
+- **Constraints carried over unchanged:** matched pairs (anything conspicuous appears in the twin, where
+  it must NOT fire); no comment, name or docstring hints at the defect; realistic CRUD idiom; files
+  shuffled and shown as `module_N.py` so neither name nor order leaks the answer.
+- **Primary outcome.** Sensitivity (planted defects flagged) and false-positive rate (controls flagged),
+  with a one-sided Fisher exact test — the statistic E26 could not justify at n = 8.
+- **Power, computed before writing any code.** At 12 pairs: 9/12 vs 1/12 → p = 0.0028; 7/12 vs 2/12 →
+  p = 0.0498. **So the design detects the effect E26 suggested, and is marginal if sensitivity falls to
+  ~0.58.** Stated in advance rather than discovered afterwards.
+- **Falsifying result.** Sensitivity near the control rate ⇒ the E26 demonstration does not survive
+  scaling, and decision 0027's transfer claim weakens.
+- **The bias that remains, unfixable by scaling.** I still author the defects. Matched pairs stop
+  conspicuousness from inflating the score; they cannot make my defects representative of a real client
+  codebase. This closes the *power* gap, never the *realism* gap.
+
+## E34 — RESULT: significant, and the MISS pattern is worth more than the rate
+
+Run 2026-07-26. Positive control passed. 12 matched pairs, 3 frameworks, shown blind as `module_N.py`.
+
+| scoring | sensitivity | false positives | one-sided Fisher |
+|---|---|---|---|
+| **as run** (classifier at run time) | 7/12 = 0.583 | 2/12 = 0.167 | **p = 0.0447** |
+| rescored (reassurance vocabulary extended by category) | 7/12 | 1/12 = 0.083 | **p = 0.0136** |
+| hand-adjudicated, **model** errors only | 7/12 | **0/12** | — |
+
+E26 at 3/4 vs 0/4 gave p = 0.0714 — **not** significant, which is why it was published as a
+demonstration. Scaling to 12 pairs was the fix, and it worked.
+
+### Where the capability actually is — the finding of this run
+
+| CWE class | planted | detected |
+|---|---|---|
+| **639** ownership / IDOR | 4 | **4** |
+| **306** missing authentication | 2 | **2** |
+| 862 missing authorization | 2 | 1 |
+| **307** no rate limit / lockout | 1 | **0** *(also missed in E26)* |
+| **915** mass assignment | 1 | **0** |
+| **209** error path leaks trace | 1 | **0** |
+| **620** no re-authentication | 1 | **0** |
+
+**The model detects absent ownership and absent authentication essentially reliably (6/6) and misses
+rate-limiting, mass assignment, error-leakage and re-authentication entirely (0/4).** Authorization is
+mixed (1/2). That is far more actionable than "58% sensitivity": the aggregate number is an average over
+classes the model is good at and classes it does not see at all, and CWE-307 has now been missed in
+**both** authored runs.
+
+### Specificity held against deliberately subtle controls
+
+Two `_b` variants hid the control on purpose — one enforced ownership through an **injected dependency**
+(no check visible in the handler body), one applied the scope **inside a service `base()` method**. The
+model correctly stayed silent on both. That is the specificity result this run was designed to stress,
+and it is the strongest one so far.
+
+### Both "false positives" were mine, not the model's
+
+- **`download_b`** — the model wrote *"Org filter on get. IDOR blocked."* It **recognised the control**.
+  The classifier scored it as a finding because "blocked" was not in the reassurance vocabulary.
+  Fixed by extending that vocabulary **as a category** (blocked/prevented/mitigated/guarded/scoped),
+  the same way E27 derived concept terms from CWE definitions rather than from whichever word tripped
+  the run.
+- **`email_b`** — the model wrote *"No rate limit. Brute password / spam confirmations."* **The model is
+  right.** That file re-checks the password and has no throttle. It is a real absent control that I did
+  not plant and did not record.
+
+### A design flaw in my own test set, disclosed
+
+`email_a` and `email_b` differ in re-authentication and **both lack rate limiting**. A matched pair is
+only "controlled" with respect to the *planted* class; it can carry an **unplanted** defect, which makes
+the control arm not truly clean and turns a correct model finding into a scored false positive.
+**Every matched-pair result in this lab inherits that flaw**, including E26's. The fix for a future set
+is to audit each `_b` variant against the full absence-class list, not only against its own pair.
+
+### Limits, unchanged
+
+n = 12 pairs. I authored the defects — matched pairs stop conspicuousness from inflating the score but
+cannot make my defect distribution representative of a client codebase. This closed the **power** gap
+E26 left. It did not close the **realism** gap, and the class breakdown above is the honest warning:
+a corpus weighted toward CWE-307 or 915 would have scored far worse.
+
+## E35 — PREREGISTRATION: re-run the headline comparison, paying the stale-artefact debt (written before measuring)
+
+Registered 2026-07-26 10:20 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** `generative-260726.json` carries E17, this lab's **most load-bearing result** (absence-class
+  vs clean files, p = 0.0078 after correction). SM17 lists it as **known-stale**: it predates the
+  E26/E27/E34 classifier corrections, so its committed numbers were produced by a classifier that no
+  longer exists. The published figures are the *re-scored* ones, which is defensible but leaves the
+  headline resting on an artefact nobody can regenerate.
+- **This is a replication, not bookkeeping.** A fresh run of the same design with the current instrument
+  is an **independent second measurement of the core finding**. E28 did exactly this for the file-role
+  comparison and reproduced its difference to 0.001; the headline has never had the same treatment.
+- **Method.** Identical design to E17 — 60 files holding an absence-class vulnerability, 40 clean
+  controls, frozen prompt, positive-control gate — with the **corrected classifier** and **full response
+  storage**. Both arms measured in the same run.
+- **Primary outcome.** Flag rate in each arm and the one-sided Fisher p, compared against the re-scored
+  E17 (9/60 = 0.150 vs 0/40 = 0.000, p = 0.0078).
+- **Prediction, recorded in advance.** Rates shift by a few files — flag-level churn is ~1 in 12 (E31) —
+  and **the conclusion holds**: the vulnerable arm materially above the clean arm.
+- **Falsifying result.** The clean arm rises to meet the vulnerable arm, or the gap loses significance.
+  That would mean E17 was a lucky draw and decision 0027's primary evidence needs re-basing. Published
+  if it occurs.
+- **Limits unchanged.** Same corpus, same model, same gateway redaction confound (37% of absence-class
+  files arrive with identifiers rewritten), same file-level granularity.
+
+### E34 — CORRECTION after an independent audit of the test set: 2 of 12 control variants were not controls
+
+The `_b` variants were audited by a reviewer who did not write them and did not see the results, against
+the **full** absence-of-control list rather than each pair's own planted class. Report:
+`docs/plans/reports/2026-07-26-authored-control-variant-audit.md`.
+
+**Two of twelve "controlled" files carry an unplanted absence-class defect:**
+
+| pair | planted control | unplanted defect found | verified |
+|---|---|---|---|
+| `email` | CWE-620 re-authentication — **present and correct** | **CWE-307**: `check_password` behind no throttle or lockout. A hijacked session brute-forces the password using the 403/200 split as an oracle. | yes — the model had flagged it and was scored wrong for doing so |
+| `lookup` | CWE-209 error-path — **present and correct** | **CWE-306 + 200**: the endpoint has **no authentication at all** — no decorator, no `current_user()`, no dependency — while returning `{id, status}` for an arbitrary `?ref=`. | yes — confirmed by inspection: `@bp.get` then `def account()`, nothing else. Every other Flask `_b` gates (invoices_b 4 sites, exports_b 2, internal_b 2) |
+
+**`lookup` is the worse case: the missing authentication is in BOTH arms**, so `lookup_a`'s label ("one
+defect, CWE-209") is also wrong. That pair cannot be scored in either direction and is excluded, not
+relabelled.
+
+### Re-scored, with both numbers published
+
+| scoring | sensitivity | false positives | p |
+|---|---|---|---|
+| all 12 pairs (as published above) | 7/12 = 0.583 | 1/12 = 0.083 | 0.0136 |
+| **10 pairs with valid ground truth** | **7/10 = 0.700** | **0/10 = 0.000** | **0.0015** |
+
+**The exclusion improves the result, so the justification has to be stated and judged, not assumed.**
+It is legitimate here because the audit was **independent, blind to the outcome, and decided on a
+criterion unrelated to it** — *does the control variant actually control?* — not because the excluded
+files scored badly. Both numbers are published so a reader can disagree with the exclusion and still
+have the conservative figure. **The conservative figure is the one quoted in decision 0027.**
+
+### The finding underneath, which matters more than either number
+
+Both defects have the **same shape**: the control class was applied only where it was the answer key.
+`reset_b` is rate-limited because CWE-307 was *its* planted class; `email_b` is not. `invoices_b`,
+`exports_b` and `internal_b` authenticate; `lookup_b` does not. That is **one systematic authoring bias,
+not two slips** — an author writing matched pairs defends the class under test and stops thinking about
+the rest.
+
+**It predicts recurrence in any test set authored this way, including E26's four pairs.** The protocol
+gains a rule: **a control variant must be audited against the full class list by someone who did not
+write it, before it is used as ground truth.**
+
+## E35 — RESULT: the headline replicates, and comes back stronger
+
+Run 2026-07-26. Positive control passed. Same design as E17, current instrument, full response storage.
+
+| run | vulnerable arm | clean arm | one-sided Fisher |
+|---|---|---|---|
+| **E17** (re-scored with the corrected classifier) | 9/60 = 0.150 | **0/40** | p = 0.0078 |
+| **E35** (fresh, independent) | **15/59 = 0.254** | **0/40** | **p = 0.000185** |
+
+**Specificity is 0/40 in both runs — 80 consecutive clean files without a single false claim.**
+
+### What replicated and what moved
+
+- **The conclusion replicated and strengthened.** The separation is larger and the p-value an order of
+  magnitude smaller. The preregistered falsifier — the clean arm rising to meet the vulnerable arm —
+  did not occur; the clean arm did not move at all.
+- **Sensitivity rose from 0.150 to 0.254.** Two changes since E17 both push that way and neither is a
+  fluke: the classifier now recognises findings its earlier vocabulary missed (E26/E27/E34 corrections),
+  and unreadable files are no longer scored as model non-answers (E21). This is the "published rates are
+  a **floor**" caveat being paid out in the expected direction.
+- **The file-missing bucket did its job**: 1 of 60 excluded as never-shown rather than silently counted
+  as a model failure. That fix came from E21 and this is its first clean demonstration.
+
+### Debt paid
+
+`generative-260726.json` is regenerated by the current instrument with responses stored in full
+(cap 4000, median length 185 — nothing truncated). It is **no longer known-stale** and can be
+re-verified from the artefact, which was the point.
+
+**Two of SM17's four known-stale entries can now be cleared** — this one, and `mutation-transfer`
+(E19, withdrawn and superseded by E23). The remaining two are `messy-control` (E18) and
+`role-control-v2` (E24, superseded by E28).
+
+### Unchanged limits
+
+Same corpus, same model, same gateway-redaction confound (37% of absence-class files arrive with
+identifiers rewritten), file-level granularity, and the sensitivity figure remains a floor rather than
+an estimate.
+
+## E36 — PREREGISTRATION: re-run the mess control, clearing the last live stale artefact (written before measuring)
+
+Registered 2026-07-26 10:45 +07. **Nothing below was measured before this text was committed.**
+
+- **Why.** `messy-control-260726.json` (E18) is the arm that rules out "the model just reacts to
+  defective code" — the control decision 0027 rests on for its class-specificity claim. It is still
+  listed known-stale: produced before the E26/E27/E34 classifier corrections. Of the three remaining
+  stale entries it is the only one carrying a **live** conclusion; the other two are superseded records
+  (`mutation-transfer` = withdrawn E19, `role-control-v2` = superseded by E28).
+- **Replication, not bookkeeping.** E35 just re-ran the headline and it came back stronger. This does the
+  same for the supporting control, so both halves of 0027's mechanism argument will rest on
+  independently replicated runs rather than on single measurements.
+- **Method.** Identical design to E18 — 80 files carrying real vulnerabilities of **presence** classes
+  only (no absent control) — current instrument, full response storage, positive-control gated.
+- **Primary outcome.** Flag rate on the messy arm, and the Fisher p against E35's freshly-measured
+  vulnerable arm (15/59), replacing the cross-run comparison E18 had to make against an older run.
+- **Prediction, recorded in advance.** The messy arm stays near zero. E18 re-scored gave 0/80.
+- **Falsifying result.** The messy arm rises materially. That would mean the model does react to
+  defectiveness after all, and **0027's class-specificity claim collapses** — the single most damaging
+  outcome available to this decision. Published if it occurs.
+- **A caveat this run inherits and cannot fix.** The E34 audit found that an authored "control" can carry
+  an unplanted defect. E18's messy arm is drawn from the **corpus**, not authored, so its labels come
+  from RealVuln ground truth — which is *also* not exhaustive. A file recorded as presence-class-only
+  could still lack a control nobody labelled. That biases **against** the hypothesis (it would raise the
+  messy arm), so a near-zero result is safe from it; a raised result would be ambiguous.
+
+### E26 — checked against the same audit, and it survives
+
+The E34 audit warned its finding "applies retroactively to anything built the same way, whether or not
+it has been re-audited yet". E26 is the obvious candidate: it used the **first four pairs** of the same
+set, authored by the same person under the same constraints.
+
+**It was already covered.** The audit reviewed all twelve `_b` variants, which includes E26's four:
+
+| E26 control variant | verdict |
+|---|---|
+| `invoices_b` | **CLEAN** — both routes call `current_user()`/`abort(401)`, `detail` scopes by `org_id` |
+| `reset_b` | **CLEAN** — rate limits on both routes |
+| `exports_b` | **CLEAN** — role check present |
+| `webhooks_b` | **CLEAN** — HMAC verification present (one out-of-scope limit noted: no replay protection, CWE-294) |
+
+**So E26's result stands unchanged** (3/4, 0/4, p = 0.071 — a demonstration, as it was always labelled).
+The two invalid controls are both in the eight pairs added for E34, and neither was part of E26.
+
+Worth noting *why* the first four survived while two of the next eight did not: the audit's own
+explanation is that the author applies a control class where it is the answer key. In the first four
+pairs, the four planted classes (639, 307, 862, 306) between them cover most of the list — so defending
+each pair's own class happened to defend the others too. The eight added pairs introduced classes
+(915, 209, 620) whose controls do **not** incidentally cover authentication or rate limiting, and that
+is exactly where the two gaps appeared. **The bias was always there; the first set was too small to
+expose it.**
+
+## E36 — RESULT: the mess control replicates; class-specificity holds on two independent runs
+
+Run 2026-07-26. Positive control passed. 80 corpus files carrying real vulnerabilities of **presence**
+classes only, current instrument, full response storage.
+
+| arm | flag rate |
+|---|---|
+| files with an **absence**-class vulnerability (E35, fresh) | 15/59 = **0.254** |
+| files **defective but with no absent control** (E36, fresh) | 2/80 = **0.025** |
+| clean files, nothing wrong (E35, fresh) | 0/40 = **0.000** |
+
+| comparison | p |
+|---|---|
+| absence-class vs messy-no-absence | **0.0000494** |
+| messy-no-absence vs clean | **0.44 — no difference** |
+
+### Both halves of 0027's mechanism argument are now independently replicated
+
+| | first run | replication |
+|---|---|---|
+| headline (absence vs clean) | 9/60 vs 0/40, p = 0.0078 | **15/59 vs 0/40, p = 0.000185** (E35) |
+| mess control (absence vs defective) | 9/60 vs 0/80, p = 0.0003 | **15/59 vs 2/80, p = 0.0000494** (E36) |
+
+**The preregistered falsifier did not occur.** The messy arm did not rise to meet the vulnerable arm; it
+sits at 0.025, statistically **indistinguishable from files with nothing wrong at all** (p = 0.44).
+Every one of those 80 files carries a real, ground-truth-confirmed vulnerability, and the model still
+produced absence-of-control language about only two of them.
+
+### The one honest difference from E18
+
+The messy arm moved from **0/80 to 2/80**. Two possibilities, and this run cannot separate them:
+
+1. **Instrument change.** The classifier now recognises findings its earlier vocabulary missed
+   (E26/E27/E34). The same change lifted the vulnerable arm from 0.150 to 0.254, so a small lift here is
+   the expected symmetric effect, not a surprise.
+2. **The caveat recorded before the run.** RealVuln's ground truth is not exhaustive. A file labelled
+   presence-class-only can still lack a control nobody recorded — exactly the flaw the E34 audit found in
+   the *authored* set. Under that reading, one or both of these two flags is a **true** positive scored
+   against the model.
+
+Both readings leave the conclusion intact, and the second would strengthen it. **Reported as
+unresolved rather than resolved in the favourable direction.**
+
+### Debt cleared
+
+`messy-control-260726.json` is regenerated by the current instrument with responses stored in full.
+**The known-stale list is now down to two entries, and neither carries a live conclusion**:
+`mutation-transfer` (E19 — withdrawn, superseded by E23) and `role-control-v2` (E24 — superseded by
+E28). Every artefact behind a standing claim is re-verifiable.

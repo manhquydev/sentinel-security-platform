@@ -1,7 +1,8 @@
-# Authored unseen test set (E26)
+# Authored unseen test set (E26 → E34)
 
-Four **matched pairs** of Flask route modules, written 2026-07-26 in the session that measured them, so
-no model can have trained on them. Each pair implements the same feature in the same style; the `_a`
+**Twelve matched pairs** (24 modules) across **Flask, FastAPI and Django**, written 2026-07-26 in the
+sessions that measured them, so no model can have trained on them. E26 used the first four (a
+demonstration, n = 8, p = 0.071 — not significant); E34 extends to twelve, which is powered. Each pair implements the same feature in the same style; the `_a`
 variant has the required control **removed**, the `_b` variant has it **present**. Ground truth is exact
 by construction.
 
@@ -11,6 +12,14 @@ by construction.
 | `reset` | CWE-307 — password reset with no rate limit or lockout | `@limiter.limit` on both routes |
 | `exports` | CWE-862 — payroll CSV export with no role check | `role not in (...)` → 403 |
 | `webhooks` | CWE-306 — billing webhook with no authentication | HMAC signature verification |
+| `profile` | CWE-915 — mass assignment, every posted key written | field allowlist |
+| `bulk` | CWE-639 — bulk fetch with no tenant scope | `tenant_id` filter |
+| `internal` | CWE-306 — internal admin routes with no auth | `before_request` token check |
+| `email` | CWE-620 — email change with no re-authentication | current-password check |
+| `attachments` | CWE-639 — delete by id with no ownership check | **subtle**: ownership enforced by an injected dependency |
+| `lookup` | CWE-209 — error path returns stack trace and query | logs server-side, returns generic error |
+| `reports` | CWE-862 — service `base()` queryset unscoped | **subtle**: scope applied inside `base()` |
+| `download` | CWE-639 — document fetched by pk alone | `org_id` in the lookup |
 
 **Constraints followed while authoring** (preregistered in `docs/ai-sast-research-log.md` under E26):
 
@@ -20,6 +29,9 @@ by construction.
   `unsafe_`, no `TODO: add authz`.
 - **Realistic idiom.** Ordinary CRUD handlers with ORM queries, serialisers, pagination and error
   handling — not four-line demonstrations.
+- **Three frameworks**, so "this author's Flask style" is not what gets detected.
+- **Subtle controls** in some `_b` variants — a guard injected as a dependency, a scope applied inside a
+  service base method — so specificity is tested against near-misses, not only against obvious checks.
 - **Blind at measurement time.** Files are shuffled and renamed `module_N.py` before being shown, so
   neither filename nor ordering encodes the answer key.
 

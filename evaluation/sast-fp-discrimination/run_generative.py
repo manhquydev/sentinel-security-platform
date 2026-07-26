@@ -152,7 +152,12 @@ _CONCEPT = re.compile(
 _ABSENCE = re.compile(r"(lack\w*|missing|absent|no\s|not\s|without|none|fails? to|does ?n[o\u2019']t|"
                       r"unprotected|unchecked|unenforced|never|any(?:one| user)?\s+can)", re.I)
 # Explicitly reassuring language: the control is present and correct.
+# Reassurance vocabulary as a CATEGORY, not as a patch for one observed miss: prose asserting the
+# control WORKS. E34 found "IDOR blocked" scored as a finding — the model had said the control was
+# present. Terms added by category (blocked/prevented/mitigated/guarded/handled), the same way E27
+# derived concept terms from CWE definitions rather than from whichever word tripped the run.
 _PRESENT_OK = re.compile(r"(\bcorrect\w*|\bproperly\b|\bproper\s|is enforced|are enforced|defen[sc]e|"
+                         r"\bblocked\b|\bprevented\b|\bmitigated\b|\bguarded\b|\bscoped\b|"
                          r"sole entry point|"
                          r"looks (?:fine|good|ok)|"
                          r"already (?:enforced|checked)|no issues?|seems (?:fine|ok)|appears (?:fine|ok))",

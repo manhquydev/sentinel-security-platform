@@ -366,3 +366,36 @@ E28's replication put run-to-run drift of the headline difference at **0.001**; 
    claims that flatter the author. This one would have retracted five of the author's own findings in a
    dramatic act of apparent rigour, and it was just as false. **Self-criticism is not self-evidently
    correct**, and a humble-sounding result deserves the same verification as a triumphant one.
+
+---
+
+## 13. An authored control is not a control until someone else audits it (E34, 2026-07-26)
+
+A test set of 12 matched pairs was built to measure detection: each pair implements the same feature
+twice, one with a required security control removed, one with it present. The "present" variants were
+the ground-truth negatives.
+
+**Two of the twelve were not negatives.** One re-checked a password with no rate limit; one had no
+authentication at all while returning account data for an arbitrary user-supplied reference. In the
+second case the gap sat in **both** arms, so that pair's positive label was wrong too.
+
+The two were not independent slips. They share one shape: **the author applied each control class only
+where it was the answer key.** Rate limiting appears in the pair whose planted class was rate limiting,
+and nowhere else. Authentication appears in every control variant except the one whose planted class was
+something different. Writing a matched pair focuses attention on the class under test and silently
+withdraws it from everything else.
+
+**Rules:**
+
+1. **A control variant must be audited against the FULL class list, not against its own pair's class.**
+   Its own class is the one the author was already thinking about; the others are where the defect will be.
+2. **The audit must be done by someone who did not write the set, and who has not seen the results.**
+   Blind to the outcome is what makes a later exclusion legitimate rather than post-hoc selection.
+3. **Publish the pre-audit number as well as the post-audit one.** Excluding invalid pairs will usually
+   *improve* the result — here 7/12 → 7/10 and p 0.0136 → 0.0015 — and a reader who distrusts the
+   exclusion is entitled to the conservative figure. **Quote the conservative one in decisions.**
+4. **Assume this flaw in every previously authored set.** It applies retroactively to anything built the
+   same way, whether or not it has been re-audited yet.
+
+*The general form, worth stating because it is not specific to test sets: when you build the thing you
+will be graded against, you defend the part you are thinking about. The rest is where you should look.*

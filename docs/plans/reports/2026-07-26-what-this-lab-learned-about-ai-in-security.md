@@ -1,6 +1,6 @@
 # What this lab actually learned about AI in security
 
-Synthesis across 28 experiments (E1–E28). Written 2026-07-26 at the close of the research session that
+Synthesis across 36 experiments (E1–E36). Written 2026-07-26 at the close of the research session that
 adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
 
 Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
@@ -40,10 +40,17 @@ There, the model contributes:
 
 | measurement | result |
 |---|---|
-| flags files with an absent control vs clean files | **9/60 vs 0/40, p = 0.0078** (corrected classifier; published as 10/60 vs 1/40, p = 0.024) |
-| names the ground-truth class | 6 of 10 flags |
-| specificity | **0 of 40** clean files — the one flag was a classifier false positive |
+| flags files with an absent control vs clean files | **9/60 vs 0/40, p = 0.0078** — **replicated independently: 15/59 vs 0/40, p = 0.000185** (E35) |
+| specificity | **0 of 40 in both runs** — 80 consecutive clean files, no false claim |
 | deterministic engines on the identical files | **0 of 60** |
+| on authored **unseen** code with exact ground truth | 7/12 (conservative) or 7/10 after audit; **p = 0.0136 / 0.0015** (E34) |
+
+**The capability is class-specific, and the aggregate rate hides that (E34).** On authored code the model
+detected **absent ownership 4/4 and absent authentication 2/2**, and missed **rate limiting, mass
+assignment, error-path exposure and re-authentication 0/4** — with CWE-307 missed in *both* authored
+runs, and CWE-307 being the **most common** absence class in the corpus. Decision 0027 is narrowed
+accordingly: what is measured is *absent ownership and absent authentication*, not absence-of-control
+generally.
 
 Three preregistered controls, each removing a different rival explanation:
 
