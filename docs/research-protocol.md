@@ -399,3 +399,41 @@ withdraws it from everything else.
 
 *The general form, worth stating because it is not specific to test sets: when you build the thing you
 will be graded against, you defend the part you are thinking about. The rest is where you should look.*
+
+## 14. A measurement must be derived from the evidence you can keep (E38–E39, 2026-07-26)
+
+A verdict stored in an artefact is not raw data. The model's prose is the data; the verdict is one
+deterministic reading of it. Every fix to the classifier therefore ages every verdict already written
+down, silently, and the artefact goes on asserting something about an instrument that no longer exists.
+
+**The scar.** A sweep re-deriving every stored verdict from its own stored prose found 11 rows across 7
+artefacts disagreeing with their own data. The cause was specific and provable: responses in which the
+model merely echoed the source file back inside a code fence had been scored as findings, before the
+classifier learned to strip code spans. The drift went **both ways** — it had inflated one published
+headline (15/59 → 14/59) and left another artefact more pessimistic than the figure already published
+(fp 2 → 1). A defect that only ever flattered us would be luck; one that runs in both directions is
+systematic, and only the sweep could tell those apart.
+
+**Why the existing guard did not catch it.** The freshness guard compares *commit times*, so an artefact
+committed alongside its instrument passes while still disagreeing with it. **Freshness is not
+reproducibility.** Only re-deriving the value tests the second, and every derived value now carries a
+guard that does so, with a planted disagreement as its negative control.
+
+**The rule this generalises to, which is the part that will matter next time.** *Score the evidence you
+are able to commit, not the evidence you had in memory.* The first run of E39 computed its verdicts from
+the raw model response while persisting a redacted copy — so the published number could not have been
+re-derived by anyone, including us. The reproducibility guard caught it on its first real use. Scoring
+moved onto the persisted text, and the estimate fell from +0.151 to +0.094 with a lower bound that now
+touches zero.
+
+That is the shape to expect: the number you can defend is usually weaker than the number you first saw.
+Where redaction, truncation or sampling stands between the measurement and the record, work out which
+direction it biases and say so — here redaction can only delete characters, so it can suppress a
+detection and never invent one, which makes the surviving rates a floor. And when the loss lands
+unevenly across arms, report that too: it cost three files, all in the arm that favoured the hypothesis
+under test.
+
+**Corollary.** If prose was truncated when it was stored, it cannot be re-derived at all, and re-scoring
+it is worse than leaving it alone — the classifier would be reading text the original verdict was never
+based on and would "correct" sound verdicts using evidence that no longer exists. Those artefacts are
+reported as *unverifiable*, never as *clean*. Two of ours are.
