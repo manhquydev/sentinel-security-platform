@@ -32,6 +32,21 @@ of either number was ever anything but a bound. **Nothing here may be quoted wit
 Honest product statement: a **low-noise sampler**. At twelve readings it surfaces two files in three, misses
 one in three, has no individual file it can be trusted on, and essentially never fires on clean code.
 
+## An unplanned finding worth more than the planned ones
+
+The deterministic **shadow detectors** built to test the corpus (E53–E54) are themselves a capability.
+Five absent-control conditions — unbounded `limit` (CWE-770), `DEBUG=True`, CORS wildcard, disabled cookie
+flags, wildcard `ALLOWED_HOSTS` — each with a self-test proving it fires on the defect and not on the
+repair. They found **10 real unlabelled defects** across the corpus at zero marginal cost, deterministically,
+with no model, no non-determinism, no k, and no false-positive rate to argue about.
+
+That is worth stating plainly next to everything else measured today: **the cheapest real security value
+produced in this whole line of work came from ~40 lines of regex, not from the model.** It does not
+generalise the way an LLM does — each detector covers one condition and had to be written by hand — but
+what it covers, it covers exactly, repeatably and for free. Any honest product story should lead with the
+deterministic layer and position the model as the thing that covers what no rule can express.
+
+## What is left
 ## What is left
 
 ### 1. A defect distribution not authored by us
@@ -48,13 +63,22 @@ A disjoint sample (zero overlap, verified) gave a ceiling of **0.375** against t
 the same decay signature, while being slightly *easier* per reading. **The ceiling is a property of the
 method, not of the first file set.** Artefacts `generative-disjoint{7,8,9}-260726.json`.
 
-### 3. Adjudicate the second specificity breach — is it a corpus gap? (highest-value cheap item)
+### 3. ~~Adjudicate the second specificity breach~~ — DONE (E53/E54)
 
-`backend/app/routers/audit.py` was flagged in the clean arm for an **uncapped `limit` parameter**. That is
-plausibly a real missing resource control (CWE-770) that the corpus does not label. If so it is a **true
-positive counted as a false positive**, and some unknown share of this project's "false positives" may be
-the same thing — which would mean ground-truth completeness, not the model, sets the apparent precision
-ceiling. Needs a human reading the file against the CWE-770 definition. **Zero model calls.**
+It **is** a corpus gap: an unbounded `limit` is a real CWE-770 and ground truth labels that class zero
+times. But the follow-up test showed the gap does **not** give meaningful headroom — confirmed-but-
+unlabelled defects are flagged 2/9 against 2/30 for clean controls (p = 0.22), and `audit.py` itself did
+not reproduce at 0/3. Measured precision is a floor; the space above it is not demonstrated to be large.
+
+### 3b. The classifier's presence-class suppressor only looks inside one window
+
+The third clean-arm breach is `aes-encrypt.py`: the model wrote *"No auth. CFB malleable → use AES-GCM"*,
+meaning **unauthenticated encryption**. The classifier read it as a missing authentication control. The
+presence-class suppressor (`aes|cbc|gcm|cipher|...`) exists precisely for this and did not fire, because
+the crypto words sit in the *adjacent* sentence while the suppressor only inspects the matching window.
+
+Fix is a window widening, but it must be validated both ways before adoption — it will remove some genuine
+detections too. **Zero model calls to measure.**
 
 ### 4. Do test files belong in either arm?
 
