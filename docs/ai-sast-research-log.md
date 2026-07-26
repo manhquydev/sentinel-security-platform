@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E75 | does the model transfer to organic post-cutoff production code? | **STANDS (negative) — COLLAPSE on the preregistered line** — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
 | E76 | how big is the inventory on real production code? | **STANDS — 24x the benchmark, and the product survives on the DECISION unit** — production web apps carry median **421 route sites** [124, 1435] against the benchmark's 17.7, and median **62 file decisions** against 2.9: the concentration artefact understated a customer's workload ~**21x**. Counted as findings the framing is dead; counted as E64's file-level decisions it is a day's work per app and **survives**. First run printed 'VIABLE, median 1' by averaging in libraries with **0 routes** (nltk, glances) — stratified by route count before concluding. Precision on this population still unmeasured |
 | E74 | does E57's rule-out survive measured reading dependence? | **STANDS — yes, unchanged** — the threatening channel (cold passes) is directly measurable: per-reading flag rates over the 16 surfaced files have **CV 0.23**, and recomputing (1-p)^144 with those multipliers moves nothing at the fourth decimal: threshold **p > 0.0206 at both** (1.00x). Closes the synthesis list: 2 corrections (E71, E72), 2 confirmed-and-fixed (E66 staleness, 63-vs-33), 1 defence (this). E61's in-sample vocabulary remains flagged, attached to the corpus debt |
 | E73 | are 63 repos 63 independent units? | **NO — they are 33 applications (10 specs x 4 generators + 23 human)** — re-clustering the flagship gain by APPLICATION: **H1 survives** ([+28.5%, +61.7%], floor +10% cleared 3x) but **H2 drops to MARGINAL** (median-gain CI [+0.0000, +0.0690] touches zero — four implementations of one spec were being counted as four pieces of evidence). Also fixed: E66/E70's stale 8%-route-landing prose vs the artefact's 52/7/37, and E67's 'two independent measurements agreeing' is withdrawn |
@@ -5580,3 +5581,65 @@ are skipped and counted. Those are the *big* applications, so the medians above 
 toward the product looking viable.
 
 Instrument `run_volume_census.py`, artefact `volume-census-260726.json`. Zero model calls.
+
+---
+
+## E75 — the model on organic post-cutoff production code: COLLAPSE, by the criterion written before the run
+
+**What this had to settle.** E72 left every generative-role number carrying a live memorisation caveat, and
+no re-analysis of the benchmark can lift it. Only new code can: maintainer-confirmed missing-control defects
+in production projects, published after any plausible training cutoff — one advisory landed **two days
+before this run**. The design is **paired**: the file *before* the fix (confirmed defect, labelled by its
+owner) against the *same file after* the fix (control added). Project familiarity, style and authorship are
+held constant and cancel; only the control differs.
+
+**The decision rule was fixed while the run was in flight and before any output was read** (protocol §23,
+committed at 22:46 with the log at 0 bytes). With 9 repositories the inference is collapse-versus-non-collapse
+only: **collapse if pre-fix detection at k≤3 falls below half the corpus rate at matched k**, i.e. below
+**0.229**.
+
+**Result — 13 post-cutoff paired sites, 9 repositories, k=3:**
+
+| | flagged at least once |
+|---|---|
+| **pre-fix** (confirmed defect) | **2/13 = 0.154** [0.043, 0.422] |
+| **post-fix** (control added) | **2/13 = 0.154** [0.043, 0.422] |
+| discordant pairs | pre-only 2, post-only 2 |
+
+**COLLAPSE on the preregistered line** (0.154 < 0.229), and worse than that: **the arms do not separate at
+all.** The model flags the repaired file exactly as often as the vulnerable one, with perfectly symmetric
+discordance. That is the outcome this experiment's own docstring named as falsifying the capability claim.
+Canary passed 3/3, so the harness detects a planted defect; verdicts were clean 63 / non-answer 18 /
+flagged 8 / error 1 across 90 readings.
+
+**Two defects in my own instrument were found and fixed before this was believed, both of which had
+produced a *different* wrong answer.**
+
+1. **The prompt was not the corpus prompt.** The first version defined its own rubric, making the headline
+   incomparable to the corpus rate it is measured against. `run_generative._RUBRIC` is now imported: a
+   transfer claim is a claim about the *same instrument* on different code.
+2. **Truncation hid the evidence.** Production files here run 400–2,700 lines; a 4,000-character head
+   truncation showed the model ~90–170 of them, and **56.5% of the labelled routes were never in the
+   prompt at all**. Corpus files are 88–184 lines (E59) and mostly fitted whole, so matching the instrument
+   meant matching what the model can see. The prompt now carries a window centred on the labelled routes,
+   applied identically to both arms. The fix was not cosmetic: `apache/airflow` went from 0/3–0/3 to
+   **3/3 pre, 0/3 post** — a perfect discrimination that whole-file truncation had made invisible.
+
+Both defects, uncorrected, would have produced a *stronger* collapse. The result stands after removing
+them, which is the only reason it is reported.
+
+**What this establishes, and its limits.** On organic, post-cutoff, maintainer-labelled production code the
+model does **not** distinguish a confirmed missing-authorization defect from its own repair. Read with the
+benchmark result — 0.458 union at k=3, higher still on memorisation-maximal repos (E72) — the most
+economical explanation of the corpus numbers is memorisation, exactly as the disclaimers feared. The limits
+are real and were preregistered: **13 sites across 9 repositories**, 20% non-answers, and two sites are test
+files rather than production routes. No p-value is quoted as a headline; nine clustered repositories cannot
+support one.
+
+**Consequence.** The generative role has no demonstrated capability on code the model has not seen before.
+Every published generative-role figure is now explicitly a **corpus** figure. The advisory counsel's
+recommendation — the deterministic layer ships and the LLM leaves the runtime product
+(`docs/plans/reports/2026-07-26-product-fork-free-layer-vs-llm-counsel.md`) — was conditioned on exactly
+this measurement, and its flip condition is **not met**.
+
+Instrument `run_organic_paired.py`, artefact `organic-paired-260726.json`. 90 model readings, ~$0.60.

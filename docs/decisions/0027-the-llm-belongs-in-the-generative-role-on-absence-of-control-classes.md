@@ -37,6 +37,31 @@ deterministic baseline is approximately nothing.
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
+## Addendum 2026-07-26 (E75) — the generative role does NOT transfer to post-cutoff production code
+
+This decision placed the LLM in the generative role on the strength of corpus measurements. **Those
+measurements are now explicitly corpus-only.**
+
+Tested directly, on maintainer-confirmed missing-control defects in production projects whose advisories
+postdate any plausible training cutoff — paired against the *same file after* the fix, so project
+familiarity cancels — the model returns **pre-fix 2/13 = 0.154 and post-fix 2/13 = 0.154**, with symmetric
+discordance (2 vs 2). It is **below the collapse line preregistered before the run** (0.229, half the corpus
+rate at matched k) and, more decisively, **the arms do not separate**: the model flags the repaired file as
+often as the vulnerable one. The canary passed 3/3, and two instrument defects that would each have made
+the collapse *look worse* were found and fixed before the result was accepted (§23, E75).
+
+**Standing of this decision.** The generative role retains no demonstrated capability on code the model has
+not seen. Read with E72 — detection higher on memorisation-maximal repositories, fame split leaning the same
+way — memorisation is the most economical explanation of the corpus figures this decision rests on.
+
+**What may still be claimed:** the corpus results as *corpus* results, with their k, and the negative
+findings (CWE-307 near-invisible, no reliable per-file core), which a collapse only strengthens.
+**What may not:** any generative-role number as a capability on customer code, in any product surface,
+sales material or business case.
+
+**Limits, preregistered:** 13 sites across 9 repositories, 20% non-answers, two sites are test files. This
+is collapse-versus-non-collapse evidence, not a precise transfer estimate, and no p-value is quoted.
+
 ## Addendum 2026-07-26 (E72) — E59's reading is inverted: the threat is mildly SUPPORTED, not absent
 
 E59's addendum below survives only in its factual half. Its arms were labelled backwards for the mechanism

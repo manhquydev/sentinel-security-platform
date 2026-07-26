@@ -53,7 +53,7 @@ for _p in (_ROOT, _HERE):
 
 import detect_absent_auth as det  # noqa: E402
 import probe_organic_absence_corpus as P  # noqa: E402
-from run_generative import classify_prose, canary_passes  # noqa: E402
+from run_generative import classify_prose, canary_passes, _RUBRIC  # noqa: E402
 from stats import fisher_one_sided  # noqa: E402
 from pool_propensity import wilson  # noqa: E402
 
@@ -63,10 +63,11 @@ CUTOFF = os.environ.get("ORGANIC_CUTOFF", "2025-06-01")   # conservative; report
 MAX_CHARS = 4000
 MAX_SITES = int(os.environ.get("ORGANIC_MAX_SITES", "24"))
 
-_RUBRIC = ("You are reviewing one source file for MISSING security controls — controls that should be "
-           "present but are absent (missing authentication, missing authorization/ownership checks, "
-           "missing rate limiting). Answer in prose. If a required control is absent, say which and why. "
-           "If the file looks adequately protected, say so plainly.")
+# THE PROMPT IS IMPORTED, NOT REWRITTEN. The first run of this experiment defined its own rubric, which
+# silently made the headline incomparable: the corpus rate it is measured against (~0.458 union at k=3) was
+# produced by run_generative's `_RUBRIC` and its persisted-text classifier. A transfer claim is a claim
+# about the SAME instrument on different code, so every part of the path — prompt, provenance labelling,
+# truncation, parser — has to be the one the corpus number came from.
 
 
 def blob(owner: str, repo: str, path: str, ref: str) -> str | None:
@@ -79,14 +80,38 @@ def blob(owner: str, repo: str, path: str, ref: str) -> str | None:
         return None
 
 
-def ask_file(src: str, label: str) -> tuple[str, str]:
+def window(src: str, routes: list[int], budget: int = MAX_CHARS) -> str:
+    """The slice of the file containing the labelled routes, within the same character budget.
+
+    THE DEFECT THIS FIXES, measured before any result was published: production files here run 400-2700
+    lines, and truncating at the first 4000 characters showed the model only ~90-170 of them. **56.5% of
+    the labelled routes were never in the prompt at all.** Any "the model missed them" reading of that is
+    a statement about the harness, not the model.
+
+    Corpus files are a different shape — median 88-184 lines (E59) — so almost all of them fitted whole
+    inside the same budget. Matching the INSTRUMENT therefore means matching what the model gets to see:
+    the code the question is about. The window is centred on the labelled routes and applied identically
+    to the pre-fix and post-fix arms, so the pairing is untouched.
+    """
+    lines = src.splitlines()
+    if not routes or len(src) <= budget:
+        return src[:budget]
+    lo, hi = min(routes), max(routes)
+    per = max(budget // 40, 40)
+    start = max(0, lo - 1 - per // 3)
+    end = min(len(lines), hi + per)
+    return "\n".join(lines[start:end])[:budget]
+
+
+def ask_file(src: str, label: str, routes: list[int] | None = None) -> tuple[str, str]:
     """One reading of one file version. Returns (verdict, persisted prose).
 
     Scores the text that is PERSISTED, never the raw response — protocol §14, the rule this project
     violated for six hours and pinned with SM19.
     """
     from agent import llm
-    numbered = "\n".join(f"{i+1}: {ln}" for i, ln in enumerate(src[:MAX_CHARS].splitlines()))
+    shown = window(src, routes or [])
+    numbered = "\n".join(f"{i+1}: {ln}" for i, ln in enumerate(shown.splitlines()))
     try:
         out = llm.chat(
             [llm.Msg("system", _RUBRIC, llm.operator()),
@@ -151,7 +176,8 @@ def main() -> int:
                 continue
             sites.append({"advisory": gid, "published_at": dates.get(gid, ""),
                           "repo": f"{owner}/{repo}", "file": f["filename"],
-                          "commit": sha[:10], "routes": len(want), "pre": pre, "post": post})
+                          "commit": sha[:10], "routes": len(want), "route_lines": want,
+                          "pre": pre, "post": post, "pre_lines": len(pre.splitlines())})
             break                                  # one file per advisory keeps repos from dominating
 
     if len(sites) < 8:
@@ -165,16 +191,16 @@ def main() -> int:
     for s in sites:
         pre_v, post_v = [], []
         for _ in range(K):
-            v, prose = ask_file(s["pre"], s["file"])
+            v, _ = ask_file(s["pre"], s["file"], s["route_lines"])
             pre_v.append(v)
-            if len(rows) < 3 and not prose.startswith("error"):
-                pass
-            v2, _ = ask_file(s["post"], s["file"])
+            v2, _ = ask_file(s["post"], s["file"], s["route_lines"])
             post_v.append(v2)
-        r = {k: s[k] for k in ("advisory", "published_at", "repo", "file", "commit", "routes")}
+        r = {k: s[k] for k in ("advisory", "published_at", "repo", "file", "commit", "routes",
+                               "pre_lines")}
         r["pre_flagged"] = sum(1 for v in pre_v if v == "flagged")
         r["post_flagged"] = sum(1 for v in post_v if v == "flagged")
         r["pre_verdicts"], r["post_verdicts"] = pre_v, post_v
+        r["pre_nonanswer"] = sum(1 for v in pre_v if v not in ("flagged", "clean"))
         rows.append(r)
         print(f"  {r['repo']:<28} {r['file'][:34]:<35} pre {r['pre_flagged']}/{K}  post {r['post_flagged']}/{K}")
 
@@ -182,6 +208,11 @@ def main() -> int:
         a = sum(1 for r in rs if r["pre_flagged"] > 0)
         b = sum(1 for r in rs if r["post_flagged"] > 0)
         return a, b, len(rs)
+
+    import collections as _c
+    allv = _c.Counter(v for r in rows for v in r["pre_verdicts"] + r["post_verdicts"])
+    print(f"\nverdict distribution across every reading: {dict(allv)}")
+    print("A run that is mostly non-answers is a broken harness, not a model finding nothing (rule 15).")
 
     for label, rs in (("ALL paired sites", rows),
                       (f"POST-CUTOFF only (>= {CUTOFF})",
@@ -218,6 +249,13 @@ def main() -> int:
            "sites": len(sites), "post_cutoff_sites": len(post_cut),
            "repositories": len({s["repo"] for s in sites}),
            "canary": {"passed": ok, "verdicts": seen},
+           "verdict_distribution": dict(allv),
+           "prompt_source": "run_generative._RUBRIC — imported, so the instrument matches the corpus "
+                            "number this is compared against",
+           "windowing": "the prompt carries the slice of the file containing the labelled routes, within "
+                        "the same 4000-char budget. Whole-file truncation hid 56.5% of the labelled "
+                        "routes from the model, because production files run 400-2700 lines while corpus "
+                        "files are 88-184; the same window is applied to both arms",
            "rows": rows}
     with open(os.path.join(_HERE, "organic-paired-260726.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)

@@ -6,6 +6,13 @@ state, not the morning's.
 
 ## What is settled
 
+> **2026-07-26, late: the generative role failed its transfer test (E75).** On maintainer-confirmed
+> missing-control defects in production code published after any plausible training cutoff, paired against
+> the same file after its fix, the model returns **0.154 pre-fix and 0.154 post-fix** — below the
+> preregistered collapse line and, decisively, **the arms do not separate**. Everything in this section is
+> therefore a **corpus** result. The capability claims below stand as measurements of this benchmark and
+> **not** as claims about customer code; the negative findings are unaffected and strengthened.
+
 **The capability is real, bounded, and every coverage number is budget-dependent.**
 
 | | measured |
