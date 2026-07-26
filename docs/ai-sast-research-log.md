@@ -39,7 +39,7 @@ audited on 2026-07-26.
 | E15 | re-audit of 0022's "+44%" | **STANDS** — +43.6% [+31.5%,+58.4%]; survived Stage-8 review byte-identically; precision clause qualified |
 | E16a | can models emit machine-readable findings? | **STANDS (negative)** — 5 models × 3 formats × prefill = zero conformance, while correctly finding planted defects |
 | E16b | generative role, first look | **INCONCLUSIVE** by preregistration (p = 0.065) |
-| E17 | generative role, powered replication | **STANDS** — p = 0.024; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
+| E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 15/59, p = 0.0000494; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
