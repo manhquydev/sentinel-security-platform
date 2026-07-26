@@ -72,6 +72,11 @@ def protected_route_lines(patch: str) -> list[int]:
     that an old one was unprotected, and counting it would manufacture sites the corpus never had.
     """
     out, old, route_at = [], 0, None
+    # Also record where markers were inserted, so the enclosing handler can be found in the pre-fix
+    # SOURCE when the route decorator sits outside the hunk's context window. Real fixes routinely put
+    # the control in the handler's SIGNATURE — `current_user: User = Depends(require_admin)` — several
+    # lines below its decorator, and a context-only scan misses every one of them.
+    inserts: list[int] = []
     for line in patch.splitlines():
         m = HUNK.match(line)
         if m:
@@ -80,13 +85,41 @@ def protected_route_lines(patch: str) -> list[int]:
             continue
         if line.startswith("+"):
             body = line[1:]
-            if (det.AUTH_MARKER.search(body) or det.ENFORCEMENT.search(body)) and route_at:
-                out.append(route_at)
+            if det.AUTH_MARKER.search(body) or det.ENFORCEMENT.search(body):
+                if route_at:
+                    out.append(route_at)
+                else:
+                    inserts.append(old)          # resolved later against the pre-fix source
             continue
         body = line[1:] if line[:1] in (" ", "-") else line
         if det.ROUTE.search(body):
             route_at = old              # a route that existed BEFORE the fix
         old += 1
+    return sorted(set(out)), sorted(set(inserts))
+
+
+def enclosing_route_lines(src: str, inserts: list[int]) -> list[int]:
+    """For each insertion point, the route decorator of the handler that ENCLOSES it, if any.
+
+    Walks up from the insertion point to the `def` that owns it, then to the decorator block above that
+    `def`. Returns the route decorator's line. This is what recovers signature-level fixes, which the
+    hunk-context scan structurally cannot see.
+    """
+    lines = src.splitlines()
+    out = []
+    for pos in inserts:
+        i = min(max(pos - 1, 0), len(lines) - 1)
+        # up to the def that owns this line
+        while i >= 0 and not re.match(r"\s*(?:async\s+)?def\s", lines[i]):
+            i -= 1
+        if i < 0:
+            continue
+        j = i - 1
+        while j >= 0 and (lines[j].lstrip().startswith("@") or not lines[j].strip()):
+            if det.ROUTE.match(lines[j]):
+                out.append(j + 1)
+                break
+            j -= 1
     return sorted(set(out))
 
 
@@ -197,16 +230,17 @@ def main() -> int:
                 continue
             if det.AUTH_MARKER.search(added) or det.ENFORCEMENT.search(added):
                 hit_marker = True
-                # The removed/context side is the pre-fix file: a route there with the marker newly added
-                # is exactly one labelled absence site.
-                ctx = "\n".join(l[1:] if l.startswith((" ", "-")) else ""
-                                for l in patch.splitlines())
-                if det.ROUTE.search(ctx) or det.ROUTE.search(added):
-                    hit_route = True
-                    sites += 1
+                # A candidate site is any file where a control was newly added. Whether it attaches to a
+                # route is decided LATER, against the pre-fix source, because the decorator often sits
+                # outside the hunk's context window — the fix lands in the handler's signature. Gating
+                # here on seeing a route inside the patch discarded exactly those cases, which inspection
+                # showed to be the largest recoverable group of real fixes.
+                routes, inserts = protected_route_lines(patch)
+                if routes or inserts:
+                    hit_route = hit_route or bool(routes)
                     found.append({"advisory": gid, "owner": owner, "repo": repo,
                                   "file": f["filename"], "commit": sha,
-                                  "route_lines": protected_route_lines(patch),
+                                  "route_lines": routes, "insert_lines": inserts,
                                   "parents": [pp["sha"] for pp in c.get("parents") or []]})
         adds_marker += 1 if hit_marker else 0
         on_route += 1 if hit_route else 0
@@ -216,7 +250,7 @@ def main() -> int:
     print(f"  touch a Python file                     : {touches_py:>4} = {touches_py/max(n,1):.1%}")
     print(f"  ADD an auth/enforcement marker          : {adds_marker:>4} = {adds_marker/max(n,1):.1%}")
     print(f"  ...and that marker lands on a route     : {on_route:>4} = {on_route/max(n,1):.1%}")
-    print(f"  labelled absence SITES extracted        : {sites}")
+    print("  (sites are resolved against the pre-fix source below, not from the patch alone)")
 
     # ------------------------------------------------------------------
     # THE TRANSFER TEST. Everything this project has measured about the detector comes from
@@ -224,10 +258,10 @@ def main() -> int:
     # production code, labelled by the maintainer who fixed them. Fetch each file AS IT WAS BEFORE THE
     # FIX and ask the detector the same question it is asked on the corpus.
     # ------------------------------------------------------------------
-    repos_hit = len({(e["owner"], e["repo"]) for e in found})
     print("\ntransfer test — does the detector fire on the PRE-FIX version of these organic files?")
     fired = checked = site_want = site_hit = 0
     detail = []
+    scored_repos: set = set()      # repositories that actually contribute a scored site, not candidates
     for e in found:
         if not e["parents"]:
             continue
@@ -240,11 +274,18 @@ def main() -> int:
             src = base64.b64decode(blob["content"]).decode("utf-8", "replace")
         except (ValueError, TypeError):
             continue
+        # Resolve the labelled routes FIRST. A file where no route encloses the change is not an absence
+        # site at all and must not enter either denominator — counting its firing before deciding that
+        # inflated file-level firing to a meaningless 1.000.
+        want = sorted(set((e.get("route_lines") or [])
+                          + enclosing_route_lines(src, e.get("insert_lines") or [])))
+        if not want:
+            continue
+        sites += len(want)
+        scored_repos.add((e["owner"], e["repo"]))
         checked += 1
         hits = det.findings_for(src, e["file"])
         fired += 1 if hits else 0
-        # SITE level: did the detector land on the very route the maintainer protected?
-        want = e.get("route_lines") or []
         got = {h["line"] for h in hits}
         matched = [w for w in want if any(abs(w - g) <= LINE_TOL for g in got)]
         site_want += len(want)
@@ -304,7 +345,7 @@ def main() -> int:
                 gt_hit += 1
     if checked:
         print(f"\n  ORGANIC   file-level firing: {fired}/{checked} = {fired/checked:.3f}"
-              f"   ({repos_hit} distinct repositories)")
+              f"   ({len(scored_repos)} repositories contributing a scored site)")
         if cfiles:
             print(f"  TEACHING  file-level firing: {cfired}/{cfiles} = {cfired/cfiles:.3f}"
                   f"   (same standard, same detector)")
@@ -362,7 +403,7 @@ def main() -> int:
                                      "FILE level, not the strict file+CWE+line standard used on the "
                                      "teaching corpus, and a much smaller sample",
                              "detail": detail,
-                             "distinct_repositories": repos_hit,
+                             "distinct_repositories": len(scored_repos),
                              "teaching_corpus_same_standard": {
                                  "files": cfiles, "fired": cfired,
                                  "file_level_firing": round(cfired / cfiles, 4) if cfiles else None},

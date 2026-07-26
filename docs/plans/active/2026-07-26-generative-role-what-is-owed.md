@@ -126,12 +126,12 @@ absence CWEs): **355** advisories → **137** with a resolvable fix commit → *
 across 6 repositories**, at zero cost, and that is a lower bound because only fixes written in the
 vocabulary the detector already knows are counted.
 
-**Widening the sweep does not help, and that is informative.** Sweeping every pip advisory in these classes
-rather than the first few pages moved the advisory count from 319 to 355 and fix commits from 115 to 137,
-while the site and repository counts **did not change at all**. The binding constraint is the **8%
-route-landing rate** — 44 organic fixes add an auth marker and only 11 put it on a route decorator — so
-about two thirds of real absence fixes are not route-shaped. More `pip` advisories will not produce more
-repositories; a different extraction shape would.
+**Widening the advisory sweep does not help; widening the EXTRACTOR does.** Sweeping every pip advisory
+moved the counts from 319/115 to 355/137 while sites and repositories did not move at all. The binding
+constraint was never the advisory count — it was the extractor, which required the route decorator to sit
+inside the diff hunk. Resolving the enclosing handler against the pre-fix source instead nearly doubled the
+sample to **35 sites across 8 repositories** (E68). What remains genuinely out of scope is absence fixed in
+middleware, service layers, or class-based views, which a route-decorator detector does not address at all.
 
 That bought the measurement this project had never been able to make. On the pre-fix versions of those
 organic production files (langflow, airflow, bambuddy and others) the detector's **file-level firing is
@@ -140,10 +140,16 @@ stated in E66: only **6 independent repositories**, an uncontrolled route-densit
 file produced 98 findings), and **site level is not established** — whether the detector lands on the
 specific route the maintainer fixed needs diff-to-line mapping that does not exist yet.
 
-**Site-level organic recall now exists (E67).** The diff-to-line mapping was built the same evening:
-**13/18 = 0.722** on organic route sites. It must not be quoted against the published 0.226 — organic sites
+**Site-level organic recall now exists (E67), and E68 corrected it downward.** The diff-to-line mapping was
+built the same evening and gave **0.722** — then widening the extractor to fixes that land in the handler's
+*signature* showed that figure was a **selection effect**: requiring the route decorator inside the diff hunk
+had kept only short, simple handlers the detector finds easily. On the corrected sample — **35 sites across
+8 repositories** — organic recall is **17/35 = 0.486**, slightly *below* the corpus's 0.576. The detector
+does not collapse on production code; it does not improve on it either.
+
+Superseded figures, kept only as the record of how the reasoning went: **0.722** on organic route sites. It must not be quoted against the published 0.226 — organic sites
 are route handlers by construction, and that is the denominator error §22 records. Matched population, the
-corpus gives **76/132 = 0.576**, so the transfer gap is **1.25×, not 3.2×**.
+corpus gives **76/132 = 0.576**. The gap first read as 1.25× in favour of organic code and E68 removed it.
 
 **That measurement re-read the free layer's headline.** Only **132 of 289 = 45.7%** of labelled CWE-306/862
 entries sit on a route handler at all; the rest are structurally unreachable by a route-decorator detector

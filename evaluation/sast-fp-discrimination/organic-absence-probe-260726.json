@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T14:18:02.961844+00:00",
+  "generated_at": "2026-07-26T14:25:04.133360+00:00",
   "question": "can an organic absence-class corpus be built without paid expert labelling?",
   "method": "GitHub Security Advisories -> fix commit -> diff ADDS an auth/enforcement marker on a route; the maintainer's fix IS the label, so nothing is inferred",
   "ecosystem": "pip",
@@ -20,16 +20,16 @@
   "sampled_commits": 137,
   "touch_python": 136,
   "add_auth_marker": 44,
-  "marker_on_route": 11,
-  "labelled_sites_in_sample": 20,
-  "sites_per_commit": 0.146,
-  "projected_sites_all_commits": 20,
+  "marker_on_route": 7,
+  "labelled_sites_in_sample": 35,
+  "sites_per_commit": 0.2555,
+  "projected_sites_all_commits": 35,
   "projection_caveat": "sample is the first n commit-linked advisories, not random; sites cluster by repository so the independent unit is the repo, not the site",
   "limitation": "counts only fixes expressed in the vocabulary detect_absent_auth already knows, so this is a LOWER BOUND on organic yield",
   "transfer_test": {
-    "checked": 20,
-    "fired": 17,
-    "organic_file_level_recall": 0.85,
+    "checked": 22,
+    "fired": 18,
+    "organic_file_level_recall": 0.8182,
     "note": "pre-fix file versions of organic maintainer-labelled defects; FILE level, not the strict file+CWE+line standard used on the teaching corpus, and a much smaller sample",
     "detail": [
       {
@@ -37,7 +37,7 @@
         "file": "backend/app/api/routes/api_keys.py",
         "commit": "a82f9278d2",
         "detector_findings": 0,
-        "labelled_routes": 1,
+        "labelled_routes": 5,
         "routes_matched": 0
       },
       {
@@ -45,7 +45,7 @@
         "file": "backend/app/api/routes/archives.py",
         "commit": "a82f9278d2",
         "detector_findings": 98,
-        "labelled_routes": 0,
+        "labelled_routes": 2,
         "routes_matched": 0
       },
       {
@@ -53,7 +53,7 @@
         "file": "backend/app/api/routes/print_queue.py",
         "commit": "a82f9278d2",
         "detector_findings": 10,
-        "labelled_routes": 0,
+        "labelled_routes": 1,
         "routes_matched": 0
       },
       {
@@ -82,14 +82,6 @@
       },
       {
         "repo": "langflow-ai/langflow",
-        "file": "src/backend/base/langflow/api/v1/files.py",
-        "commit": "3fed9fe1b5",
-        "detector_findings": 12,
-        "labelled_routes": 0,
-        "routes_matched": 0
-      },
-      {
-        "repo": "langflow-ai/langflow",
         "file": "src/backend/base/langflow/api/v1/models.py",
         "commit": "3fed9fe1b5",
         "detector_findings": 4,
@@ -102,6 +94,14 @@
         "commit": "3fed9fe1b5",
         "detector_findings": 2,
         "labelled_routes": 2,
+        "routes_matched": 1
+      },
+      {
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/users.py",
+        "commit": "3fed9fe1b5",
+        "detector_findings": 6,
+        "labelled_routes": 1,
         "routes_matched": 1
       },
       {
@@ -145,6 +145,14 @@
         "routes_matched": 1
       },
       {
+        "repo": "volcengine/OpenViking",
+        "file": "tests/server/test_auth.py",
+        "commit": "8c1c3f3608",
+        "detector_findings": 8,
+        "labelled_routes": 1,
+        "routes_matched": 1
+      },
+      {
         "repo": "janeczku/calibre-web",
         "file": "cps/shelf.py",
         "commit": "bcdc976414",
@@ -157,15 +165,15 @@
         "file": "jupyterlab/tests/test_extensions.py",
         "commit": "be9303f5bc",
         "detector_findings": 16,
-        "labelled_routes": 0,
-        "routes_matched": 0
+        "labelled_routes": 1,
+        "routes_matched": 1
       },
       {
-        "repo": "open-webui/open-webui",
-        "file": "backend/open_webui/routers/utils.py",
-        "commit": "6d736d3c59",
-        "detector_findings": 10,
-        "labelled_routes": 0,
+        "repo": "langflow-ai/langflow",
+        "file": "src/backend/base/langflow/api/v1/endpoints.py",
+        "commit": "2c9f498d66",
+        "detector_findings": 12,
+        "labelled_routes": 1,
         "routes_matched": 0
       },
       {
@@ -173,15 +181,23 @@
         "file": "backend/open_webui/routers/chats.py",
         "commit": "2e52ad8ff2",
         "detector_findings": 70,
-        "labelled_routes": 0,
-        "routes_matched": 0
+        "labelled_routes": 2,
+        "routes_matched": 1
       },
       {
         "repo": "open-webui/open-webui",
         "file": "backend/open_webui/main.py",
         "commit": "de3317e26b",
         "detector_findings": 48,
-        "labelled_routes": 0,
+        "labelled_routes": 1,
+        "routes_matched": 0
+      },
+      {
+        "repo": "aegra/aegra",
+        "file": "libs/aegra-api/src/aegra_api/api/runs.py",
+        "commit": "e1b2042254",
+        "detector_findings": 0,
+        "labelled_routes": 3,
         "routes_matched": 0
       },
       {
@@ -193,16 +209,16 @@
         "routes_matched": 0
       }
     ],
-    "distinct_repositories": 6,
+    "distinct_repositories": 8,
     "teaching_corpus_same_standard": {
       "files": 145,
       "fired": 43,
       "file_level_firing": 0.2966
     },
     "site_level": {
-      "labelled_routes": 18,
-      "matched": 13,
-      "organic_site_recall": 0.7222,
+      "labelled_routes": 35,
+      "matched": 17,
+      "organic_site_recall": 0.4857,
       "line_tolerance": 10,
       "corpus_published_strict_recall": 0.226,
       "corpus_same_population": {
