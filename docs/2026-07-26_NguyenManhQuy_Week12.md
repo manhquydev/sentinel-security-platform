@@ -141,6 +141,15 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > dạng đường cong, dù bộ mới còn *dễ hơn*. Trần là tính chất của phương pháp, không phải của bộ
 > file đầu tiên.
 >
+> **CON SỐ QUAN TRỌNG NHẤT CỦA CẢ HƯỚNG NÀY, gộp cả hai bộ file (48 file có lỗi thật):**
+> **29/48 = 60,4% file có lỗi KHÔNG BAO GIỜ được nêu, khoảng tin cậy [46% – 73%]** — ở mọi số lần
+> đọc đã thử. Hai bộ file cho kết quả khớp nhau (Fisher hai phía p = 1,000), nên đây là tính chất
+> của phương pháp chứ không phải của một bộ file may rủi.
+>
+> Nói thành câu cho người mua: **đọc mỗi file sáu lần, trả tiền sáu lần, và khoảng ba trong năm
+> file có lỗi vẫn không bao giờ hiện ra.** Mọi con số khác trong báo cáo này chỉ là chi tiết treo
+> quanh câu đó.
+>
 > **Đường cong chi phí, đo chứ không phải mô hình hóa:** đọc k lần thì phủ được bao nhiêu phần so
 > với kỳ vọng lý thuyết — **100%, 81%, 71%, 65%, 61%, 58%** ứng với k = 1 đến 6. Ở k=6 thì phủ
 > được 10/24 file với chi phí gấp sáu. **Mỗi lần đọc thêm đáng giá ít hơn lần trước, khoảng cách

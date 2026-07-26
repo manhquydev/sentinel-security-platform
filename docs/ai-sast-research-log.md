@@ -3908,6 +3908,27 @@ That reframes the specificity claim retrospectively. "It never fires on clean fi
 fires on test files" — and the first time it did fire, it fired on exactly that subpopulation. The claim
 was weaker than it read, in a way nobody had checked, for as long as it held.
 
+### Pooled across both samples: the single most decision-relevant number in this line of work
+
+Sample A (24 files, 6 readings) and sample B (24 disjoint files, 3 readings), pooled:
+
+| | at propensity zero | mean propensity |
+|---|---|---|
+| sample A | 14/24 = 0.583 [0.388, 0.755] | 0.188 |
+| sample B | 15/24 = 0.625 [0.427, 0.788] | 0.278 |
+| **pooled, 48 files** | **29/48 = 0.604, 95% CI [0.463, 0.730]** | — |
+
+The two samples agree closely on the zero fraction — Fisher two-sided **p = 1.000**, which here is the
+result one wants: two independent draws putting the quantity in the same place.
+
+**Between 46% and 73% of files carrying a real absent-control defect are never surfaced, at any k tested.**
+That is the number the commercial case turns on, it is now measured on two disjoint samples that agree, and
+it is a property of the method rather than of a particular file set.
+
+Stated for a buyer: **read every file six times, pay six times, and roughly three in five defective files
+still never appear.** Everything else measured today — the mixture, the saturation, the class asymmetry —
+is detail hanging off that sentence.
+
 **Status: no fix applied, and the owed work is now a different question** — whether test files belong in
 either arm of this design. Changing that changes the sampling frame and therefore every specificity number
 this project has published, so it needs deciding deliberately rather than as a patch. The measured rate of

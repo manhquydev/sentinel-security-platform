@@ -198,6 +198,12 @@ than the one before it, by a widening margin.
 original 0.417 with the same decay signature — and did so while being slightly *easier* per reading. The
 saturation is a property of the method rather than of the first file set.
 
+**Pooled over both samples — 48 distinct defective files — the fraction never surfaced at any k tested is
+29/48 = 0.604, 95% CI [0.463, 0.730]**, and the two samples agree on it (Fisher two-sided p = 1.000). This
+is the sentence the commercial case turns on: *read every file six times, pay six times, and roughly three
+in five defective files still never appear.* Every other measurement in this decision is detail hanging off
+that.
+
 **And on this sample the curve does not merely flatten — it stops.** Ten of the 24 positive files ever
 produce a flag, and union coverage at k=6 is exactly those 10. **The capability saturates at 0.417 by the
 sixth reading; beyond that, additional readings buy cost and nothing else.** The 14 files at propensity
