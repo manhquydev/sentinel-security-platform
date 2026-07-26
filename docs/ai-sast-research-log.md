@@ -43,7 +43,8 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
-| E82 | build cross-file awareness — does it unblock E81? | **BUILT AND PRICED — NO, the obvious fix costs too much** — `scan_repo` collects app-wide enforcement and cross-file router mounts before judging any file; default path byte-identical so no published number moves. The two mechanisms differ completely in price: **router propagation costs 0 recall** (and is unexercised — none of the 4 production apps use it); **app-wide suppression removes ALL 514 production FPs but costs 16/76 corpus TPs = 21% of recall**, because global guards carve out public paths and defects live there (carve-outs measured: 32/12/8/45). Off by default: a measured loss for an unmeasurable gain. E81's block STANDS; resolution is carve-out-aware suppression |
+| E83 | is E82's 21% cost real? | **NO — it was three bugs of mine; the real cost is ZERO** — (1) `APP_LEVEL` matched **CORSMiddleware** via `allow_headers=[..."Authorization"]`; (2) a repo is not one app (`vulpy` ships `good/` and `bad/`) so scoping is now per-directory; (3) the guard must **ENFORCE**, not just load a session — E61's identity-vs-enforcement distinction applied at app scope. After all three: recall **0.263 unchanged**, **508 of 514 production FPs removed**. E82's 'not worth paying' is **withdrawn**; cross-file suppression now ships **on by default**, corpus figure 558 sites / 0.263 / 0.125 |
+| E82 | build cross-file awareness — does it unblock E81? | **PRICING CORRECTED BY E83 — the cost was my own bugs, real cost is zero.** Original (wrong) finding: — `scan_repo` collects app-wide enforcement and cross-file router mounts before judging any file; default path byte-identical so no published number moves. The two mechanisms differ completely in price: **router propagation costs 0 recall** (and is unexercised — none of the 4 production apps use it); **app-wide suppression removes ALL 514 production FPs but costs 16/76 corpus TPs = 21% of recall**, because global guards carve out public paths and defects live there (carve-outs measured: 32/12/8/45). Off by default: a measured loss for an unmeasurable gain. E81's block STANDS; resolution is carve-out-aware suppression |
 | E81 | do real apps centralise auth the detector cannot see? | **YES — high FP floor, cause identified** — 2 of 4 production apps enforce auth via app-wide middleware declared in a CENTRAL file (`AuthTokenMiddleware`, `CustomAuthenticationMiddleware`); the detector's `APP_LEVEL` suppressor exists but applies **per file**, so scanning `routers/*.py` it never sees `main.py`. **20 of 20 sampled flags in those apps sit behind app-wide auth.** Single-file scope is structurally blind to how production apps are built. BLOCKS the precision claim until cross-file awareness lands; recall claim unaffected |
 | E80 | what inventory does the LLM produce on a real repo? | **ZERO — and it reframes the architecture** — pointed at production route files with the corpus instrument verbatim: model **0/41**, detector 37/41, overlap 0, non-answers 31.7%. Truncation checked and rejected as the cause: in the **28 files where a route WAS visible** the model still flags **0** vs the detector's 25. E79's 0.300 came from windowing around a route a maintainer had already localised — so the model is a **commentator on located findings, not a finder**; it cannot be aimed at a repository. Marginal value of running it over a repo: nil |
 | E79 | RE-CHECK of E75 under a corrected instrument | **REVERSES E75 — collapse was an artefact, result is INCONCLUSIVE** — E75's 0.154 came from the wrong prompt (`_RUBRIC` not the corpus's `_BINARY_RUBRIC`), truncation hiding routes, and a duplicated/test site. Corrected: pre **0.300** [0.108, 0.603], post **0.200**, 33% non-answers, 10 sites. Above the 0.229 collapse line so NOT collapse; but post 0.200 >> corpus ~1% specificity so arms don't separate — the model flags production code at a base rate. Neither transfer nor collapse. Memorisation now UNRESOLVED |
@@ -5932,6 +5933,12 @@ declarations are recorded in `production-inventory-260727.json` and quoted above
 
 ## E82 — cross-file awareness, built and priced: the obvious fix for E81 costs 21% of recall and is not worth paying
 
+> **PRICING WITHDRAWN BY E83 (same session).** The 21% figure was three bugs in my own instrument — CORS
+> middleware matching as authentication, a two-application repository treated as one, and a `before_request`
+> hook that loads a session counted as enforcement. Corrected, the cost is **zero** and app-wide suppression
+> now ships **on by default**. The reasoning below is kept as the record of how the wrong price was reached.
+
+
 **The debt.** E81 blocked the free layer's production precision claim: real applications centralise
 authentication in `main.py`/`asgi.py` while their routes live in `routers/*.py`, and a single-file detector
 cannot see the middleware — 20 of 20 sampled flags in two production apps sat on already-protected routes.
@@ -5984,3 +5991,75 @@ reachability step, and it is the one remaining deterministic engineering item on
 Instrument `detect_absent_auth.py` (`scan_repo`, `RepoContext`, gated `findings_for`), artefacts
 `absent-auth-detector-260726.json`, `rank-absent-auth-260726.json` (both unchanged — the default path is
 byte-identical in behaviour). Zero model calls.
+
+---
+
+## E83 — E82's "21% cost" was two bugs of mine. The real cost is ZERO, and cross-file suppression now ships on
+
+**How this surfaced.** E82 concluded that app-wide suppression removes every production false positive but
+costs 21% of corpus recall, so it should ship off by default. Before accepting that as the reason E81's
+block stands, the four corpus applications that lost detections were inspected rather than trusted — the
+same discipline that caught E78. **Three of the four were not protected at all, and the fourth's guard does
+not enforce.**
+
+**Bug 1 — CORS matched as authentication.** `APP_LEVEL` matched `add_middleware\(...Auth` anywhere inside
+the call. Three corpus applications register:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_headers=["Content-Type", "Authorization"],   # <- matched here
+)
+```
+
+CORS is not authentication. Anchoring the pattern on the **first argument** — the middleware class itself —
+distinguishes `add_middleware(AuthTokenMiddleware, ...)` from `add_middleware(CORSMiddleware, ...)`.
+
+**Bug 2 — a repository is not always one application.** `vulpy` ships `good/` and `bad/` variants of the
+same app. The guard in `good/vulpy.py` was suppressing routes in `bad/mod_*.py`. App-wide protection is now
+**directory-scoped**: a guard covers the subtree it was registered in.
+
+**Bug 3, and the principled one — the guard must ENFORCE, not merely identify.** With scoping fixed, `vulpy`
+still lost six detections, because `bad/vulpy.py` has its own hook — byte-identical to the good variant's:
+
+```python
+@app.before_request
+def before_request():
+    g.session = libsession.load(request)     # loads identity; refuses nothing
+```
+
+That is exactly the distinction E61 established for handler bodies, now applied at application scope:
+**identity is not authorization.** A `before_request` hook counts only if its body aborts, raises, redirects
+or tests a permission. Middleware registered by an auth-shaped class name is taken at its word — its body is
+not in that file, and the class name is the only evidence available.
+
+**Re-measured after all three:**
+
+| mode | corpus recall | corpus sites | production sites (2 apps with real app-wide auth) |
+|---|---|---|---|
+| single-file (E56 baseline) | 0.263 | 562 | 514 |
+| cross-file, router only | 0.263 | 562 | 514 |
+| **cross-file + app-wide (now DEFAULT)** | **0.263** | **558** | **6** |
+
+**Zero recall cost. 508 of 514 production false positives removed.** The four suppressed corpus sites carry
+no labelled defect. E82's conclusion — "the obvious fix costs 21% and is not worth paying" — is **withdrawn**:
+the cost was my own instrument, and once the instrument is right the fix is free.
+
+**Both instruments now run cross-file**, so the published corpus figure describes what the tool actually
+does: recall **76/289 = 0.263** unchanged, **558 reported route handlers** (was 562), site precision
+**70/558 = 0.125**. `rank_absent_auth` was updated in the same pass so SM26 keeps comparing like with like.
+
+**E81's block is now lifted in mechanism, not in measurement.** The structural false positives it identified
+are gone, and the reason production precision could not be claimed — a single-file detector blind to
+centralised enforcement — no longer holds. What still cannot be claimed is a production *precision number*,
+because organic labels remain unobtainable (E77); the two remaining apps have no app-wide auth, so their 491
+flags are not resolved by this work at all.
+
+**Method note.** This is the second time today a published cost figure turned out to be my own bug (E78's
+`@patch`, now E82's CORS), and both were found by inspecting the specific cases behind an aggregate rather
+than accepting it. An aggregate that decides a design question deserves the same scepticism as one that
+decides a research claim.
+
+Instrument `detect_absent_auth.py` (`APP_LEVEL` anchored, `_global_guard_enforces`, directory scoping,
+default-on suppression) and `rank_absent_auth.py`; artefacts `absent-auth-detector-260726.json`,
+`rank-absent-auth-260726.json`. Zero model calls.

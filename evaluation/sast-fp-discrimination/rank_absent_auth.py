@@ -137,6 +137,7 @@ def collect() -> list[dict]:
         gt = rs.load_gt(slug)
         if not gt:
             continue
+        ctx = det.scan_repo(root)      # cross-file protection, same as the detector's own run (E83)
         per_file: dict[str, list[dict]] = {}
         srcs: dict[str, str] = {}
         for dp, _, fns in os.walk(root):
@@ -149,7 +150,7 @@ def collect() -> list[dict]:
                 except OSError:
                     continue
                 rel = os.path.relpath(path, root)
-                f = det.findings_for(src, rel)
+                f = det.findings_for(src, rel, ctx)
                 if f:
                     per_file[rel] = f
                     srcs[rel] = src

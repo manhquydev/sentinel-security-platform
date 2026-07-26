@@ -24,7 +24,19 @@ state, not the morning's.
 > applications are built. The **recall** claim (0.263 where Bandit+Semgrep get 0) is unaffected; the
 > **precision** claim is blocked until the layer becomes cross-file aware and is re-measured.
 >
-> **Cross-file awareness was then built and PRICED (E82), and the obvious fix is not payable.** A
+> **Cross-file awareness was built, mis-priced, then corrected (E82 → E83) — and it is FREE.** The first
+> pricing said 21% of recall; that was three bugs of my own (CORS middleware matching as auth, a
+> two-application repository treated as one, and an identity-only `before_request` counted as enforcement).
+> Fixed, the measured cost is **zero** — corpus recall 0.263 either way — while **508 of 514** production
+> false positives disappear. Cross-file suppression now ships **on by default**; the published corpus
+> figure is **558 route handlers, 0.263 recall, 0.125 site precision**.
+>
+> **E81's block is lifted in mechanism.** The structural false positives are gone and the reason production
+> precision could not be claimed no longer holds. What still cannot be claimed is a production precision
+> *number*: organic labels remain unobtainable (E77), and the two sampled apps without app-wide auth keep
+> 491 flags this work does not resolve.
+>
+> Superseded, kept as record: A
 > repository pre-pass now collects app-wide enforcement and cross-file router mounts before any file is
 > judged. The two mechanisms cost very differently: router propagation costs **zero** recall (and is
 > unexercised — none of the four production apps mount routers with dependencies), while app-wide

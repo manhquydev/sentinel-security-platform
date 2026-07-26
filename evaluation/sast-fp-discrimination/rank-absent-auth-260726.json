@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-26T19:27:20.179811+00:00",
+  "generated_at": "2026-07-26T19:36:41.876942+00:00",
   "question": "can a free, unfitted ordering lift the absence detector's real defects?",
   "unit": "finding site (file+line); TP fixed once in canonical order, identical for all rankers",
-  "sites": 561,
+  "sites": 558,
   "real_defects": 70,
-  "site_precision": 0.1248,
+  "site_precision": 0.1254,
   "signals": [
     "write_method",
     "sensitive_name",
@@ -28,35 +28,35 @@
     "0.10": {
       "observed": 0.0286,
       "chance_p95": 0.1571,
-      "p_value": 0.994,
+      "p_value": 0.997,
       "lift_over_chance": 0.286,
       "grouped_ci": [
         0.0,
-        0.08974358974358974
+        0.09523809523809523
       ],
       "negative_control_line": 0.1857
     },
     "0.20": {
       "observed": 0.1571,
       "chance_p95": 0.2714,
-      "p_value": 0.872,
+      "p_value": 0.8795,
       "lift_over_chance": 0.786,
       "grouped_ci": [
-        0.07936507936507936,
-        0.24390243902439024
+        0.078125,
+        0.2459016393442623
       ],
       "negative_control_line": 0.4143
     },
     "0.50": {
-      "observed": 0.4429,
+      "observed": 0.4571,
       "chance_p95": 0.5857,
-      "p_value": 0.8805,
-      "lift_over_chance": 0.886,
+      "p_value": 0.832,
+      "lift_over_chance": 0.914,
       "grouped_ci": [
-        0.3235294117647059,
-        0.5571428571428572
+        0.34375,
+        0.5714285714285714
       ],
-      "negative_control_line": 0.6857
+      "negative_control_line": 0.7
     }
   },
   "negative_control": "source line number \u2014 no security content",
@@ -64,15 +64,15 @@
   "verdict": "INVERTED \u2014 the ordering is significantly WORSE than shuffling; the signals anti-correlate with real defects",
   "stratum_precision": {
     "3": {
-      "sites": 65,
+      "sites": 64,
       "real": 4
     },
     "2": {
-      "sites": 176,
+      "sites": 175,
       "real": 19
     },
     "1": {
-      "sites": 300,
+      "sites": 299,
       "real": 42
     },
     "0": {

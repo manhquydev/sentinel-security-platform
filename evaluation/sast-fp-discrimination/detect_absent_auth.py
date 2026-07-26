@@ -71,8 +71,18 @@ AUTH_MARKER = re.compile(
 # but a correctness gap regardless, and reporting a route as unprotected when its router protects it is
 # simply wrong.
 # App-wide protection: nothing in the module can be unprotected behind it.
-APP_LEVEL = re.compile(r"@\w+\.before_request|add_middleware\s*\([^)]*Auth"
-                       r"|LoginRequiredMiddleware|AuthenticationMiddleware", re.I)
+#
+# The middleware CLASS must itself be auth-shaped. The first version matched `add_middleware(...Auth...)`
+# anywhere inside the call, which caught **CORSMiddleware** in three corpus applications, because
+# `allow_headers=["Content-Type", "Authorization"]` contains the word. CORS is not authentication, and
+# that single mis-match accounted for most of the "21% recall cost" E82 attributed to carve-outs (E83).
+# Anchoring on the first argument is what distinguishes `add_middleware(AuthTokenMiddleware, ...)` from
+# `add_middleware(CORSMiddleware, allow_headers=[... "Authorization"])`.
+APP_LEVEL = re.compile(
+    r"@\w+\.before_request"
+    r"|add_middleware\s*\(\s*(?:\w+\.)*\w*(?:auth|login_required|jwt|session)\w*"
+    r"|Middleware\s*\(\s*(?:\w+\.)*\w*(?:Authentication|Authorization|AuthToken)\w*"
+    r"|LoginRequiredMiddleware|AuthenticationMiddleware", re.I)
 # Per-router protection: `admin = APIRouter(dependencies=[Depends(require_user)])` protects only the
 # handlers decorated with THAT router. A file often holds both a protected and a public router, so
 # suppressing the whole module on one match was too coarse — it cost four real detections.
@@ -122,36 +132,83 @@ class RepoContext:
 
       * **router propagation** — a router mounted with a dependency in another module. Precise, and it
         costs **nothing**: zero corpus true positives lost. On by default.
-      * **app-wide suppression** — the application registers auth middleware, so every request is
-        authenticated. This removed 514 production false positives across two real apps, and cost
-        **16 of 76 corpus true positives (21% of recall)**, because applications that install global auth
-        still carve out public paths and defects live in exactly those carve-outs. **Off by default**: a
-        21% recall cost is not payable against a benefit nobody can currently measure (production
-        precision is unobtainable, E77).
+      * **app-wide suppression** — the application registers an enforcing auth guard, so every request is
+        authenticated. Removes **508 of 514** production false positives across two real apps at **zero
+        corpus recall cost** (76/289 either way; four non-defect sites suppressed). **On by default.**
+        The first measurement put the cost at 21% and concluded it was not payable; that figure was two
+        bugs of my own — `add_middleware(CORSMiddleware, allow_headers=[..."Authorization"])` matching as
+        auth, and a repository treated as one application when `vulpy` ships `good/` and `bad/` variants.
+        Fixing both, plus requiring the guard to ENFORCE rather than merely load a session, took the cost
+        to zero (E83).
     """
 
     def __init__(self, app_wide: bool = False, routers: set[str] | None = None,
                  carve_outs: int = 0, evidence: list[str] | None = None,
-                 suppress_app_wide: bool = False) -> None:
+                 suppress_app_wide: bool = True, scopes: set[str] | None = None) -> None:
         self.app_wide = app_wide
         self.routers = routers or set()
         self.carve_outs = carve_outs
         self.evidence = evidence or []
         self.suppress_app_wide = suppress_app_wide
+        self.scopes = scopes or set()      # directory subtrees an app-wide guard actually covers
 
-    def protects(self, owner: str | None) -> bool:
-        return ((self.app_wide and self.suppress_app_wide)
-                or (owner is not None and owner in self.routers))
+    def protects(self, owner: str | None, relpath: str | None = None) -> bool:
+        return (self.app_wide_covers(relpath) or (owner is not None and owner in self.routers))
+
+    def app_wide_covers(self, relpath: str | None) -> bool:
+        """Does an app-wide guard cover THIS file?
+
+        A repository is not always one application. `vulpy` ships `good/` and `bad/` variants of the same
+        app: `good/vulpy.py` registers `@app.before_request`, `bad/mod_*.py` holds the planted defects, and
+        treating the repository as a single unit let the good app's guard suppress the bad app's routes —
+        five real detections lost to a scope error rather than to any carve-out (E83).
+
+        Scope rule: a guard covers the directory subtree it was registered in. Registered at the root, it
+        covers everything; registered in `good/`, it covers `good/`.
+        """
+        if not (self.app_wide and self.suppress_app_wide):
+            return False
+        if relpath is None or not self.scopes:
+            return True
+        rel = relpath.replace("\\", "/")
+        return any(s == "" or rel.startswith(s + "/") for s in self.scopes)
 
     def __repr__(self) -> str:
         return (f"RepoContext(app_wide={self.app_wide}, routers={sorted(self.routers)}, "
-                f"carve_outs={self.carve_outs})")
+                f"scopes={sorted(self.scopes)}, carve_outs={self.carve_outs})")
+
+
+def _global_guard_enforces(src: str) -> bool:
+    """Does this module's app-level guard actually REFUSE, or does it only learn who is calling?
+
+    The same distinction E61 established for handler bodies, applied at application scope — and it is
+    what separates the two `vulpy` variants, whose `before_request` hooks are byte-identical:
+
+        @app.before_request
+        def before_request():
+            g.session = libsession.load(request)     # loads identity; refuses nothing
+
+    Treating that as app-wide protection suppressed six real defects in the `bad` variant (E83). A guard
+    counts only if its body contains an enforcement construct — an abort, a raise, a redirect to login, a
+    permission test. Middleware registered by class name (`AuthTokenMiddleware`) is taken at its word: its
+    body is not in this file, and the class name is the only evidence available.
+    """
+    lines = src.splitlines()
+    for i, ln in enumerate(lines):
+        if not re.match(r"\s*@\w+\.before_request", ln):
+            continue
+        start, end = _handler_span(lines, i)
+        body = "\n".join(lines[start:end])
+        if ENFORCEMENT.search(body) or AUTH_MARKER.search(body) or re.search(
+                r"\babort\s*\(|\braise\b|redirect\s*\(", body):
+            return True
+    return False
 
 
 def scan_repo(root: str, skip_dirs: set[str] | None = None) -> RepoContext:
     """One pass over a repository to find centralised protection before judging any route."""
     skip = skip_dirs or {".git", "node_modules", ".venv", "venv", "__pycache__"}
-    app_wide, routers, carve, evidence = False, set(), 0, []
+    app_wide, routers, carve, evidence, scopes = False, set(), 0, [], set()
     for dp, dirs, fns in os.walk(root):
         dirs[:] = [d for d in dirs if d not in skip]
         for fn in fns:
@@ -166,14 +223,21 @@ def scan_repo(root: str, skip_dirs: set[str] | None = None) -> RepoContext:
             # Tests declare mock middleware and fixture routers; they protect nothing in production.
             if "/tests/" in rel.replace("\\", "/") or fn.startswith("test_"):
                 continue
-            if APP_LEVEL.search(src) or APP_DEPS.search(src) or DRF_DEFAULT.search(src):
+            # A `before_request` hook counts only if it enforces; middleware registered by an
+            # auth-shaped class name is taken at its word (its body is elsewhere).
+            hook_only = bool(re.search(r"@\w+\.before_request", src)) and not re.search(
+                r"add_middleware\s*\(\s*(?:\w+\.)*\w*(?:auth|jwt|session)\w*"
+                r"|LoginRequiredMiddleware|AuthenticationMiddleware", src, re.I)
+            enforces = _global_guard_enforces(src) if hook_only else True
+            if enforces and (APP_LEVEL.search(src) or APP_DEPS.search(src) or DRF_DEFAULT.search(src)):
                 app_wide = True
                 evidence.append(rel)
+                scopes.add(os.path.dirname(rel).replace("\\", "/"))
             for m in MOUNT_WITH_DEPS.finditer(src):
                 routers.add(m.group(1).split(".")[-1])
             routers.update(PROTECTED_ROUTER.findall(src))
             carve += len(CARVE_OUT.findall(src))
-    return RepoContext(app_wide, routers, carve, evidence[:8])
+    return RepoContext(app_wide, routers, carve, evidence[:8], scopes=scopes)
 # ---------------------------------------------------------------------------------------------------
 
 # Protection written in the body rather than as a decorator. Two kinds of construct turn up there and
@@ -255,8 +319,8 @@ def findings_for(src: str, relpath: str, ctx: "RepoContext | None" = None) -> li
     so every published corpus number stands unchanged; with it the structural false positives measured in
     E81 are suppressed.
     """
-    if ctx is not None and ctx.app_wide and ctx.suppress_app_wide:
-        return []                      # opt-in: every request is authenticated (21% recall cost, E82)
+    if ctx is not None and ctx.app_wide_covers(relpath):
+        return []                      # opt-in: an app-wide guard covers this file's subtree
     if APP_LEVEL.search(src):
         return []                      # every handler in the module sits behind app-wide auth
     protected = set(PROTECTED_ROUTER.findall(src))
@@ -331,6 +395,10 @@ def main() -> int:
         real_862 += sum(1 for g in gt if g["is_vulnerable"] and 862 in g["cwes"])
         distinct_real += sum(1 for g in gt if g["is_vulnerable"]
                              and (306 in g["cwes"] or 862 in g["cwes"]))
+        # The published number must describe what the tool actually does, and the tool is cross-file
+        # aware (E83): a repository pre-pass finds enforcing app-wide guards and cross-file router mounts
+        # before any file is judged.
+        ctx = scan_repo(root)
         findings = []
         for dp, _, fns in os.walk(root):
             for fn in fns:
@@ -341,7 +409,7 @@ def main() -> int:
                     src = open(path, encoding="utf-8", errors="replace").read()
                 except OSError:
                     continue
-                findings += findings_for(src, os.path.relpath(path, root))
+                findings += findings_for(src, os.path.relpath(path, root), ctx)
         claimed: set[int] = set()
         hit_sites = set()
         rtp = 0
