@@ -528,3 +528,29 @@ misprices a product just as badly.
 **Corollary for guards.** SM24 pinned the affected figure inside a band and passed throughout, because the
 corrected value stayed in band. A guard on a *value* cannot detect a broken *question*. Nothing here
 substitutes for asking, of each check, what it would look like if the claim were false.
+
+## 18. A coverage number is a function of the budget, not a property of the corpus (E51, 2026-07-26)
+
+Three times in one afternoon the same figure was published, and three times reading deeper moved it:
+
+| | k=6 | k=9 | k=12 |
+|---|---|---|---|
+| "files never surfaced" | 0.583 | 0.458 | **0.333** |
+| "files always detected" | 2 of 24 | 1 of 24 | **0 of 24** |
+
+Every version was an upper bound wearing the clothes of a measurement, and the phrasing made it worse:
+*"unreachable by this method at any k"* was written about files that fired three readings later, and
+*"detected in every reading"* was written about files that later missed.
+
+**The rule.** Any coverage, recall, or never-surfaced figure produced by repeated sampling **must be
+quoted with its k**, and must be described as what that budget bought rather than as what the method can
+do. "33% are never surfaced" is not a finding; "33% were not surfaced in twelve readings" is.
+
+**The trap that makes this hard.** The curve goes flat for stretches — here k=8 through k=11 produced
+nothing new, then k=12 added a file. A flat stretch feels like a plateau and is the exact evidence a
+saturation claim seems to rest on. **A plateau may only be claimed from many readings past the last
+increase, never from a flat run**, and the honest default is that no ceiling has been located.
+
+**Corollary for anything selected on a previous reading.** "Always detected" and "never detected" are both
+selection effects at small k. Both regress under deeper reading, in opposite directions, and both were
+published here before they did.
