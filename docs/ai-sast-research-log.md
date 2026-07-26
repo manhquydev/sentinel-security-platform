@@ -3000,3 +3000,57 @@ we would actually be sold against.
 to 53 corpus files, and its confidence explicitly *not* raised. Replication at adequate power needs more
 rate-limit-bearing files than this corpus contains — which is now the concrete blocker on this line of
 work, and a sourcing problem rather than an experimental one.
+
+---
+
+## E40 — targeted per-class probing: the format finding came first
+
+E39's most consequential number is an absolute one: across 53 corpus files that **all** carry a real
+CWE-307 defect, the model named the missing rate limit in **one**. That does not yet say whether the model
+*cannot* recognise a missing lockout or simply *does not mention it* when asked one open-ended question
+and a juicier IDOR is sitting in the same file. Only the first is a statement about capability, and the two
+lead to opposite product decisions: if a targeted question recovers the misses, per-class prompting is the
+answer and this is prompt design; if it does not, CWE-307 is outside what this role delivers and no prompt
+fixes it.
+
+**Preregistered as a test** — paired within file against E39's 1/53 on the identical files, exact McNemar,
+one-sided. Power at n=53: 90% for recovery to 0.20, 70% to 0.15, 36% to 0.10. That gate was deliberately
+set where the *decision* changes rather than where a p-value becomes obtainable: recovery below ~10% would
+not justify one call per class per file, so failing to resolve a 7% effect is not a failure at anything
+worth resolving.
+
+**The leading-question problem, and why this probe carries two canaries.** "Is the rate limit missing?"
+invites yes. A model answering yes indiscriminately would score as total recovery while detecting nothing,
+and comparing against E39's open-ended prompt cannot catch that, because the two prompts differ in exactly
+the way that manufactures the artefact. So the probe refuses to run unless a login handler with no limiter
+reads as absent **and** the same handler with `@limiter.limit(...)` does not. One canary would have been
+worse than none — it would have licensed precisely the failure it cannot see.
+
+### The first version aborted at its own gate, and that is E16a replicating
+
+The probe originally demanded a one-word verdict — `ABSENT` / `PRESENT` / `NA` — on the first line. Both
+canaries came back **unparseable**. The model had ignored the instruction entirely and answered with a
+rewritten copy of the file:
+
+```
+"```python\n@app.route('/login', methods=['POST'])\ndef login():\n    data = request.get_json()..."
+"Syntax error L7: missing `})`.\nTiming leak: exists check before hash.\n\n```python\n@app.route..."
+```
+
+E16a established that this model family produces **zero** conformance to machine-readable output contracts
+across 5 models × 3 formats, including with prefill. This is a **fourth format**, on the current model,
+with the shortest and least ambiguous contract yet attempted — one word from a closed set of three — and it
+still conforms zero times out of two. The finding is not that a probe failed; it is that **any measurement
+built on this model emitting a structured verdict is measuring the contract rather than the code**, and the
+canary gate is what stops that from being discovered after the numbers are published rather than before.
+
+Note the second response: asked only about rate limiting, the model volunteered a syntax error and a timing
+leak. It is not refusing to answer — it is answering a question it prefers. That is the same salience
+behaviour E39 measured, showing up here in the control rather than the treatment.
+
+**The probe was rebuilt to keep the targeted question and drop the structured answer**: prose out, read by
+the same `names_class_absence` rule every other experiment uses, whose CWE-307 specificity is measured
+(fires on 9.5% of prose claiming a defect, 0.0% of prose concluding all-clear). The verdict collapses to
+two outcomes rather than three, because separating "no login path here" from "there is one and it is
+limited" is not recoverable from prose without inventing a second unvalidated classifier — and both mean
+the same thing for this measurement: the missing rate limit was not reported.
