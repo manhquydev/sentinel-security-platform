@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
-| specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive) | it is not flagging indiscriminately |
+| specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive); **replicated again E47: 0 of 16 in both readings** | it is not flagging indiscriminately — and this is the firmest number in the project, never having moved in any run |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |
@@ -152,6 +152,15 @@ files were the weakest part of this decision, so the same question was put to al
 ground truth carries both an ownership/authentication class and CWE-307 — paired inside each file, so one
 response answers both questions and nothing about the file can differ between the two arms. Result:
 ownership/authn named on **6/53**, rate limit on **1/53**, difference **+0.094, 95% CI [+0.000, +0.189]**.
+
+**How the primary claim must now be read (E47).** The two halves of it behave differently and only one was
+ever at risk. **Specificity is a floor**: zero flags on clean controls in every reading this lab has taken,
+including a fresh independent re-run. **Sensitivity is a rate**: on the same 24 absence-class files, two
+independent readings flagged 5 and 3, overlapping in **2**, with **18 of 24 flagged in neither**. So the
+supportable statement is *"on a file with a real absent control, one reading flags it about a fifth of the
+time, on a shifting subset; on a file with no defect, no reading has ever flagged it."* That is a low-noise
+**sampler**, not a scanner — a coherent product, and not the one a reader would assume from a sensitivity
+figure alone.
 
 **This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
 the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate

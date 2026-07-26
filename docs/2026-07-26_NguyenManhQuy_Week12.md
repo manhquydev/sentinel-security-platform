@@ -97,6 +97,19 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > Em xin nói thẳng: đây là phát hiện làm **giảm giá trị bán được** của phần này nhiều nhất trong
 > cả tuần, và nếu không chạy lại lần hai thì đã không ai biết.
 >
+> **Em đã hỏi đúng câu đó với kết quả CHỦ CHỐT của dự án, và câu trả lời chia làm hai nửa rõ rệt.**
+> Chạy lại độc lập thiết kế gốc trên cùng bộ file:
+> - **Nửa "không báo bậy" thì vững như đá:** file sạch bị báo nhầm **0/16 ở cả hai lần đọc** — và
+>   qua *mọi* lần chạy từ trước tới nay, nhóm file sạch **chưa bao giờ** bị báo nhầm lần nào. Đây
+>   là con số chắc chắn nhất của cả dự án.
+> - **Nửa "tìm được lỗi" thì vẫn là tỉ lệ:** cùng 24 file có lỗi thật, lần 1 báo 5 file, lần 2 báo
+>   3 file, **trùng nhau 2**. Và **18/24 file có lỗi thật không bị báo ở cả hai lần**.
+>
+> Nói cho đúng thì phải nói thế này: **"file có lỗi thì mỗi lần đọc bắt được khoảng 1/5, và mỗi
+> lần là một nhóm file khác; file không có lỗi thì chưa lần nào bị báo nhầm."** Đây là một **máy
+> lấy mẫu ít nhiễu**, không phải một **máy quét** — vẫn là sản phẩm dùng được, nhưng khác hẳn thứ
+> người ta tưởng khi chỉ nhìn con số "tỉ lệ trúng".
+>
 > **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại nhiều lần
 > trên cùng một file cho thấy **không phải xổ số**: file "có gì đó" thật sự dễ được nêu hơn. Nhưng
 > **file cao nhất cũng chỉ 0,67**, tức **không file nào chắc chắn được phát hiện**. Con số cụ thể

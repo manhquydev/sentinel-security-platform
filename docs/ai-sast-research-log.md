@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
 | E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
@@ -3643,3 +3644,53 @@ runs existed because E37 needed them; the union curve was free once they did. Wo
 dataset gathered for one preregistered question routinely answers others, and that those others still
 require their estimand stated before the data is looked at, which is what was done here: the union curve
 and the all-5 count were specified as the outputs before either was computed.
+
+---
+
+## E47 — the same question put to decision 0027's PRIMARY claim: specificity is solid, sensitivity is a rate
+
+E42–E46 established that class attribution reports at a rate without identifying particular files. That
+work all sat on the 53-file ownership/rate-limit slice. **0027's primary claim is a different measurement**
+— the file-level discrimination between absence-class files and clean controls — and it had never been
+asked the same question. If it dissolves the same way, the headline needs the same rewrite.
+
+An independent re-run of that design, same seeded sample, 40 files shared with the original:
+
+| arm | reading 1 | reading 2 | overlap |
+|---|---|---|---|
+| absence-class (n=24) | 5 flagged | 3 flagged | **2** |
+| clean controls (n=16) | **0 flagged** | **0 flagged** | — |
+
+### The two halves behave completely differently, and only one of them was in danger
+
+**Specificity is stable and reproducible.** Zero flags on clean controls in both readings here, as in E17
+and E35 before them. Across every run this lab has done, the clean arm has never produced a flag. That is
+not a rate that happens to be low — it is a floor that has not moved, and it is the half of the primary
+claim that carries the "it is not flagging indiscriminately" argument. **It survives untouched.**
+
+**Sensitivity behaves like everything else measured this session.** Five flags then three, overlapping in
+two. Independence would predict 0.62 overlap and perfect stability would predict 3, so this sits between
+them — the same positive-but-partial correlation E46 measured on the union curve. Union over the two
+readings is 6/24 = 0.250, and **18 of 24 files carrying a real absence-class defect were flagged in
+neither reading** (0.750, 95% CI [0.551, 0.880]).
+
+Verdict churn on the positive arm was 10 of 24 files, and its composition matters: `non-answer→clean` 4,
+`flagged→clean` 3, `clean→non-answer` 2, `clean→flagged` 1. Most churn is the benign clean/non-answer
+movement E31 described, but four files changed flag state in one direction or the other.
+
+### What this does and does not change in 0027
+
+**It does not weaken the discrimination finding.** The separation between arms is real in both readings
+(5/24 vs 0/16, then 3/24 vs 0/16), and the specificity floor is firmer than any other number in this
+project.
+
+**It does change what "sensitivity" may be claimed to mean.** The primary claim must be read as: *on a
+file carrying an absence-class defect, one reading produces a flag about a fifth of the time, on a
+shifting subset; on a file with no defect, no reading has ever produced one.* A false-positive rate this
+lab can stand behind, and a true-positive rate that is a sampling process — which is a coherent product
+(a low-noise sampler) and a very different one from a scanner.
+
+**Honest scope.** Twenty-four positive files and two readings. The overlap of 2 cannot distinguish "mild
+correlation" from "moderate correlation" — it excludes only the extremes. What it does establish, at the
+sample size available, is that the primary claim's sensitivity half shows the same shape as everything
+else measured today, and its specificity half does not.
