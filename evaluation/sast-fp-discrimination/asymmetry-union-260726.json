@@ -1,0 +1,17 @@
+{
+  "runs": [
+    "class-asymmetry-e37-run1-260726.json",
+    "class-asymmetry-e37-run2-260726.json",
+    "class-asymmetry-e37-run3-260726.json"
+  ],
+  "k": 3,
+  "n": 53,
+  "estimand": "named in at least one of k independent readings; NOT the single-reading rate",
+  "named_own_authn_union": 9,
+  "named_rate_limit_union": 2,
+  "discordant_own_only": 9,
+  "discordant_rate_limit_only": 2,
+  "mcnemar_p_one_sided": 0.03271484,
+  "empty_responses_total": 3,
+  "preregistered_power": "94.6% at k=3 under the independence measured in E42"
+}

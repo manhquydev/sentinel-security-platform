@@ -50,7 +50,7 @@ audited on 2026-07-26.
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
 | E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
 | E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
-| E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate, then SUPERSEDED by E42** — reinstated at k=3, 94.6% power, 159 calls, once the correlation was measured here instead of imported from E31. Original text: — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
+| E37 | is the capability class-uniform or concentrated? | **RUN — NULL REJECTED, p = 0.0327** — union over k=3: ownership 9/53 vs rate-limit 2/53. But realized power was **61%, not the 94.6% preregistered**: readings are positively correlated, so the effect size is probably optimistic. Originally cancelled, then superseded by E42 — reinstated at k=3, 94.6% power, 159 calls, once the correlation was measured here instead of imported from E31. Original text: — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
 | E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 14/59, p = 0.000120; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
 | E35 | replicate the headline | **STANDS** — fresh run 14/59 vs 0/40, p = 0.000350 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
 | E34 | authored-unseen, powered | **STANDS** — 7/12 vs 0-1/12, p = 0.0136. **Class-specific**: ownership+authn 6/6, rate-limit/mass-assignment/error-leak/re-auth 0/4 |
@@ -3492,3 +3492,57 @@ readings was all that separated them.
 session and needing fresh model calls. It needed neither. Before scheduling a run, it is worth asking what
 the committed artefacts already answer — two single readings of a corpus are a propensity measurement of
 the whole corpus at k=2, which is weak per file and strong in aggregate, and aggregate was the question.
+
+---
+
+## E37 — RUN AND RESULT: the class asymmetry is now a test, and the power assumption behind it was wrong
+
+Cancelled at the power gate, superseded by E42, and now actually run. Three independent runs over the same
+53 corpus files, pooled as a union: is the class named in **at least one** of three readings?
+
+| | union over 3 readings |
+|---|---|
+| named ownership/authentication absence | **9/53 = 0.170** |
+| named rate-limit absence (CWE-307) | **2/53 = 0.038** |
+| discordant | ownership-only **9**, rate-limit-only **2** |
+| exact McNemar, one-sided | **p = 0.0327** |
+
+**The null of no class asymmetry is rejected.** What E39 could only publish as an estimate whose interval
+touched zero is now a test that clears α = 0.05, on the same files, with the same instrument.
+
+**The estimand is different and must not be conflated.** This is "named in at least one of three
+readings", not E39's single-reading 6/53 vs 1/53. It is larger by construction, it is the quantity a tool
+reading three times would actually surface, and quoting it beside a one-call-per-file cost would misprice
+the capability by a factor of three.
+
+### The part that matters more than the p-value: the power assumption was wrong
+
+Preregistration claimed 94.6% power, derived from E42's finding that two runs' detections overlapped in 0
+of 6 files — which pointed to independence between readings. The per-run rates here were 6, 4 and 4 of 53,
+mean 0.088. **Under independence the union should have been 0.242 (≈13 of 53). It came in at 0.170 (9 of
+53).** Readings are **positively correlated**, and E42's zero overlap on six files was too thin to see it.
+
+Realized power at the observed rates is **61.3%, not 94.6%**.
+
+That does not invalidate the p-value — the test is exact and its assumptions are about the null, not about
+the effect size. But it changes how the result should be held:
+
+- **A significant result from a design running at 61% power is more likely to overstate the effect than a
+  significant result from one running at 95%.** The direction is established; the magnitude reported here
+  should be treated as an upper end, not a best estimate.
+- **The reinstatement of E37 rested on an independence assumption that this very run falsifies.** The
+  cancellation was overturned on evidence from 6 files; the correction to that evidence came from 159
+  calls. Both the cancellation and its reversal were decided on data too thin for the question, and the
+  honest summary is that the lab got a valid answer via a route it should not have trusted as much as it
+  did.
+- **E43 already predicted this and was not consulted.** It measured per-file propensity as a mixture with
+  most files at zero — which necessarily means readings of the *same* file correlate, because a file at
+  zero returns nothing every time. The independence estimate came from E42's set overlap; the propensity
+  distribution was the better evidence and was sitting in the same repository. Set overlap on six files
+  answered "do the same files recur"; the propensity distribution answered "how correlated are readings",
+  and only the second was the question the power calculation needed.
+
+**Status.** Decision 0027's class narrowing now has a preregistered test behind it, at p = 0.0327, with
+the effect size flagged as probably optimistic and the underlying design flagged as having been justified
+by the wrong statistic. Three empty responses across the three runs bias both arms toward the null and are
+recorded in the artefact.

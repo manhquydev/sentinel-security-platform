@@ -18,29 +18,16 @@ Two things are settled and should not be re-litigated without new evidence:
   targeted prompt could not be made to discriminate a present control from an absent one (E40).
 - The per-file result is a mixture, not a lottery and not detection (E42, E43).
 
-## 1. E37 — the powered class-asymmetry test (159 calls, ~45 min)
+## 1. ~~E37 — the powered class-asymmetry test~~ — DONE 2026-07-26
 
-**Why first.** It is the only owed item that can convert a published *estimate* into a *test*, and its
-cancellation is already formally superseded.
+**Run, three times, pooled. Null rejected: ownership 9/53 vs rate-limit 2/53 over a k=3 union, exact
+McNemar one-sided p = 0.0327.** Artefacts `class-asymmetry-e37-run{1,2,3}-260726.json`, analysis
+`pool_asymmetry_union.py`, result `asymmetry-union-260726.json`.
 
-The original gate computed k=3 at 53.7% power using a correlation figure imported from E31. E42 measured
-the correlation on this exact material — two runs' attributions overlapping in 0 of 6 files, against 0.68
-expected under independence — and independence is the best-supported model here. Recomputed: **k=3 reaches
-94.6% power at 159 calls.**
-
-    ASYMMETRY_OUT=... rag/.venv/bin/python -W ignore evaluation/sast-fp-discrimination/run_class_asymmetry.py
-
-**Run 1 of 3 was launched 2026-07-26 13:51** and writes to `class-asymmetry-e37-run1-260726.json`. It was
-started deliberately knowing it would finish after the session ended: the artefact lands either way, and a
-finished run waiting on disk is worth more to the next session than an unstarted one. **First thing to do
-when picking this up: check whether that artefact exists and whether its positive-control tally is in the
-file.** If the run died mid-way there will be no artefact at all — this runner writes once at the end — in
-which case simply relaunch it.
-
-Run it three times with different output names, then pool. **The estimand changes** and must be labelled:
-union-over-k answers "is this class reported in at least one of three readings", which is the
-product-relevant question given E43, but it is not the single-reading quantity E39 published. Do not
-substitute one for the other silently.
+**Do not treat the magnitude as settled.** Realized power was 61%, not the 94.6% this was reinstated on:
+readings are positively correlated, which E42's six-file overlap was too thin to reveal and which E43's
+propensity mixture had already implied. The direction is established; the effect size is probably
+optimistic. If anyone wants the magnitude, that needs more files, not more readings of these 53.
 
 ## 2. Widen the propensity measurement (24–72 calls)
 

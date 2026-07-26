@@ -153,9 +153,22 @@ ground truth carries both an ownership/authentication class and CWE-307 — pair
 response answers both questions and nothing about the file can differ between the two arms. Result:
 ownership/authn named on **6/53**, rate limit on **1/53**, difference **+0.094, 95% CI [+0.000, +0.189]**.
 
-Read this precisely, because it is easy to over-read. The **direction agrees** with E34 and the evidence
-base for the narrowing widens from 4 authored files to 53 real ones — but **the interval's lower bound is
-zero, so this does not confirm the narrowing and the confidence behind it is not raised.** The powered
+**This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
+the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate
+limit on **2/53**, discordant 9 vs 2, **exact McNemar one-sided p = 0.0327 — the null of no class asymmetry
+is rejected.** The narrowing now rests on a test, not only on an estimate.
+
+Two qualifications travel with that, and neither is optional. The union estimand is **not** the
+single-reading figure below and is larger by construction — quoting it against a one-call-per-file cost
+would misprice the capability threefold. And the design's **realized power was 61%, not the 94.6%
+preregistered**: the reinstatement assumed independence between readings from E42's six-file overlap, and
+this run falsifies it (union came in at 0.170 where independence predicts 0.242). A significant result at
+61% power is more likely to overstate the effect, so **the direction is established and the magnitude
+should be read as an upper end**.
+
+Read the original estimate precisely, because it is easy to over-read. The **direction agrees** with E34
+and the evidence base for the narrowing widens from 4 authored files to 53 real ones — but **that
+estimate's interval touched zero, and on its own it did not confirm the narrowing.** The powered
 test of the same question was cancelled beforehand at 43% power, and this estimate came out exactly as
 that gate predicted it would.
 
