@@ -533,6 +533,32 @@ PY
 then ok "every class vocabulary fires on real prose and fires far more on defect claims than on all-clear prose"
 else bad "SM20: a class-attribution vocabulary is dead or fires as readily on prose claiming nothing is wrong"; fi
 
+sect "SM21: the class-asymmetry estimate never acquires a p-value it was not powered for"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/class-asymmetry-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run the class-asymmetry experiment"); sys.exit(1)
+d = json.load(open(p))
+# This result exists because the significance test of the same question was cancelled at 43% power. An
+# estimate and a test look identical once someone quotes the point value, and the difference is the whole
+# reason this run was allowed to happen. A p-value appearing here later would erase that distinction
+# silently, so its ABSENCE is pinned as part of the result.
+has_p = any("p_value" in k or k.endswith("_p") or "fisher" in k or "mcnemar" in k for k in d)
+lo, hi = d["difference_ci95"]
+# The interval must still be published whole. Reporting +0.094 without [0.000, 0.189] would turn a
+# result whose lower bound touches zero into one that reads as established.
+interval_ok = lo <= d["difference"] <= hi
+declares = "estimation" in d.get("preregistered_as", "").lower()
+# The estimate is a floor because redaction can only delete text; that framing must survive too.
+floor_noted = "floor" in d.get("scoring_note", "").lower()
+print("  p-value absent=%s  interval=[%s,%s] consistent=%s  declared-estimation=%s  floor-noted=%s"
+      % (not has_p, lo, hi, interval_ok, declares, floor_noted))
+sys.exit(0 if (not has_p and interval_ok and declares and floor_noted) else 1)
+PY
+then ok "the estimate keeps its interval, declares itself an estimate, and carries no p-value"
+else bad "SM21: the class-asymmetry estimate has gained a p-value or lost its interval"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
