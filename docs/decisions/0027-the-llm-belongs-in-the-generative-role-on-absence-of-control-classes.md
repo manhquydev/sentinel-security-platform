@@ -206,17 +206,27 @@ than the one before it, by a widening margin.
 original 0.417 with the same decay signature — and did so while being slightly *easier* per reading. The
 saturation is a property of the method rather than of the first file set.
 
-**Pooled over both samples — 48 distinct defective files — the fraction never surfaced at any k tested is
-29/48 = 0.604, 95% CI [0.463, 0.730]**, and the two samples agree on it (Fisher two-sided p = 1.000). This
-is the sentence the commercial case turns on: *read every file six times, pay six times, and roughly three
-in five defective files still never appear.* Every other measurement in this decision is detail hanging off
-that.
+**The never-surfaced fraction, corrected for depth (E50).** Sample A at **k=9: 11/24 = 0.458, 95% CI
+[0.279, 0.649]**. The earlier pooled figure of 29/48 = 0.604 combined sample A at k=6 with sample B at k=3
+and overstated the fraction, because both were shallow and shallow readings misclassify low-propensity
+files as zeros — three of sample A's "zeros" fired by k=9. Sample B at k=3 is an upper bound, not an
+estimate, and the two depths cannot be pooled as if comparable.
 
-**And on this sample the curve does not merely flatten — it stops.** Ten of the 24 positive files ever
-produce a flag, and union coverage at k=6 is exactly those 10. **The capability saturates at 0.417 by the
-sixth reading; beyond that, additional readings buy cost and nothing else.** The 14 files at propensity
-zero are not slow to surface, they are unreachable by this method. Any cost model must therefore be built
-around "we can afford more readings than this method can use", not around trading budget for coverage.
+The sentence the commercial case turns on, corrected: *read every file nine times, pay nine times, and
+roughly four to five in ten defective files still never appear — with the fraction still falling slowly as
+k grows.* Weaker than the retracted version claimed, and still the number that matters most.
+
+**A saturation claim was published here this afternoon and is RETRACTED (E50).** It held that the curve
+stops at 0.417 by k=6 and that further readings buy nothing. The test behind it was circular — union
+coverage and "files that ever fired" are the same quantity by definition — and three more readings
+falsified it: at **k=9 the union is 13/24 = 0.542 and still climbing**, and three files previously called
+unreachable fired.
+
+What the corrected data supports is weaker and less tidy: **coverage keeps growing with k, slowly and
+irregularly** (0.208, 0.333, 0.417, 0.458, 0.458, 0.500, 0.500, 0.500, 0.542 for k = 1…9 — note the flat
+stretches, which are what produced the false saturation reading), while delivering a falling fraction of
+what independence predicts (62% by k=9). **No ceiling has been demonstrated.** A cost model may assume
+returns diminish; it may not assume they stop.
 
 **This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
 the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate

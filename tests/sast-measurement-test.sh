@@ -656,9 +656,14 @@ if run_py <<'PY'
 import glob, json, sys
 sys.path.insert(0, "evaluation/sast-fp-discrimination")
 from pool_propensity import wilson
-# "Roughly three in five defective files never appear at any k" is the sentence decision 0027's commercial
-# case turns on. It is derived across many artefacts rather than stored in one, which is exactly the shape
-# of number that rots silently: any run added or removed changes it and nothing would say so.
+# The never-surfaced fraction is the sentence decision 0027's commercial case turns on. It is derived across
+# many artefacts rather than stored in one, which is exactly the shape of number that rots silently.
+#
+# It is also DEPTH-DEPENDENT, which this guard originally ignored and E50 had to retract a claim over: a
+# file read 6 times and never flagged may simply be low-propensity, and three such files fired once sample A
+# reached k=9. The fraction therefore FALLS as k rises, and a band that treats it as a fixed property would
+# fire on honest new data. So the guard reports k alongside the fraction and only fails if the value leaves
+# a band wide enough to accommodate further deepening.
 def group(patterns):
     runs = []
     for pat in patterns:
@@ -674,15 +679,17 @@ for label, pats in (("A", ["generative-260726.json", "generative-rerun*-260726.j
     shared = set.intersection(*(set(m) for m in runs))
     pos = [k for k in shared if runs[0][k]["arm"] == "positive"]
     z = sum(1 for k in pos if not any(m[k]["verdict"] == "flagged" for m in runs))
-    print("  sample %s: %d readings, %d positive files, %d never surfaced" % (label, len(runs), len(pos), z))
+    print("  sample %s: k=%d readings, %d positive files, %d never surfaced (%.3f)"
+          % (label, len(runs), len(pos), z, z / len(pos)))
     zeros += z; total += len(pos)
 frac = zeros / total
 lo, hi = wilson(zeros, total)
 print("  pooled: %d/%d = %.3f  95%% CI [%.3f, %.3f]" % (zeros, total, frac, lo, hi))
-# The band is deliberately wide: this guard exists to catch the figure MOVING or becoming underivable,
-# not to freeze a point estimate that more data should be allowed to refine.
-ok = 0.40 <= frac <= 0.80 and total >= 40
-print("  within the published band [0.40, 0.80] and >=40 files: %s" % ok)
+# Band is wide and its LOWER edge is loose on purpose: deeper reading legitimately drives this figure down
+# (0.583 at k=6 -> 0.458 at k=9 on sample A), so a tight floor would fail on correct new measurements. The
+# upper edge is what actually guards: a rise would mean detections were lost.
+ok = 0.25 <= frac <= 0.80 and total >= 40
+print("  within the published band [0.25, 0.80] and >=40 files: %s" % ok)
 sys.exit(0 if ok else 1)
 PY
 then ok "the never-surfaced fraction still derives from the artefacts and sits in its published band"

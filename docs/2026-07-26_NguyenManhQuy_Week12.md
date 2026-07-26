@@ -141,14 +141,14 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > dạng đường cong, dù bộ mới còn *dễ hơn*. Trần là tính chất của phương pháp, không phải của bộ
 > file đầu tiên.
 >
-> **CON SỐ QUAN TRỌNG NHẤT CỦA CẢ HƯỚNG NÀY, gộp cả hai bộ file (48 file có lỗi thật):**
-> **29/48 = 60,4% file có lỗi KHÔNG BAO GIỜ được nêu, khoảng tin cậy [46% – 73%]** — ở mọi số lần
-> đọc đã thử. Hai bộ file cho kết quả khớp nhau (Fisher hai phía p = 1,000), nên đây là tính chất
-> của phương pháp chứ không phải của một bộ file may rủi.
+> **CON SỐ QUAN TRỌNG NHẤT CỦA CẢ HƯỚNG NÀY (đã sửa theo độ sâu đọc):**
+> bộ A đọc **9 lần**: **11/24 = 45,8% file có lỗi không bao giờ được nêu**, khoảng [28% – 65%].
+> Con số 60,4% em báo trước đó là **quá cao** — nó gộp bộ A đọc 6 lần với bộ B đọc 3 lần, mà đọc
+> nông thì đếm nhầm file xu-hướng-thấp thành 0. Bộ B ở k=3 chỉ là **cận trên**, không phải ước
+> lượng, và hai độ sâu khác nhau thì không gộp được.
 >
-> Nói thành câu cho người mua: **đọc mỗi file sáu lần, trả tiền sáu lần, và khoảng ba trong năm
-> file có lỗi vẫn không bao giờ hiện ra.** Mọi con số khác trong báo cáo này chỉ là chi tiết treo
-> quanh câu đó.
+> Nói thành câu cho người mua: **đọc mỗi file chín lần, trả tiền chín lần, khoảng bốn tới năm trong
+> mười file có lỗi vẫn không hiện ra** — và tỉ lệ đó vẫn đang giảm chậm nếu đọc thêm nữa.
 >
 > **Đường cong chi phí, đo chứ không phải mô hình hóa:** đọc k lần thì phủ được bao nhiêu phần so
 > với kỳ vọng lý thuyết — **100%, 81%, 71%, 65%, 61%, 58%** ứng với k = 1 đến 6. Ở k=6 thì phủ
@@ -156,14 +156,23 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > ngày một giãn** — nghĩa là có trần thật cho việc "mua thêm lần đọc", và trần đó tới sớm hơn mọi
 > phép tính tuyến tính.
 >
-> **Và trên bộ file này thì đường cong không chỉ thoải ra — nó DỪNG HẲN.** Trong 24 file có lỗi
-> thật, chỉ 10 file từng được nêu ít nhất một lần, và đọc 6 lần thì phủ được đúng 10 file đó.
-> Nghĩa là **năng lực bão hòa ở 41,7% ngay từ lần đọc thứ sáu; đọc thêm nữa chỉ tốn tiền chứ không
-> thêm được file nào.** 14 file còn lại không phải "khó thấy" — chúng **nằm ngoài tầm** của cách
-> làm này ở mọi số lần đọc.
+> **⚠️ EM RÚT LẠI MỘT KẾT LUẬN ĐÃ VIẾT TRONG CHÍNH BÁO CÁO NÀY CHIỀU NAY.** Em đã viết rằng đường
+> cong "dừng hẳn" ở 41,7% từ lần đọc thứ sáu, đọc thêm chỉ tốn tiền. **Sai.**
 >
-> Với việc tính giá thì câu hỏi không phải "chúng ta đủ tiền đọc mấy lần" mà là **"chúng ta đủ tiền
-> đọc nhiều hơn mức phương pháp này dùng được"**.
+> Phép kiểm của em là một vòng luẩn quẩn: em so "đọc k lần phủ được bao nhiêu file" với "bao nhiêu
+> file từng được nêu trong k lần đó" — **hai thứ đó là MỘT theo định nghĩa**, nên phép kiểm không
+> bao giờ có thể sai. Em đọc sự trùng khớp tất yếu đó thành bằng chứng có trần.
+>
+> Em chạy thêm 3 lần đọc nữa (k=9) để kiểm cho đúng: **độ phủ lên 54,2% và vẫn đang tăng.** Ba file
+> em từng xếp là "nằm ngoài tầm ở mọi số lần đọc" đã được nêu khi đọc sâu hơn.
+>
+> **Số đã sửa:** tỉ lệ file không bao giờ được nêu giảm từ 58,3% xuống **45,8%** (bộ A, k=9). Con
+> số gộp 60,4% em báo trước đó **cũng cao quá**, vì nó trộn bộ A đọc 6 lần với bộ B đọc 3 lần — đọc
+> nông thì đếm nhầm file xu-hướng-thấp thành file xu-hướng-0.
+>
+> Nói lại cho đúng: **đọc mỗi file chín lần, trả tiền chín lần, khoảng bốn tới năm trong mười file
+> có lỗi vẫn không hiện ra — và tỉ lệ này vẫn đang giảm chậm khi đọc thêm.** Chưa chứng minh được
+> có trần. Mô hình chi phí được phép giả định lợi ích giảm dần, **không** được giả định nó dừng.
 >
 > **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại nhiều lần
 > trên cùng một file cho thấy **không phải xổ số**: file "có gì đó" thật sự dễ được nêu hơn. Nhưng

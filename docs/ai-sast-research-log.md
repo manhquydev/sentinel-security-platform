@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E50 | **RETRACTION — the saturation claim was circular** | union over k and 'files that ever fired in those k' are the SAME quantity; the test could not fail. Properly tested at k=9 the union is **0.542 and still rising**, never-surfaced falls **0.583 → 0.458**, and 3 files called unreachable fired. No guard caught it: the arithmetic was right, the QUESTION was unfalsifiable |
 | E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Both candidate fixes then FAIL — the prose-level one removes 2 real detections and not the FP; the path-level one removes only the embarrassing observation. Real issue is upstream: test files in a clean-control arm |
 | E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6 and SATURATES there** — all 10 files that can ever fire have fired, so more readings add cost only; 0 flags in 96 clean-control observations **on this sample (broken in E49 on a disjoint one)** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
@@ -3785,11 +3786,16 @@ ninety-six consecutive opportunities to break it — **on this file set**.
 > giving **1 in 184** overall. The 96-for-96 above is accurate for the files it covers and is exactly the
 > kind of number that reads as a general law when it is a statement about one sample. Read it with E49.
 
-### The union has saturated, and that sets a hard ceiling on what buying readings can achieve
+### ~~The union has saturated~~ — RETRACTED, see E50
 
-Ten of the twenty-four positive files produced at least one flag across the six readings. Union coverage at
-k=6 is **exactly 10.0 of 24** — every file capable of firing has already fired. The curve has not merely
-slowed; **it has stopped.**
+> **This section is wrong and is kept only so the error is visible.** The "saturation test" compared union
+> coverage against the count of files that ever fired — the same quantity by definition, so it could not
+> have failed. Tested properly at k=9 the union is **0.542 and still rising**. Read E50 instead.
+
+
+~~Ten of the twenty-four positive files produced at least one flag across the six readings. Union coverage
+at k=6 is exactly 10.0 of 24 — every file capable of firing has already fired.~~ **RETRACTED (E50): those
+two numbers are the same quantity by definition. At k=9 the union is 13/24 = 0.542 and still climbing.**
 
 That converts the decay into something sharper than "diminishing returns". On this sample there is a hard
 ceiling at **10 of 24 files = 0.417**, it is reached by k=6, and **further readings can add cost and
@@ -3958,3 +3964,74 @@ keep producing zeros. The interval said all along what the breach later demonstr
 either arm of this design. Changing that changes the sampling frame and therefore every specificity number
 this project has published, so it needs deciding deliberately rather than as a patch. The measured rate of
 1 in 184 stands meanwhile, and it is the honest number under the sampling frame actually used.
+
+---
+
+## E50 — RETRACTION: the "saturation" claim was circular, and more readings do keep finding files
+
+**Retracted:** the claim, published this afternoon in E46, E48, decision 0027 and the Week-12 stakeholder
+report, that *"the union has saturated — every file capable of firing has fired, so further readings add
+cost and nothing else."*
+
+It was not a measurement. It was a tautology.
+
+### The error
+
+The "saturation test" compared two quantities:
+
+- union coverage over k readings, and
+- the count of files that fired at least once in those same k readings.
+
+**These are the same quantity by definition.** A file is in the union exactly when it fired at least once.
+Computing both and observing they were equal at k=6 (10 of 24, then 12 of 24 on the fuller set) proved
+nothing whatsoever, and I read the equality as evidence of a ceiling.
+
+Verified directly: using the first 6 readings, union = 12 and "ever fired" = 12, identical; using 9,
+union = 13 and "ever fired" = 13, identical. The check could never have come out any other way.
+
+### What the data actually says, tested properly
+
+The real question is whether *adding* readings adds files. Three more readings were run, taking sample A to
+k=9. Cumulative union:
+
+| k | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| union | 0.208 | 0.333 | 0.417 | 0.458 | 0.458 | 0.500 | 0.500 | 0.500 | **0.542** |
+
+**Still climbing at k=9.** It flattens in places — no gain at k=5, none at k=7 or k=8 — and those flat
+stretches are exactly what fooled me at k=6. Growth is slow and irregular, not stopped.
+
+### Everything downstream that this moves
+
+| figure | published | corrected at k=9 |
+|---|---|---|
+| never surfaced, sample A | 14/24 = 0.583 | **11/24 = 0.458** [0.279, 0.649] |
+| union coverage | "saturated at 0.417" | **0.542 and rising** |
+| files at propensity zero | 14 | **11** — three files called unreachable fired at higher k |
+| union vs independence at k=9 | — | 62% |
+
+**Three files I had classified as propensity zero — "unreachable by this method at any k" — fired once the
+readings went deeper.** That phrasing was wrong on its own terms: a file observed at 0 of 6 had the interval
+[0.000, 0.390], which I quoted at the time and then talked past.
+
+The pooled 60.4% never-surfaced figure from E49 inherits this: it combined sample A at k=6 with sample B at
+k=3, both of which overstate the zero fraction because both were shallow. Sample A alone at k=9 gives
+**0.458**. Sample B at k=3 remains an upper bound, not an estimate, and the two can no longer be pooled as
+though they were measured at comparable depth.
+
+### Why this one got through
+
+Every other correction today was caught by a guard. This one was not, because it was not an instrument
+defect or a stale artefact — the arithmetic was right and the artefacts were clean. **The defect was in the
+question**: I designed a check that could only return the answer I expected, and no test in this repository
+looks for that. SM24 pinned the never-surfaced fraction inside a band, and the corrected value stayed
+inside it, so the guard passed while the claim it was guarding was wrong.
+
+The generalisable form: **a check whose two sides are definitionally equal will always agree, and agreement
+then feels like confirmation.** Before treating a comparison as evidence, ask what result would have
+falsified it. "Union equals the number of files that ever fired" has no falsifying outcome. Neither does any
+check of the same shape, and this lab has now produced one in the middle of a day spent building guards
+against exactly this class of self-deception.
+
+**Specificity is unaffected:** 0 flags in 144 clean-control observations on sample A, 1 in 184 overall.
+That half of the claim never depended on the tautology.

@@ -497,3 +497,34 @@ model-based refinement second, and prefer a bound you can defend to a point esti
 the model-free figure (0.774 never named, an upper bound) leads, and the two model-based corrections
 disagreed by 0.09 — that disagreement was reported, because it is the honest measure of how much the model
 deserved to be trusted.
+
+## 17. A check with no falsifying outcome is not a check (E50, 2026-07-26)
+
+Every correction in this protocol before now came from a guard catching something: a stale artefact, a dead
+vocabulary, a verdict scored on text nobody kept. E50 came from none of them, and no guard in the
+repository could have caught it, because nothing was broken. The arithmetic was right, the artefacts were
+clean, the instrument was sound.
+
+**The defect was in the question.** A "saturation test" compared union coverage over k readings against the
+number of files that fired at least once in those k readings, found them equal, and read the equality as a
+ceiling. Those two quantities are *the same quantity* — a file is in the union exactly when it fired at
+least once. The comparison had no outcome that could have contradicted the conclusion, so its agreement
+carried no information at all, and it felt like confirmation precisely because it was guaranteed.
+
+The claim that rested on it — *"the capability saturates at 0.417; further readings buy cost and nothing
+else"* — reached a decision record and a stakeholder report before three additional readings falsified it:
+union 0.542 and still climbing, three supposedly-unreachable files surfacing.
+
+**The rule.** Before treating any comparison as evidence, state what result would have falsified it. If no
+such result exists, it is a definition being restated, not a measurement. This applies with special force
+to checks that feel like confirmation, because a check that cannot fail always does.
+
+**Two properties that make this class hard to catch, and both were present.** The conclusion was
+*plausible* — diminishing returns were genuinely measured, so a ceiling was a natural next inference. And it
+was *unflattering*, which suppressed scepticism: a lab trained to distrust results that flatter it will
+wave through the ones that do not. **Being wrong in the pessimistic direction is still being wrong**, and it
+misprices a product just as badly.
+
+**Corollary for guards.** SM24 pinned the affected figure inside a band and passed throughout, because the
+corrected value stayed in band. A guard on a *value* cannot detect a broken *question*. Nothing here
+substitutes for asking, of each check, what it would look like if the claim were false.
