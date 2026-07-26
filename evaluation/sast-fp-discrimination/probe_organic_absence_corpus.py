@@ -58,6 +58,37 @@ COMMIT_SAMPLE = 200       # bounded diff fetches — this is the expensive stage
 CACHE = os.path.join(os.environ.get("TMPDIR", "/tmp"), "organic-absence-cache")
 
 COMMIT_URL = re.compile(r"https://github\.com/([^/]+)/([^/]+)/commit/([0-9a-f]{7,40})")
+HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@")
+LINE_TOL = 10          # the project matcher's tolerance, reused so the number is comparable
+
+
+def protected_route_lines(patch: str) -> list[int]:
+    """OLD-file line numbers of route handlers that this diff ADDS a control to.
+
+    This is what turns a fix commit into a labelled SITE rather than a labelled file. Walking each hunk
+    and tracking the old-file line counter gives, for every added auth/enforcement marker, the nearest
+    route declaration at or above it that already EXISTED before the fix.
+
+    A route that is itself added by the diff is skipped: a brand-new protected endpoint is not evidence
+    that an old one was unprotected, and counting it would manufacture sites the corpus never had.
+    """
+    out, old, route_at = [], 0, None
+    for line in patch.splitlines():
+        m = HUNK.match(line)
+        if m:
+            old = int(m.group(1))
+            route_at = None
+            continue
+        if line.startswith("+"):
+            body = line[1:]
+            if (det.AUTH_MARKER.search(body) or det.ENFORCEMENT.search(body)) and route_at:
+                out.append(route_at)
+            continue
+        body = line[1:] if line[:1] in (" ", "-") else line
+        if det.ROUTE.search(body):
+            route_at = old              # a route that existed BEFORE the fix
+        old += 1
+    return sorted(set(out))
 
 
 def gh(path: str):
@@ -160,6 +191,7 @@ def main() -> int:
                     sites += 1
                     found.append({"advisory": gid, "owner": owner, "repo": repo,
                                   "file": f["filename"], "commit": sha,
+                                  "route_lines": protected_route_lines(patch),
                                   "parents": [pp["sha"] for pp in c.get("parents") or []]})
         adds_marker += 1 if hit_marker else 0
         on_route += 1 if hit_route else 0
@@ -179,7 +211,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     repos_hit = len({(e["owner"], e["repo"]) for e in found})
     print("\ntransfer test — does the detector fire on the PRE-FIX version of these organic files?")
-    fired = checked = 0
+    fired = checked = site_want = site_hit = 0
     detail = []
     for e in found:
         if not e["parents"]:
@@ -196,8 +228,15 @@ def main() -> int:
         checked += 1
         hits = det.findings_for(src, e["file"])
         fired += 1 if hits else 0
+        # SITE level: did the detector land on the very route the maintainer protected?
+        want = e.get("route_lines") or []
+        got = {h["line"] for h in hits}
+        matched = [w for w in want if any(abs(w - g) <= LINE_TOL for g in got)]
+        site_want += len(want)
+        site_hit += len(matched)
         detail.append({"repo": f"{e['owner']}/{e['repo']}", "file": e["file"],
-                       "commit": e["commit"][:10], "detector_findings": len(hits)})
+                       "commit": e["commit"][:10], "detector_findings": len(hits),
+                       "labelled_routes": len(want), "routes_matched": len(matched)})
     for d in detail[:12]:
         mark = "FIRES" if d["detector_findings"] else "MISSES"
         print(f"  {mark:<7} {d['repo']:<32} {d['file'][:40]:<41} "
@@ -209,6 +248,14 @@ def main() -> int:
     # of its files that carry a ground-truth CWE-306/862 entry, on how many does the detector fire at all?
     import run_spike as rs
     cfired = cfiles = 0
+    # THE DENOMINATOR THAT DECIDES WHETHER THE TRANSFER NUMBER MEANS ANYTHING.
+    # Every organic site here is a route handler by construction — a maintainer added a control to it.
+    # The corpus's published recall is measured against ALL ground-truth CWE-306/862 entries, and the
+    # detector only recognises route decorators, so entries that are not on a route are structurally
+    # unreachable and sit in that denominator as guaranteed misses. Comparing the two directly inflates
+    # the organic figure. This re-measures the corpus on the same population the organic sample is drawn
+    # from: labelled entries that sit on a route handler.
+    gt_all = gt_route = gt_hit = 0
     for slug in sorted(os.listdir(rs.REPOS)) if os.path.isdir(rs.REPOS) else []:
         root = os.path.join(rs.REPOS, slug)
         gt = rs.load_gt(slug) if os.path.isdir(root) else None
@@ -224,6 +271,22 @@ def main() -> int:
                 continue
             cfiles += 1
             cfired += 1 if det.findings_for(src, rel) else 0
+        for g in gt:
+            if not (g["is_vulnerable"] and (306 in g["cwes"] or 862 in g["cwes"])):
+                continue
+            gt_all += 1
+            try:
+                src = open(os.path.join(root, g["file"]), encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            lines = src.splitlines()
+            if not any(det.ROUTE.match(l) and abs(i + 1 - g["line"]) <= LINE_TOL
+                       for i, l in enumerate(lines)):
+                continue                      # not on a route: the detector cannot reach it at all
+            gt_route += 1
+            got = {f["line"] for f in det.findings_for(src, g["file"])}
+            if any(abs(g["line"] - x) <= LINE_TOL for x in got):
+                gt_hit += 1
     if checked:
         print(f"\n  ORGANIC   file-level firing: {fired}/{checked} = {fired/checked:.3f}"
               f"   ({repos_hit} distinct repositories)")
@@ -233,8 +296,23 @@ def main() -> int:
             print("  Both are FILE level: 'the detector fired somewhere in this file'. That is a weak bar")
             print("  — one organic file produced 98 findings — and it is NOT the 0.226 site-level recall")
             print("  published for the corpus. What it supports is a transfer statement at file level")
-            print("  only; whether the detector lands on the SPECIFIC route the maintainer fixed is not")
-            print("  established here and needs the line mapping this probe does not do.")
+            print("  only. The site-level figure below is the one comparable to the published 0.226.")
+        if site_want:
+            print(f"\n  SITE level — the detector lands on the very route the maintainer protected")
+            print(f"  (old-file line from the diff, +/-{LINE_TOL} as the project matcher allows):")
+            print(f"    ORGANIC : {site_hit}/{site_want} = {site_hit/site_want:.3f}")
+            if gt_route:
+                print(f"    CORPUS  : {gt_hit}/{gt_route} = {gt_hit/gt_route:.3f}  "
+                      f"(same population: labelled entries that sit ON a route)")
+                print(f"\n  The published corpus recall uses ALL {gt_all} labelled entries as its")
+                print(f"  denominator, of which only {gt_route} = {gt_route/gt_all:.1%} sit on a route at")
+                print("  all. The rest are structurally unreachable by a route-decorator detector and sit")
+                print("  in that denominator as guaranteed misses, so the headline recall carries a")
+                print(f"  structural ceiling near {gt_route/gt_all:.3f}. Against what it actually targets")
+                print(f"  the detector reaches {gt_hit/gt_route:.3f}, and the organic gap is")
+                print(f"  {site_hit/site_want:.3f} vs {gt_hit/gt_route:.3f}, not vs the published figure.")
+        else:
+            print("\n  SITE level: no pre-existing route could be located in any diff — not measurable.")
 
     # Sites per commit, NOT commits-containing-a-site. The first version multiplied by the latter and
     # called the result sites, understating it — a commit that adds auth to five routes yields five.
@@ -273,8 +351,19 @@ def main() -> int:
                              "teaching_corpus_same_standard": {
                                  "files": cfiles, "fired": cfired,
                                  "file_level_firing": round(cfired / cfiles, 4) if cfiles else None},
-                             "not_established": "whether the detector lands on the SPECIFIC route the "
-                                                "maintainer fixed — file-level firing only"}}
+                             "site_level": {"labelled_routes": site_want, "matched": site_hit,
+                                            "organic_site_recall": round(site_hit / site_want, 4)
+                                            if site_want else None,
+                                            "line_tolerance": LINE_TOL,
+                                            "corpus_published_strict_recall": 0.226,
+                                            "corpus_same_population": {
+                                                "labelled_entries": gt_all,
+                                                "on_a_route": gt_route,
+                                                "route_fraction": round(gt_route / gt_all, 4) if gt_all else None,
+                                                "recall_on_routes": round(gt_hit / gt_route, 4) if gt_route else None},
+                                            "denominator_warning": "the published recall counts labelled "
+                                                "entries a route-decorator detector cannot reach; comparing "
+                                                "the organic figure against it inflates the gap"}}}
     with open(os.path.join(_HERE, "organic-absence-probe-260726.json"), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     return 0

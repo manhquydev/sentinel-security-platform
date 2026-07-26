@@ -133,11 +133,23 @@ stated in E66: only **6 independent repositories**, an uncontrolled route-densit
 file produced 98 findings), and **site level is not established** — whether the detector lands on the
 specific route the maintainer fixed needs diff-to-line mapping that does not exist yet.
 
-**So what is actually owed has changed shape.** Not "$30–50k or nothing", but engineering: diff-to-line
-mapping, ecosystems beyond `pip`, and enough repositories that the unit of analysis is the repository. The
+**Site-level organic recall now exists (E67).** The diff-to-line mapping was built the same evening:
+**13/18 = 0.722** on organic route sites. It must not be quoted against the published 0.226 — organic sites
+are route handlers by construction, and that is the denominator error §22 records. Matched population, the
+corpus gives **76/132 = 0.576**, so the transfer gap is **1.25×, not 3.2×**.
+
+**That measurement re-read the free layer's headline.** Only **132 of 289 = 45.7%** of labelled CWE-306/862
+entries sit on a route handler at all; the rest are structurally unreachable by a route-decorator detector
+and sit in the published denominator as guaranteed misses. So "22.6% recall" carries an unstated
+**structural ceiling near 0.457**, and against the population it targets the free layer reaches **0.576**.
+The instrument is not weak over absence classes — it is strong over *route-level* absence and silent on the
+other 54%, which is where further deterministic work belongs.
+
+**So what is actually owed has changed shape.** Not "$30–50k or nothing", but engineering: ecosystems
+beyond `pip`, and enough repositories that the unit of analysis is the repository rather than the site. The
 paid options remain the route to a *publishable* corpus; they are no longer the route to a first organic
-check, and no positive per-file number may be published as applying to customer code until site-level
-organic recall exists.
+check. What still may not be published as applying to customer code is any positive figure resting on
+**6 repositories** with sites clustered inside them.
 
 **E65 gave this debt a second, independent reason.** The headroom for any prioritisation method is bounded
 by defect concentration, and on this corpus the oracle sits 6.5 points from a trivial density ordering

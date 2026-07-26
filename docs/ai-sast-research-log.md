@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E67 | does the detector hit the ROUTE the maintainer fixed, on organic code? | **STANDS — 0.722, and it re-reads the published figure** — diff-to-line mapping gives organic site-level recall **13/18 = 0.722**. Quoting that against the published 0.226 is a **denominator error**: organic sites are route handlers by construction. Matched population: corpus **76/132 = 0.576**, so the gap is **1.25x not 3.2x**. Exposes that only **132/289 = 45.7%** of labelled CWE-306/862 entries sit on a route at all — the headline recall has a **structural ceiling near 0.457**, and against what it targets the free layer reaches **0.576** |
 | E66 | can the organic corpus debt be attacked for free? | **STANDS — debt materially reduced, not closed** — **the fix commit is the label**: a maintainer adding an auth check marks the pre-fix file as a confirmed absence site, so no expert labelling is needed. From pip advisories: 319 → 115 with a fix commit → **20 labelled organic sites across 6 repos**, free, a LOWER bound. First organic measurement ever made here: file-level firing **0.850 vs 0.297** on the teaching corpus at the same standard. Three limits load-bearing: 6 independent repos, an uncontrolled route-density confound (one file gave 98 findings), and site-level NOT established |
 | E65 | does reviewer-in-the-loop learning beat density ordering? | **STANDS (negative) — and it BOUNDS the whole question** — prequential active learning needs **46.7%** of files to reach 90% of defects, LOSING to trivial density ordering at 37.0%; shuffled-label control sits at chance (89%) so the protocol invents nothing. The decisive number is the **ORACLE at 30.4%**: total headroom for ANY prioritisation here is **6.5 points**. It also voids E64's HARMLESS comparison — 16% is below what perfect knowledge achieves on this corpus, because 38% of files carry a defect. Prioritisation closed on this corpus; may still be live on production code |
 | E64 | is the inventory framing actually triageable? | **STANDS — the unit is the file, and that is the whole gain** — 565 findings collapse to **92 file-level decisions** (6.1 per decision); densest-first reaches **70% of real defects from 25% of files**, p < 0.0001. But measured against FINDINGS read instead of files opened the advantage vanishes (69.4% vs 70%) — **no prioritisation exists**, confirming E60; the ~3x effort compression is entirely the unit of work. Time per decision remains unmeasured. **The subagent's one piece of negative evidence (HARMLESS 'abandoned at 5% precision') FAILED verification** — the paper reports an efficiency success, 90% of vulns at 16% of files, which benchmarks this detector's density ordering at **less than half as efficient** (90% at 37%) and pointed at learned prioritisation as the open lead — **E65 then voided that comparison**: HARMLESS's 16% is below this corpus's ORACLE of 30.4% |
@@ -5039,5 +5040,53 @@ route to a *publishable* corpus; they are no longer the route to a first organic
 
 Fetched data is cached outside the repository and never committed, following the corpus policy already in
 force.
+
+Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.
+
+---
+
+## E67 — organic site-level recall, and the denominator that was hiding inside the published figure
+
+**What E66 left open.** It established the free organic-corpus path and measured *file-level* firing, but
+explicitly could not say whether the detector lands on the **specific route the maintainer protected** —
+that needs diff-to-line mapping. That mapping now exists: each hunk is walked tracking the old-file line
+counter so every added auth marker resolves to the route declaration above it **that already existed
+before the fix**. A route the diff itself adds is skipped — a brand-new protected endpoint is not evidence
+that an old one was unprotected.
+
+**First result, and why it must not be quoted.** Organic site-level recall is **13/18 = 0.722** against a
+published corpus recall of 0.226 — a 3.2× transfer advantage. **That comparison is invalid**, and the same
+denominator error §22 and E62 record: every organic site is a route handler *by construction*, because it
+was found by a maintainer adding a control to a route, while the corpus figure is measured against **all**
+labelled CWE-306/862 entries.
+
+**The matched comparison, and the fact it exposes:**
+
+| | recall |
+|---|---|
+| organic production code, route sites | **13/18 = 0.722** |
+| corpus, same population (labelled entries **on a route**) | **76/132 = 0.576** |
+| corpus, published denominator (all labelled entries) | 76/289 = 0.263 |
+
+The transfer gap is **1.25×, not 3.2×**.
+
+**And the middle row changes how the free layer should be described.** Only **132 of 289 = 45.7%** of the
+corpus's labelled CWE-306/862 entries sit on a route handler at all. The rest are structurally unreachable
+by a route-decorator detector and sit in the published denominator as **guaranteed misses**. So the headline
+"22.6% recall" carries a **structural ceiling near 0.457** that was never stated, and against the population
+it actually targets the detector reaches **0.576**.
+
+That is not a correction of the published number — 0.226 is the right figure for "recall over this CWE class"
+and remains the honest one to compare against Bandit and Semgrep's zero. It is a correction of what it
+*means*: the free layer is not a weak instrument over absence classes, it is a **strong instrument over
+route-level absence** (0.576) that says nothing about the other 54%, which is where any further deterministic
+work belongs. Two questions were being conflated exactly as *"is a control absent"* and *"which control"*
+were in the generative role.
+
+**What still limits the organic figure.** Unchanged from E66 and still load-bearing: **6 independent
+repositories**, sites clustering within them, and a sample drawn as the first commit-linked advisories
+rather than at random. 0.722 on 18 sites from 6 repositories is an indication that the detector does not
+degrade on production code — the third result pointing away from the feared direction, after E59 and E56 —
+and it is not yet a transfer claim anyone should sell.
 
 Instrument `probe_organic_absence_corpus.py`, artefact `organic-absence-probe-260726.json`. Zero model calls.
