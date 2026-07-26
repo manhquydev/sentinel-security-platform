@@ -118,6 +118,39 @@ respectively, with perfect specificity, against a deterministic layer that has n
 expressing this class. **What no longer stands:** that this is not memorisation, and that it is not
 file-role recognition. Both are open questions again.
 
+## REFINEMENT (E34, 2026-07-26) — the capability is class-specific, and the aggregate rate hides that
+
+E26's transfer demonstration (3/4, n = 8, p = 0.071 — not significant) was scaled to **12 matched pairs
+across Flask, FastAPI and Django**, blinded, with exact ground truth: **sensitivity 7/12, model false
+positives 0/12 on adjudication** (1/12 by classifier), **p = 0.0136**. The transfer claim is now powered
+rather than illustrated.
+
+**The refinement that matters more than the number:**
+
+| absence class | planted | detected |
+|---|---|---|
+| ownership / IDOR (639) | 4 | **4** |
+| missing authentication (306) | 2 | **2** |
+| missing authorization (862) | 2 | 1 |
+| rate limit / lockout (307) | 1 | **0** — also missed in E26 |
+| mass assignment (915) | 1 | **0** |
+| error-path exposure (209) | 1 | **0** |
+| missing re-authentication (620) | 1 | **0** |
+
+**This decision's claim is therefore narrowed from "absence-of-control classes" to what was actually
+measured: absent ownership and absent authentication.** Rate limiting, mass assignment, error-path
+exposure and re-authentication were missed in every instance tested. A deployment weighted toward those
+classes would see far less than the headline rate — and CWE-307 is the *most common* absence class in
+the RealVuln corpus.
+
+**Specificity strengthened:** two controls were deliberately hidden — one injected as a dependency, one
+applied inside a service `base()` method — and the model correctly stayed silent on both.
+
+**A flaw in the test method, disclosed:** a matched `_b` variant is only "controlled" for its *planted*
+class and may carry an unplanted defect. E34's `email_b` does — the model correctly flagged a real
+missing rate limit there, and it was scored as a false positive. Every matched-pair result in this lab
+inherits this, and future sets must audit controls against the full class list.
+
 ## The bounds are part of the claim
 
 1. **It is a weak detector — but every published rate is a FLOOR, not an estimate.** The measured

@@ -433,6 +433,28 @@ PY
 then ok "every committed artefact is at least as new as the instrument that produced it"
 else bad "SM17: a guard is asserting over an artefact older than its own instrument"; fi
 
+sect "SM18: the authored-unseen result keeps its class breakdown, not just a rate"
+if run_py <<'PY'
+import json, os, sys
+p = "evaluation/sast-fp-discrimination/authored-unseen-v2-260726.json"
+if not os.path.exists(p):
+    print("  SKIP-AS-FAIL: run the authored-unseen v2 experiment"); sys.exit(1)
+d = json.load(open(p))
+# The aggregate rate averages over classes the model handles and classes it misses entirely. Decision
+# 0027 was narrowed on that breakdown, so the per-class detail must survive in the artefact.
+rows = d["rows"]
+vuln = [r for r in rows if r["truth"] == "vulnerable"]
+has_why = all(r.get("why") for r in vuln)          # the class each defect belongs to
+ownership = [r for r in vuln if "639" in r.get("why", "") or "306" in r.get("why", "")]
+own_hits = sum(1 for r in ownership if r["verdict"] == "flagged")
+print("  n_pairs=%s sensitivity=%s p=%s | ownership+authn %d/%d"
+      % (d["n_pairs"], d["sensitivity"], d["fisher_p_one_sided"], own_hits, len(ownership)))
+# Guard the two things 0027 now rests on: significance, and the strong classes staying strong.
+sys.exit(0 if (has_why and d["fisher_p_one_sided"] < 0.05 and own_hits >= len(ownership) - 1) else 1)
+PY
+then ok "authored-unseen stays significant and keeps per-defect class labels for the breakdown"
+else bad "SM18: the authored-unseen result lost significance or its class detail"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
