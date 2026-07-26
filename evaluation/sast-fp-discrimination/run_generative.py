@@ -463,8 +463,9 @@ def main() -> int:
             return ""
 
     # POSITIVE CONTROL: the classifier and the prompt must together surface a blatant planted defect.
-    canary = classify_prose(query("__canary__", "canary.py", literal=_CANARY_SRC))
-    print(f"positive control (planted missing-authz + missing-rate-limit): {canary}")
+    _ok, _tally = canary_passes(lambda: query("__canary__", "canary.py", literal=_CANARY_SRC))
+    print(f"positive control (planted missing-authz + missing-rate-limit): {_tally}")
+    canary = "flagged" if _ok else "clean"
     if canary != "flagged":
         print("FAIL: the harness cannot surface a blatant absence-class defect. Any negative result "
               "here would measure the harness, not the hypothesis.")
@@ -514,7 +515,9 @@ def main() -> int:
                                   "positive result mixes capability with memorisation and cannot "
                                   "transfer to private code",
            "rows": rows}
-    with open(os.path.join(_HERE, "generative-260726.json"), "w", encoding="utf-8") as fh:
+    # A re-run must not overwrite the artefact it is meant to be compared against.
+    _name = os.environ.get("GENERATIVE_OUT", "generative-260726.json")
+    with open(os.path.join(_HERE, _name), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     return 0
 
