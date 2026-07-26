@@ -131,6 +131,15 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > ngày một giãn** — nghĩa là có trần thật cho việc "mua thêm lần đọc", và trần đó tới sớm hơn mọi
 > phép tính tuyến tính.
 >
+> **Và trên bộ file này thì đường cong không chỉ thoải ra — nó DỪNG HẲN.** Trong 24 file có lỗi
+> thật, chỉ 10 file từng được nêu ít nhất một lần, và đọc 6 lần thì phủ được đúng 10 file đó.
+> Nghĩa là **năng lực bão hòa ở 41,7% ngay từ lần đọc thứ sáu; đọc thêm nữa chỉ tốn tiền chứ không
+> thêm được file nào.** 14 file còn lại không phải "khó thấy" — chúng **nằm ngoài tầm** của cách
+> làm này ở mọi số lần đọc.
+>
+> Với việc tính giá thì câu hỏi không phải "chúng ta đủ tiền đọc mấy lần" mà là **"chúng ta đủ tiền
+> đọc nhiều hơn mức phương pháp này dùng được"**.
+>
 > **Và em đã đo tiếp để biết vì sao — kết quả đổi luôn cách tính chi phí.** Đọc lặp lại nhiều lần
 > trên cùng một file cho thấy **không phải xổ số**: file "có gì đó" thật sự dễ được nêu hơn. Nhưng
 > **file cao nhất cũng chỉ 0,67**, tức **không file nào chắc chắn được phát hiện**. Con số cụ thể

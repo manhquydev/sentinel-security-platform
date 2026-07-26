@@ -178,8 +178,13 @@ through ninety-six consecutive opportunities to break it.
 **The cost curve, measured rather than modelled.** Union coverage of the positive arm at k readings, as a
 fraction of what an independence model would predict: **100%, 81%, 71%, 65%, 61%, 58%** for k = 1 to 6. At
 k=6 the design surfaces 10.0 of 24 files for six times the cost. Every additional reading is worth less
-than the one before it, by a widening margin — so there is a real ceiling on what buying more readings can
-achieve, and it arrives sooner than a linear or independence-based projection suggests.
+than the one before it, by a widening margin.
+
+**And on this sample the curve does not merely flatten — it stops.** Ten of the 24 positive files ever
+produce a flag, and union coverage at k=6 is exactly those 10. **The capability saturates at 0.417 by the
+sixth reading; beyond that, additional readings buy cost and nothing else.** The 14 files at propensity
+zero are not slow to surface, they are unreachable by this method. Any cost model must therefore be built
+around "we can afford more readings than this method can use", not around trading budget for coverage.
 
 **This has since been raised to a preregistered test (E37, run 2026-07-26).** Three independent runs over
 the same 53 files, pooled as a union over k=3 readings: ownership/authentication named on **9/53**, rate

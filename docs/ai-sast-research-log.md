@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6**; **0 flags in 96 clean-control observations** |
+| E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6 and SATURATES there** — all 10 files that can ever fire have fired, so more readings add cost only; **0 flags in 96 clean-control observations** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
 | E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
@@ -3779,3 +3779,22 @@ margin, and at k=6 the design delivers barely over half of what a naive model pr
 
 **Specificity across all six readings: 0 flags in 96 clean-control observations.** The floor has now held
 for ninety-six consecutive opportunities to break it.
+
+### The union has saturated, and that sets a hard ceiling on what buying readings can achieve
+
+Ten of the twenty-four positive files produced at least one flag across the six readings. Union coverage at
+k=6 is **exactly 10.0 of 24** — every file capable of firing has already fired. The curve has not merely
+slowed; **it has stopped.**
+
+That converts the decay into something sharper than "diminishing returns". On this sample there is a hard
+ceiling at **10 of 24 files = 0.417**, it is reached by k=6, and **further readings can add cost and
+nothing else**. The 14 files at propensity zero are not slow to surface — they are unreachable by this
+method at any k.
+
+Two caveats keep this honest. Twenty-four files is a small sample, and a file observed at 0 of 6 has the
+interval [0.000, 0.390] — some of those 14 may have small non-zero propensities that six readings did not
+catch, which would let the ceiling creep upward with much larger k. And saturation here is saturation *of
+this file set*; nothing about it predicts where the ceiling sits on other code. What it does establish is
+that the ceiling exists and is reached quickly, which is the part that matters for a cost model: the
+question is not "how many readings can we afford" but "we can afford more readings than this method can
+use.
