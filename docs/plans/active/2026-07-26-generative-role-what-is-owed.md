@@ -48,8 +48,18 @@ item is closed: 41 of 53 files were never named across two independent readings 
 the model-corrected zero fraction at roughly 0.60-0.77.** It required no new calls — the two committed
 single-reading runs already were a k=2 propensity measurement of the whole slice.
 
-What remains open here is narrower: the per-file intervals for the files that DO carry signal are still
-wide (the best is [0.320, 0.807]), so the ceiling is established but not located.
+Extended to CWE-307 on the same free data: **52 of 53 (0.981, [0.901, 0.997]) never named**, and at a rate
+that low the two-reading bound is effectively the answer.
+
+What remains open here is narrower, and there is one concrete next measurement:
+
+- The per-file intervals for files that DO carry signal are wide (the best is [0.320, 0.807]) — the ceiling
+  is established but not located.
+- **`realvuln-.../accounts/views.py` is the single file ever named for CWE-307, and it was named in both
+  readings (1 of 1) where ownership detections overlapped 0 of 6.** Read that one file at k=9. If it sits
+  near 1.0, the rate-limit failure is a *narrow competence* rather than a weak one — a different failure
+  mode with different product implications. If it regresses toward the group mean, it was a lucky draw.
+  One file, nine calls, and it distinguishes two stories that currently look identical.
 
 ## 3. A defect distribution not authored by us
 
