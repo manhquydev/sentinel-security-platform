@@ -82,6 +82,14 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > báo cáo "hỏi riêng thì phát hiện được" — một khuyến nghị sản phẩm **sai**. Em cài **hai** file
 > mẫu đối chứng nên bẫy này lộ ra **trước khi** tốn một lời gọi nào trên dữ liệu thật.
 >
+> **Cách thử thứ hai, và nó khép lại vấn đề:** thay vì đổi câu hỏi, em bỏ hẳn phần tranh chấp —
+> chạy đúng câu hỏi cũ trên **16 file chỉ có mỗi lỗi thiếu rate-limit**, không có lỗi nào khác
+> giành chỗ. Kết quả **1/16**, so với 1/53 lúc có tranh chấp: **không cải thiện** (p = 0,41). Đáng
+> chú ý là nhóm 16 file này lại **nhỏ hơn hẳn** (84 so với 189 dòng), tức là *dễ hơn* — điều kiện
+> đã nghiêng về phía có lợi cho giả thuyết "model thấy được nhưng không thèm nói", vậy mà vẫn
+> không thấy. Kết luận thực dụng: **đây không phải lỗi cách hỏi, và "prompt khéo hơn" không phải
+> là lời giải.** (Chỉ loại được hiệu ứng lớn; hiệu ứng nhỏ thì corpus không đủ file để kết luận.)
+>
 > **Và vẫn chưa bán được:** tỉ lệ trúng ~24% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
