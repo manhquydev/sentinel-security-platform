@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Classifier fix owed, deliberately not applied same-day |
+| E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Both candidate fixes then FAIL — the prose-level one removes 2 real detections and not the FP; the path-level one removes only the embarrassing observation. Real issue is upstream: test files in a clean-control arm |
 | E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6 and SATURATES there** — all 10 files that can ever fire have fired, so more readings add cost only; **0 flags in 96 clean-control observations** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
@@ -3857,5 +3857,35 @@ would delete an unflattering number.
 
 So: the breach stands as measured, the corrected rate is published, and the classifier fix is owed work
 that must be validated on the full corpus — including a check of how many *positive*-arm flags it also
-removes — before it is applied to anything. If it turns out to remove positive-arm detections too, that is
-a second finding and the specificity correction was cheap by comparison.
+removes — before it is applied to anything.
+
+### That validation was then run, and both candidate fixes fail
+
+Across all 460 committed rows and 62 flags:
+
+| candidate | flags removed | positive arm | clean arm |
+|---|---|---|---|
+| **A** — exclude files whose *path* marks them as tests | 1 | **0** | **1** |
+| **B** — require the absence language not to sit in a sentence about tests | 2 | **2** | **0** |
+
+**B is the actual classifier-level fix, and it is simply wrong.** It removes two genuine positive-arm
+detections and **does not remove the false positive at all** — the breaching prose says "No unauth
+302/403", which contains no test vocabulary in the same window. The obvious repair does not touch the thing
+it was designed to repair.
+
+**A works, and that is what is suspicious about it.** It removes exactly one flag: the one that embarrasses
+us, and nothing else. A rule whose entire measured effect is to delete the single observation that damaged
+a claim is not a fix, it is a retraction wearing a fix's clothing — however reasonable its rationale sounds.
+
+**What the two failures actually reveal is that the question is upstream of the classifier.** A test file
+contains no production security controls, so *"is a required control absent in this file?"* is close to
+ill-posed for it: there is nothing there that ought to have an authorization check. The defect is not that
+the classifier read the prose wrongly — arguably it read it correctly, since the model was describing
+absent things — but that **a test file was placed in a clean-control arm whose semantics are "code that
+should have had controls and does"**. That is a corpus construction decision, and 8 of 56 clean-control
+files are test files.
+
+**Status: no fix applied, and the owed work is now a different question** — whether test files belong in
+either arm of this design. Changing that changes the sampling frame and therefore every specificity number
+this project has published, so it needs deciding deliberately rather than as a patch. The measured rate of
+1 in 184 stands meanwhile, and it is the honest number under the sampling frame actually used.
