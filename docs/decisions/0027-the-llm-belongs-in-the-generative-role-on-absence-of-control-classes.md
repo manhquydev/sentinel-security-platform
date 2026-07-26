@@ -159,6 +159,21 @@ zero, so this does not confirm the narrowing and the confidence behind it is not
 test of the same question was cancelled beforehand at 43% power, and this estimate came out exactly as
 that gate predicted it would.
 
+**The replication (E42) changed what this number is a statement about, and this is the most important
+qualification in this decision.** An independent re-run of the identical 53 files reproduced both rates to
+the digit — 6/53 and 1/53, difference +0.094 — on responses that were **byte-different in 52 of 53 cases**,
+so it was a genuine second measurement and not a cached one. But the **6 files detected in the first run
+and the 6 in the second overlap in none**. Expected overlap if each run drew independently at the same
+rate is 0.68 files; if detection were a stable property of a file it would be 6.
+
+So what replicates is a **rate**, not a detection. This model reports an absent ownership control on about
+11% of files of this kind, and does not consistently report it on the *same* files. For a product that
+means two runs yield two disjoint worklists, both at the published rate — which forces either repeated
+readings per file, with the cost model that implies, or presenting the generative role as a sampling
+process rather than as a scanner. **No claim in this decision may be read as "the model finds the
+vulnerability in this file".** The class-rate comparison this decision rests on is unaffected, because it
+was always a statement about rates by class, and both classes' rates replicated exactly.
+
 What does not depend on the comparison: all 53 files carry a real CWE-307 defect and the model named the
 missing rate limit in **one**. The most common absence class in this corpus is very nearly invisible to
 the model in this role. That number needs no control arm and is the one with commercial consequences.

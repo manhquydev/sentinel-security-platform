@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
 | E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
 | E39 | is the class narrowing real on corpus code? | **STANDS as an ESTIMATE (not a test)** — ownership/authn 6/53 vs rate-limit 1/53, difference **+0.094 [+0.000, +0.189]**; direction matches E34 but the interval includes zero. **1 of 53 files with a real CWE-307 defect had it named** |
@@ -3141,3 +3142,63 @@ arm, and the error runs toward the null. It is one row of 53 and does not move a
 the pattern is exactly the one that produced this lab's `RECALL=0.000` incident, and a call that failed
 must never be scoreable as a model that declined. A guard now counts empty responses and the runners fail
 loudly instead of quietly.
+
+---
+
+## E42 — RESULT: the RATE replicates exactly. WHICH FILE does not replicate at all.
+
+E39 was published as an estimate with the note that it "needs replication before anything rests on it".
+This is that replication: the identical 53 files, the identical prompt, the identical classifier, a fresh
+set of calls.
+
+**The aggregate reproduced to the digit.**
+
+| | run A (E39) | run B (replication) |
+|---|---|---|
+| named ownership/authn absence | 6/53 = 0.113 | **6/53 = 0.113** |
+| named rate-limit absence | 1/53 = 0.019 | **1/53 = 0.019** |
+| difference | +0.094 [+0.000, +0.189] | **+0.094 [+0.000, +0.189]** |
+
+An exact match on an instrument known to churn is itself suspicious, so the first thing checked was
+whether the gateway had simply served a cache. It had not: **52 of the 53 responses differ byte-for-byte**
+between runs, and the prose differs substantially, not cosmetically. These are genuinely independent
+calls that happen to aggregate to the same place.
+
+**And then the part that matters more than the agreement.**
+
+| | |
+|---|---|
+| files named for ownership/authn in run A | 6 |
+| files named for ownership/authn in run B | 6 |
+| **files in common** | **0** |
+| file-level verdicts identical across runs | 29/53 (45% churn, consistent with E22's ~40%) |
+
+Zero overlap. Under the hypothesis that each run draws its 6 detections independently at the same rate,
+the expected overlap is **0.68 files** and P(overlap = 0) = **0.47** — so zero is simply the most likely
+outcome of *no per-file stability whatsoever*. If detection were a stable property of a file, the two runs
+would share ~6 files; if it were half-stable, ~3.3. They share none.
+
+**This does not weaken E39's number. It changes what the number is about.** The rate is real and
+reproducible: ask this model about 53 files of this kind and roughly 11% will come back with the ownership
+control named. But **the model is not identifying *which* files have the defect** — run it twice and a
+disjoint set comes back. E39's estimate is a statement about a base rate, not about detection of a
+particular vulnerability in a particular file, and every downstream reading has to be rewritten in those
+terms.
+
+**The consequence for the product is larger than the consequence for the paper.** A scanner that returns a
+different 11% of files on each run does not give an engineer something to act on; it gives them a lottery
+with a known payout rate. Two runs would produce two disjoint worklists, both defensible, neither
+reproducible. Any deployment of the generative role must therefore either aggregate over repeated
+readings — which changes the cost model, since the per-file call count is no longer one — or be presented
+as a sampling process rather than as a finding.
+
+**Honest bounds on this entry.** n=6 per run is small, and 0 overlap is consistent with independence but
+does not *prove* it — mild stability cannot be excluded from two runs of six. What can be said is that the
+data show no per-file stability, and the burden now sits on the claim that any exists. The obvious next
+measurement is k repeated readings per file to estimate a per-file propensity directly, which is E31's
+design applied to class attribution rather than to the file-level verdict.
+
+**Status:** E39's aggregate STANDS, replicated exactly. Its interpretation is narrowed from "the model
+detects absent ownership in 11% of these files" to "the model reports absent ownership at an 11% rate,
+without per-file consistency". Decision 0027's class narrowing is untouched — it was always a statement
+about rates by class, and both classes' rates replicated.

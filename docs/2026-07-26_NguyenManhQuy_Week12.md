@@ -82,6 +82,21 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > báo cáo "hỏi riêng thì phát hiện được" — một khuyến nghị sản phẩm **sai**. Em cài **hai** file
 > mẫu đối chứng nên bẫy này lộ ra **trước khi** tốn một lời gọi nào trên dữ liệu thật.
 >
+> **⚠️ PHÁT HIỆN QUAN TRỌNG NHẤT TRONG NGÀY — chạy lại lần hai và ý nghĩa con số đã đổi.**
+> Em chạy lại đúng 53 file đó lần nữa. **Tỉ lệ lặp lại chính xác tới từng con số** (6/53 và 1/53),
+> và đây là lần đo thật chứ không phải cache — **52/53 câu trả lời khác nhau từng ký tự**. Nhưng:
+> **6 file được phát hiện ở lần 1 và 6 file ở lần 2 KHÔNG TRÙNG FILE NÀO.**
+>
+> Nghĩa là cái lặp lại được là **tỉ lệ**, không phải **khả năng chỉ đúng file**. Model báo "thiếu
+> ownership" ở khoảng 11% số file, nhưng không báo ở **cùng những file đó**. Với sản phẩm, hệ quả
+> rất cụ thể: **chạy hai lần ra hai danh sách việc cần làm rời nhau hoàn toàn**, cùng tỉ lệ, và
+> kỹ sư không biết tin danh sách nào. Muốn dùng thì phải **đọc lặp nhiều lần mỗi file** — và khi
+> đó chi phí không còn là một lời gọi một file nữa — hoặc phải trình bày nó như một **phép lấy
+> mẫu**, chứ không phải một máy quét.
+>
+> Em xin nói thẳng: đây là phát hiện làm **giảm giá trị bán được** của phần này nhiều nhất trong
+> cả tuần, và nếu không chạy lại lần hai thì đã không ai biết.
+>
 > **Cách thử thứ hai, và nó khép lại vấn đề:** thay vì đổi câu hỏi, em bỏ hẳn phần tranh chấp —
 > chạy đúng câu hỏi cũ trên **16 file chỉ có mỗi lỗi thiếu rate-limit**, không có lỗi nào khác
 > giành chỗ. Kết quả **1/16**, so với 1/53 lúc có tranh chấp: **không cải thiện** (p = 0,41). Đáng
