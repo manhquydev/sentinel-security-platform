@@ -48,7 +48,7 @@ for _p in (_ROOT, _HERE):
 import run_spike as rs  # noqa: E402
 from agent import trace  # noqa: E402
 from run_generative import (MAX_BYTES, _BINARY_RUBRIC, _CANARY_SRC, _load_gt_index,
-                            classify_prose, names_class_absence)  # noqa: E402
+                            canary_passes, classify_prose, names_class_absence)  # noqa: E402
 
 # Ownership / authorization / authentication absence. CWE-200 is deliberately absent from both groups:
 # it is neither the comparison class nor trustworthy enough to fold into the ownership group.
@@ -112,7 +112,12 @@ def main() -> int:
 
     # A run that measures a dead harness reports zeros that look exactly like a negative result. This
     # lab has published one of those before; the canary is the reason it cannot happen silently again.
-    if classify_prose(query("__canary__", "canary.py", literal=_CANARY_SRC)) != "flagged":
+    # Read the control repeatedly, not once: the canary itself was measured firing on only 4 of 5
+    # identical calls, so a single reading blocked about one legitimate run in five. A dead harness
+    # still scores zero however often it is read, which is the failure this gate exists for.
+    _ok, _tally = canary_passes(lambda: query("__canary__", "canary.py", literal=_CANARY_SRC))
+    print(f"positive control readings: {_tally}")
+    if not _ok:
         print("FAIL: positive control did not fire; the harness, not the hypothesis, would be measured.")
         return 2
     print("positive control PASSED")

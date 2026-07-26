@@ -3350,7 +3350,9 @@ planted intermittent one (1 of 3, proceeds) before being used — because **weak
 after it blocks you is exactly what a lab does wrong**, and the only thing separating this from that is
 whether the negative control still bites. It does.
 
-**Scope, honestly.** This fix is applied where the failure appeared. Other runners in this directory still
-use a single-reading control, which means they too carry a ~20% chance of a spurious stop — an annoyance
-rather than a correctness threat, since the failure direction is refusal rather than false publication.
-The correctness-relevant half is already handled: nothing this control lets through can be a dead harness.
+**Scope.** The fix now covers every runner in this directory that carries a positive control — the
+generative discrimination run, the messy control, the class-asymmetry run and the competition run — not
+only the one where the failure surfaced. Leaving the others on a single reading would have meant knowing
+they each carried a ~20% spurious-stop rate and doing nothing, and the change is the same three lines in
+each. The correctness-relevant half was never at risk in either case: nothing this control lets through
+can be a dead harness, because a dead harness scores zero however often it is read.
