@@ -38,7 +38,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 | comparison | result | what it establishes |
 |---|---|---|
 | **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
-| specificity | **1 flag in 280 clean-control observations = 0.36%, 95% CI [0.06%, 2.0%]** (E51; 0/192 on sample A across twelve readings) | it is not flagging indiscriminately. Both sampling frames agree the rate is **below ~3%** — and neither supports a claim of *zero*, which is how "0 of 96" was being read before a disjoint sample breached it |
+| specificity | **2 flags in 328 clean-control observations = 0.61%, 95% CI [0.17%, 2.2%]** (E52). The two have DIFFERENT causes and the second may be a **corpus labelling gap rather than a model error** — an uncapped `limit` parameter, plausibly a real missing resource control the ground truth omits | it is not flagging indiscriminately. Both sampling frames agree the rate is **below ~3%** — and neither supports a claim of *zero*, which is how "0 of 96" was being read before a disjoint sample breached it |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
 | same control arm vs clean files | 3/80 vs 1/40, **p = 0.59** | defective code alone triggers **nothing** — mess is not the driver |

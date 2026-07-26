@@ -1,0 +1,302 @@
+{
+  "generated_at": "2026-07-26T09:47:45.791392+00:00",
+  "model": "sast-grok45",
+  "granularity": "file-level (line-level unobtainable: see conformance finding)",
+  "counts": {
+    "positive": {
+      "clean": 17,
+      "non-answer": 2,
+      "flagged": 5
+    },
+    "negative": {
+      "clean": 9,
+      "non-answer": 7
+    }
+  },
+  "flag_rate_vulnerable": 0.2273,
+  "flag_rate_clean": 0.0,
+  "separation": 0.2273,
+  "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
+  "rows": [
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`serialize_dispute`. What do you need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "accounts/urls.py",
+      "verdict": "clean",
+      "response": "Looks fine. No change needed.\n\nMissing: `app_name = \"accounts\"` if reverse uses `accounts:` namespace (you already do). Add if not in parent include.\n\nLogout: set `next_page` or `LOGOUT_REDIRECT_URL` or it dumps to admin login.\n\nWhat do you want done?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-lets-be-bad-guys",
+      "file": "badguys/settings.py",
+      "verdict": "non-answer",
+      "response": "What need? Review? Fix DB? Security audit?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/auth_routes.py",
+      "verdict": "clean",
+      "response": "**Fixes (security):**\n\n```python\n# register \u2014 drop raw SQL + MD5\ndata = request.get_json() or {}\nusername, [redacted:secret]\nif not username or not [redacted:secret]\nif User.query.filter_by(username=username).first():\n    return jsonify({'error': 'Username already exists'}), 400\nuser = User(username=username, balance=0)\nuser.set_password(password)\ndb.session.add(user)\ndb.session.commit()\nreturn jsonify({'message': 'User registered successfully', 'id': user.id}), 201\n```\n\n```python\n# login \u2014 drop raw SQL\nuser = User.query.filter_by(username=username).first()\nif user and user.check_password(password):\n    [redacted:secret]\n        {'user_id': user.id, 'username': username,\n         'exp': datetime.utcnow() + timedelta(days=1)},\n        os.environ['JWT_SECRET'], algorithm='HS256')\n    # ... rest same with user not user_obj/user[0]\n```\n\n```python\n# update_password \u2014 kill IDOR\nnew_password = (request.get_json() or {}).get('new_password')\nif not new_password:\n    return jsonify({'error': 'new_password required'}), 400\ncurrent_user.set_password(new_password)\ndb.session.commit()\nreturn jsonify({'message': 'Password updated'})\n```\n\n```python\n# import_profile \u2014 no code exec\nprofile_data = yaml.safe_load(profile_yaml)\n```\n\nDrop: `hashlib`, unused `json`. Add: `import os`. Set `JWT_SECRET` in env (no default).\n\n\u2192 skipped: rate-limit login, password strength, old-password check on change. Add when abuse/prod."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/support_operations.py",
+      "verdict": "clean",
+      "response": "Ops router: intentional vuln catalog. Gate only.\n\nCritical:\n- shell-632: cmd inject (`host`)\n- jinja-582: SSTI\n- dock-591 / vault-243: path write + PII\n- mongo-612: NoSQL inject\n- panel-089: mass assign admin\n- blurb-325 / bannerlet-088: XSS\n- after-160: open redirect\n- origin-562: CORS + credentials\n- badge-622: cookie privilege\n- tally-221: logs secrets\n- nonce-602: weak RNG\n- digest-281: MD5\n- roll-090 / vault: hardcoded PII\n- frame-572: CSP off\n- trace-642: info leak\n\nGoal? Fix / delete / prioritize."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "cases/views_clients.py",
+      "verdict": "clean",
+      "response": "`views_clients.py` received. Task?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/payroll_operations.py",
+      "verdict": "clean",
+      "response": "**Vulns found. Fixes:**\n\n```python\nfrom __future__ import annotations\n\nimport json\nimport logging\nimport os\nimport urllib.request\nfrom pathlib import Path\nfrom urllib.parse import urlparse\n\nfrom django.conf import settings\nfrom django.http import HttpResponse, JsonResponse\n\nlogger = logging.getLogger(__name__)\nBASE_EXPORT_DIR = Path(getattr(settings, \"BASE_DIR\", Path.cwd())) / \"private_exports\"\nALLOWED_RELAY_HOSTS = {\"127.0.0.1\", \"localhost\", \"status.internal\"}\nALLOWED_ORIGINS = {\"https://app.example.com\"}\n\n\ndef _wrk_gate(request):\n    gate_value = os.environ.get(\"INTERNAL_OPS_TOKEN\")\n    return bool(gate_value and request.headers.get(\"x-internal-token\") == gate_value)\n\n\ndef _nope():\n    return JsonResponse({\"detail\": \"forbidden\"}, status=403)\n\n\ndef _safe_export_path(name: str) -> Path | None:\n    target = (BASE_EXPORT_DIR / Path(name).name).resolve()\n    if not str(target).startswith(str(BASE_EXPORT_DIR.resolve())):\n        return None\n    return target\n\n\ndef payroll_cycle_tile_073(request):\n    if not _wrk_gate(request):\n        return _nope()\n    folio_ref = request.GET.get(\"payroll_id\", \"1001\")\n    folio_cards = {\"1001\": {\"owner\": \"north-region\", \"balance\": 4180}, \"2002\": {\"owner\": \"south-region\", \"balance\": 9250}}\n    return JsonResponse({\"payroll_id\": folio_ref, \"folio_card\": folio_cards.get(folio_ref, {\"owner\": \"unknown\", \"balance\": 0})})\n\n\ndef payroll_zipper_note_074(request):\n    if not _wrk_gate(request):\n        return _nope()\n    packet_ref = request.GET.get(\"packet_ref\", \"payroll-summary.csv\")\n    parcel_path = _safe_export_path(packet_ref)\n    if parcel_path is None:\n        return JsonResponse({\"detail\": \"invalid path\"}, status=400)\n    try:\n        data = parcel_path.read_text()\n    except FileNotFoundError:\n        data = \"missing archive\"\n    return HttpResponse(data, content_type=\"text/plain\")\n\n\ndef payroll_clearer_ping_075(request):\n    if not _wrk_gate(request):\n        return _nope()\n    relay_ref = request.GET.get(\"url\", \"http://127.0.0.1/status\")\n    parsed = urlparse(relay_ref)\n    if parsed.scheme not in {\"http\", \"https\"} or parsed.hostname not in ALLOWED_RELAY_HOSTS:\n        return JsonResponse({\"detail\": \"url not allowed\"}, status=400)\n    with urllib.request.urlopen(relay_ref, timeout=3) as response:  # nosec B310 \u2014 host allowlisted\n        body = response.read(2048).decode(\"utf-8\", errors=\"replace\")\n    return JsonResponse({\"source\": relay_ref, \"preview\": body})\n\n\ndef payroll_delta_136(request):\n    if not _wrk_gate(request):\n        return _nope()\n    try:\n        payload = json.loads(request.body.decode(\"utf-8\") or \"{}\")\n    except json.JSONDecodeError:\n        payload = request.POST.dict()\n    try:\n        amount = int(payload.get(\"amount\", request.GET.get(\"amount\", \"0\")))\n    except (TypeError, ValueError):\n        return JsonResponse({\"detail\": \"bad amount\"}, status=400)\n    if amount < 0:\n        return JsonResponse({\"detail\": \"amount must be >= 0\"}, status=400)\n    ledger = {\"state\": \"approved\", \"balance\": 1200, \"limit\": 900}\n    if ledger[\"balance\"] - amount < 0:\n        return JsonResponse({\"detail\": \"insufficient balance\"}, status=400)\n    ledger[\"balance\"] -= amount\n    # state not client-writable\n    return JsonResponse(ledger)\n\n\ndef payroll_bundle_thaw_180(request):\n    if not _wrk_gate(request):\n        return _nope()\n    # pickle removed \u2014 untrusted deserialize = RCE\n    try:\n        bundle = json.loads(request.body.decode(\"utf-8\") or \"{}\")\n    except json.JSONDecodeError:\n        return JsonResponse({\"detail\": \"invalid json\"}, status=400)\n    return JsonResponse({\"bundle\": repr(bundle)[:200]})\n\n\ndef payroll_wire_tally_223(request):\n    if not _wrk_gate(request):\n        return _nope()\n    body = request.body.decode(\"utf-8\", errors=\"replace\")\n    logger.warning(\"ops tally body_len=%s\", len(body))  # no secrets in logs\n    return JsonResponse({\"status\": \"queued\"})\n\n\ndef payroll_formula_cast_263(request):\n    if not _wrk_gate(request):\n        return _nope()\n    # eval removed\n    amo"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/vendors.py",
+      "verdict": "clean",
+      "response": "**Route order bug.** `GET /{vendor_id}` steals `/admin/all`. Move admin routes above it.\n\n```python\n# ---- Admin (before /{vendor_id}) ----\n\n@router.get(\"/admin/all\", response_model=list[VendorOut])\ndef admin_list_vendors(\n    status_filter: VendorStatus | None = None,\n    q: str | None = None,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_admin),\n):\n    query = db.query(Vendor)\n    if status_filter:\n        query = query.filter(Vendor.status == status_filter)\n    if q:\n        like = f\"%{q.lower()}%\"\n        from sqlalchemy import func\n        query = query.filter(func.lower(Vendor.name).like(like))\n    return [_to_out(v) for v in query.order_by(Vendor.created_at.desc()).limit(500).all()]\n\n@router.put(\"/admin/{vendor_id}\", response_model=VendorOut)\ndef admin_update_vendor(\n    vendor_id: int,\n    payload: VendorAdminUpdateIn,\n    request: Request,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_admin),\n):\n    vendor = db.get(Vendor, vendor_id)\n    if not vendor:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=\"Vendor not found\")\n    old_status = vendor.status\n    if payload.status is not None:\n        vendor.status = payload.status\n    if payload.verification_notes is not None:\n        vendor.verification_notes = sanitize_plain(payload.verification_notes, max_len=5000)\n    audit.record(\n        db,\n        actor=current_user,\n        action=\"vendor.admin_update\",\n        target_type=\"vendor\",\n        target_id=vendor.id,\n        details={\"old_status\": old_status.value, \"new_status\": vendor.status.value},\n        ip_address=client_ip(request),\n    )\n    db.commit()\n    db.refresh(vendor)\n    return _to_out(vendor)\n\n# ---- Public storefront ----\n\n@router.get(\"\", response_model=list[VendorOut])\ndef list_public_vendors(\n    q: str | None = None,\n    db: Session = Depends(get_db),\n):\n    query = db.query(Vendor).filter(Vendor.status == VendorStatus.active)\n    if q:\n        like = f\"%{q.lower()}%\"\n        from sqlalchemy import func\n        query = query.filter(func.lower(Vendor.name).like(like))\n    return [_to_out(v) for v in query.order_by(Vendor.name).limit(200).all()]\n\n@router.get(\"/{vendor_id}\", response_model=VendorOut)\ndef get_public_vendor(vendor_id: int, db: Session = Depends(get_db)):\n    vendor = db.get(Vendor, vendor_id)\n    if not vendor or vendor.status != VendorStatus.active:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=\"Vendor not found\")\n    return _to_out(vendor)\n```\n\n\u2192 skipped: hoist `func` import, drop unused `UserRole`. add when lint complains."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-insecure-web",
+      "file": "app/app.py",
+      "verdict": "clean",
+      "response": "```python\nfrom flask import Flask, request, render_template, redirect, session\nfrom markupsafe import escape\nimport sqlite3\nimport os\n\napp = Flask(__name__)\napp.secret_key = os.environ.get(\"SECRET_KEY\", os.urandom(24))\n\ndef init_db():\n    conn = sqlite3.connect(\"test.db\")\n    c = conn.cursor()\n    c.execute(\"CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT)\")\n    c.execute(\"INSERT OR IGNORE INTO users (username, password) VALUES ('user1', 'password1')\")\n    conn.commit()\n    conn.close()\n\ninit_db()\n\n@app.route(\"/\")\ndef home():\n    return render_template(\"index.html\")\n\n@app.route(\"/login\", methods=[\"POST\"])\ndef login():\n    username = request.form.get(\"username\")\n    [redacted:secret]\n    conn = sqlite3.connect(\"test.db\")\n    c = conn.cursor()\n    c.execute(\"SELECT * FROM users WHERE username = ? AND [redacted:secret]\n    result = c.fetchone()\n    conn.close()\n    if result:\n        session[\"user\"] = username\n        return redirect(\"/dashboard\")\n    return \"Invalid credentials. <a href='/'>Try again</a>\"\n\n@app.route(\"/dashboard\")\ndef dashboard():\n    user = session.get(\"user\")\n    if not user:\n        return redirect(\"/\")\n    return f\"<h1>Welcome, {escape(user)}!</h1>\"\n\n@app.route(\"/search\", methods=[\"GET\"])\ndef search():\n    query = request.args.get(\"q\", \"\")\n    return f\"<h1>Search Results for {escape(query)}</h1>\"\n\nif __name__ == \"__main__\":\n    app.run(host=\"127.0.0.1\", port=5000)\n```\n\u2192 skipped: password hashing + CSRF + secure cookie flags. add when prod."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`_ticket_to_out`. What needed?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/views.py",
+      "verdict": "flagged",
+      "response": "No SQL built in views. All risk in DAOs.\n\nInput paths:\n- `User.get_by_username(conn, username)` \u2014 login\n- `Student.create(conn, data['name'])`\n- `Course.create(conn, data['title'], data['description'])`\n- `Review.create(conn, course_id, review_text)`\n- `Mark.create` \u2014 schema-checked, lower risk\n\nAlso: line 38 syntax broken (`[redacted:password]'password']`). `Application` unimported. No auth on create/evaluate routes.\n\nNeed DAO files to fix. Paste `sqli/dao/*.py`."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "flagged",
+      "response": "**Bugs**\n\n1. `settings` used L55, imported L120 \u2192 NameError. Move import top.\n2. L50/L100 redacted/broken: need `create_access_token({\"sub\": ..., ...})`.\n3. Register accepts `role` from client \u2192 privilege escalation. Force `UserRole.customer`.\n4. `PasswordResetToken` imported, never used. JWT-only reset; no revoke/one-time use.\n5. Cookie `secure=False` \u2192 fine local only; prod needs True + HTTPS.\n\n**Minimal fix (critical only)**\n\n```python\nfrom app.config import settings  # top of file\n\n# register: drop role from request body\nuser = User(\n    email=req.email,\n    hashed_password=get_password_hash(req.password),\n    full_name=req.full_name,\n    role=UserRole.customer,\n    phone=req.phone,\n)\n\n# login token (restore real call)\n[redacted:secret]\n```\n\n\u2192 skipped: rate limits, reset-token table, secure cookie flag. Add when prod/deploy."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/reviews.py",
+      "verdict": "clean",
+      "response": "Need? Review / fix / explain / test."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "file": "operations/views.py",
+      "verdict": "clean",
+      "response": "File truncated at L333. What do?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "employees/views_import_export.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-crm-saas-django",
+      "file": "config/partner_console.py",
+      "verdict": "clean",
+      "response": "**Delete this file.** Ops console full of live vulns.\n\nCritical:\n- `acct_shell_probe_633` \u2014 cmd injection (`os.system` + user host)\n- `acct_jinja_cast_585` \u2014 SSTI (user fragment into Jinja)\n- `acct_relay_note_063` \u2014 SSRF (urlopen user URL)\n- `acct_vaultlet_pull_062` / `acct_dock_shelf_592` \u2014 path traversal + arbitrary write\n- `acct_return_lane_161` \u2014 open redirect\n- `acct_mongo_lane_613` \u2014 NoSQL injection\n- `acct_origin_mirror_563` \u2014 CORS reflect + credentials\n- `acct_vault_stash_244` \u2014 writes SSN/card to disk\n- `acct_identity_ping_340` \u2014 no `_wrk_gate`\n- `acct_nonce_roll_603` \u2014 `random` not CSPRNG\n- `acct_digest_fold_282` \u2014 MD5\n- `acct_trust_drift_643` \u2014 TLS verify off\n- `acct_workset_rebind_202` / `acct_delta_133` \u2014 mass assign / balance logic abuse\n\nGate is single shared env token in header. Not enough.\n\nWhat do you want: kill list, minimal harden patch, or route map only?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "file": "crm_platform/urls.py",
+      "verdict": "clean",
+      "response": "Need? File only. No task."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/libuser.py",
+      "verdict": "clean",
+      "response": "```python\nimport sqlite3\n\ndef login(username, password):\n    conn = sqlite3.connect('db_users.sqlite')\n    conn.row_factory = sqlite3.Row\n    c = conn.cursor()\n    user = c.execute(\n        \"SELECT * FROM users WHERE username = ? AND [redacted:secret]\n        (username, password)\n    ).fetchone()\n    conn.close()\n    return user['username'] if user else False\n\ndef create(username, password):\n    conn = sqlite3.connect('db_users.sqlite')\n    c = conn.cursor()\n    c.execute(\n        \"INSERT INTO users (username, password, failures, mfa_enabled, mfa_secret) VALUES (?, ?, 0, 0, '')\",\n        (username, password)\n    )\n    conn.commit()\n    conn.close()\n\ndef userlist():\n    conn = sqlite3.connect('db_users.sqlite')\n    conn.row_factory = sqlite3.Row\n    c = conn.cursor()\n    users = c.execute(\"SELECT username FROM users\").fetchall()\n    conn.close()\n    return [u['username'] for u in users]\n\ndef password_change(username, password):\n    conn = sqlite3.connect('db_users.sqlite')\n    c = conn.cursor()\n    c.execute(\n        \"UPDATE users SET [redacted:secret]\n        (password, username)\n    )\n    conn.commit()\n    conn.close()\n    return True\n\ndef password_complexity(password):\n    return True\n```\n\n\u2192 skipped: password hashing, complexity rules, unique-user check. add when auth hardens."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "notes/views.py",
+      "verdict": "flagged",
+      "response": "**Bugs:**\n\n1. `client_message_send` \u2014 no authz. Any logged-in user can flip status if they know `pk`.\n2. No matter-access check anywhere. Only `is_read_only` + role. User can create notes/msgs on any matter by ID.\n3. `notify_client_message` notifies attorney, not client. Name lies.\n\n**Fix send:**\n```python\n@login_required\ndef client_message_send(request, pk):\n    if not request.user.can_approve_messages():\n        messages.error(request, 'Access denied.')\n        return redirect('dashboard')\n    msg = get_object_or_404(ClientMessage, pk=pk)\n    if msg.status == 'approved' and not msg.sent_at:\n        msg.status = 'sent'\n        msg.sent_at = timezone.now()\n        msg.save()\n        log_action(request.user, 'update', 'ClientMessage', msg.pk, str(msg), 'Message sent to client', request)\n        messages.success(request, 'Message sent.')\n    return redirect('matter_detail', pk=msg.matter.pk)\n```\n\n**Matter access:** add shared guard (or reuse existing if you have one):\n```python\n# e.g. before create\nif not request.user.can_access_matter(matter):\n    messages.error(request, 'Access denied.')\n    return redirect('dashboard')\n```\n\n\u2192 skipped: full matter ACL design, add when model has membership rules.  \nWhat do you want next \u2014 patch, tests, or delete dead paths?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/api_keys.py",
+      "verdict": "flagged",
+      "response": "**Unauth status endpoint.** Anyone hits `/status/{app_id}` \u2014 no `require_user`, no API key check.\n\n```python\n@router.get(\"/status/{app_id}\")\ndef get_application_status_api(\n    app_id: int,\n    db: Session = Depends(get_db),\n    current_user: User = Depends(require_user),  # or API-key auth\n):\n```\n\n**Webhook receive open.** No signature/HMAC. Spoofable.\n\n```python\n# drop mock or require HMAC header + secret from WebhookConfig\n```\n\n**create return broken** (paste redaction). Fix:\n\n```python\nreturn {\"key\": raw_key, \"[redacted:secret]\n```\n\n**revoke query broken** (paste). Fix:\n\n```python\n[redacted:secret]\n    ApiKey.id == key_id, ApiKey.user_id == current_user.id\n).first()\n```\n\n\u2192 skipped: salt on key hash, rate limit, URL allowlist on webhooks. add when abuse appears."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "hr_payroll/urls.py",
+      "verdict": "flagged",
+      "response": "Suspicious ops routes. Cryptic names, post-import, no auth. Likely injected.\n\nDelete lines 23\u201346.\n\n```python\nfrom django.contrib import admin\nfrom django.urls import path, include\nfrom django.conf import settings\nfrom django.conf.urls.static import static\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('accounts/', include('accounts.urls')),\n    path('', include('employees.urls')),\n    path('compensation/', include('compensation.urls')),\n    path('onboarding/', include('onboarding.urls')),\n    path('documents/', include('documents.urls')),\n    path('requests/', include('hr_requests.urls')),\n    path('policies/', include('policies.urls')),\n    path('audit/', include('audit.urls')),\n    path('api/', include('api.urls')),\n]\n\nif settings.DEBUG:\n    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\n    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\n```\n\nNext: audit `payroll_operations.py`, git blame, rotate secrets."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_project/patient_operations.py",
+      "verdict": "clean",
+      "response": "**Critical vulns** (gate token only; still broken):\n\n| fn | issue |\n|---|---|\n| `patient_notelet_card_040` | XSS \u2014 `copyline` raw in HTML |\n| `patient_panel_rebind_041` | mass assign \u2014 client sets `is_admin` |\n| `patient_care_roll_042` | leaks SSN-like `tax_ref`, live sync key |\n| `patient_delta_129` | balance/state client-controlled |\n| `patient_return_lane_155` | open redirect |\n| `patient_wire_tally_216` | logs body + bearer |\n| `patient_formula_cast_256` | `eval` RCE |\n| `patient_identity_ping_339` | **no gate** |\n| `patient_origin_mirror_469` | reflected CORS + credentials |\n| `patient_frame_slip_479` | strips XSS/CSP headers |\n| `patient_jinja_cast_490` | SSTI |\n| `patient_dock_shelf_496` | path traversal write |\n| `patient_shell_probe_508` | cmd injection |\n| `patient_xml_fold_520` | XXE |\n| `patient_badge_gate_529` | [redacted:secret]\n| `patient_mongo_lane_539` | NoSQL injection |\n| `patient_trust_drift_549` | TLS verify off |\n\nWhat do you want: full kill list, ranked patch, or delete the whole ops module?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/payroll_operations.py",
+      "verdict": "clean",
+      "response": "File: intentional vuln farm. Gate token only.\n\n| fn | issue |\n|---|---|\n| fold_drop_014 | path traversal read |\n| broker_tile_015 | SSRF |\n| delta_124 | mass-assign state + balance math |\n| bundle_thaw_170 | pickle RCE |\n| workset_rebind_194 | mass-assign role/approved |\n| formula_cast_252 | eval |\n| crumb_lane_290 | cookie no flags |\n| identity_ping_336 | no gate |\n| origin_mirror_373 | reflected CORS + creds |\n| jinja_cast_384 | SSTI |\n| dock_shelf_391 | path traversal write |\n| shell_probe_402 | cmd inject |\n| mongo_lane_413 | NoSQL inject |\n| frame_slip_423 | CSP/XSS headers off |\n| trust_drift_433 | TLS verify off |\n| trace_panel_443 | info leak |\n| xml_fold_454 | XXE |\n\nNeed: fix list? full harden? delete dead endpoints?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/admin/views.py",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n`admin_get_user`: dead `user is None` branch \u2014 `DoesNotExist` already returns.\n\n`admin_get_all_users`: delete `users2` junk.\n\n`admin_update_user`: `data['password']` KeyError if missing; password save then `.update(**data)` races; no hash (`set_password` if Django auth).\n\nAdmin routes: only `user_is_authenticated` \u2014 any logged-in user hits delete/update. Gate on `is_admin`.\n\n`admin_analytics`: request keys \u2192 `col` string into `hits_by_ip` \u2014 whitelist columns or injection risk.\n\n**Minimal fix**\n\n```python\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef admin_get_user(request, selected_id):\n    try:\n        user = User.objects.get(user_id=int(selected_id))\n    except User.DoesNotExist:\n        return render(request, 'admin/modal_notFound.html')\n    return render(request, 'admin/modal.html',\n                  {'user': user, 'other_admin_val': not user.is_admin})\n\n\n@require_http_methods([\"POST\", \"PATCH\"])\n@user_is_authenticated\ndef admin_update_user(request, selected_id):\n    try:\n        user = User.objects.get(user_id=int(selected_id))\n        data = request.POST.dict().copy()\n        [redacted:secret]\n        data.pop('password_confirmation', None)\n        data['updated_at'] = pytz.utc.localize(datetime.datetime.now())\n        if [redacted:secret]\n        for k, v in data.items():\n            setattr(user, k, v)\n        user.save()\n        success = True\n    except User.DoesNotExist:\n        success = False\n    return JsonResponse({'msg': \"success\" if success else \"failure\"})\n\n\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef admin_get_all_users(request, selected_id):  # pylint: disable=unused-argument\n    return render(request, 'admin/table.html', {'users': User.objects.all()})\n```\n\n\u2192 skipped: admin role decorator, add when any non-admin can auth.  \n\u2192 skipped: password hashing, add when User is Django auth.  \n\u2192 skipped: col whitelist on analytics, add when `hits_by_ip` builds SQL."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/models/test_model_note.py",
+      "verdict": "clean",
+      "response": "```python\n# -*- coding: utf-8 -*-\nfrom django.test import TestCase\nfrom django.utils import timezone\nfrom app.models import Note\nfrom app.tests.mixins import Pep8ModelTests\n\nclass NoteModelTests(TestCase, Pep8ModelTests):\n    def setUp(self):\n        self.path = \"app/models/Note/note.py\"\n\n    def test_str(self):\n        note = Note(note_name=\"Hey!\", pub_date=timezone.now())\n        self.assertEqual(str(note), \"Hey!\")\n```\n\n\u2192 skipped: CRUD tests (Django ORM), add when custom model logic. `assertEquals` dead."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/categories.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "matters/forms.py",
+      "verdict": "clean",
+      "response": "Redundant querysets. `client`/`practice_area` already default to `.all()`. Drop lines 32\u201333.\n\n```python\ndef __init__(self, *args, **kwargs):\n    super().__init__(*args, **kwargs)\n    self.fields['lead_attorney'].queryset = User.objects.filter(role='attorney')\n    self.fields['paralegals'].queryset = User.objects.filter(role='paralegal')\n```\n\n\u2192 skipped: widget DRY / form helper, add when 3+ forms share same attrs."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "cases/migrations/0001_initial.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`Task.status`. Incomplete.\n\nIssues:\n- `ApiKey.key` plaintext. Hash it.\n- `Document` no `FileField`/`File`. Metadata only.\n- `default=secrets.token_urlsafe` OK (callable). Prefer `default=partial(secrets.token_urlsafe, 32)`.\n- Custom `User` in initial mig: fine if `AUTH_USER_MODEL` set before first migrate.\n\nNeed: finish Task? models.py? review? say which."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "cases/forms.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/schemas.py",
+      "verdict": "clean",
+      "response": "schemas.py received. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "lms/urls.py",
+      "verdict": "clean",
+      "response": "Root LMS urls. Dashboard + app includes. DEBUG serves media/static.\n\nOps block (lines 29\u201348): 19 ad-hoc `course_operations` routes under `/ops/`. Names smell like vuln probes (shell, jinja, xml, frame, trust).\n\nWhat need? Delete ops? Review handlers? Wire something else?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "file": "core/management/commands/seed.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix / slim / run? State goal."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/audit.py",
+      "verdict": "clean",
+      "response": "Types wrong. Cap limit. Fix:\n\n```python\nfrom typing import Optional\nfrom fastapi import Query\n\n@router.get(\"\", response_model=list[AuditLogOut])\ndef list_audit_logs(\n    action: Optional[str] = None,\n    entity_type: Optional[str] = None,\n    user_id: Optional[int] = None,\n    skip: int = Query(0, ge=0),\n    limit: int = Query(200, ge=1, le=500),\n    db: Session = Depends(get_db),\n    current_user: User = Depends(get_current_active_user),\n):\n    require_role(current_user, UserRole.PROPERTY_ADMIN)\n    query = db.query(AuditLog)\n    if action:\n        query = query.filter(AuditLog.action == action)\n    if entity_type:\n        query = query.filter(AuditLog.entity_type == entity_type)\n    if user_id:\n        query = query.filter(AuditLog.user_id == user_id)\n    return query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()\n```\n\n\u2192 skipped: date range, pagination total. add when needed."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/models/audit_log.py",
+      "verdict": "non-answer",
+      "response": "What need?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/models.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`Inspection` CheckConstraint.\n\nNeed: complete model? review? fix? what task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "scheduling/admin.py",
+      "verdict": "clean",
+      "response": "Admin fine. No change needed.\n\nWhat do?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/tests/test_security_workflows.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "lms/tests.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix / implement views / run?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/models.py",
+      "verdict": "non-answer",
+      "response": "Broken syntax L308, L330. Redaction ate `Column(...)`.\n\n```python\n[redacted:secret]\n[redacted:secret]\n```\n\nWhat need?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "portal/admin.py",
+      "verdict": "clean",
+      "response": "Dead comment line 59. Delete.\n\nBare `register` fine for rest. No ModelAdmin until list/filter needed."
+    }
+  ]
+}

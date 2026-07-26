@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E52 | k=15 and a second specificity breach | **STANDS** — union flat for 6 readings at **0.708** (not a plateau claim, per §18); never-surfaced **7/24**. **SECOND clean-arm flag, NOT a test file**: an uncapped `limit` param — possibly a REAL absent control the corpus fails to label. Documented cause withdrawn; specificity 2/328 = 0.61% |
 | E51 | how far does the union actually go? | **STANDS** — at k=12 union **0.667 and still rising** (flat for k=8-11, then a new file); never-surfaced falls a THIRD time **0.583 → 0.458 → 0.333**; **0/24 files flagged in every reading** — the reliable core is gone, top of distribution ~0.9. Specificity unmoved: **0/192**, pooled 1/280 |
 | E50 | **RETRACTION — the saturation claim was circular** | union over k and 'files that ever fired in those k' are the SAME quantity; the test could not fail. Properly tested at k=9 the union is **0.542 and still rising**, never-surfaced falls **0.583 → 0.458**, and 3 files called unreachable fired. No guard caught it: the arithmetic was right, the QUESTION was unfalsifiable |
 | E49 | does the ceiling generalise? does the floor? | **STANDS — split** — ceiling **generalises** (0.417 vs 0.375 on a disjoint sample, same decay); specificity floor **BREAKS**: 1 flag in 184 clean observations, cause identified (test-coverage prose read as absent controls). Both candidate fixes then FAIL — the prose-level one removes 2 real detections and not the FP; the path-level one removes only the embarrassing observation. Real issue is upstream: test files in a clean-control arm |
@@ -4087,3 +4088,50 @@ Read every file twelve times and pay twelve times: **two files in three get surf
 three never does, no individual file is dependable, and clean code is essentially never flagged.** The
 coverage figure is still rising slowly with budget and no ceiling has been located — which means it cannot
 be quoted as a maximum, only as what twelve readings bought.
+
+---
+
+## E52 — k=15: the union plateaus for seven readings, and a SECOND specificity breach refutes the documented cause
+
+Three more readings, sample A at **k=15**.
+
+### Union: flat for seven consecutive readings
+
+| k | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| union | .583 | .625 | .667 | **.708** | .708 | .708 | .708 | .708 | .708 | .708 |
+
+Last increase at **k=9**; six readings since with no new file. Never surfaced: **7/24 = 0.292**
+[0.149, 0.492]. Still **0/24 flagged in every reading**; best file 14/15 = 0.933.
+
+Per protocol §18 this is **not** a plateau claim — the previous flat stretch ran four readings before
+breaking, this one has run six, and the rule says a ceiling may only be asserted from *many* readings past
+the last increase. What can be said: coverage at k=15 is 0.708 and the marginal return of readings 10–15
+was exactly zero files.
+
+### The second breach, and why it matters more than the union
+
+**1 flag in 240 clean-control observations on sample A**, where 192 had been clean. Two breaches total
+across all runs — and SM23 was deliberately set to fail on the second, because *"one documented false
+positive with an identified cause is a bound; two would mean the cause is not what we think it is."*
+
+It fired correctly, and **the cause is indeed not what we thought.** The new breach is
+`backend/app/routers/audit.py` — **not a test file.** The prose:
+
+> **Issues** 1. `action/entity_type/user_id` typed `str = None` … 2. **No cap on `limit` — client can
+> request millions of rows** 3. `require_role` after auth — fine; no other auth gap
+
+The model reported an **unbounded query parameter**: no pagination cap, so a caller can request unlimited
+rows. Read plainly, that *is* an absent control — a missing resource limit, arguably CWE-770. The file
+carries no ground-truth entry for it.
+
+**So this may not be a false positive at all. It may be a true positive the corpus does not label.** That
+possibility was not on the table when the test-file explanation was adopted, and it changes the shape of
+the specificity claim: some unknown share of "false positives" may be unlabelled real defects, which would
+mean the corpus ground truth — not the model — sets the apparent ceiling on precision.
+
+**Status: the documented cause is withdrawn as a complete explanation.** Two breaches, two different
+mechanisms, one of them possibly not an error. Specificity across everything: **2 in 328 = 0.61%**, 95% CI
+[0.17%, 2.2%] — still low, still the most stable quantity here, but no longer explained by a single named
+failure mode. Adjudicating whether the audit.py flag is a corpus gap needs a human reading the file
+against the CWE-770 definition, and that is owed work, not something to settle by adjusting a threshold.

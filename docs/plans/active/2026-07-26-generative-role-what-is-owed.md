@@ -10,12 +10,12 @@ state, not the morning's.
 
 | | measured |
 |---|---|
-| Specificity | **1 flag in 280 clean-control observations = 0.36%**, 95% CI [0.06%, 2.0%]. 0/192 on sample A across twelve readings. **The only quantity deepening has never revised.** |
+| Specificity | **2 flags in 328 clean-control observations = 0.61%**, 95% CI [0.17%, 2.2%] (E52). Two different causes; the second may be a **corpus labelling gap, not a model error**. |
 | Sensitivity, single reading | ~0.20 on files carrying a real absent control |
 | Per-file structure | a **mixture**: 8 of 24 at zero, a long thin tail, **nothing at 1.0** |
-| Reliable core | **none.** 2 files at k=4, 1 at k=6 and k=9, **0 at k=12**. Best file 11/12 ≈ 0.92 |
-| Union coverage at k=12 | **16/24 = 0.667, still rising** (flat k=8–11, then a new file at k=12) |
-| Never surfaced | **8/24 = 0.333** [0.180, 0.533] at k=12 — after 0.583 at k=6 and 0.458 at k=9 |
+| Reliable core | **none.** 2 files at k=4, 1 at k=6 and k=9, **0 from k=12 on**. Best file 14/15 = 0.933 |
+| Union coverage at k=15 | **17/24 = 0.708**; last increase at k=9, flat for 6 readings since (not a plateau claim — §18) |
+| Never surfaced | **7/24 = 0.292** [0.149, 0.492] at k=15 — after 0.583 (k=6), 0.458 (k=9), 0.333 (k=12) |
 | Class asymmetry | ownership/authn ≫ CWE-307, **p = 0.0327** (E37), realized power 61% |
 | CWE-307 | **50 of 53 files never named across five readings**; not recovered by targeted prompting (E40) or by removing competing defects (E41) |
 
@@ -48,7 +48,15 @@ A disjoint sample (zero overlap, verified) gave a ceiling of **0.375** against t
 the same decay signature, while being slightly *easier* per reading. **The ceiling is a property of the
 method, not of the first file set.** Artefacts `generative-disjoint{7,8,9}-260726.json`.
 
-### 3. Do test files belong in either arm? (blocks every specificity number)
+### 3. Adjudicate the second specificity breach — is it a corpus gap? (highest-value cheap item)
+
+`backend/app/routers/audit.py` was flagged in the clean arm for an **uncapped `limit` parameter**. That is
+plausibly a real missing resource control (CWE-770) that the corpus does not label. If so it is a **true
+positive counted as a false positive**, and some unknown share of this project's "false positives" may be
+the same thing — which would mean ground-truth completeness, not the model, sets the apparent precision
+ceiling. Needs a human reading the file against the CWE-770 definition. **Zero model calls.**
+
+### 4. Do test files belong in either arm?
 
 The clean-control arm is defined as "files with no ground-truth entries", which makes it **14% test files**
 (8 of 56) while the positive arm has none (0 of 84). A test file has no production controls, so *"is a
