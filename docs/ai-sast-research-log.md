@@ -2365,3 +2365,37 @@ Every place citing instability is updated to distinguish the two.
 k = 3 estimates θ to ±0.29 at best, and n = 12 is a sketch. This establishes the *shape* — a mixture,
 dominated by stable-at-zero, with control files the stablest — not any individual file's θ, and not a
 precise churn rate. Proper propagation still wants larger k, which stays recorded as owed.
+
+## E32 — PREREGISTRATION: structural familiarity, the last untested memorisation channel (written before measuring)
+
+Registered 2026-07-26 09:40 +07. **Nothing below was measured before this text was committed.**
+
+- **Why (Stage 1).** E23 showed detection survives *surface* anonymisation (identifiers, route literals,
+  filename). Its stated limit — carried in decision 0027 ever since — is that **mutation changed names,
+  not shapes**: a model could still recognise a distinctive code structure. That is the last untested
+  memorisation channel, and it is the reason 0027 still cannot promise transfer.
+- **This also pays two recorded debts.** E23's artefact is non-re-verifiable (responses truncated at 400
+  chars, E27) and is one of the four artefacts SM17 lists as known-stale. This run stores responses in
+  full and produces a fresh artefact.
+- **Method.** On top of E23's surface anonymisation, add a **structural** change: **reorder top-level
+  function and class definitions**. Applied only where provably safe — a file qualifies only if it has
+  ≥2 top-level definitions and **no non-definition statement sits between the first and last** (module-
+  level assignments or decorated registrations could depend on order). **41 of 53** arm-A files qualify.
+  Verified per file: the mutated source must still parse, preserve the import set byte-identically, and
+  preserve the AST node-type profile.
+- **Design (per the determinism rule).** **Both arms measured fresh, in the same run**, compared as
+  **aggregate rates**. Nothing reused; per-file verdicts never compared.
+- **Hypothesis.** Detection is reasoning, not structural recall: the flag rate survives combined
+  surface + structural anonymisation.
+- **Falsifying result.** A materially lower rate on the mutated arm ⇒ structural familiarity contributes,
+  and decision 0027's transfer bound must widen again.
+- **THE LIMIT, STATED FIRST because it decides what this can claim.** Reordering top-level definitions
+  changes the file's **global** shape — it defeats whole-file n-gram recall. It does **not** change the
+  **intra-function control flow**, which is where a "this is that vulnerable handler I've seen" judgement
+  would most plausibly live. So E32 can weaken structural memorisation at the file level and **cannot
+  eliminate** it at the function level. Anything stronger needs semantics-preserving control-flow
+  rewriting, which cannot be automated safely at this scale and stays recorded as owed.
+- **Power.** 41 files at a ~0.2 base rate detects only a large collapse. A null is **not** equivalence;
+  if the interval is wide the verdict is inconclusive, exactly as E23's was.
+- **Instrument frozen:** same prompt, corrected classifier (SM13), positive-control gate with the
+  transport-failure rule.
