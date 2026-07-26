@@ -58,6 +58,23 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > hẹp: cái đo được là **thiếu ownership và thiếu xác thực**, không phải "các lớp
 > thiếu-kiểm-soát" nói chung. Một hệ thống nghiêng về các lớp kia sẽ tệ hơn nhiều.
 >
+> **Cảnh báo trên ban đầu chỉ dựa trên 4 file do chính chúng em viết — quá mỏng để nói với
+> lãnh đạo. Nay đã kiểm trên code thật.** Lấy toàn bộ **53 file trong corpus mang đồng thời
+> cả hai loại lỗi** (thiếu ownership/xác thực *và* thiếu rate-limit), hỏi model một lần rồi
+> đọc cả hai câu trả lời từ cùng một đoạn văn — nên không thể đổ cho "file này khó hơn file
+> kia". Kết quả: model gọi tên được thiếu ownership/xác thực ở **6/53**, còn thiếu rate-limit
+> chỉ **1/53**.
+>
+> Con số đáng nhớ nhất, và **không phụ thuộc phép so sánh nào**: cả 53 file đều có lỗi
+> thiếu rate-limit **thật**, model chỉ nêu ra được **1**. Lớp lỗi phổ biến nhất trong corpus
+> gần như **vô hình** với model ở vai trò này.
+>
+> Nói cho đủ: hiệu số +0,094 có khoảng tin cậy **[0,000 – 0,189]**, tức **chạm 0**. Nghĩa là
+> hướng thì khớp với lần thử trước và cơ sở bằng chứng rộng ra từ 4 file lên 53 file, nhưng
+> **chưa đủ để khẳng định**. Em đã tính trước công suất và biết là sẽ không đủ, nên công bố
+> dưới dạng **ước lượng**, không phải kiểm định — và không ghi p-value để không ai đọc nhầm
+> thành đã chứng minh.
+>
 > **Và vẫn chưa bán được:** tỉ lệ trúng ~24% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
