@@ -107,6 +107,21 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > buộc phải đọc lặp**, và **mọi con số chi phí phải nhân với số lần đọc**. Một lời gọi một file
 > chỉ mua được khoảng **một phần ba** những gì con số "tỉ lệ trúng" gợi ra.
 >
+> **Em đã đọc sâu thêm (9 lần mỗi file) và kết quả sắc hơn — kèm một đính chính về cách hiểu con
+> số 11%.** Nhóm file từng được phát hiện: **0,278**. Nhóm chưa từng: **0,028**. Chênh lệch
+> **+0,250, khoảng tin cậy [0,028 – 0,500]**, tức **đã tách khỏi 0** (trước đó còn chạm 0). File
+> tốt nhất đạt **0,667**, khoảng [0,354 – 0,879] — **không chạm tới 1**, nghĩa là **không file nào
+> được phát hiện chắc chắn**, và giờ đây đó là số đo chứ không phải nhận xét.
+>
+> **Đính chính quan trọng:** con số 11% **không có nghĩa là "mỗi file có 11% cơ hội được phát
+> hiện"**. Thực tế là **phần lớn file gần như bằng 0**, và một thiểu số nằm ở mức 33–67%. Số 11%
+> là trung bình của một tập mà **hầu như không file nào giống cái trung bình đó**.
+>
+> Nói theo ngôn ngữ bán hàng cho đúng: đọc lặp **thật sự có tác dụng**, nhưng **chỉ trên phần file
+> có tín hiệu**, và **không vượt được trần của chúng**. File ở mức 0 thì đọc bao nhiêu lần cũng
+> không ra. Lời hứa trung thực là: **phủ được một phần corpus, với chi phí nhân k, và không biết
+> trước phần đó là phần nào.**
+>
 > **Cách thử thứ hai, và nó khép lại vấn đề:** thay vì đổi câu hỏi, em bỏ hẳn phần tranh chấp —
 > chạy đúng câu hỏi cũ trên **16 file chỉ có mỗi lỗi thiếu rate-limit**, không có lỗi nào khác
 > giành chỗ. Kết quả **1/16**, so với 1/53 lúc có tranh chấp: **không cải thiện** (p = 0,41). Đáng

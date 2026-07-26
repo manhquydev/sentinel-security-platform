@@ -172,10 +172,21 @@ come back at **0.333**, files never reported at **0.083** — so it is not a lot
 propensity measured on any file is 0.67, and none is reliable**. Propensities sit in a mixture roughly
 between 0 and 0.67, which is exactly what produces the same count from disjoint file sets.
 
+Deepened to k=9 readings per file, both edges of that result hardened: the group difference is
+**+0.250 [+0.028, +0.500]**, now excluding zero, and the best file tops out at **0.667 [0.354, 0.879]**,
+excluding one. So the per-file signal is established, and so is the ceiling.
+
+**A correction to how the headline rate must be read.** Never-reported files sit at 0.028, far below the
+0.113 population rate, while a minority sit at 0.33-0.67. **0.113 does not mean "each file has an 11%
+chance"** — it is a few files at 30-70% diluted by many at zero, and the average describes almost no
+individual file in the set.
+
 The operational consequence is concrete: detection accumulates with repeated reading (a file at 0.33 is
 found with probability 0.33 at k=1, **0.70 at k=3**, 0.87 at k=5), so **the generative role requires
 repeated readings to mean anything at file level, and every cost figure must carry the k.** One call per
-file buys roughly a third of what the headline sensitivity implies.
+file buys roughly a third of what the headline sensitivity implies. But repeated reading only helps where
+there is signal to accumulate: a file at 0.000 is never found at any k. What may be promised is **coverage
+of a subset of the corpus, at k times the cost, with no way to identify that subset in advance.**
 
 So what replicates is a **rate**, not a detection. This model reports an absent ownership control on about
 11% of files of this kind, and does not consistently report it on the *same* files. For a product that

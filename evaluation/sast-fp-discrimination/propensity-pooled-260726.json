@@ -1,0 +1,117 @@
+{
+  "pooled_from": [
+    "attribution-propensity-260726.json",
+    "attribution-propensity-deep-260726.json"
+  ],
+  "n_files": 8,
+  "ever_mean": 0.2777,
+  "never_mean": 0.0278,
+  "difference": 0.25,
+  "difference_ci95": [
+    0.0278,
+    0.5003
+  ],
+  "max_propensity": 0.667,
+  "max_propensity_ci95": [
+    0.354,
+    0.879
+  ],
+  "rows": [
+    {
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/views.py",
+      "group": "ever",
+      "hits": 6,
+      "k": 9,
+      "propensity": 0.667,
+      "ci95": [
+        0.354,
+        0.879
+      ]
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "bad/mod_api.py",
+      "group": "ever",
+      "hits": 3,
+      "k": 9,
+      "propensity": 0.333,
+      "ci95": [
+        0.121,
+        0.646
+      ]
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "education_lms/course_operations.py",
+      "group": "ever",
+      "hits": 1,
+      "k": 9,
+      "propensity": 0.111,
+      "ci95": [
+        0.02,
+        0.435
+      ]
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "config/urls.py",
+      "group": "ever",
+      "hits": 0,
+      "k": 9,
+      "propensity": 0.0,
+      "ci95": [
+        0.0,
+        0.299
+      ]
+    },
+    {
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/auth_routes.py",
+      "group": "never",
+      "hits": 1,
+      "k": 9,
+      "propensity": 0.111,
+      "ci95": [
+        0.02,
+        0.435
+      ]
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/auth.py",
+      "group": "never",
+      "hits": 0,
+      "k": 9,
+      "propensity": 0.0,
+      "ci95": [
+        0.0,
+        0.299
+      ]
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "group": "never",
+      "hits": 0,
+      "k": 9,
+      "propensity": 0.0,
+      "ci95": [
+        0.0,
+        0.299
+      ]
+    },
+    {
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/main.py",
+      "group": "never",
+      "hits": 0,
+      "k": 9,
+      "propensity": 0.0,
+      "ci95": [
+        0.0,
+        0.299
+      ]
+    }
+  ]
+}

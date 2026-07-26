@@ -43,7 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
-| E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — previously-reported files 0.333 vs never-reported 0.083 (+0.250 [0.000, 0.500]), so not a lottery; but **max propensity 0.67, no file reliable**. Predicts E42. Repeated reading is required, and the cost model must carry k |
+| E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled to k=9: ever 0.278 vs never 0.028, **+0.250 [+0.028, +0.500] (excludes 0)**; best file **0.667 [0.354, 0.879] (excludes 1.0)**. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
 | E42 | does the class-asymmetry estimate replicate? | **STANDS (aggregate) / FAILS (per-file)** — rates reproduce exactly (6/53, 1/53, +0.094) on 52/53 byte-different responses, but the detected files **overlap in 0 of 6**. A reproducible RATE, not per-file detection |
 | E41 | is CWE-307's invisibility competition for the answer? | **STANDS (negative)** — uncontested 1/16 = 0.062 vs contested 1/53, p = 0.41; **no recovery**, and the uncontested files are *smaller* (84 vs 189 median lines), so the confound favoured recovery. Large salience effect ruled out |
 | E40 | can targeted per-class prompting recover CWE-307? | **ABANDONED at the canary gate (twice)** — the targeted prompt reported the rate limit absent on code that has one; 4 canary readings across 2 formats, never discriminating. No corpus calls spent. Question stays open |
@@ -3301,8 +3301,47 @@ third of what a naive reading of the sensitivity figure implies. This also indep
 reinstatement of E37 at k=3: the union-over-k estimand is not a statistical convenience, it is the only
 estimand that matches how this capability actually behaves.
 
-**Honest bounds.** Four files per group and k=3 is a small measurement, and the interval on the difference
-touches zero — this establishes the *shape* of the answer, not its precise magnitude. The propensity
+### Deepened to k=9: the signal is real, and the ceiling is real too
+
+k=3 resolves a file only to the nearest third, so the same eight files were read six more times and the
+counts pooled — pooled by adding hits, not by averaging two estimates, since a k=3 and a k=6 estimate do
+not carry equal weight. Wilson intervals throughout, because the case that matters here is zero hits,
+where the normal approximation returns a zero-width interval that is simply a lie.
+
+| group | file | hits/k | propensity | 95% CI |
+|---|---|---|---|---|
+| ever | sqli/views.py | 6/9 | **0.667** | [0.354, 0.879] |
+| ever | bad/mod_api.py | 3/9 | 0.333 | [0.121, 0.646] |
+| ever | education_lms/course_operations.py | 1/9 | 0.111 | [0.020, 0.435] |
+| ever | config/urls.py | 0/9 | 0.000 | [0.000, 0.299] |
+| never | backend/routes/auth_routes.py | 1/9 | 0.111 | [0.020, 0.435] |
+| never | backend/app/api/auth.py | 0/9 | 0.000 | [0.000, 0.299] |
+| never | backend/app/routes/auth.py | 0/9 | 0.000 | [0.000, 0.299] |
+| never | backend/app/main.py | 0/9 | 0.000 | [0.000, 0.299] |
+
+EVER mean **0.278**, NEVER mean **0.028**, difference **+0.250, 95% CI [+0.028, +0.500]**.
+
+**Both of the k=3 result's soft edges hardened, in opposite directions.** The difference interval now
+**excludes zero** where before it touched it, so the per-file signal is established rather than merely
+directional. And the best file in the set tops out at **0.667 with an interval of [0.354, 0.879], which
+excludes 1.0** — so "no file is reliably reported" is now a measured claim rather than an observation
+about a small sample.
+
+**The mixture is sharper than k=3 suggested, and it is more lopsided.** NEVER files sit at 0.028, far
+*below* the population rate of 0.113 — most files carry essentially no propensity at all, while a minority
+carry 0.33 to 0.67. The population rate is an average over a population where the average describes almost
+no individual file. That is worth stating plainly: **0.113 is not "each file has an 11% chance"; it is a
+few files at 30–70% diluted by many at zero.**
+
+**What that changes about the product answer.** Repeated reading is not merely required, it is
+*effective* — but only on the files that carry signal, and it cannot exceed their ceiling. A file at 0.667
+is found with probability 0.96 by k=3; a file at 0.000 is never found however large k grows. So repeated
+reading converts the capability from a sampler into something usable on part of the corpus, and does
+nothing whatsoever for the rest. The honest promise is coverage of a subset, at k× cost, with no way to
+know in advance which subset.
+
+**Honest bounds.** Four files per group is still small, and the per-file intervals remain wide — 0.667 is
+[0.354, 0.879], so "two thirds" could be half or could be seven eighths. The propensity
 values are each estimated from three readings, so a "0.33" is one hit in three and carries large
 uncertainty of its own. What is solid: the lottery is excluded, no file reached reliability, and the
 mixture predicts E42. What is not: where exactly the distribution sits, which needs more files and larger
