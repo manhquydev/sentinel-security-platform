@@ -6,27 +6,31 @@ state, not the morning's.
 
 ## What is settled
 
-**The capability is real, bounded, and has a shape a sensitivity figure alone hides.**
+**The capability is real, bounded, and every coverage number is budget-dependent.**
 
 | | measured |
 |---|---|
-| Specificity | **1 flag in 184 clean-control observations** (~0.5%). Was an unbroken zero until a disjoint sample breached it on the first try; cause is a test file whose *test-coverage* gaps read as absent controls. Pinned by SM23 as a rate. |
-| Sensitivity, single reading | ~0.19 on files carrying a real absent control |
-| Per-file structure | a **mixture**: 14 of 24 at propensity zero, a tail reaching 1.0 |
-| Reliable core | **1 file of 24 flagged in all six readings, 1 more at 5 of 6** |
-| Union coverage | saturates at **10 of 24 = 0.417 by k=6**; further readings add cost only. **Generalises**: a disjoint sample gave 0.375 with the same decay. |
-| Union vs independence | 100%, 81%, 71%, 65%, 61%, 58% at k = 1…6 |
+| Specificity | **1 flag in 280 clean-control observations = 0.36%**, 95% CI [0.06%, 2.0%]. 0/192 on sample A across twelve readings. **The only quantity deepening has never revised.** |
+| Sensitivity, single reading | ~0.20 on files carrying a real absent control |
+| Per-file structure | a **mixture**: 8 of 24 at zero, a long thin tail, **nothing at 1.0** |
+| Reliable core | **none.** 2 files at k=4, 1 at k=6 and k=9, **0 at k=12**. Best file 11/12 ≈ 0.92 |
+| Union coverage at k=12 | **16/24 = 0.667, still rising** (flat k=8–11, then a new file at k=12) |
+| Never surfaced | **8/24 = 0.333** [0.180, 0.533] at k=12 — after 0.583 at k=6 and 0.458 at k=9 |
 | Class asymmetry | ownership/authn ≫ CWE-307, **p = 0.0327** (E37), realized power 61% |
 | CWE-307 | **50 of 53 files never named across five readings**; not recovered by targeted prompting (E40) or by removing competing defects (E41) |
 
-**The two questions that were being conflated, and must not be again:**
+**Two questions that must not be conflated:**
 
-- *"Is a control absent somewhere in this file?"* — coarse, has a small reliable core.
-- *"Which control is absent?"* — fine, has **no** reliable core: 0 of 53 files across five readings.
+- *"Is a control absent somewhere in this file?"* — coarse; best file ~0.92, no certainties.
+- *"Which control is absent?"* — fine; **no** reliable core at all: 0 of 53 across five readings.
 
-Honest product statement: a **low-noise sampler** that surfaces about 40% of defective files when read six
-times, fires on clean code about once in 200 observations, and cannot reliably say what is wrong. Not a
-scanner.
+**The single most important methodological fact, learned three times the hard way:** every coverage and
+never-surfaced figure is **a function of the reading budget, not a property of the corpus**. Each deepening
+(k=6 → 9 → 12) lowered "never surfaced" and dissolved another "always detected" file. No published version
+of either number was ever anything but a bound. **Nothing here may be quoted without its k.**
+
+Honest product statement: a **low-noise sampler**. At twelve readings it surfaces two files in three, misses
+one in three, has no individual file it can be trusted on, and essentially never fires on clean code.
 
 ## What is left
 
@@ -61,11 +65,15 @@ whichever frame is chosen the claim is "below about 3%", and no conclusion in 00
 settling for cleanliness — 17% of the clean arm being test files is a design defect — but it is not
 blocking anything.
 
-### 4. Whether the 14 zero-propensity files are truly unreachable
+### 4. Where the union curve actually plateaus (open, and the most expensive question here)
 
-A file observed at 0 of 6 carries the interval [0.000, 0.390], so some may have small non-zero
-propensities. Separating "unreachable" from "very rare" needs large k on those files: 14 × 20 ≈ 280 calls.
-Worth doing, because the ceiling is the number the commercial case rests on.
+Answered partially and revised twice. At k=12 the union is 0.667 and **still climbing**; 8 files remain at
+zero. The phrase "unreachable" has been retired — three files so labelled at k=6 fired by k=12.
+
+What is still unknown is where this stops, and it matters because **the commercial number is whatever
+coverage the budget buys**. Extending sample A to k=20 is ~320 calls and would either locate a plateau or
+push the bound down again. Note the curve goes flat for stretches (k=8–11) and then moves, so **a plateau
+may only be claimed from many readings past the last increase**, never from a flat stretch.
 
 ## Not worth doing, and why
 
