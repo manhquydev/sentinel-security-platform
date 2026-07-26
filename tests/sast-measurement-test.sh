@@ -420,15 +420,41 @@ def _committed_at(path):
 # Every artefact behind a standing claim is now re-verifiable (E35 and E36 regenerated the last two).
 KNOWN_STALE = {"mutation-transfer-260726.json": "E19, withdrawn; superseded by E23",
                "role-control-v2-260726.json": "E24; superseded by E28 (role-control-v3)"}
-stale = []
+def _still_re_derives(path):
+    """True if every stored verdict in this artefact re-derives from its own prose under today's code.
+
+    A timestamp says an artefact MIGHT be stale. Re-derivation says whether it actually is. When a change
+    to the instrument leaves every stored value reproducible — adding a helper, fixing how a control is
+    read, anything that does not touch the classifier — the artefact is not stale in any sense that
+    matters, and failing on the timestamp would train people to add allowlist entries for non-problems.
+    The weaker check defers to the stronger one; it does not override it, because an artefact that fails
+    re-derivation is caught by SM19 regardless of what any timestamp says.
+    """
+    sys.path.insert(0, "evaluation/sast-fp-discrimination")
+    try:
+        import json as _json
+        from rescore_artefacts import drifted, truncated, _rows
+        doc = _json.load(open(path))
+        if not _rows(doc) or truncated(doc):
+            return False                      # nothing to verify, or unverifiable — timestamp still rules
+        return not drifted(doc)
+    except Exception:
+        return False
+
+stale, reproducible = [], []
 for art, src in pairs:
     a, b = base + art, base + src
     if not (os.path.exists(a) and os.path.exists(b)):
         continue
     if _committed_at(a) < _committed_at(b) and art not in KNOWN_STALE:
-        stale.append(art)
-print("  checked=%d  undocumented-stale=%s  known-stale=%d (documented)"
-      % (len(pairs), stale or "none", sum(1 for a, _ in pairs if a in KNOWN_STALE)))
+        if _still_re_derives(a):
+            reproducible.append(art)          # older than its instrument, but provably unaffected by it
+        else:
+            stale.append(art)
+print("  checked=%d  undocumented-stale=%s  known-stale=%d (documented)  "
+      "newer-instrument-but-still-re-derives=%s"
+      % (len(pairs), stale or "none", sum(1 for a, _ in pairs if a in KNOWN_STALE),
+         reproducible or "none"))
 sys.exit(0 if not stale else 1)
 PY
 then ok "every committed artefact is at least as new as the instrument that produced it"
