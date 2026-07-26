@@ -37,7 +37,7 @@ Evidence (E16a, E16b, E17; preregistered per `docs/research-protocol.md`):
 
 | comparison | result | what it establishes |
 |---|---|---|
-| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 15/59 vs 0/40, p = 0.000185** | the model **discriminates**, and the conclusion survives a fresh run |
+| **PRIMARY (preregistered, two-sided):** vulnerable files vs clean control files | corrected **9/60 vs 0/40, p = 0.0078**; **replicated independently (E35): 14/59 vs 0/40, p = 0.000350** | the model **discriminates**, and the conclusion survives a fresh run |
 | specificity | **0 of 40** clean files (corrected — the one flag was a classifier false positive) | it is not flagging indiscriminately |
 | class attribution (post-hoc, exploratory) | **6 of 10** flags named the ground-truth class | 4 flagged the file for an unrelated issue |
 | **MECHANISM (E18, preregistered):** absence-class files vs **defective files with no absent control** | 10/60 = 0.167 vs **3/80 = 0.037**, **p = 0.010** | the effect is **class-specific** |
@@ -88,9 +88,9 @@ and the model never returns identical prose (0 of 14).** Consequently:
     **2/42 = 0.048**, difference **+0.177, 95% CI [+0.031, +0.326], p = 0.0195**. It tolerates two extra
     flags before crossing α (E20 tolerated one) and its interval excludes zero. **The file-role confound
     is closed on evidence that survives its own instrument.**
-  - **REPLICATED (E28).** An independent re-run gives **8/40 vs 1/42, difference +0.176 [+0.052, +0.325],
-    p = 0.0120** — against E24's +0.177. Both arms moved by one file; **the difference reproduced to
-    within 0.001**. On an instrument whose raw verdicts differ ~40% of the time (flag decisions ~1 in 12, E31), the conclusion is stable
+  - **REPLICATED (E28).** An independent re-run gives **7/40 vs 1/42, difference +0.151 [+0.027, +0.276],
+    p = 0.0241** — against E24's +0.177. Arm C moved by one file and arm A′ by two; **the difference
+    reproduced to within 0.026**, and the interval still excludes zero. On an instrument whose raw verdicts differ ~40% of the time (flag decisions ~1 in 12, E31), the conclusion is stable
     across runs even though the labels are not. E28 also stores responses in full, so unlike E24 it can
     be re-verified from its artefact.
 
@@ -162,14 +162,14 @@ measurements:
 
 | claim | first run | independent replication |
 |---|---|---|
-| discriminates absence-class from **clean** files | 9/60 vs 0/40, p = 0.0078 | **15/59 vs 0/40, p = 0.000185** |
-| discriminates absence-class from **merely defective** files | 9/60 vs 0/80, p = 0.0003 | **15/59 vs 2/80, p = 0.0000494** |
+| discriminates absence-class from **clean** files | 9/60 vs 0/40, p = 0.0078 | **14/59 vs 0/40, p = 0.000350** |
+| discriminates absence-class from **merely defective** files | 9/60 vs 0/80, p = 0.0003 | **14/59 vs 2/80, p = 0.000120** |
 
 **Specificity across both runs: 0/40 clean files flagged — 80 consecutive, no false claim.** Defective
 files with no absent control sit at 2/80, **statistically indistinguishable from files with nothing
 wrong** (p = 0.44), while every one of those 80 carries a real confirmed vulnerability.
 
-Sensitivity rose from 0.150 to 0.254 between runs. Two instrument corrections since the first run push
+Sensitivity rose from 0.150 to 0.237 between runs. Two instrument corrections since the first run push
 that way — the classifier now recognises findings its earlier vocabulary missed, and unreadable files
 are no longer counted as model failures — which is the "published rates are a **floor**" caveat paying
 out in the predicted direction rather than a change in the model.

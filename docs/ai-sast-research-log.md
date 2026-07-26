@@ -42,15 +42,17 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 15/59, p = 0.0000494; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
-| E35 | replicate the headline | **STANDS** — fresh run 15/59 vs 0/40, p = 0.000185 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
+| E38 | do the stored verdicts still match the prose? | **STANDS (instrument)** — **no**: 11 rows across 7 artefacts had drifted (echoed source inside code fences, scored before code-stripping existed). Reconciled; it cut **both ways**. Also: the CWE-306 vocabulary was dead (0/440), and CWE-200's is not specific enough for class attribution |
+| E37 | is the capability class-uniform or concentrated? | **CANCELLED at power gate** — 43.3% paired, 53.7% at k=3 under measured churn; only a falsified independence assumption reaches 80% |
+| E36 | replicate the mess control | **STANDS** — messy 2/80 vs absence 14/59, p = 0.000120; messy vs clean p = 0.44 (indistinguishable). Artefact no longer stale |
+| E35 | replicate the headline | **STANDS** — fresh run 14/59 vs 0/40, p = 0.000350 (E17 re-scored: 9/60 vs 0/40). Specificity 0/40 in **both**. Artefact no longer stale |
 | E34 | authored-unseen, powered | **STANDS** — 7/12 vs 0-1/12, p = 0.0136. **Class-specific**: ownership+authn 6/6, rate-limit/mass-assignment/error-leak/re-auth 0/4 |
 | E33 | clean 2-level mutation comparison | **CANCELLED at power gate** — 32% power even using all 117 eligible files |
 | E32 | structural familiarity | **INCONCLUSIVE (leaning against)** — anonymised+reordered 8/41 vs 11/41, −0.073 [−0.195,+0.049]; transfer bound does **not** narrow |
 | E31 | per-file propensity | **STANDS** — mixture confirmed: 10/12 stable at 0. Most instability is clean<->non-answer; **flag churn ~1 in 12**; controls theta=0.000 across 18 calls |
-| E30 | propagating noise into intervals | **WITHDRAWN (model error)** — treated a disagreement rate as a flip probability; falsified by E28's measured 0.001 drift |
+| E30 | propagating noise into intervals | **WITHDRAWN (model error)** — treated a disagreement rate as a flip probability; falsified by E28's measured 0.026 drift |
 | E29 | how unstable is the instrument, really? | **STANDS** — pooled **15/38 = 40%** verdict flips, 95% CI [21%,63%]; **0/38 identical prose**. Replaces the bare "36%" |
-| E28 | does the conclusion replicate? | **STANDS** — 8/40 vs 1/42, diff **+0.176** against E24's **+0.177**, p = 0.012; individual verdicts churn, the difference does not |
+| E28 | does the conclusion replicate? | **STANDS** — 7/40 vs 1/42, diff **+0.151** against E24's **+0.177** — agreement to within **0.026** — p = 0.0241; individual verdicts churn, the difference does not |
 | E27 | how much did the classifier under-count? | **STANDS** — narrow (~1 file in 53 on this corpus); and E23/E24 found **non-re-analysable** (responses truncated at 400 chars) |
 | E26 | sensitivity on authored unseen code | **STANDS (demonstration)** — 3/4 planted defects found, 0/4 false claims on controls; classifier under-counted 2/4, so published sensitivity is a **floor** |
 | E25 | transfer to unseen code | **STANDS (bounded)** — 0 flags on 25 files of our own code (written days before): **specificity transfers**; sensitivity untested, no ground truth |
@@ -60,8 +62,15 @@ audited on 2026-07-26.
 | E19 | capability or memorisation? | **INCONCLUSIVE (withdrawn)** — the paired design assumed a deterministic instrument; E22 measured 36% verdict flips, which alone explains the null |
 | E18 | is it detection, or reaction to messy code? | **STANDS** — **detection**: defective code with no absent control draws flags at 3/80, indistinguishable from clean (p = 0.59); vs absence arm p = 0.010 |
 
-**The pattern worth reading this table for:** of the corrections above, **every quantified one moved a
-claim against this lab's own headline**. None ever found an understatement.
+**The pattern worth reading this table for:** of the corrections above, **every quantified one that
+touched a published claim moved it against this lab's own headline**.
+
+That sentence used to end "none ever found an understatement", and E38 retired the absolute. The
+artefact reconciliation found drift in both directions: one stored verdict had inflated the E35 headline,
+and another had left the E34 artefact *more* pessimistic than the figure the log had already published.
+The published claims still only ever moved the unflattering way — but a summary line that can only come
+out flattering to the people writing it is worth distrusting, and the honest version is narrower than the
+one that read better.
 
 ---
 
@@ -2112,16 +2121,16 @@ Registered 2026-07-26 06:06 +07. **Nothing below was measured before this text w
   the file-role confound is open again, and decision 0027 loses that support for a second time. That
   outcome is published if it occurs.
 
-## E28 — RESULT: the conclusion replicates to within 0.001, on an instrument that flips 36% of verdicts
+## E28 — RESULT: the conclusion replicates to within 0.026, on an instrument that flips 36% of verdicts
 
 Run 2026-07-26, identical design to E24, full response storage, both arms measured fresh.
 
 | run | arm A′ (handlers **with** an absent control) | arm C (**without**) | difference | 95% CI | Fisher p |
 |---|---|---|---|---|---|
 | **E24** | 9/40 = 0.225 | 2/42 = 0.048 | **+0.177** | [+0.031, +0.326] | 0.0195 |
-| **E28** | 8/40 = 0.200 | 1/42 = 0.024 | **+0.176** | [+0.052, +0.325] | 0.0120 |
+| **E28** | 7/40 = 0.175 | 1/42 = 0.024 | **+0.151** | [+0.027, +0.276] | 0.0241 |
 
-**Both arms moved by exactly one file — and the difference reproduced to within 0.001.**
+**Arm C moved by one file and arm A′ by two — and the difference reproduced to within 0.026.**
 
 ### This is the direct test of the assumption the whole chain rests on
 
@@ -2131,8 +2140,8 @@ it directly, and it holds:
 
 - **Individual verdicts are unreliable** — arm A′ lost a file, arm C lost a file, and E22 showed 36% of
   single verdicts flip on identical input.
-- **The aggregate difference is reliable** — +0.177 against +0.176, with overlapping intervals and the
-  same verdict at a stronger p.
+- **The aggregate difference is reliable** — +0.177 against +0.151, with overlapping intervals and the
+  same verdict at a comparable p.
 
 This is the empirical justification for the design rule adopted after E22 (*measure rates, never reuse
 labels*), now confirmed rather than merely argued. It also matches the earlier incidental check: the same
@@ -2214,7 +2223,7 @@ follow up, explicitly **not** as a finding.
 
 Both withdrawals stand. E19 and E20 reused single verdicts as fixed values, which is invalid at any
 instability in this range — and both were rebuilt and re-established on valid designs (E23, E24, and
-E28's replication to within 0.001). The rule adopted after E22 — **measure rates, never reuse labels** —
+E28's replication to within 0.026). The rule adopted after E22 — **measure rates, never reuse labels** —
 is unaffected, and E28 demonstrated its payoff directly.
 
 ## E30 — PREREGISTRATION: propagate measurement noise into the published intervals (written before measuring)
@@ -2257,8 +2266,8 @@ noise is honestly modelled"* — a dramatic, self-flagellating headline, and **w
 ### The model is falsified by a direct measurement this lab already has
 
 The simulation implies the between-arm difference should vary by roughly **±0.2** between runs.
-**E28 measured that variation directly: +0.177 vs +0.176 — a drift of 0.0012.** The model is off by more
-than two orders of magnitude against an empirical replication of exactly the quantity it is modelling.
+**E28 measured that variation directly: +0.177 vs +0.151 — a drift of 0.026.** The model is off by nearly
+an order of magnitude against an empirical replication of exactly the quantity it is modelling.
 
 **The error:** I treated the measured **0.395 as a per-verdict flip probability**. It is not. It is the
 probability that **two independent draws disagree**, which for a file with latent propensity θ is
@@ -2276,8 +2285,8 @@ not a uniform 40% corruption of every verdict.
 The published intervals **are** too narrow — they bootstrap over files and ignore per-file measurement
 variance, which is a real omission. But the correct magnitude of that widening is **not** derivable from
 the disagreement rate alone without a per-file propensity model, and **the direct empirical estimate
-already exists**: E28's replication puts run-to-run drift of the headline difference at **0.001**, which
-is negligible beside the file-sampling intervals of ±0.15–0.30.
+already exists**: E28's replication puts run-to-run drift of the headline difference at **0.026**, which
+is small beside the file-sampling intervals of ±0.15–0.30.
 
 **No conclusion changes.** The published intervals stand as the dominant source of uncertainty.
 
@@ -2349,7 +2358,7 @@ itself: ~8%, not 40%.**
 
 **This explains, at last, three things that had been in tension all session:**
 
-1. **Why E28 replicated to 0.001** while the raw disagreement rate suggested it should not have. The
+1. **Why E28 replicated to within 0.026** while the raw disagreement rate suggested it should not have. The
    quantity being replicated — the aggregate flag rate — rides on ~8% churn, not 40%.
 2. **Why E30's model was catastrophically wrong.** It applied a 40% flip to the *flag* label. The real
    flag-level churn is roughly a fifth of that, and it is concentrated in a minority of files rather
@@ -2596,7 +2605,7 @@ Registered 2026-07-26 10:20 +07. **Nothing below was measured before this text w
   headline resting on an artefact nobody can regenerate.
 - **This is a replication, not bookkeeping.** A fresh run of the same design with the current instrument
   is an **independent second measurement of the core finding**. E28 did exactly this for the file-role
-  comparison and reproduced its difference to 0.001; the headline has never had the same treatment.
+  comparison and reproduced its difference to within 0.026; the headline has never had the same treatment.
 - **Method.** Identical design to E17 — 60 files holding an absence-class vulnerability, 40 clean
   controls, frozen prompt, positive-control gate — with the **corrected classifier** and **full response
   storage**. Both arms measured in the same run.
@@ -2640,6 +2649,12 @@ criterion unrelated to it** — *does the control variant actually control?* —
 files scored badly. Both numbers are published so a reader can disagree with the exclusion and still
 have the conservative figure. **The conservative figure is the one quoted in decision 0027.**
 
+**The artefact now agrees with the published figure.** `authored-unseen-v2-260726.json` had stored the
+as-run scoring (`tp = 7, fp = 2, p = 0.0447`) while the log and decision 0027 both quoted the re-scored
+`7/12 vs 1/12, p = 0.0136`; re-deriving its verdicts from the stored prose brings the artefact to
+`tp = 7, fp = 1, p = 0.0136`. **No published number moves** — and note the direction: here the stale
+artefact was the *pessimistic* one, understating a result the documents had already corrected.
+
 ### The finding underneath, which matters more than either number
 
 Both defects have the **same shape**: the control class was applied only where it was the answer key.
@@ -2659,7 +2674,7 @@ Run 2026-07-26. Positive control passed. Same design as E17, current instrument,
 | run | vulnerable arm | clean arm | one-sided Fisher |
 |---|---|---|---|
 | **E17** (re-scored with the corrected classifier) | 9/60 = 0.150 | **0/40** | p = 0.0078 |
-| **E35** (fresh, independent) | **15/59 = 0.254** | **0/40** | **p = 0.000185** |
+| **E35** (fresh, independent) | **14/59 = 0.237** | **0/40** | **p = 0.000350** |
 
 **Specificity is 0/40 in both runs — 80 consecutive clean files without a single false claim.**
 
@@ -2668,7 +2683,7 @@ Run 2026-07-26. Positive control passed. Same design as E17, current instrument,
 - **The conclusion replicated and strengthened.** The separation is larger and the p-value an order of
   magnitude smaller. The preregistered falsifier — the clean arm rising to meet the vulnerable arm —
   did not occur; the clean arm did not move at all.
-- **Sensitivity rose from 0.150 to 0.254.** Two changes since E17 both push that way and neither is a
+- **Sensitivity rose from 0.150 to 0.237.** Two changes since E17 both push that way and neither is a
   fluke: the classifier now recognises findings its earlier vocabulary missed (E26/E27/E34 corrections),
   and unreadable files are no longer scored as model non-answers (E21). This is the "published rates are
   a **floor**" caveat being paid out in the expected direction.
@@ -2706,7 +2721,7 @@ Registered 2026-07-26 10:45 +07. **Nothing below was measured before this text w
 - **Method.** Identical design to E18 — 80 files carrying real vulnerabilities of **presence** classes
   only (no absent control) — current instrument, full response storage, positive-control gated.
 - **Primary outcome.** Flag rate on the messy arm, and the Fisher p against E35's freshly-measured
-  vulnerable arm (15/59), replacing the cross-run comparison E18 had to make against an older run.
+  vulnerable arm (14/59), replacing the cross-run comparison E18 had to make against an older run.
 - **Prediction, recorded in advance.** The messy arm stays near zero. E18 re-scored gave 0/80.
 - **Falsifying result.** The messy arm rises materially. That would mean the model does react to
   defectiveness after all, and **0027's class-specificity claim collapses** — the single most damaging
@@ -2750,21 +2765,21 @@ classes only, current instrument, full response storage.
 
 | arm | flag rate |
 |---|---|
-| files with an **absence**-class vulnerability (E35, fresh) | 15/59 = **0.254** |
+| files with an **absence**-class vulnerability (E35, fresh) | 14/59 = **0.237** |
 | files **defective but with no absent control** (E36, fresh) | 2/80 = **0.025** |
 | clean files, nothing wrong (E35, fresh) | 0/40 = **0.000** |
 
 | comparison | p |
 |---|---|
-| absence-class vs messy-no-absence | **0.0000494** |
+| absence-class vs messy-no-absence | **0.000120** |
 | messy-no-absence vs clean | **0.44 — no difference** |
 
 ### Both halves of 0027's mechanism argument are now independently replicated
 
 | | first run | replication |
 |---|---|---|
-| headline (absence vs clean) | 9/60 vs 0/40, p = 0.0078 | **15/59 vs 0/40, p = 0.000185** (E35) |
-| mess control (absence vs defective) | 9/60 vs 0/80, p = 0.0003 | **15/59 vs 2/80, p = 0.0000494** (E36) |
+| headline (absence vs clean) | 9/60 vs 0/40, p = 0.0078 | **14/59 vs 0/40, p = 0.000350** (E35) |
+| mess control (absence vs defective) | 9/60 vs 0/80, p = 0.0003 | **14/59 vs 2/80, p = 0.000120** (E36) |
 
 **The preregistered falsifier did not occur.** The messy arm did not rise to meet the vulnerable arm; it
 sits at 0.025, statistically **indistinguishable from files with nothing wrong at all** (p = 0.44).
@@ -2776,7 +2791,7 @@ produced absence-of-control language about only two of them.
 The messy arm moved from **0/80 to 2/80**. Two possibilities, and this run cannot separate them:
 
 1. **Instrument change.** The classifier now recognises findings its earlier vocabulary missed
-   (E26/E27/E34). The same change lifted the vulnerable arm from 0.150 to 0.254, so a small lift here is
+   (E26/E27/E34). The same change lifted the vulnerable arm from 0.150 to 0.237, so a small lift here is
    the expected symmetric effect, not a surprise.
 2. **The caveat recorded before the run.** RealVuln's ground truth is not exhaustive. A file labelled
    presence-class-only can still lack a control nobody recorded — exactly the flaw the E34 audit found in
@@ -2792,3 +2807,134 @@ unresolved rather than resolved in the favourable direction.**
 **The known-stale list is now down to two entries, and neither carries a live conclusion**:
 `mutation-transfer` (E19 — withdrawn, superseded by E23) and `role-control-v2` (E24 — superseded by
 E28). Every artefact behind a standing claim is re-verifiable.
+
+## E37 — CANCELLED at the power gate (Stage 3), before any model call
+
+Proposed 2026-07-26: ask whether the generative-role capability is **class-uniform** or **concentrated**.
+E34 hinted hard at concentration — ownership/authentication **6/6**, rate-limit/mass-assignment/
+error-leak/re-authentication **0/4** — but n = 4 on the miss side, which is a hint and not a measurement.
+
+**Cancelled. The corpus cannot answer it either.**
+
+- **Design considered.** A within-file paired McNemar over the **53 corpus files whose ground truth
+  carries BOTH** an ownership/authentication class (CWE-639/862/863/285/284/306/287) **and** CWE-307.
+  Within-file pairing controls everything about the file — framework, size, style, redaction damage,
+  familiarity — so the only thing differing between the two arms is **which class the prose named**.
+- **Corpus inventory, measured before any power arithmetic.** Files with ownership/authentication classes
+  only: **118**. Files with CWE-307 only: **20**. Files carrying **both**: **53**.
+
+**Power, computed against rates MEASURED on existing data** (ownership/authentication language appears on
+**13.3%** of absence-arm files, CWE-307 language on **3.3%**) rather than against rates hoped for:
+
+| design | power |
+|---|---|
+| paired McNemar, n = 53, one reading per file | **43.3%** |
+| unpaired Fisher, 118 vs 20 | **16.0%** |
+| paired, k = 3 readings, union estimand, under E31's **measured** flag churn (~1 file in 12) | **53.7%** |
+| paired, k = 3, under an **independence** assumption E31 already falsifies | 91.3% |
+
+Null calibration was checked and behaved: **3.3%** paired and **1.8%** unpaired against α = 0.05.
+
+**Why this is a cancellation.** Only the last row clears 80%, and it clears it by assuming the repeated
+readings of a file are independent — which E31 measured and falsified: most files sit at θ ≈ 0 and a
+minority churn, so three readings of a file buy far less than three independent files. Running the honest
+design at 43–54% would produce a null that could not be distinguished from "we could not have found one",
+which is the exact failure E33 was cancelled to avoid.
+
+**The second absence-class design cancelled at this gate, after E33, and the pattern is itself the
+finding.** E33 died because only 117 of
+175 files support both mutation levels; E37 dies because only 20 files carry CWE-307 without an
+ownership/authentication class beside it. **The corpus does not contain enough rate-limit-bearing files to
+resolve the class question at the detection rates the model actually achieves.** The class breakdown in
+E34 therefore stays a hint, and decision 0027's narrowing stays where E34 put it.
+
+**One comparison worth recording on the way out.** E34's *authored* files produced ownership detection at
+**4/4**; real corpus files produce ownership-class language at **13.3%**. The gap is an order of
+magnitude, in the direction that should worry us: **our own authored test set is easier than reality**,
+and the transfer evidence built on it is correspondingly optimistic.
+
+## E38 — a stored verdict is a derived value, and ours had drifted from the data
+
+This is an **instrument** entry, not a hypothesis test. Nothing about the model was measured; what was
+measured is whether this lab's own committed artefacts still agree with the code that produced them.
+
+- **Hypothesis.** Every artefact under `evaluation/sast-fp-discrimination/` stores, per file, both the
+  model's raw prose (`response`) and a `verdict` **derived** from it by the deterministic classifier in
+  `run_generative.py`. The classifier has been fixed repeatedly this session — most consequentially, it
+  now **strips fenced code blocks before scanning**. The stored verdicts were never re-derived after
+  those fixes. If the derivation changed and the derived values did not, the artefacts disagree with
+  their own data.
+- **Method.** Re-score every stored `response` against the current classifier and compare with the
+  `verdict` sitting beside it. No model calls; the prose is fixed and committed.
+- **Data.** **11 rows across 7 artefacts** disagree with their own stored prose.
+- **Proven cause.** Responses that **echoed the source file back** inside a code fence had been scored
+  `flagged` — the classifier was reading the *source*, not the review. With code spans stripped they
+  correctly read `clean`. This is the same defect class the code-stripping fix was written for; the fix
+  simply never reached the values already on disk.
+
+### It cut both ways, which is the reason to trust the sweep
+
+| | before | after | direction |
+|---|---|---|---|
+| E35 headline, absence vs clean | 15/59 vs 0/40, p = 0.000185 | **14/59 vs 0/40, p = 0.000350** | **against us** |
+| E28 role/filename control | 8/40 vs 1/42, +0.176, p = 0.0120 | **7/40 vs 1/42, +0.151, p = 0.0241** | **against us** |
+| E34 authored-unseen | artefact held tp = 7, fp = 2, p = 0.0447 | **tp = 7, fp = 1, p = 0.0136** | **for us** — the artefact was the pessimistic one |
+
+The headline correction removes a flag this lab had been counting. The E34 correction restores one it had
+already stopped counting in prose but was still under-counting in the artefact. **A defect that only ever
+moved numbers in the author's favour would be a suspicious defect; this one is systematic, and the
+distribution of its damage is what a systematic defect looks like.** E28 remains significant with an
+interval excluding zero, E35 remains significant by three orders of magnitude, and E34's published figure
+does not move at all — but that is the outcome, not the design.
+
+### Reconciliation
+
+Verdicts re-derived from the stored prose, derived statistics (flag rates, differences, Fisher p)
+recomputed from the corrected counts, and the previous values preserved **in-file** under a `superseded`
+key with a timestamp, a reason and the exact rows that changed. Nothing is overwritten silently. The
+operation was verified **idempotent** — a second pass changes nothing — which is the property that makes
+it safe to run as a check rather than only as a repair.
+
+### The gap this exposes, and it is the durable part
+
+**The existing freshness guard compares COMMIT TIMES.** An artefact committed alongside the instrument
+that scores it passes the guard — while still disagreeing with it, because agreeing was never what the
+guard tested. Every one of the 11 drifted rows lived in an artefact the guard called fresh.
+
+> **Freshness is not reproducibility.** The question a guard must ask is not *was this file written after
+> the code* but *does re-deriving it from its own stored inputs give back what it says*.
+
+### The second instrument defect found in the same audit: a dead vocabulary
+
+The per-CWE class-attribution vocabulary for **CWE-306** (`unauthenticated|no authentication|missing
+authentication`) fires on **0 of 440** real model responses. Not rarely — never. The cause is that the
+model writes telegraphically: *"no auth"*, *"No admin gate"*, *"Any user can delete/update"*. **Every
+CWE-306 file was therefore uncreditable by construction**, and had been for the whole session.
+
+A replacement derived from the CWE **definition** rather than from whichever phrasing happened to trip a
+past run fires on **12 of 440**, all of them on prose the classifier had **flagged** and **0** on prose it
+had called clean.
+
+**Blast radius measured, and it is nil:** the class-attribution figure this feeds does not move, because
+CWE-306 almost never occurs alone in this corpus and the co-occurring classes already fired. The defect
+is real and the number it would have corrupted was, by luck of the corpus, already right.
+
+### Specificity audit across all classes, because it constrains what may be claimed
+
+The same audit asked the prior question: does each class's vocabulary fire on prose that flagged the file
+and stay silent on prose that cleared it? Under a per-class **absence rule** — the class term and an
+absence marker in the same sentence window, reassurance test applied first — firing rates were:
+
+| class | on flagged prose | on clean prose |
+|---|---|---|
+| CWE-639 ownership / IDOR | **46.0%** | 0.0% |
+| CWE-862 missing authorization | **20.6%** | 0.0% |
+| CWE-306 missing authentication (replacement vocabulary) | **19.0%** | 0.0% |
+| CWE-307 no rate limit / lockout | **9.5%** | 0.0% |
+| CWE-200 information exposure | 4.8% | **2.1%** |
+
+Four of five classes separate cleanly — they fire only on prose that found something. **CWE-200 does
+not**: it fires almost as often on prose the classifier cleared as on prose it flagged, which means its
+terms are catching ordinary discussion of responses and error paths rather than a claim about a missing
+control. **CWE-200's vocabulary is not specific enough to support a class-attribution claim and is
+excluded from one.** The four that separate may be used; the fifth may not.

@@ -29,11 +29,12 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > - **Có phải model chỉ "thấy code xấu là kêu"?** Không, và điều này đã **lặp lại độc lập
 >   2 lần**. Trên 80 file có lỗ thật nhưng **không thuộc lớp thiếu-kiểm-soát**, model chỉ
 >   kêu **2/80** — **không phân biệt được với file không có lỗi gì** (p = 0.44), trong khi
->   nhóm có lỗ thiếu-kiểm-soát là **15/59** (p = 0.00005). Lần đo đầu cho 0/80 vs 9/60
+>   nhóm có lỗ thiếu-kiểm-soát là **14/59** (p = 0.00012). Lần đo đầu cho 0/80 vs 9/60
 >   (p = 0.0003). Nó phân biệt **đúng lớp lỗ**, không phải phân biệt "bẩn/sạch".
 > - **Có phải model chỉ đọc tên file/biến quen thuộc?** Không. Cùng một bộ file endpoint,
 >   nhóm **thiếu** kiểm soát bị kêu 9/40 còn nhóm **có** kiểm soát chỉ 2/42 (p = 0.020),
->   và chạy lại độc lập cho kết quả lệch **0.001**.
+>   và chạy lại độc lập cho kết quả lệch **0.026** (7/40 vs 1/42, chênh lệch +0.151, p = 0.024 —
+>   vẫn có ý nghĩa thống kê, khoảng tin cậy vẫn không chứa 0).
 > - **Có phải model chỉ học thuộc corpus public?** Đổi tên toàn bộ hàm/biến/route/tên file
 >   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không giảm** (11/53 → 14/53). Loại trừ
 >   được "học thuộc bề mặt"; **chưa** loại trừ được mức đóng góp nhỏ.
@@ -43,6 +44,12 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >   vẫn thiếu control** — bỏ 2 cặp đó thì còn 7/10 và 0 báo nhầm (p = 0.0015). Em **trích
 >   con số thận trọng (7/12)**, vì việc loại bỏ làm số đẹp hơn.
 >
+> **Vì sao vài con số ở trên khác bản trước:** chúng em đã đối chiếu lại toàn bộ kết quả đã lưu
+> với **nguyên văn câu trả lời thô của model**, và phát hiện hồ sơ của chính mình đã lệch khỏi dữ
+> liệu gốc. Sau khi sửa, **một con số chủ chốt của chúng em xấu đi** (15/59 → **14/59**) và con số
+> kiểm chứng tên file cũng giảm (8/40 → **7/40**); một con số khác thì tốt lên. Kết luận không đổi
+> ở cả ba trường hợp, nhưng em nói phần xấu đi trước — đó mới là phần lãnh đạo cần biết.
+>
 > **⚠️ GIỚI HẠN QUAN TRỌNG NHẤT — năng lực phụ thuộc LỚP LỖ, con số tổng che mất điều đó.**
 > Trên bộ test có đáp án chính xác, model bắt **thiếu ownership 4/4** và **thiếu xác thực
 > 2/2**, nhưng **miss hoàn toàn (0/4)**: thiếu rate-limit, mass assignment, lộ thông tin
@@ -51,7 +58,7 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > hẹp: cái đo được là **thiếu ownership và thiếu xác thực**, không phải "các lớp
 > thiếu-kiểm-soát" nói chung. Một hệ thống nghiêng về các lớp kia sẽ tệ hơn nhiều.
 >
-> **Và vẫn chưa bán được:** tỉ lệ trúng ~25% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
+> **Và vẫn chưa bán được:** tỉ lệ trúng ~24% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
 > bán cho khách (quyết định 0027).
