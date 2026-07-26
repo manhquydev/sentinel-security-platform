@@ -2711,3 +2711,29 @@ Registered 2026-07-26 10:45 +07. **Nothing below was measured before this text w
   from RealVuln ground truth — which is *also* not exhaustive. A file recorded as presence-class-only
   could still lack a control nobody labelled. That biases **against** the hypothesis (it would raise the
   messy arm), so a near-zero result is safe from it; a raised result would be ambiguous.
+
+### E26 — checked against the same audit, and it survives
+
+The E34 audit warned its finding "applies retroactively to anything built the same way, whether or not
+it has been re-audited yet". E26 is the obvious candidate: it used the **first four pairs** of the same
+set, authored by the same person under the same constraints.
+
+**It was already covered.** The audit reviewed all twelve `_b` variants, which includes E26's four:
+
+| E26 control variant | verdict |
+|---|---|
+| `invoices_b` | **CLEAN** — both routes call `current_user()`/`abort(401)`, `detail` scopes by `org_id` |
+| `reset_b` | **CLEAN** — rate limits on both routes |
+| `exports_b` | **CLEAN** — role check present |
+| `webhooks_b` | **CLEAN** — HMAC verification present (one out-of-scope limit noted: no replay protection, CWE-294) |
+
+**So E26's result stands unchanged** (3/4, 0/4, p = 0.071 — a demonstration, as it was always labelled).
+The two invalid controls are both in the eight pairs added for E34, and neither was part of E26.
+
+Worth noting *why* the first four survived while two of the next eight did not: the audit's own
+explanation is that the author applies a control class where it is the answer key. In the first four
+pairs, the four planted classes (639, 307, 862, 306) between them cover most of the list — so defending
+each pair's own class happened to defend the others too. The eight added pairs introduced classes
+(915, 209, 620) whose controls do **not** incidentally cover authentication or rate limiting, and that
+is exactly where the two gaps appeared. **The bias was always there; the first set was too small to
+expose it.**
