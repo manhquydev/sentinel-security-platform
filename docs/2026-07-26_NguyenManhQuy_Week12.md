@@ -41,8 +41,7 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > hỏng** (0020: verifier giấu mất 3/8 lỗ thật). Nên cách ghép hiển nhiên nhất đã bị chính bằng chứng của
 > dự án đóng lại.
 >
-> Và
-> em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
+> Ngoài ra em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
 > - **Có phải model chỉ "thấy code xấu là kêu"?** Không, và điều này đã **lặp lại độc lập
 >   2 lần**. Trên 80 file có lỗ thật nhưng **không thuộc lớp thiếu-kiểm-soát**, model chỉ
 >   kêu **2/80** — **không phân biệt được với file không có lỗi gì** (p = 0.44), trong khi
