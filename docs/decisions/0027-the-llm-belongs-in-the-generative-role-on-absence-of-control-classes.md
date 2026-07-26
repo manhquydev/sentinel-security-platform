@@ -211,6 +211,23 @@ So **three to four files in five carry no propensity to be reported at any k**, 
 coverage of at most the remaining one to two in five, at k times the cost. That is a materially different
 product from "an 11% detector that improves when run repeatedly", and it is the honest description.
 
+**E46 then measured the whole curve on five independent readings of those 53 files, and this is the table
+to price from:**
+
+| k readings | files surfaced | vs an independence model |
+|---|---|---|
+| 1 | 5.2/53 (0.098) | 100% |
+| 3 | 11.4/53 (0.215) | 81% |
+| 5 | 15.0/53 (0.283) | **70%** |
+
+**Not one file of 53 was reported in all five readings** — the direct, model-free form of "no file is
+reliably detected". Ownership never fired on 38 of 53; CWE-307 never fired on 50 of 53.
+
+Three consequences for pricing, none of them optional: coverage **saturates far below 1** (five readings
+surface 28% of files); returns **diminish measurably** (k=4→5 adds 1.6 files) and diverge further from an
+independence model as k grows; and **any model of the form "11% per reading, so k readings gives k×11%"
+overcharges**. The defensible offer is: read every file five times, pay five times, see about a quarter.
+
 So what replicates is a **rate**, not a detection. This model reports an absent ownership control on about
 11% of files of this kind, and does not consistently report it on the *same* files. For a product that
 means two runs yield two disjoint worklists, both at the published rate — which forces either repeated

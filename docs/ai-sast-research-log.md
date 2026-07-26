@@ -42,6 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
+| E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
 | E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
 | E44 | is the positive control trustworthy? | **STANDS (instrument)** — **no**: the canary fired on 4/5 identical reads, so the single-reading gate blocked ~1 legitimate run in 5. Now read n times, pass on >=1; dead harness still scores 0/n and is still refused |
 | E43 | lottery, or per-file signal? | **STANDS — a MIXTURE, neither** — pooled over 3 runs, 16 files: ever 0.291 vs never 0.021, **+0.271 [+0.104, +0.437] (excludes 0)**; best file **0.667 (excludes 1.0)**; 7 of 8 never-reported files at exactly 0. Most files ~0, a few at 0.33-0.67 — the 0.113 rate describes almost no individual file. Predicts E42 |
@@ -3546,3 +3547,64 @@ the effect size. But it changes how the result should be held:
 the effect size flagged as probably optimistic and the underlying design flagged as having been justified
 by the wrong statistic. Three empty responses across the three runs bias both arms toward the null and are
 recorded in the artefact.
+
+---
+
+## E46 — what k readings actually buy: the union curve, measured on five readings of the same files
+
+E37 found readings are positively correlated, which the power calculation had assumed away. That has a
+direct commercial consequence — it sets what repeated reading is worth — and it is now measurable
+directly, because five independent readings of the same 53 files exist: E39, E42, and E37's three runs.
+No new calls.
+
+### Every file, five readings
+
+| ownership / authentication | rate limit (CWE-307) |
+|---|---|
+| fired in ≥1 of 5: **15/53 = 0.283** | fired in ≥1 of 5: **3/53 = 0.057** |
+| fired in **all 5: 0/53** | fired in **all 5: 0/53** |
+| never fired: **38/53 = 0.717** [0.584, 0.820] | never fired: **50/53 = 0.943** [0.846, 0.981] |
+
+Hit-count distribution over five readings — ownership: **38 files at 0, then 8, 4, 2, 1 at one through
+four hits, and nothing at five.** Rate limit: 50 at zero, 2 at one, 1 at two.
+
+**Not one file in 53 was reported in all five readings.** E43 argued no file is reliably detected from a
+per-file propensity ceiling of 0.667 on eight files; this says the same thing directly, on the full 53,
+with no model and no interval needed. It is the cleanest statement of the finding the lab has.
+
+### The union curve, and the shortfall against independence
+
+| k readings | observed union | independence predicts | fraction delivered |
+|---|---|---|---|
+| 1 | 0.098 (5.2/53) | 0.098 | 100% |
+| 2 | 0.166 (8.8/53) | 0.187 | 89% |
+| 3 | 0.215 (11.4/53) | 0.266 | 81% |
+| 4 | 0.253 (13.4/53) | 0.338 | 75% |
+| 5 | 0.283 (15.0/53) | 0.403 | **70%** |
+
+Repeated reading works, and it decays. Each additional reading returns less than the last **and less than
+an independence model would promise**, because the readings correlate: the files that fire are
+disproportionately the same files. By k=5 the design delivers 70% of the independence projection, and the
+gap is still widening.
+
+### What this fixes in how the capability may be priced
+
+The cost model must now carry three facts rather than one:
+
+1. **Coverage saturates well below 1.** Five readings — five times the cost — surface 28% of files.
+2. **Returns diminish measurably.** The step from k=4 to k=5 adds 1.6 files out of 53. Anyone modelling
+   linear or independence-based gains from k will over-promise, and the error compounds with k.
+3. **Roughly seven files in ten yield nothing at any k tested.** For CWE-307 it is more than nine in ten.
+
+Stated as an offer: **read every file five times, pay five times, and see about a quarter of them.** That
+is a real capability and a defensible one, but it is not a scanner, and any pricing built on "11% per
+reading, so k readings gives k × 11%" is wrong in the direction that overcharges.
+
+### A note on where this evidence came from
+
+Every number above is a re-reading of artefacts already committed — the same move as E45, and the second
+time in one session that the answer to a question filed as "needs more runs" was already on disk. The
+runs existed because E37 needed them; the union curve was free once they did. Worth remembering that a
+dataset gathered for one preregistered question routinely answers others, and that those others still
+require their estimand stated before the data is looked at, which is what was done here: the union curve
+and the all-5 count were specified as the outputs before either was computed.

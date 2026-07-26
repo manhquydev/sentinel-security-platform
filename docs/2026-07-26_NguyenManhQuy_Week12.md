@@ -130,6 +130,25 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > nêu lần nào qua cả hai lần đọc**, khoảng [90% – 99,7%]. Đây là con số có ý nghĩa quyết định nhất
 > trong ngày, và nó là số đo trực tiếp, không cần hiệu chỉnh gì.
 >
+> **Em đã đo hẳn đường cong "đọc k lần thì được bao nhiêu" trên 5 lần đọc độc lập của cùng 53 file.
+> Đây là bảng để tính giá:**
+>
+> | Đọc mấy lần | Số file nêu được | So với kỳ vọng lý thuyết |
+> |---|---|---|
+> | 1 lần | 5,2/53 (9,8%) | 100% |
+> | 3 lần | 11,4/53 (21,5%) | 81% |
+> | 5 lần | 15,0/53 (28,3%) | **70%** |
+>
+> **Không một file nào trong 53 file được nêu ở cả 5 lần đọc.** Đây là cách nói trực tiếp nhất,
+> không cần mô hình, cho kết luận "không file nào được phát hiện chắc chắn".
+>
+> Ba điều phải đưa vào cách tính giá: (1) độ phủ **bão hòa rất sớm** — đọc 5 lần, trả tiền 5 lần,
+> thấy 28% số file; (2) **lợi ích giảm dần đo được** — từ lần thứ 4 sang thứ 5 chỉ thêm 1,6 file;
+> (3) **mọi cách tính kiểu "9,8% mỗi lần đọc, đọc k lần thì được k × 9,8%" đều SAI theo hướng
+> tính đắt cho khách**.
+>
+> Nói thành lời chào hàng trung thực: **đọc mỗi file 5 lần, trả tiền 5 lần, thấy khoảng một phần tư.**
+>
 > Điểm đáng nói về cách làm: con số này em **không tốn thêm một lời gọi model nào** để có. Nó nằm
 > sẵn trong dữ liệu đã lưu — hai lần chạy trước chính là hai lần đọc độc lập của cả 53 file. Nửa
 > giờ trước em còn ghi nó vào danh sách "việc còn nợ, cần chạy thêm".
