@@ -15,10 +15,11 @@ the same file — E31's design, applied to class attribution rather than to the 
 DESIGN. Two groups, k readings each. Group EVER = files reported by either E39 or E42; group NEVER = an
 equal number reported by neither, drawn with a fixed seed. Both groups are capped so the run fits a
 bounded call budget — when the budget binds, group size gives way rather than k, because k is what decides
-whether a propensity distribution can be told apart from a flat rate at all. Under the lottery hypothesis the two groups have
-the SAME underlying propensity and any gap is regression to the mean — EVER was selected precisely
-because it fired, so a lottery predicts it falls back toward 0.11 on fresh readings. Under the signal
-hypothesis EVER stays high and NEVER stays near zero.
+whether a propensity distribution can be told apart from a flat rate at all.
+
+Under the lottery hypothesis the two groups share the SAME underlying propensity and any gap between them
+is regression to the mean: EVER was selected precisely because it fired, so a lottery predicts it falls
+back toward 0.11 on fresh readings. Under the signal hypothesis EVER stays high and NEVER stays near zero.
 
 PREREGISTERED AS ESTIMATION. Group size is set by the prior runs and the call budget, not chosen for
 power, so the output is two propensity distributions with a bootstrap interval on their difference and no
@@ -167,7 +168,9 @@ def main() -> int:
            "difference": round(me - mn, 4), "difference_ci95": [round(lo, 4), round(hi, 4)],
            "population_rate_for_comparison": 0.113,
            "empty_responses": empty, "rows": rows}
-    with open(os.path.join(_HERE, "attribution-propensity-260726.json"), "w", encoding="utf-8") as fh:
+    # A deeper re-run over the same files must not overwrite the readings it is meant to be pooled with.
+    name = os.environ.get("PROPENSITY_OUT", "attribution-propensity-260726.json")
+    with open(os.path.join(_HERE, name), "w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     return 0
 
