@@ -25,10 +25,11 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >
 > Đây là **năng lực đầu tiên trong dự án mà công cụ tất định không cung cấp được**. Và
 > em đã kiểm tra tiếp hai câu hỏi quan trọng nhất:
-> - **Có phải model chỉ "thấy code xấu là kêu"?** Không. Trên 80 file có lỗ thật nhưng
->   **không thuộc lớp thiếu-kiểm-soát**, model kêu **0/80** — ngang với file sạch
->   (p = 0.59), khác hẳn nhóm có lỗ thiếu-kiểm-soát (**p = 0.0003**). Nó phân biệt **đúng
->   lớp lỗ**, không phải phân biệt "bẩn/sạch".
+> - **Có phải model chỉ "thấy code xấu là kêu"?** Không, và điều này đã **lặp lại độc lập
+>   2 lần**. Trên 80 file có lỗ thật nhưng **không thuộc lớp thiếu-kiểm-soát**, model chỉ
+>   kêu **2/80** — **không phân biệt được với file không có lỗi gì** (p = 0.44), trong khi
+>   nhóm có lỗ thiếu-kiểm-soát là **15/59** (p = 0.00005). Lần đo đầu cho 0/80 vs 9/60
+>   (p = 0.0003). Nó phân biệt **đúng lớp lỗ**, không phải phân biệt "bẩn/sạch".
 > - **Có phải model chỉ đọc tên file/biến quen thuộc?** Không. Cùng một bộ file endpoint,
 >   nhóm **thiếu** kiểm soát bị kêu 9/40 còn nhóm **có** kiểm soát chỉ 2/42 (p = 0.020),
 >   và chạy lại độc lập cho kết quả lệch **0.001**.
@@ -36,9 +37,20 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 >   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không giảm** (11/53 → 14/53). Loại trừ
 >   được "học thuộc bề mặt"; **chưa** loại trừ được mức đóng góp nhỏ.
 > - **Trên code model chắc chắn chưa từng thấy** (tự viết ngay trong phiên, có đáp án
->   chính xác): tìm được **3/4** lỗ cài sẵn, **0/4** báo nhầm trên bản có kiểm soát.
+>   chính xác, 12 cặp / 3 framework): tìm được **7/12** lỗ cài sẵn, **1/12** báo nhầm
+>   (p = 0.0136). Một audit độc lập sau đó phát hiện **2/12 bản "có kiểm soát" thực ra
+>   vẫn thiếu control** — bỏ 2 cặp đó thì còn 7/10 và 0 báo nhầm (p = 0.0015). Em **trích
+>   con số thận trọng (7/12)**, vì việc loại bỏ làm số đẹp hơn.
 >
-> **Nhưng vẫn chưa bán được:** tỉ lệ trúng chỉ ~19% (bỏ sót 4/5; và đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
+> **⚠️ GIỚI HẠN QUAN TRỌNG NHẤT — năng lực phụ thuộc LỚP LỖ, con số tổng che mất điều đó.**
+> Trên bộ test có đáp án chính xác, model bắt **thiếu ownership 4/4** và **thiếu xác thực
+> 2/2**, nhưng **miss hoàn toàn (0/4)**: thiếu rate-limit, mass assignment, lộ thông tin
+> qua error, thiếu re-authentication. **CWE-307 (thiếu rate-limit) là lớp thiếu-kiểm-soát
+> PHỔ BIẾN NHẤT trong corpus và bị miss ở cả hai lần thử.** Vì vậy quyết định 0027 đã thu
+> hẹp: cái đo được là **thiếu ownership và thiếu xác thực**, không phải "các lớp
+> thiếu-kiểm-soát" nói chung. Một hệ thống nghiêng về các lớp kia sẽ tệ hơn nhiều.
+>
+> **Và vẫn chưa bán được:** tỉ lệ trúng ~25% (bỏ sót 3/4; đây là **sàn**, vì bộ phân loại đếm thiếu), 1/3 lượt model không trả
 > lời, chỉ ở mức file chứ không ra dòng, và vẫn **chưa test trên target model chắc chắn
 > chưa từng thấy**. Vì vậy: đây là **kết quả nghiên cứu + hướng đi**, chưa phải tính năng
 > bán cho khách (quyết định 0027).
