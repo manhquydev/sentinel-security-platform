@@ -3192,6 +3192,23 @@ reproducible. Any deployment of the generative role must therefore either aggreg
 readings — which changes the cost model, since the per-file call count is no longer one — or be presented
 as a sampling process rather than as a finding.
 
+**A discrepancy with E31 that this run exposes, and which cuts against an earlier decision of mine.**
+These two runs give a direct churn measurement on the same 53 files: **24/53 = 45%** of file-level
+verdicts changed. Of that, 21% is the benign `clean <-> non-answer` movement E31 described, but **25% of
+files changed FLAG STATE** — three times E31's published "flag churn ~1 in 12" (8%). Different arm,
+different corpus slice, so this is not a contradiction of E31 so much as evidence that its figure does not
+generalise to this material.
+
+It matters because **E37 was cancelled at the power gate partly on E31's number.** That gate computed the
+k=3 repeated-reading design as reaching only 53.7% power "under E31's measured correlation", and dismissed
+the 91.3% figure as resting on an independence assumption E31 had falsified. If flag decisions actually
+churn at 25% here, readings are considerably less correlated than assumed and the true power of a k=3
+design sits somewhere between those two numbers rather than at the pessimistic end. **E37's cancellation
+should be revisited against the churn measured on the material it would actually run on, not against a
+figure imported from a different arm.** That is not a retraction of the cancellation — it was the right
+call on the evidence available at the time — but the evidence has changed and the decision is now open
+again.
+
 **Honest bounds on this entry.** n=6 per run is small, and 0 overlap is consistent with independence but
 does not *prove* it — mild stability cannot be excluded from two runs of six. What can be said is that the
 data show no per-file stability, and the burden now sits on the claim that any exists. The obvious next
