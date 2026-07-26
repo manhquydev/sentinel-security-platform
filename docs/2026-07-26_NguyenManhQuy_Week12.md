@@ -79,6 +79,18 @@ câu chuyện "AI tìm giỏi hơn" là bán thứ dữ liệu của chính dự
 > - **Có phải model chỉ học thuộc corpus public?** Đổi tên toàn bộ hàm/biến/route/tên file
 >   (giữ nguyên ngữ nghĩa) → tỉ lệ phát hiện **không giảm** (11/53 → 14/53). Loại trừ
 >   được "học thuộc bề mặt"; **chưa** loại trừ được mức đóng góp nhỏ.
+>
+>   **⚠️ ĐÍNH CHÍNH LỚN (tối nay):** suốt cả dự án em ghi "corpus do LLM sinh ra nên kết quả dương
+>   trộn lẫn năng lực với học thuộc". **Câu đó SAI với 40% corpus.** Benchmark có ghi xuất xứ theo
+>   từng repo, và **26 trên 66 repo là `human_authored`** — DVWA, Vulpy, DjanGoat, VAmPI, DSVW, do
+>   người viết từ nhiều năm trước khi benchmark tồn tại, mang **704 lỗ hổng thật**.
+>
+>   Giả thuyết "học thuộc" dự đoán có hướng: phát hiện phải **cao hơn** ở nửa do LLM sinh. Đo được
+>   thì **ngược lại**: nửa người viết **0,519**, nửa LLM sinh **0,316** (p = 0,062).
+>
+>   **Không phải bác bỏ** — p chưa đạt 0,05, và file người viết nhỏ hơn một nửa (88 vs 184 dòng) nên
+>   yếu tố nhiễu chạy cùng chiều. Nhưng **không có bằng chứng nào cho hướng đáng sợ**, và đây là giới
+>   hạn **nhẹ hơn hẳn** cái em đã mang suốt cả dự án.
 > - **Trên code model chắc chắn chưa từng thấy** (tự viết ngay trong phiên, có đáp án
 >   chính xác, 12 cặp / 3 framework): tìm được **7/12** lỗ cài sẵn, **1/12** báo nhầm
 >   (p = 0.0136). Một audit độc lập sau đó phát hiện **2/12 bản "có kiểm soát" thực ra

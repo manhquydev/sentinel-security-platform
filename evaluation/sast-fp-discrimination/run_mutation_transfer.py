@@ -1,6 +1,7 @@
 """E19 — does detection survive when every surface cue is anonymised?
 
-The generative-role finding (0027) rests on a public, LLM-seeded corpus, so capability and memorisation
+The generative-role finding (0027) rests on a public, MIXED-provenance corpus (26 of 66 repos are
+human_authored; E59), so capability and memorisation
 are inseparable. This re-presents the SAME files with identifiers, route literals and the filename
 replaced, and the semantics — including the absent control — untouched. Paired against verdicts already
 measured in E17, so file-to-file variation drops out.

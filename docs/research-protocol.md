@@ -184,8 +184,11 @@ say so at the point of the claim.
 Corollaries:
 - A target that self-identifies (banner headers, `security.txt`, its own metric names) is **not blind**,
   and an A/B "blinded" condition over it measures nothing.
-- Note when a corpus is **synthetic/LLM-seeded** rather than organic — RealVuln's repos are
-  `vc-*-seeded-v2-*` with `llm_generated_corpus: true`, which bounds what its numbers mean for real code.
+- Note when a corpus is **synthetic/LLM-seeded** rather than organic — and check the metadata before
+  asserting it. This project stated "RealVuln's repos are LLM-seeded" for months; the benchmark records
+  `authorship` per repository and **26 of 66 are `human_authored`** (E59). The disclaimer was wrong about
+  40% of the corpus, in the direction that made the work look weaker than it was. **A contamination bound
+  is a claim like any other and has to be checked, not inherited.**
 
 *Scar: the Phase-3 LLM hypothesis layer was cancelled at the red-team gate because condition B was never
 blind — the target identified itself four independent ways.*
@@ -201,7 +204,7 @@ Set by measurement, not preference:
 | Verdict / gate / judge | **No** | LLM judge refused the role 12/12 under correct provenance (0018); LLM verifier dropped 3 of 8 real vulnerabilities (0020). A structural test (DD1) asserts no model is reachable from the verdict path. |
 | Ranking / triage where labels exist | **No advantage** | Ties a free deterministic CWE prior (0021, corrected). |
 | Narration / summarization | **Yes, bounded** | Costs a measured $0.048–0.051 per run and adds zero findings (E13). Sold as convenience, never as detection. |
-| **Generation / proposing** (model proposes, deterministic code disposes) | **Yes — measured, bounded** | On absence-of-control classes, deterministic engines flag **0 of 60** vulnerable files while the model names the ground-truth class in **6/60 (p = 0.0137)** on identical files (E17, decision 0027). First capability measured here that deterministic tooling cannot supply. Bounds are part of the claim: ~10% hit rate, file-level only, 33% non-answers, and a public LLM-seeded corpus makes capability and memorisation **inseparable**, so transfer to private code is unproven. |
+| **Generation / proposing** (model proposes, deterministic code disposes) | **Yes — measured, bounded** | On absence-of-control classes, deterministic engines flag **0 of 60** vulnerable files while the model names the ground-truth class in **6/60 (p = 0.0137)** on identical files (E17, decision 0027). First capability measured here that deterministic tooling cannot supply. Bounds are part of the claim: ~10% hit rate, file-level only, 33% non-answers, and a public MIXED-provenance corpus (26 of 66 repos human-authored) leaves transfer to private code unproven — though E59 found detection **higher** on the human-authored half, i.e. no evidence for the memorisation story. |
 
 ---
 
@@ -560,8 +563,9 @@ published here before they did.
 Rules 1–18 all assume the answer to a doubt is another measurement. Some doubts are not like that, and
 this lab has been carrying one all day while treating it as a footnote.
 
-**The standing example.** Every result here is measured on a corpus whose defects were LLM-seeded
-(`llm_generated_corpus=true`), scored against labels that are demonstrably incomplete — a deterministic
+**The standing example.** Every result here is measured on a corpus of mixed provenance — 26 of 66 repos
+human-authored, 40 LLM-generated (E59 corrected an earlier blanket claim that all of it was seeded) —
+scored against labels that are demonstrably incomplete — a deterministic
 scan found ten endpoints with an unbounded client-controlled `limit` and the ground truth labels that class
 zero times — and supplemented by matched-pair files this lab authored itself, which three separate
 measurements show are **easier** than corpus files. No amount of re-reading, re-scoring or replication

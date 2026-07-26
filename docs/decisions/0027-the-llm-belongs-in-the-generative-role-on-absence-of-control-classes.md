@@ -37,6 +37,34 @@ deterministic baseline is approximately nothing.
 > public endpoint from a forgotten check — an intent judgement, which is the honest residual. Composing
 > the two (rule for recall, model to filter) is the gate role 0018/0020 falsified and DD1 forbids.
 
+## Addendum 2026-07-26 (E59) — the contamination bound was over-broad, and the threat is not evidenced
+
+This decision, and every artefact this project writes, has carried the bound *"RealVuln is public and
+LLM-seeded, so capability and memorisation are inseparable"*. **That was wrong about 40% of the corpus.**
+The benchmark records `authorship` per repository: **26 of 66 are `human_authored`** — DVWA-family, Vulpy,
+DjanGoat, VAmPI, DSVW, written by people long before this benchmark — carrying **704 real vulnerabilities**.
+Forty are `llm_generated` (GPT-5.5).
+
+The memorisation story makes a directional prediction: detection should run **higher** on the seeded half.
+Measured on the files already read:
+
+| provenance | union detection |
+|---|---|
+| human_authored (27 files) | **0.519** [0.340, 0.693] |
+| llm_generated (57 files) | 0.316 [0.210, 0.445] |
+
+One-sided Fisher **p = 0.0617** — the effect runs **opposite** to the threat.
+
+**This is not a refutation** and must not be quoted as one: p is above 0.05, and human-authored files are
+half the size (88 vs 184 median lines), a confound pointing the same way. What it does establish is that
+**there is no evidence for the feared direction**, which is a materially weaker bound than the one this
+decision has been carrying.
+
+**Corrected wording for the bound:** results are measured on a mixed corpus, 26 human-authored repositories
+and 40 LLM-generated; the human-authored subset does not detect worse, so contamination is not
+demonstrated — but that subset is small, the comparison is confounded by file size, and none of it
+substitutes for private production code.
+
 ## Addendum 2026-07-26 (E58) — what a cheap rule adds at a realistic budget
 
 E56 argued the model and a deterministic rule are independent evidence sources. E58 measured it on the
