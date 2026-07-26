@@ -97,7 +97,18 @@ if not os.path.exists(p):
     print("  SKIP-AS-FAIL: run rank_grouped.py"); sys.exit(1)
 # Freshness: an artefact older than the instrument that produced it is stale, and every assertion
 # below would then be checking a number no current code produces.
-stale = os.path.getmtime(p) < os.path.getmtime(src)
+import subprocess
+def _committed_at(path):
+    """Commit time of a path's last change. Filesystem mtime is useless here: git sets every file's
+    mtime to CHECKOUT time, so an mtime comparison is arbitrary in a fresh clone — which is exactly
+    what CI is. This was caught the moment the branch was merged and the suite re-run on main."""
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%ct", "--", path],
+                             capture_output=True, text=True, timeout=20).stdout.strip()
+        return int(out) if out else 0
+    except Exception:
+        return 0
+stale = _committed_at(p) < _committed_at(src)
 d = json.load(open(p))
 # A review found the original SM4 tautological: it recomputed lo<=0<=hi and compared it to a verdict
 # the code defines as exactly that expression. These are empirical claims instead — they fail if the
@@ -175,7 +186,18 @@ plo, phi = d["precision_delta_ci95"]
 # no resample can produce a negative gain (a review measured 0 of 2000; minimum +0.234). The
 # preregistration committed to +10% as the threshold that could actually fail -- assert THAT.
 # `plo <= 0 <= phi` is not vacuous: a deduplicated denominator makes it fail.
-fresh = os.path.getmtime(p) >= os.path.getmtime(
+import subprocess
+def _committed_at(path):
+    """Commit time of a path's last change. Filesystem mtime is useless here: git sets every file's
+    mtime to CHECKOUT time, so an mtime comparison is arbitrary in a fresh clone — which is exactly
+    what CI is. This was caught the moment the branch was merged and the suite re-run on main."""
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%ct", "--", path],
+                             capture_output=True, text=True, timeout=20).stdout.strip()
+        return int(out) if out else 0
+    except Exception:
+        return 0
+fresh = _committed_at(p) >= _committed_at(
     "evaluation/sast-fp-discrimination/run_multiengine_grouped.py")
 zero_gain_published = d.get("repos_with_zero_gain", 0) > 0
 print("  drift=%s fresh=%s gain_ci=[%.3f,%.3f] prec_ci=[%.4f,%.4f] zero_gain_repos=%s"
@@ -382,6 +404,17 @@ base = "evaluation/sast-fp-discrimination/"
 # Artefacts whose INSTRUMENT was edited after the run (classifier corrections, storage caps). Their
 # live results stand -- computed by the code as it was at run time -- but regenerating them needs fresh
 # model calls. Documented here rather than hidden; regeneration is recorded as owed work.
+import subprocess
+def _committed_at(path):
+    """Commit time of a path's last change. Filesystem mtime is useless here: git sets every file's
+    mtime to CHECKOUT time, so an mtime comparison is arbitrary in a fresh clone — which is exactly
+    what CI is. This was caught the moment the branch was merged and the suite re-run on main."""
+    try:
+        out = subprocess.run(["git", "log", "-1", "--format=%ct", "--", path],
+                             capture_output=True, text=True, timeout=20).stdout.strip()
+        return int(out) if out else 0
+    except Exception:
+        return 0
 KNOWN_STALE = {"generative-260726.json": "predates the E26/E27 classifier corrections",
                "messy-control-260726.json": "predates the E26/E27 classifier corrections",
                "mutation-transfer-260726.json": "E19, withdrawn; superseded by E23",
@@ -391,7 +424,7 @@ for art, src in pairs:
     a, b = base + art, base + src
     if not (os.path.exists(a) and os.path.exists(b)):
         continue
-    if os.path.getmtime(a) < os.path.getmtime(b) and art not in KNOWN_STALE:
+    if _committed_at(a) < _committed_at(b) and art not in KNOWN_STALE:
         stale.append(art)
 print("  checked=%d  undocumented-stale=%s  known-stale=%d (documented)"
       % (len(pairs), stale or "none", sum(1 for a, _ in pairs if a in KNOWN_STALE)))
