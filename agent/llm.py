@@ -69,8 +69,23 @@ def chat(msgs: list[Msg], model: str, max_tokens: int = 1024,
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
-    r = requests.post(f"{BASE}/v1/chat/completions",
-                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                      json=payload, timeout=timeout)
-    r.raise_for_status()
-    return r.json()["choices"][0]["message"]["content"]
+    import time
+
+    from . import finops  # function-local import: avoids a module-load cycle (finops imports no agent)
+
+    start = time.monotonic()
+    try:
+        r = requests.post(f"{BASE}/v1/chat/completions",
+                          headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                          json=payload, timeout=timeout)
+        r.raise_for_status()
+        body = r.json()
+        content = body["choices"][0]["message"]["content"]  # a malformed 200 raises here -> error path
+    except Exception:
+        # Week-11 FinOps: a failed OR malformed call still counts toward the run's error budget.
+        finops.record(model, 0, 0, time.monotonic() - start, error=True)
+        raise
+    usage = body.get("usage") or {}
+    finops.record(model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0),
+                  time.monotonic() - start)
+    return content

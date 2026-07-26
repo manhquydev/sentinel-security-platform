@@ -216,7 +216,7 @@ def _redact_proposal(p: dict[str, Any]) -> None:
 def recon_node(state: SyndicateState) -> dict[str, Any]:
     use_llm = bool(state.get("use_llm", True))
     with trace.node_span("recon", use_llm=use_llm):
-        with _threaded_model(state.get("model", "sast-sol")):
+        with _threaded_model(state.get("model", "sast-grok45")):
             m = recon.build_map(use_llm=use_llm)
     return {"recon_map": _redact_map(m)}
 
@@ -244,7 +244,7 @@ def fuzz_node(state: SyndicateState) -> dict[str, Any]:
 
     use_llm = bool(state.get("use_llm", True))
     with trace.node_span("fuzz", use_llm=use_llm, map_guided=surface_map is not None):
-        with _threaded_model(state.get("model", "sast-sol")):
+        with _threaded_model(state.get("model", "sast-grok45")):
             report = fuzz.run(use_llm=use_llm, surface_map=surface_map)
 
     budget["total_requests_sent"] += report.requests_sent
@@ -262,7 +262,7 @@ def exploit_node(state: SyndicateState) -> dict[str, Any]:
     with trace.node_span("exploit", use_llm=use_llm,
                           findings=len(fuzz_report.get("findings") or [])):
         proposals = exploit.propose(fuzz_report, use_llm=use_llm,
-                                    model=state.get("model", "sast-sol"))
+                                    model=state.get("model", "sast-grok45"))
 
     dumped = [p.model_dump() for p in proposals]
     for p in dumped:
@@ -448,7 +448,7 @@ def default_checkpointer(path: str = CHECKPOINT_PATH) -> SqliteSaver:
     return saver
 
 
-def run_syndicate(thread_id: str, *, model: str = "sast-sol", use_llm: bool = True,
+def run_syndicate(thread_id: str, *, model: str = "sast-grok45", use_llm: bool = True,
                    checkpointer: SqliteSaver | None = None) -> dict[str, Any]:
     """Run (or continue) the Supervisor graph for one thread. A brand-new `thread_id` seeds the
     budget at zero; an EXISTING thread_id must not resupply `budget` in the input (D11) — see
@@ -464,6 +464,8 @@ def run_syndicate(thread_id: str, *, model: str = "sast-sol", use_llm: bool = Tr
     Leaving it open per call would leak a connection/fd on every invocation with no explicit
     checkpointer (e.g. the CLI or a library caller that never passes one). A caller that DOES
     pass its own `checkpointer` keeps ownership of its lifecycle; this function never closes it."""
+    from . import finops  # Week-11: per-run cost/token/latency metering (decision 0019)
+
     owns_checkpointer = checkpointer is None
     checkpointer = checkpointer or default_checkpointer()
     try:
@@ -473,7 +475,11 @@ def run_syndicate(thread_id: str, *, model: str = "sast-sol", use_llm: bool = Tr
         init: SyndicateState = {"model": model, "use_llm": use_llm}
         if not (existing.values or {}).get("budget"):
             init["budget"] = {"total_requests_sent": 0, "target_max": fuzz.MAX_TOTAL_REQUESTS}
-        return graph.invoke(init, config=cfg)
+        with finops.run_meter(thread_id) as meter:
+            result = graph.invoke(init, config=cfg)
+        # Attach the run's FinOps accounting to the return value (not persisted state). Costs are
+        # zero when use_llm=False (no gateway calls) — the accounting still records that honestly.
+        return {**result, "finops": meter.report()}
     finally:
         if owns_checkpointer:
             checkpointer.conn.close()
@@ -484,7 +490,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Run the Week-6 Supervisor graph (Recon -> Fuzz -> Exploit(sim)).")
     ap.add_argument("--thread", default="cli", help="checkpoint thread id (reuse to resume)")
     ap.add_argument("--no-llm", action="store_true", help="deterministic run only")
-    ap.add_argument("--model", default=os.environ.get("RECON_MODEL", "sast-sol"))
+    ap.add_argument("--model", default=os.environ.get("RECON_MODEL", "sast-grok45"))
     args = ap.parse_args(argv)
 
     result = run_syndicate(args.thread, model=args.model, use_llm=not args.no_llm)
@@ -498,6 +504,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"    {p.get('endpoint')} [{p.get('vuln_class')}] verdict={p.get('verdict')}")
     if "__interrupt__" in result:
         print("  paused at interrupt_seam (reserved for Week-8 HITL)")
+    # Week-11 FinOps: per-run cost/token/latency + cost-spike/drift alerting (decision 0019)
+    from . import finops
+    fin = result.get("finops") or {}
+    if fin:
+        lat = fin.get("latency_s", {})
+        print(f"  FinOps: calls={fin['calls']} tokens={fin['total_tokens']} "
+              f"cost~=${fin['cost_estimate_usd']:.4f} (estimate) latency={lat.get('total')}s "
+              f"errors={fin['errors']}")
+        for a in finops.check_thresholds(fin):
+            print(f"  \033[33mALERT\033[0m FinOps budget breach: {a['metric']} "
+                  f"{a['actual']} > {a['ceiling']} (over by {a['over_by']})")
     return 0
 
 

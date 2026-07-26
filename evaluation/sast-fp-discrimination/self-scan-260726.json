@@ -1,0 +1,135 @@
+{
+  "n_files": 25,
+  "counts": {
+    "clean": 17,
+    "non-answer": 8
+  },
+  "flagged": 0,
+  "rows": [
+    {
+      "file": "agent/approval.py",
+      "verdict": "clean",
+      "response": "File loaded. What?"
+    },
+    {
+      "file": "agent/approve.py",
+      "verdict": "clean",
+      "response": "Broken redactions. Restored:\n\n```python\n# load_private_key\nkey = serialization.load_pem_private_key(f.read(), [redacted:secret]\n\n# sign_token sig\ndef sign_token(proposal: dict[str, Any], [redacted:secret]\n\n# main approve path\n[redacted:secret]\n[redacted:secret]\n# ...\nelse:\n    print(\"Recorded: APPROVE \u2014 [redacted:secret]\n    sys.exit(main())\n```\n\n\u2192 skipped: ledger close/contextmgr, add when `ApprovalLedger` holds open conn."
+    },
+    {
+      "file": "agent/exploit.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`except` at L233. What needed?"
+    },
+    {
+      "file": "agent/finops.py",
+      "verdict": "clean",
+      "response": "Broken L116: `[redacted:secret]\n\nRest fine. YAGNI holds. Pricing/budget env overrides OK.\n\n`open()` without `with` \u2014 minor. Fix only if you care.\n\nWhat do you need?"
+    },
+    {
+      "file": "agent/fuzz.py",
+      "verdict": "clean",
+      "response": "What do with `agent/fuzz.py`?"
+    },
+    {
+      "file": "agent/fuzz_payloads.py",
+      "verdict": "non-answer",
+      "response": "File: read-safe GET fuzz corpus. Classes: boundary, sqli, xss, traversal, template.\n\nWhat need? Review / change / extend / use?"
+    },
+    {
+      "file": "agent/fuzz_signals.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "file": "agent/gateway.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "file": "agent/guard.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`detect_injection`. Complete:\n\n```python\ndef detect_injection(text: str) -> list[str]:\n    \"\"\"Best-effort heuristic flags for imperative-instruction/override patterns in\n    target-derived text. Returns the sorted list of pattern names that fired (empty if\n    none). NOT the control (0006) \u2014 callers use this for measurement/visibility, never to\n    silently drop or rewrite anything on its own.\"\"\"\n    if not text:\n        return []\n    return sorted(name for name, pat in _INJECTION_PATTERNS if pat.search(text))\n```\n\n\u2192 skipped: tests, add when measuring recall/FP on live titles."
+    },
+    {
+      "file": "agent/lake.py",
+      "verdict": "clean",
+      "response": "Broken by redaction markers.\n\nL61: `[redacted:secret]\nL68: `[redacted:secret]\n\nWhat do you want done with this file?"
+    },
+    {
+      "file": "agent/llm.py",
+      "verdict": "clean",
+      "response": "Broken L79: redaction artifact. Should be:\n\n```python\nheaders={\"[redacted:secret]\n```\n\nRest: provenance labels mandatory, fail-closed, finops on error path. Fine.\n\nWhat need?"
+    },
+    {
+      "file": "agent/pii.py",
+      "verdict": "clean",
+      "response": "Need task. Review? Change? Test?"
+    },
+    {
+      "file": "agent/recon.py",
+      "verdict": "clean",
+      "response": "No task stated. Want review, change, or run?"
+    },
+    {
+      "file": "agent/schema.py",
+      "verdict": "non-answer",
+      "response": "What need with `agent/schema.py`?"
+    },
+    {
+      "file": "agent/sim_dump.py",
+      "verdict": "clean",
+      "response": "No ask. What do?"
+    },
+    {
+      "file": "agent/supervisor.py",
+      "verdict": "non-answer",
+      "response": "File truncated L241: `surface_map = A`. What need?"
+    },
+    {
+      "file": "agent/trace.py",
+      "verdict": "clean",
+      "response": "File loaded. Task?"
+    },
+    {
+      "file": "evaluation/absence-detection/map_defence_in_depth.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, fix, run, extend?"
+    },
+    {
+      "file": "evaluation/absence-detection/measure_exposure_gap.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "file": "evaluation/absence-detection/probe_missing_authz.py",
+      "verdict": "non-answer",
+      "response": "Missing-authz differential prober (CWE-306/284/862). Credential-free GET vs Kong + app. What need?"
+    },
+    {
+      "file": "evaluation/absence-detection/probe_missing_limits.py",
+      "verdict": "clean",
+      "response": "What do you need with this file?"
+    },
+    {
+      "file": "evaluation/pentest-eval/capture.py",
+      "verdict": "non-answer",
+      "response": "Read-only capture harness. Corpus \u2192 baseline \u2192 recon/fuzz/propose \u2192 redacted JSON under `captured/`.\n\nNo ask. What needed?"
+    },
+    {
+      "file": "evaluation/pentest-eval/cwe_map.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "file": "evaluation/pentest-eval/judge.py",
+      "verdict": "clean",
+      "response": "Task? File only. No ask."
+    },
+    {
+      "file": "evaluation/pentest-eval/measure.py",
+      "verdict": "clean",
+      "response": "Task?"
+    }
+  ]
+}

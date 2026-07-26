@@ -1,0 +1,91 @@
+{
+  "n": 14,
+  "disagreements": 5,
+  "identical_prose": 0,
+  "pairs": [
+    {
+      "file": "accounts/views.py",
+      "run1": "non-answer",
+      "run2": "flagged",
+      "prose_identical": false
+    },
+    {
+      "file": "dsvw.py",
+      "run1": "non-answer",
+      "run2": "non-answer",
+      "prose_identical": false
+    },
+    {
+      "file": "core/views.py",
+      "run1": "non-answer",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "routes/account.py",
+      "run1": "flagged",
+      "run2": "flagged",
+      "prose_identical": false
+    },
+    {
+      "file": "portal/views.py",
+      "run1": "non-answer",
+      "run2": "non-answer",
+      "prose_identical": false
+    },
+    {
+      "file": "clinic/forms.py",
+      "run1": "clean",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "legalcase/urls.py",
+      "run1": "clean",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "bad/libmfa.py",
+      "run1": "clean",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "accounts/urls.py",
+      "run1": "non-answer",
+      "run2": "non-answer",
+      "prose_identical": false
+    },
+    {
+      "file": "documents/views.py",
+      "run1": "clean",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "backend/app/routers/audit_log.py",
+      "run1": "clean",
+      "run2": "non-answer",
+      "prose_identical": false
+    },
+    {
+      "file": "clinic_project/urls.py",
+      "run1": "flagged",
+      "run2": "clean",
+      "prose_identical": false
+    },
+    {
+      "file": "backend/routes/transaction_routes.py",
+      "run1": "flagged",
+      "run2": "flagged",
+      "prose_identical": false
+    },
+    {
+      "file": "backend/app/routers/messages.py",
+      "run1": "clean",
+      "run2": "flagged",
+      "prose_identical": false
+    }
+  ]
+}

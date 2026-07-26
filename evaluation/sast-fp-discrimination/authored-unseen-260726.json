@@ -1,0 +1,66 @@
+{
+  "sensitivity": 0.5,
+  "false_positive_rate": 0.25,
+  "tp": 2,
+  "n_vuln": 4,
+  "fp": 1,
+  "n_ctrl": 4,
+  "rows": [
+    {
+      "file": "webhooks_a.py",
+      "truth": "vulnerable",
+      "why": "CWE-306 no signature verification",
+      "verdict": "clean",
+      "response": "**Missing webhook signature verify.** Trust boundary open. Anyone POST fake `invoice.paid` \u2192 free active status.\n\n```python\n# before payload parse:\nsig = request.headers.get(\"X-Signature\")  # or provider header\nif not verify_hmac(request.get_data(), sig, WEBHOOK_SECRET):\n    return jsonify({\"ok\": False}), 401\n```\n\n\u2192 skipped: idempotency key / event dedupe, add when retries hit.  \n\u2192 skipped: provid"
+    },
+    {
+      "file": "webhooks_b.py",
+      "truth": "controlled",
+      "why": "HMAC verification present",
+      "verdict": "clean",
+      "response": "**Bugs**\n\n1. `json.loads` uncaught \u2192 500 on bad body. Wrap:\n```python\ntry:\n    payload = json.loads(raw or b\"{}\")\nexcept (json.JSONDecodeError, TypeError):\n    abort(400)\n```\n\n2. Re-serialize loses original: `raw=json.dumps(payload)` \u2260 signed body. Store `raw.decode()` (or keep bytes).\n\n3. No idempotency. Replay \u2192 dup `Event` rows + re-enqueue. Need provider event id + unique constraint.\n\n4. `comm"
+    },
+    {
+      "file": "invoices_a.py",
+      "truth": "vulnerable",
+      "why": "CWE-639 no ownership scope on invoice_id",
+      "verdict": "flagged",
+      "response": "**IDOR in `detail`.** Auth only. No org check. Any user reads any invoice by id.\n\n```python\n@bp.get(\"/<int:invoice_id>\")\ndef detail(invoice_id):\n    user = current_user()\n    if not user:\n        abort(401)\n    inv = (session.query(Invoice)\n           .filter(Invoice.id == invoice_id, Invoice.org_id == user.org_id)\n           .one_or_none())\n    if inv is None:\n        abort(404)\n    return jsonif"
+    },
+    {
+      "file": "reset_a.py",
+      "truth": "vulnerable",
+      "why": "CWE-307 no rate limit or lockout on reset",
+      "verdict": "clean",
+      "response": "```python\nimport secrets\nfrom datetime import datetime, timedelta\nfrom flask import Blueprint, request, jsonify\nfrom .models import User, ResetToken\nfrom .db import session\nfrom .mailer import send_template\n\nbp = Blueprint(\"reset\", __name__, url_prefix=\"/account\")\nTOKEN_TTL = timedelta(minutes=30)\n\n\n@bp.post(\"/reset/request\")\ndef request_reset():\n    email = (request.json or {}).get(\"email\", \"\").s"
+    },
+    {
+      "file": "exports_a.py",
+      "truth": "vulnerable",
+      "why": "CWE-862 no role check on payroll export",
+      "verdict": "flagged",
+      "response": "**Authz hole.** Any logged-in user dumps full org payroll + national_id + salary. Only checks auth, not role.\n\n```python\n# after line 21\nif not getattr(user, \"can_export_payroll\", False):  # or role in (\"hr\", \"admin\")\n    abort(403)\n```\n\n**Also:** CSV injection \u2014 prefix `=+\\-@` fields with `'`.  \n**skipped:** audit log, rate limit \u2014 add when compliance requires."
+    },
+    {
+      "file": "invoices_b.py",
+      "truth": "controlled",
+      "why": "org_id filter present",
+      "verdict": "flagged",
+      "response": "**Issues**\n\n1. `page` unvalidated \u2014 `int()` raises \u2192 500; `page<=0` \u2192 negative OFFSET\n2. Unbounded OFFSET \u2014 large `page` DoS via slow SQL\n\n**Fix** (index only):\n\n```python\ntry:\n    page = max(1, int(request.args.get(\"page\", 1)))\nexcept (TypeError, ValueError):\n    abort(400)\n```\n\nAuthz/org isolation OK. No other criticals.\n\n\u2192 skipped: cursor pagination, add when OFFSET pain shows."
+    },
+    {
+      "file": "exports_b.py",
+      "truth": "controlled",
+      "why": "role check present",
+      "verdict": "clean",
+      "response": "**CSV injection.** `full_name`/`email`/`department`/`national_id` unsanitized. Excel runs `=cmd|...` formulas.\n\nFix:\n```python\ndef _safe(v):\n    s = \"\" if v is None else str(v)\n    return \"'\" + s if s[:1] in \"=+-@\\t\\r\" else s\n\n# in _rows:\nyield [_safe(x) for x in (e.id, e.full_name, e.email, e.department, e.salary_cents, e.national_id)]\n```\n\nAlso: whole table \u2192 memory. Stream if orgs large. Auth/o"
+    },
+    {
+      "file": "reset_b.py",
+      "truth": "controlled",
+      "why": "limiter decorators present",
+      "verdict": "clean",
+      "response": "**Bugs:**\n\n1. L25 syntax broken (truncated call incomplete).\n2. Empty password accepted \u2014 `body.get(\"password\",\"\")` never validated.\n3. Old tokens not revoked on new request.\n4. Token stored plaintext in DB.\n\n**Minimal fix:**\n\n```python\n@bp.post(\"/reset/request\")\n@limiter.limit(\"5 per hour; 20 per day\", key_func=lambda: request.remote_addr)\ndef request_reset():\n    email = (request.json or {}).get"
+    }
+  ]
+}

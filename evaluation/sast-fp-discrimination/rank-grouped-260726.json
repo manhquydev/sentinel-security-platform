@@ -1,0 +1,35 @@
+{
+  "n_rows": 1764,
+  "n_repos": 61,
+  "n_scorable_repos": 59,
+  "primary_estimand": "macro-per-repo",
+  "macro": {
+    "auc": {
+      "cwe_prior": 0.8199680362587463,
+      "llm": 0.7252400309199502,
+      "severity": 0.6352797055022554
+    },
+    "delta": 0.0947,
+    "ci95": [
+      0.063,
+      0.1279
+    ],
+    "verdict": "prior-wins"
+  },
+  "micro": {
+    "auc": {
+      "cwe_prior": 0.8260208926875594,
+      "llm": 0.8139056477291772,
+      "severity": 0.7320205575107536
+    },
+    "delta": 0.0121,
+    "ci95": [
+      -0.006,
+      0.0351
+    ],
+    "verdict": "tie",
+    "within_repo_pair_share": 0.019
+  },
+  "matched_grouping_effect": 0.0224,
+  "bootstrap_caveat": "resamples pre-computed LOSO scores without refitting the prior, so both intervals are somewhat NARROWER than a fully nested procedure would give"
+}

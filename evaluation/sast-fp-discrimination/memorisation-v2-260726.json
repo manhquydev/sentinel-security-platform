@@ -1,0 +1,440 @@
+{
+  "generated_at": "2026-07-25T22:22:52.005159+00:00",
+  "model": "sast-grok45",
+  "n_files": 53,
+  "original_flagged": 11,
+  "mutated_flagged": 14,
+  "aggregate_difference": 0.0566,
+  "ci95": [
+    -0.0377,
+    0.1509
+  ],
+  "verdict": "no collapse detected; a >5pt reduction is excluded, but equivalence is NOT established at this power",
+  "design_note": "both arms measured fresh in the same run; per-file verdicts never compared because E22 measured 36% verdict instability",
+  "rows": [
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/views.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "`accounts/views.py` loaded. What need?",
+      "resp_mutated": "Obfuscated Django accounts views (auth/profile/admin/invite).\n\nBroken:\n- L46: `v_30=` \u2192 `url=`\n- L123: token assign redacted/broken\n- L129: reset URL missing from mail body\n- L279: def sig truncated\n- L290: `[redacted:secret]\n\nWhat need?"
+    },
+    {
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/account.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**Vulns (critical first)**\n\n1. **Pickle RCE** \u2014 cookie `preferences` \u2192 `loads(b64decode(...))`. Attacker sets cookie \u2192 RCE.\n2. **SQLi** \u2014 `text(f\"text like '%{search_param}%'\")`.\n3. **IDOR** \u2014 `/accounts/<user_id>/notes` no ownership check.\n4. **Missing auth** \u2014 `update_account` no `@login_required`.\n5. **Mass assign** \u2014 `current_user.__dict__.update(...)` writes arbitrary fields.\n6. **Broken hash",
+      "resp_mutated": "**Critical:**\n\n1. **RCE** \u2014 pickle cookie\n```\nloads(b64decode(v_11))  # L118\n```\nAttacker sets `preferences` cookie \u2192 arbitrary code.\n\n2. **SQLi** \u2014 L33\n```\ntext(f\"text like '%{fn_13}%'\")\n```\n`search` param \u2192 injection.\n\n3. **IDOR** \u2014 L41-48  \nAny `user_id` notes, no ownership check.\n\n4. **Auth missing** \u2014 `fn_15`, `fn_14` no `@login_required`.\n\n5. **Broken hash** \u2014 L88-89 syntax/redacted; passwor"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "original": "non-answer",
+      "mutated": "non-answer",
+      "resp_original": "File truncated mid-`appointment_book` at L373 (`a`).\n\nWhat needed?",
+      "resp_mutated": "File truncated line 373: `a`\n\nWhat needed? Complete fn_3? Review? Deobfuscate?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic/forms.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Broken L32: `[redacted:secret]\n\nFix:\n```python\n[redacted:secret]\n```\n\n\u2192 skipped: password confirm + strength rules, add when auth policy requires.",
+      "resp_mutated": "**Broken.** Syntax + Django hooks wrong.\n\n```python\n# line 32 \u2014 invalid\n[redacted:secret]\n\n# Meta: v_42 \u2192 widgets (Cls_13, Cls_1)\nwidgets = {\"start_time\": forms.TimeInput(attrs={\"type\": \"time\"}), \"end_time\": forms.TimeInput(attrs={\"type\": \"time\"})}\nwidgets = {\"starts_at\": forms.DateTimeInput(attrs={\"type\": \"datetime-local\"})}\n\n# clean hooks must be clean_<field>\ndef cl"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "legalcase/urls.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "No ask. What need? Review / fix / explain / delete ops routes?",
+      "resp_mutated": "Need? Review, fix, explain?"
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "bad/libmfa.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "**Bugs:**\n\n`mfa_validate` hardcodes secret. Ignores user. Everyone same TOTP.\n\n`mfa_reset_secret` always returns False.\n\n`set_trace_callback(print)` leaks SQL.\n\n`mfa_enable` sets flag only. No secret.\n\n**Minimal fix validate:**\n\n```python\ndef mfa_validate(username, otp):\n    [redacted:secret]\n    if not [redacted:secret]\n    return pyotp.TOTP(secret).verify(otp)\n```\n",
+      "resp_mutated": "Bug: `fn_5` always returns `False` after write. `set_trace_callback(print)` leaks SQL. Duped connect/cursor every fn. Dead commented code.\n\nWhat need? Fix / review / delete?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/urls.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "Clean. Standard Django auth wiring. No change needed.\n\nWhat need?",
+      "resp_mutated": "```python\nfrom django.contrib.auth.views import (\n    PasswordChangeDoneView,\n    PasswordChangeView,\n    PasswordResetCompleteView,\n    PasswordResetConfirmView,\n    PasswordResetDoneView,\n    PasswordResetView,\n)\nfrom django.urls import path, reverse_lazy\n\nfrom . import views\nfrom .forms import StyledPasswordChangeForm, StyledPasswordResetForm, StyledSetPasswordForm\n\napp_name = \"accounts\"\n\nurlpa"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "documents/views.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Authz gap `document_decide`: front desk skips `_document_visible`. Can POST decide on internal clinical docs.\n\n```python\nif not _document_visible(user, doc):\n    raise Http404(\"Not found\")\n```\n\nReplace clinician-only check.\n\nWhat need? Fix / review / other.",
+      "resp_mutated": "Broken renames. Runtime fails.\n\n1. L167: `FileResponse(..., fn_4=fn_4)` \u2192 `content_type=`\n2. L173,L205: `v_6.fn_17` no attr \u2192 `v_6.v_16_id`\n3. L203: `update_fields=[\"status\",...]` vs assign `v_6.v_22` \u2014 pick one name\n4. L65/L82/L134: FK still `patient`; elsewhere `v_16`\n\nPatches:\n\n```python\nresponse = FileResponse(open(v_19, \"rb\"), content_type=fn_4)\n```\n\n```python\nmetadata={\"patient_id\": v_6.v_16"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/audit_log.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "What need? Review, fix, extend?",
+      "resp_mutated": "```python\nfrom fastapi import APIRouter, Depends, HTTPException\nfrom sqlalchemy.orm import Session\nfrom typing import List\n\nfrom app.database import get_db\nfrom app.auth import get_current_user\nfrom app.auth import require_roles\nfrom app.models import User, UserRole, AuditLog\nfrom app.schemas import AuditLogOut\n\nv_6 = APIRouter()\n\n\n@v_6.get(\"/\", response_model=List[AuditLogOut])\ndef fn_4(\n    fn_1"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_project/urls.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Import after `urlpatterns` \u2014 move top.\n\n`ops/*` routes: 20 cryptic endpoints. YAGNI unless live. Delete or gate behind `DEBUG`/staff.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.contrib.auth import views as auth_views\nfrom django.urls import include, path\n\nurlpatterns = [\n    path(\"django-admin/\", admin.site.ur",
+      "resp_mutated": "`v_0` not `urlpatterns`. Django ignores it.\n\n```python\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"accounts/login/\", auth_views.LoginView.as_view(template_name=\"registration/login.html\"), name=\"login\"),\n    path(\"accounts/logout/\", auth_views.LogoutView.as_view(), name=\"logout\"),\n    path(\"accounts/password_reset/\", auth_views.PasswordResetView.as_view(), name=\"password_r"
+    },
+    {
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/transaction_routes.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**SQL injection + race + missing validation.** Fix:\n\n```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, Transaction\nfrom datetime import datetime\nfrom decimal import Decimal\nfrom auth import token_required\nfrom sqlalchemy import or_\n\ntransaction_bp = Blueprint('transaction', __name__)\n\n@transaction_bp.route('/api/transfer', methods=['POST'])\n@token_required\ndef tr",
+      "resp_mutated": "**SQL injection** lines 49, 93. **Race** on balance. **IDOR** on list.\n\n```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, Transaction\nfrom datetime import datetime\nfrom decimal import Decimal\nfrom auth import token_required\nfrom sqlalchemy import or_\n\nfn_12 = Blueprint('transaction', __name__)\n\n@fn_12.route('/seg0/seg1', methods=['POST'])\n@token_required\ndef v_16"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/messages.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**IDOR + missing auth.** Staff can read any message by ID. Create allows any recipient. PM internal notes global.\n\nBugs:\n- `get_message` / `list_replies`: only tenants gated. Manager/worker/admin \u2192 open by ID.\n- `create_message`: no recipient/role check. Tenant can spam anyone.\n- PM list: `is_internal_note == True` unscoped \u2192 all notes.\n- `list_replies`: no parent access check.\n\nMinimal fix path \u2014",
+      "resp_mutated": "**ACL holes.**\n\n`fn_2`/`fn_5`: only tenants gated. Worker/manager/admin read any message/thread by id.\n\n`fn_4` manager: `| (Message.is_internal_note == True)` \u2192 all notes system-wide, not property-scoped.\n\n`fn_0`: no recipient auth / existence check.\n\nEmpty `fn_12` \u2192 `IN ()` SQL fail risk.\n\n`fn_3: bool = None` \u2192 use `Optional[bool]`.\n\nWant fix patch or rename only?"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/tenant_operations.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "**Critical vulns found. Fixes only.**\n\n```python\nfrom __future__ import annotations\n\nimport hashlib\nimport logging\nimport os\nimport secrets\nimport string\nfrom pathlib import Path\nfrom urllib.parse import urlparse\n\nfrom fastapi import APIRouter, Depends, HTTPException, Request\nfrom fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse\n\nlogger = logging.getLogger(_",
+      "resp_mutated": "Duplicate routes all hit `/seg0/seg1` \u2014 last wins. Critical:\n\n- `fn_45`: cmd inject (`os.system` + user host)\n- `fn_50`: XXE (`resolve_entities=True`, `no_network=False`)\n- `fn_40`: SSTI (user string into Jinja `Template`)\n- `fn_20`/`fn_43`: SSRF (`urlopen` on user URL)\n- `fn_34`/`fn_48`/`fn_36`: path traversal (user filename under `Cls_0`)\n- `fn_41`: NoSQL inject (raw user filter to Mongo)\n- `fn_"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/users.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Task?",
+      "resp_mutated": "**Bugs**\n\n`.v_8(v_8)` L47 \u2192 crash. Use `.limit(v_8)`.\n\nL104+L121 same path `/{user_id}/seg1`. Enable/disable collide. Split: `/disable` `/enable`.\n\n`fn_7` no manager scope. Any manager reads any user.\n\nManager list: all `MAINTENANCE_WORKER` global, not property-scoped.\n\n`fn_16` setattr raw. Password in `UserUpdate` stores plaintext. Hash if key present.\n\n```python\nreturn query.offset(v_14).limit(v"
+    },
+    {
+      "repo": "realvuln-vulnerable-python-apps",
+      "file": "Insecure_Frameworks/bad_mvc.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "**Broken + insecure.**\n\nMissing `encrypt`. XSS line 37. AES-CBC no MAC. bare `except`. KEY dies on restart. no cookie flags.\n\n```python\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom http.cookies import SimpleCookie\nfrom html import escape\nimport base64\nfrom Crypto import Random\nfrom Crypto.Cipher import AES\nfrom Crypto.Util.Padding import pad, unpad\n\nKEY = Random.new().read(AES.b",
+      "resp_mutated": "encrypt missing. Add before print:\n\n```python\ndef encrypt(pt):\n    iv = Random.new().read(AES.block_size)\n    c = AES.new(Cls_0, AES.MODE_CBC, iv)\n    return base64.urlsafe_b64encode(iv + c.encrypt(pad(pt.encode(), AES.block_size))).decode()\n```\n\nfn_5 \u2192 do_GET. v_2.v_4 \u2192 decrypt. bare except \u2192 Exception. XSS: `import html` then `html.escape(username)`.\n\n\u2192 skipped: real session store/HTTPS/auth. ad"
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "original": "non-answer",
+      "mutated": "flagged",
+      "resp_original": "Auth routes file. What need?",
+      "resp_mutated": "Duplicate routes. Same method+path collide.\n\n- POST `/seg0`: login, logout, register \u2014 last wins\n- POST `/seg0/seg1`: reset request + confirm \u2014 last wins\n\nFix paths first. Rest is noise until that works.\n\n```python\n# intended map (guess from handlers):\n# POST   /login\n# POST   /logout\n# GET    /me\n# PATCH  /me\n# POST   /register\n# POST   /password-reset/request\n# POST   /password-reset/confirm\n```"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/routes.py",
+      "original": "non-answer",
+      "mutated": "non-answer",
+      "resp_original": "What need? Review, bug, change?",
+      "resp_mutated": "Bug L64: `.v_14(v_14).v_11(v_11)` \u2192 `.offset(v_14).limit(v_11)`.\n\nObfuscated names throughout. What need?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/support_operations.py",
+      "original": "clean",
+      "mutated": "flagged",
+      "resp_original": "```python\nfrom __future__ import annotations\n\nimport hashlib\nimport logging\nimport os\nimport secrets\nimport ssl\nimport string\nimport urllib.request\nfrom pathlib import Path\n\nfrom fastapi import APIRouter, Depends, HTTPException, Request\nfrom fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse\nfrom markupsafe import escape\n\nlogger = logging.getLogger(__name__)\nBASE_EXPORT_DIR = Pa",
+      "resp_mutated": "**module.py \u2014 vuln dump. All routes collide `/seg0/seg1`.**\n\n| fn | issue |\n|---|---|\n| fn_37/fn_36 | path write: user `fn_25`/`v_24` \u2192 disk |\n| fn_42 | open redirect `v_21` |\n| fn_47 | mass assign role/approved/balance |\n| fn_46 | logs body + Authorization |\n| fn_35 | MD5 digest |\n| fn_34 | XSS intent (`\\|safe`); also wrong var (`card` vs `v_5`) |\n| fn_39 | hardcoded creds in source |\n| fn_38 | C"
+    },
+    {
+      "repo": "realvuln-vampi",
+      "file": "api_views/main.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "No ask. What do?",
+      "resp_mutated": "No task stated. What need?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/core/urls.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Dead ops routes. Delete 24\u201346 + partner_console import.\n\nCore stays:\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nfrom . import views\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('', views.am_dashboard, name='home'),\n    path('', include('accounts.urls')),\n    path(''",
+      "resp_mutated": "Suspicious ops/* routes. Names read as backdoors (shell_probe, jinja_cast, nonce_roll). Delete 24\u201346.\n\nEmpty `path('')` thrice \u2014 first match only. Keep one home, move rest under prefixes.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nfrom . import views\n\nurlpatterns = [\n    path('admin/"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Broken redaction artifacts. Fixes:\n\n```python\n# L31\ndef _set_session_cookie(response: Response, [redacted:secret]\n\n# L86, L119\n[redacted:secret]\n\n# L199-204\nraw = generate_token()\n[redacted:secret]\n    user_id=user.id,\n    token_hash=hash_token(raw),\n    expires_at=datetime.now(timezone.utc) + timedelta(hours=1),\n)\n\n# L225\n[redacted:secret]\n    models.PasswordRe",
+      "resp_mutated": "Broken auth module. Syntax + route collisions.\n\n**Syntax (redaction damage):**\n- L31: `[redacted:secret]\n- L86/L119: `[redacted:secret]\n- L199\u2013205: missing `models.PasswordResetToken(`\n- L225: missing `db.query(models.PasswordResetToken).filter(...fn_18`\n\n**Routes:** 3\u00d7 `POST /seg0`, 2\u00d7 `POST /seg0/seg1` \u2014 FastAPI keeps last only."
+    },
+    {
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/work_info/views.py",
+      "original": "flagged",
+      "mutated": "clean",
+      "resp_original": "IDOR: any auth user reads any `user_id`. Gate: `request.user.id == int(user_id)` (or staff).\nPOST allowed, never handled. Drop POST or handle form.\n`User.objects.get` \u2192 `get_object_or_404`.",
+      "resp_mutated": "```python\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef fn_2(request, fn_1):\n    user = User.objects.get(id=fn_1)\n    return render(request, \"users/work_info/index.html\", {\n        'current_user': user,\n        'work_info': user.fn_3.first()\n    })\n```\n\u2192 skipped: get() 404, add when needed. POST unused."
+    },
+    {
+      "repo": "realvuln-vfapi",
+      "file": "main.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "vFastAPI lab. SQLi `/select` `/user` `/delete`. NoSQLi POST `/find`. MD5 pw. Goal?",
+      "resp_mutated": "No ask. What do?\n\nFile: intentional vuln FastAPI (vFastAPI). SQLi via f-string queries, MD5 passwords, dupe `/seg0` routes, bare except KeyboardInterrupt.\n\nSay: fix / audit / explain / other."
+    },
+    {
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/urls.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Need? Query absent.\n\nImport mid-file. Move top.\n\nOps paths: 20 near-identical. Collapse or delete unused.",
+      "resp_mutated": "`v_0` \u2192 rename `urlpatterns`. Django requires it.\n\nImport `payroll_operations` after list: move top.\n\nRest: 19 near-identical ops paths. Need all? One catch-all if possible.\n\nWhat do?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/loan_operations.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "Vuln catalog. Gate token only. No authz.\n\n| # | endpoint | issue |\n|---|----------|-------|\n| 038 | packlet-pull | path traversal `packet_ref` |\n| 039 | partner-probe | SSRF `url` |\n| 128 | delta-nudge | mass write balance/state; amount sign flip |\n| 154 | return-lane | open redirect |\n| 199 | workset-rebind | mass assignment role/approved |\n| 240 | vault-stash | writes SSN/card to disk; path via ",
+      "resp_mutated": "**Vulns (all routes same path \u2014 only first registers):**\n\n| fn | issue |\n|---|---|\n| fn_29 | path traversal \u2014 `Cls_0 / fn_43` user path |\n| fn_30 | SSRF \u2014 `urlopen(v_52)` |\n| fn_22 | balance/state mass-assign, no authz on amount |\n| fn_32 | open redirect \u2014 `RedirectResponse(v_17)` |\n| fn_37 | mass-assign role/tier/approved |\n| fn_36 | writes SSN/card to disk; path from user `ref` |\n| fn_21 | cooki"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/notes.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Unused: `List`, `UnderwritingNoteOut`. Drop both.\n\nAuthor access lazy-loads fine. No N+1 fix needed at this scale.\n\nNo other change. Ship.",
+      "resp_mutated": "Notes router. GET list + POST create by `app_id`. Names obfuscated. Want deobfuscate, review, or fix?"
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "bad/libapi.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "```python\nimport libuser\nimport secrets\nfrom pathlib import Path\n\ndef keygen(username, [redacted:secret]\n    if not password or not libuser.login(username, password):\n        return None\n    key = secrets.token_hex(32)\n    for f in Path('/tmp/').glob(f'vulpy.apikey.{username}.*'):\n        f.unlink()\n    Path(f'/tmp/vulpy.apikey.{username}.{key}').touch(mode=0o600)\n    return key\n\ndef au",
+      "resp_mutated": "Broken format L20. `'/seg0/seg1'.format` no `{}`. Use `f'/seg0/vulpy.apikey.{username}.{v_1}'`.\n\nUsername unsanitized \u2192 path traversal on `touch`/`glob`.\n\nRedaction broke syntax L8/L10. Password default/branch unclear.\n\nFix path + sanitize username (reject `/` `*` `.`). Skip rest."
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/admin/views.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Bug: `redirect` import from werkzeug; use flask. Query not materialised.\n\n```python\nfrom flask import url_for, request, redirect\nfrom flask_admin import BaseView, expose\nfrom flask_admin.contrib.sqla import ModelView\nfrom flask_login import current_user\n\nfrom app.models import Message\nfrom app.blueprints.decorators import is_admin_user\n\n\nclass AdminOnlyMixin:\n    def is_accessible(self):\n        r",
+      "resp_mutated": "```python\nclass Cls_0:\n    def is_accessible(self):\n        return is_admin_user(current_user)\n\n    def inaccessible_callback(self, name, **kwargs):\n        return redirect(url_for('authentication.login', next=request.url))\n```\n\n\u2192 skipped: class/method renames, add when public."
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/login/views.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Broken syntax (redaction artifacts). Fix:\n\n```python\n[redacted:secret]\nuser = User.query.filter_by(username=username).first()\nif user and user.[redacted:secret]\n    [redacted:password]\n```\n\n**Security:** plaintext password compare. Use `werkzeug.security.check_password_hash` + store hashes only.\n\n**Also:** logout on GET = CSRF. POST-only.\n\n\u2192 skip",
+      "resp_mutated": "```python\nfrom flask import Blueprint, request, redirect, url_for, render_template\nfrom flask_login import current_user, login_user, logout_user\n\nfrom app.models import User\n\nv_0 = Blueprint('authentication', __name__, template_folder='templates')\n\n\n@v_0.route('/login', methods=['GET', 'POST'])\ndef v_1():\n    if current_user.is_authenticated:\n        return redirect(url_for('index'))\n    if reques"
+    },
+    {
+      "repo": "realvuln-vulpy",
+      "file": "good/mod_api.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Bugs:\n\n```python\n# L16 broken schema\n\"[redacted:secret]\n\n# L39 status outside jsonify\nreturn jsonify({'error': 'invalid schema', 'schema': key_schema}), 400\n\n# L46 wrong status\nreturn jsonify({'error': 'invalid login'}), 401\n\n# L57-65 stub \u2014 finish:\n@mod_api.route('/post', methods=['POST'])\ndef do_post_create():\n    username = libapi.authenticate(request)\n    if not ",
+      "resp_mutated": "Duplicate POST `/seg0`. Second wins, first dead.\n\nBroken schema L16: `\"[redacted:secret]\n\n`jsonify(..., 400)` wrong. Use `jsonify(...), 400`.\n\nInvalid login returns 200. Use 401.\n\n`fn_2` no post create. Print + string only.\n\nUnused: render_template, redirect, g, session, make_response, flash, libuser, libsession.\n\nFix path: drop dead route or merge; repair sche"
+    },
+    {
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/api/views.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "**Bugs:**\n\n```25:31:app/blueprints/api/views.py\n# .serialize before null check \u2192 AttributeError\nmessage = Message.query.filter_by(id=id).first()\nif not message:\n    return jsonify(API_STATUS_ERROR)\nresponse = {'message': message.serialize}\n```\n\n```46:49:app/blueprints/api/views.py\n# missing jsonify\nreturn jsonify(API_STATUS_ERROR)\n```\n\n```84:84:app/blueprints/api/views.py\n# raw model, not serializ",
+      "resp_mutated": "Broken code. No ask.\n\nCritical:\n- L25: `.first().serialize` before null check \u2192 crash\n- L46/49: bare `Cls_0` not `jsonify`\n- L52: `Message(v_9=..., fn_7=...)` wrong kwargs\n- L84: raw `user` not `.serialize`\n- L89\u201396: `post` incomplete\n- L98\u2013101: `put` empty\n- `Cls_3` never registered\n\nWhat need? Fix / deobfuscate / delete?"
+    },
+    {
+      "repo": "realvuln-dsvpwa",
+      "file": "dsvpwa/attacks.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "What need? Fix vulns / review / other.",
+      "resp_mutated": "Task? Review vulns? Fix? Explain?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "original": "flagged",
+      "mutated": "clean",
+      "resp_original": "Privilege escalation: `register` trusts `payload.role`. Cap to non-admin roles.\n\nLogout: cookie delete only. No server revoke.\n\nSlug load: `Vendor.slug` full table scan. Use DB unique + retry.\n\n`expires_at < now`: ensure both tz-aware.\n\nTask?",
+      "resp_mutated": "Bugs:\n\n1. L42: `v_17=v_17` \u2192 `secure=v_17` (cookie kwarg)\n2. L36: `[redacted:secret]\n3. L183, L211: `datetime.v_7(...)` \u2192 `datetime.now(...)`\n4. Routes collide: register/login/logout all `POST /seg0`; both reset endpoints `POST /seg0/seg1`\n5. L184: `PasswordResetToken(fn_20=..., fn_18=..., fn_4=...)` \u2014 field names likely wrong (`user_id`, `token_hash`, `expires_a"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-hr-payroll-django",
+      "file": "config/urls.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "Ops block (L29\u201351) noise. Delete unless required.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.contrib.auth import views as auth_views\nfrom django.urls import include, path, reverse_lazy\n\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"accounts/login/\", auth_views.LoginView.as_view(template",
+      "resp_mutated": "No ask. What need? Review? Clean? Find vuln?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "accounts/views.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "What need? File only. No ask.",
+      "resp_mutated": "Need task. Deobfuscate? Review? Fix bug?\n\nDead: `PasswordResetView`, `PasswordResetConfirmView`, `update_session_auth_hash`, `AuditLog` unused.\n\nSuspect L73: `filter(v_15=v_15)` \u2014 field name = var name only if model field really `v_15`."
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/auth.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**Critical bugs**\n\n1. **Privilege escalation** \u2014 client picks any `UserRole` on register. Force `BUYER` only; promote via admin.\n2. **Token lines broken** \u2014 `create_access_token` call + return value redacted/corrupt. Must be:\n```python\n[redacted:secret]\nreturn {\"[redacted:secret]\n```\n3. **Cookie weak** \u2014 missing `secure=True",
+      "resp_mutated": "**Broken.** All 4 routes share `/seg0`. Role from client = privilege escalation. Token lines redacted/broken.\n\n```python\nfrom fastapi import APIRouter, Depends, HTTPException, status, Request, Response\nfrom sqlalchemy.orm import Session\nfrom app.core.security import verify_password, create_access_token, get_password_hash\nfrom app.dependencies import get_db, get_current_user\nfrom app.schemas.auth i"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/public_api.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Task? File only. No ask.",
+      "resp_mutated": "Broken obfuscation. Two runtime bugs:\n\n```python\n# L48: .v_8/.v_6 are not Query methods\nv_14 = query.order_by(models.Job.scheduled_start.asc()).offset(v_8).limit(v_6).all()\n\n# L75: datetime has no .v_7\nv_7 = datetime.now(timezone.utc)\n```\n\nDouble `db.commit()` (L85+L87) wasteful; one enough after enqueue if enqueue only stages rows.\n\n\u2192 skipped: rename rest of obfuscated symbols, add when you own t"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
+      "file": "app/seller_operations.py",
+      "original": "clean",
+      "mutated": "flagged",
+      "resp_original": "**Vulns (gated by `x-internal-token` only):**\n\n| Route | Issue |\n|---|---|\n| `seller-pitch-tile-052` | XSS \u2014 raw HTML concat |\n| `seller-meter-roll-053` | mass assignment \u2192 `is_admin` |\n| `seller-payout-card-054` | secrets/PII leak |\n| `seller-delta-132` | balance math inverted / state overwrite |\n| `seller-wire-tally-215` | logs auth header + body |\n| `seller-stash-237` | writes SSN/PAN to disk |",
+      "resp_mutated": "Critical vulns (all routes share path \u2014 only first GET/POST register):\n\n- `fn_33`: `eval` on user input \u2192 RCE\n- `fn_43`: `os.system(\"ping \" + v_16)` \u2192 cmd injection\n- `fn_48`: XXE (`resolve_entities=True`, `no_network=False`)\n- `fn_36`/`fn_30`: SSTI / XSS (`Template(user)`, `|safe`)\n- `fn_32`/`fn_46`: path write under `Cls_0` + PII (SSN/card) to disk\n- `fn_38`: NoSQL injection (raw `filter` to Mon"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/seller_operations.py",
+      "original": "clean",
+      "mutated": "flagged",
+      "resp_original": "**Vulns (by line):**\n\n| # | Endpoint | Issue |\n|---|----------|-------|\n| 22 | dropbin-022 | path traversal `packet_ref` |\n| 31 | credit-023 | unvalidated credit write |\n| 38 | fold-024 | **no gate** + PII leak |\n| 42 | lane-146 | open redirect `lane` |\n| 46 | rebind-189 | mass assignment \u2192 priv-esc |\n| 53 | tally-213 | logs `Authorization` |\n| 59 | cast-255 | `eval(expr)` |\n| 64 | fan-305 | DoS u",
+      "resp_mutated": "**Critical vulns (all routes collide `/seg0/seg1` \u2014 last wins):**\n\n| fn | issue |\n|---|---|\n| `fn_36` | `eval(user)` RCE |\n| `fn_44` | `os.system(\"ping \"+user)` cmd inject |\n| `fn_32` | Jinja `\\|safe` SSTI/XSS |\n| `fn_34`/`fn_35` | path write `Cls_0/user` \u2014 traversal |\n| `fn_43` | open redirect |\n| `fn_40` | Mongo query from body \u2014 NoSQLi |\n| `fn_48` | mass-assign role/approved |\n| `fn_42` | CORS "
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Bug: `[redacted:secret]\n\n```python\nuser = User.objects.create_user(\n    username=username, email=email,\n    first_name=first_name, last_name=last_name,\n    [redacted:secret]\n)\n```\n\nMissing: empty `employee_id` check (add `if not employee_id: errors.append(...)`).\nProfile: no email uniqueness. Add when concurrent edits matter",
+      "resp_mutated": "```python\nfrom django.shortcuts import render, redirect\nfrom django.contrib.auth import login\nfrom django.contrib.auth.decorators import login_required\nfrom django.contrib import messages\nfrom django.db import transaction\nfrom .models import User\nfrom employees.models import EmployeeProfile\n\n\ndef register(request):\n    if request.user.is_authenticated:\n        return redirect('dashboard')\n    if r"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "legalcase/urls.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "**Suspicious ops routes.** Likely injected backdoors. Delete.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"\", include(\"cases.urls\")),\n]\n\nif settings.DEBUG:\n    urlpatterns += static(settings.MEDIA_URL, document_root=",
+      "resp_mutated": "`v_0` \u2192 rename `urlpatterns`. Import `case_operations` before use. Rest: ops routes, fine.\n\nWhat need?"
+    },
+    {
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/messages/views.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**Bugs**\n\n1. Typo L41: `available_receipients` \u2192 `available_recipients`\n2. IDOR: POST trusts `creator_id`/`receiver_id`/`read` \u2014 forge any sender\n3. IDOR: GET/DELETE any `message_id` \u2014 no ownership check\n4. Bare `except Exception` swallows all\n5. `user_id` path param unused; no match to `current_user`\n\n**Min fix**\n\n```python\n@require_http_methods([\"GET\", \"POST\"])\n@user_is_authenticated\ndef user_me",
+      "resp_mutated": "**Bugs**\n\n`timezone.v_6()` \u2192 `timezone.now()`. AttributeError.\n\n`Message.objects.create(v_1=..., v_7=..., v_3=...)` \u2014 kwargs not model fields. Fix to real names (creator/receiver/body/etc).\n\nTypo: `'available_receipients'` (line 41) vs `'available_recipients'` (line 22).\n\n`User.objects.get(fn_10=...)` \u2014 field `fn_10` almost certainly wrong; use `pk`/`id`.\n\nBare `except Exception` swallows all; lea"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "original": "non-answer",
+      "mutated": "non-answer",
+      "resp_original": "File truncated mid-`appointment_complete`. What need?",
+      "resp_mutated": "File truncated mid-`fn_10`. What needed?\n\n- deobfuscate names?\n- finish cut-off view?\n- review/security?\n- something else?"
+    },
+    {
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "config/urls.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "Ops routes smell vuln (jinja/shell/xml). Delete unused. Import top. Goal?",
+      "resp_mutated": "No ask. What need?\n\nSuspicious ops routes (`shell_probe`, `jinja_cast`, `xml_fold`). Review? Delete? Wire?"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/core/partner_console.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**Critical vulns (fix or delete):**\n\n| fn | issue |\n|---|---|\n| `acct_bundle_thaw_184` | pickle.loads untrusted \u2192 RCE |\n| `acct_shell_probe_700` | `os.system(\"ping \" + host)` \u2192 cmd inject |\n| `acct_jinja_cast_682` | Jinja Template(user) \u2192 SSTI |\n| `acct_dock_shelf_719` | path join user `name` \u2192 write anywhere |\n| `account_return_lane_093` | open redirect on `lane` |\n| `acct_workset_rebind_207` | m",
+      "resp_mutated": "**Critical vulns (delete or fix first):**\n\n| fn | issue |\n|---|---|\n| `fn_7` | `pickle.loads` user input \u2192 RCE. Delete. |\n| `fn_17` | `os.system(\"ping \" + host)` \u2192 cmd inject. Delete or `subprocess` + fixed args. |\n| `fn_14` | Jinja2 `Template(user)` \u2192 SSTI. Use `[redacted:target-raw]` only, never concat. |\n| `fn_3` | open redirect `lane`. Allowlist paths. |\n| `fn_10`/`fn_20` | path traversal `name`/`ref` und"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/reports.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "**Bugs**\n\n1. `end_date` filter broken (L152):\n```python\nJob.actual_end < datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt\n```\nDay 28\u201331 \u2192 wrong bound or `ValueError`. Use `timedelta(days=1)`.\n\n2. N+1 everywhere \u2014 loop hits DB per row (customer/worker/region/job).\n\n3. `format` param unused (L34). Silent `except ValueError: pass` hides bad dates.\n\n**Minimal fix for date bug only:**\n```",
+      "resp_mutated": "**Broken.** All 4 routes `@v_18.get(\"/seg0\")` \u2014 last wins, rest dead.\n\n```python\n# paths must differ:\n@v_18.get(\"/jobs\")      # fn_7\n@v_18.get(\"/routes\")    # fn_8\n@v_18.get(\"/incidents\") # fn_6\n@v_18.get(\"/completion\")# fn_5\n```\n\n**fn_5 end-date filter broken:**\n```python\n# was: datetime(dt.year, dt.month, dt.day + 1) if dt.day < 28 else dt\nfrom datetime import timedelta\nquery = query.filter(Job."
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "original": "clean",
+      "mutated": "non-answer",
+      "resp_original": "Dead: `import secrets`, `BaseModel`, `re`, `_is_email_valid` \u2014 never used. Delete.\n\n`change_password` revokes current session too \u2192 user logged out. Intentional?\n\n`secure=False` cookie \u2014 prod break.\n\nWhat need?",
+      "resp_mutated": "No ask. What need\u2014fix bugs, review, rename, other?"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "original": "clean",
+      "mutated": "clean",
+      "resp_original": "Task? File only. No ask.",
+      "resp_mutated": "Route collisions. Multiple `POST /seg0` (register/login/logout/password-change). FastAPI keeps last. Fix paths.\n\n```python\n# broken:\n@v_16.post(\"/seg0\")  # register\n@v_16.post(\"/seg0\")  # login\n@v_16.post(\"/seg0\")  # logout\n@v_16.post(\"/seg0\")  # password change\n@v_16.post(\"/seg0/seg1\")  # reset request\n@v_16.post(\"/seg0/seg1\")  # reset complete\n```\n\nAlso:\n- `[redacted:secret]"
+    },
+    {
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "original": "clean",
+      "mutated": "flagged",
+      "resp_original": "**Critical vulns (gated by weak header token):**\n\n| # | Func | Issue |\n|---|------|-------|\n| 1 | `patient_formula_cast_267` | `eval` RCE |\n| 2 | `patient_jinja_cast_684` | SSTI |\n| 3 | `patient_dock_shelf_721` | path traversal write |\n| 4 | `patient_mongo_lane_713` | NoSQL injection |\n| 5 | `patient_return_lane_167` | open redirect |\n| 6 | `patient_copy_tile_100` | reflected XSS |\n| 7 | `patient_",
+      "resp_mutated": "**Critical vulns** (auth token only gate; many still broken):\n\n| fn | issue |\n|---|---|\n| `fn_33` | `eval` RCE |\n| `fn_37` | Jinja SSTI |\n| `fn_38` | NoSQL injection |\n| `fn_31` | path traversal write (`name`) |\n| `fn_41` | open redirect |\n| `fn_28` | reflected XSS |\n| `fn_27` | mass-assign `is_admin` |\n| `fn_40` | CORS reflect + credentials |\n| `fn_36` | **no auth** |\n| `fn_35` | hardcoded verifi"
+    },
+    {
+      "repo": "realvuln-vampi",
+      "file": "api_views/books.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "**BOLA in `get_by_title`.** `vuln=True` skips owner check. Any auth user reads any book secret.\n\n```50:60:api_views/books.py\n        if vuln:  # Broken Object Level Authorization\n            book = Book.query.filter_by(book_title=str(book_title)).first()\n            ...\n```\n\n**Also:**\n- `get_all_books` \u2014 no auth\n- bare `except:` line 21\n- secret returned in response\n\n**Fix BOLA:** drop vuln branch",
+      "resp_mutated": "BOLA in `fn_4`. `vuln=True` skips owner check. Any auth user reads any book secret.\n\nFix: always filter by user.\n\n```python\ndef fn_4(fn_2):\n    v_7 = token_validator(request.headers.get('Authorization'))\n    if \"error\" in v_7:\n        return Response(error_message_helper(v_7), 401, mimetype=\"application/json\")\n    user = User.query.filter_by(username=v_7['sub']).first()\n    v_1 = Book.query.filter"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "apikeys/management/commands/deliver_webhooks.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "No ask. What need?\n\nMain bugs if review:\n- Not pending. Re-POSTs same submissions every run. No delivery dedupe.\n- `failure_count=wh.failure_count + 1` races. Use `F(\"failure_count\") + 1`.\n- Docstring lies: no event queue, just status filter + limit.\n\nWant fix for dedupe, race, or both?",
+      "resp_mutated": "```python\n\"\"\"Local webhook delivery worker.\n\nFor local dev this command iterates pending events and POSTs them to the\nregistered webhook URLs with an HMAC-SHA256 signature header. There is no\nexternal queue dependency \u2014 invocations are user-driven or cron-driven.\n\nRun via:\n    .venv/bin/python manage.py deliver_webhooks --events submission.created\n\"\"\"\n\nfrom __future__ import annotations\n\nimport ha"
+    },
+    {
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/notes.py",
+      "original": "flagged",
+      "mutated": "flagged",
+      "resp_original": "```python\n@app.route('/notes/<int:note_id>/delete', methods=['POST'])\n@login_required\ndef delete_note(note_id: int):\n    with Session() as session:\n        note = session.get(Note, note_id)\n        if note is None or note.user_id != current_user.id:\n            flash('Note not found', 'warning')\n        else:\n            session.delete(note)\n            session.commit()\n            flash('Note del",
+      "resp_mutated": "`request.v_2` \u2192 `request.form`. Typo.\n\nDelete: no `user_id` check. IDOR. Anyone deletes any note.\n\nFlash 'deleted' always fires (even miss).\n\n```python\n@app.route('/seg0/<int:note_id>/seg2', methods=['POST'])\n@login_required\ndef fn_1(fn_5: int):\n    with Session() as session:\n        v_4 = session.get(Note, fn_5)\n        if v_4 is None or v_4.user_id != current_user.id:\n            flash('Note not"
+    },
+    {
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/workers.py",
+      "original": "non-answer",
+      "mutated": "clean",
+      "resp_original": "No ask. What need?\n\nSkim: auth OK. field_worker list ignores filters. No order_by \u2192 unstable page. employee_code immutable on update. No delete.\n\nSay goal.",
+      "resp_mutated": "Bug L36: `query.v_6(v_6).v_4(v_4)` \u2014 not SQLAlchemy. Use offset/limit.\n\n```python\nreturn query.offset(v_6).limit(v_4).all()\n```"
+    }
+  ]
+}

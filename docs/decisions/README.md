@@ -83,3 +83,116 @@ documents here as real choices are accepted, then index them in this file.
   security vocabulary) — so the SQLi/XSS/hash workload passes untouched; the unsalted-MD5 password
   value is removed via the credential pass while the finding survives; residual is MEASURED (recall
   vs FP) with a guard that fails closed on an absent corpus. Egress PII leg + bare-PAN + NER deferred.
+- [0018 Week-10 eval is a deterministic oracle over an observable subset; the LLM judge is measured, not trusted](0018-week10-eval-is-a-deterministic-oracle-over-an-observable-subset-judge-measured-not-trusted.md)
+  — a red-team showed the read-only fuzzer's observable surface is exactly one endpoint, so a naive
+  recall/FP over "the observable subset" is vacuous. Week-10 is a deterministic code oracle over two
+  labelled corpora: a `synthetic:true` corpus with a KNOWN confusion matrix (asserted as independent
+  ground truth) that exercises the matcher exhaustively, and an enriched real corpus (the known SQLi
+  search + four benign read paths, labelled from public sources) scored over a committed, redacted
+  live capture. Recall is honest COVERAGE (the syndicate does identify the observable SQLi, 1/1);
+  FP=0 on benign endpoints is the load-bearing gate (the syndicate false-positives on none);
+  unobservable auth/state-change vulns are deferred (0016), never faked. The guard fails closed +
+  non-vacuous by construction; a re-redaction leak guard protects the first committed live capture.
+  The LLM narrative judge is built only to be MEASURED — under the security-correct target-derived
+  provenance the hardened models refuse the grading role (0/12), and only a forbidden trust downgrade
+  gets them to respond — so it is demonstrated unfit to be load-bearing; the oracle stays the verdict.
+- [0019 Week-11 production is a containerised syndicate + per-run FinOps + an on-prem serving path](0019-week11-production-is-a-containerised-syndicate-per-run-finops-and-an-on-prem-serving-path.md)
+  — scouting corrected the literal charter (4 GB laptop GPU, no docker NVIDIA runtime). Week-11 ships
+  the three real things: per-run FinOps (`agent/finops.py`) that MEASURES exact tokens+latency and
+  labels cost an estimate (on-prem = $0), with a deterministic cost/token/latency/error budget guard
+  for spike alerting, opt-in and non-invasive; a slim digest-pinned syndicate container
+  (`infra/agent/`, RAG degrades gracefully so no ML stack) verified running the full pipeline against
+  the live planes; and an on-prem serving path as a gateway alias (`local-onprem`) verified LIVE via
+  Ollama (`qwen2.5:0.5b` on the GPU, agent call + FinOps $0), with vLLM (`infra/vllm/`) committed as
+  the datacenter path. Honestly deferred + named: vLLM production throughput/autoscaling; the
+  gateway-container→host-model hop (sandbox forbids non-loopback binds); output/version drift beyond
+  the budget guard.
+- [0020 The inherited LLM-SAST-triage verifier is measured unsafe; the deterministic ethos holds; default model → grok-4.5](0020-ai-sast-llm-triage-verifier-is-measured-unsafe-deterministic-ethos-holds-default-model-grok.md)
+  — the AI-SAST inherit-and-upgrade spike (clean-room guided-question verifier, inheriting VulnHunterX's
+  method) ran on real RealVuln FP-traps (Bandit → match → verify → score) and DISPROVED the thesis
+  across two models × two provenance conditions: under the security-correct target-derived provenance
+  BOTH sast-sol and grok-4.5 refuse the grading role (FP-reduction 0, reproducing the Week-10 judge on
+  the SAST surface); under the forbidden operator downgrade both grade but breach the hard recall floor
+  (silently drop real SQLi/cmd-injection/hardcoded-cred). So no verifier module ships (measure-first,
+  fail-allowed) — the honest path is a broader deterministic SAST foundation + a NON-load-bearing LLM
+  annotator that can never drop a finding. Also: the default agent model moved to grok-4.5
+  (`sast-grok45`, gpt-5.6-sol low on quota); frozen benchmark arms untouched.
+- [0021 The non-load-bearing LLM SAST annotator is a confirmed safe upgrade (ranks, never drops)](0021-non-load-bearing-sast-annotator-is-a-confirmed-safe-upgrade.md)
+  — the safe replacement for the disproven drop-verifier (0020): the LLM assigns a review-priority over
+  code-derived facts (operator-safe, no refusal) and NEVER drops a finding, so recall stays 1.0. Measured
+  over the full RealVuln corpus (n=1764, 37 memoized LLM calls): LLM annotator AUC 0.814 [0.780,0.848] vs
+  deterministic severity 0.732 [0.694,0.770] — significantly better (non-overlapping CIs), real-vuln
+  priority 0.44 vs FP-trap 0.26. The LLM assists the human's order-of-work, never the keep/drop call.
+  **AMENDED, then CORRECTED**: a self-red-team reported the free deterministic CWE-class prior beating
+  the LLM by +0.069 [+0.045,+0.095] — but that split was by ROW, so rows from one repo sat on both
+  sides and the prior was graded on repos it was fitted on. Corrected twice: leave-one-repo-out **pooled**
+  gives +0.012 [−0.006,+0.035] (a tie), but pooling ranks pairs that are only **1.9% within-repository**.
+  On the **per-application** estimand — how a pentest team actually triages — the same scores give
+  **+0.095 [+0.063,+0.128], the deterministic prior WINS**. Row-splitting was worth **+0.022** at matched
+  train size (not the +0.057 briefly published). The original direction was right; its method and
+  magnitude were not. Measured-not-trusted held twice on this surface, both times against our own
+  previous answer.
+- [0022 Multi-engine deterministic detection is the real recall lever; the SAST ceiling is structural](0022-multi-engine-deterministic-detection-is-the-real-recall-lever-sast-ceiling-needs-dast.md)
+  — ranking can't recover an undetected vuln, so detection was measured: Bandit recall 0.131, Semgrep
+  0.118 (but 2.4x the precision), **union 0.188 = +44% relative at no precision cost**, engines strongly
+  complementary (~37%/30% unique). **81% still missed by both** — CWE-200/284/862/639/20 (info exposure,
+  access control, missing authz, IDOR, input validation) need app semantics + runtime, which pattern SAST
+  structurally cannot see; that residual is the DAST/syndicate layer's job. Adding further engines
+  (OpenGrep/gosec/Brakeman/js-x-ray) is now an evidence-backed, per-language decision with a committed
+  harness. The founding thesis — AI stands on a broad deterministic tool foundation — measured, not assumed.
+- [0023 SAST detects PRESENCE not ABSENCE (6.2x, corrected from 9.5x); the residual belongs to runtime/DAST](0023-sast-detects-presence-not-absence-the-residual-belongs-to-runtime.md)
+  — per-CWE breakdown of 0022's missed 81%: SAST recall is **42.1% on "presence of a bad pattern"**
+  but **6.8% on "absence of a required control"** (CWE-284 access control, CWE-307 no auth-attempt
+  limit, CWE-200 info exposure all at or near 0%) — a **6.2x** gap. Both figures are the CORRECTED
+  ones: a `min(cwes)` attribution bug had misfiled 61% of vulnerabilities and inflated the gap to 9.5x.
+  The claim that absence is the LARGER half is **WITHDRAWN** (513 vs 637 corrected, with 36%
+  unclassified — relative size is unresolved). The direction survives every alternative bucketing. An
+  absent control has no token to match; it is observable only in behaviour, i.e. at RUNTIME. So more
+  SAST rules cannot close it — this is the measured justification for the SAST ∪ DAST architecture and
+  for the agentic syndicate. Instruments: analyze_cwe_gap.py, classify_gap.py (offline, no LLM).
+- [0024 The standard SAST benchmark contains 0% absence-of-control cases](0024-the-standard-sast-benchmark-cannot-measure-half-of-real-vulnerabilities.md)
+  — self-verified from OWASP Benchmark's own expectedresults CSV: all 2740 cases fall in 11 presence-type
+  categories (sqli/xss/weakrand/crypto/cmdi/pathtraver/...), with **zero** CWE-284/639/862/863/306/307.
+  Against a substantial absence-class share in RealVuln and Juice Shop, the benchmark that drives SAST
+  tool development cannot measure this class **at all** — what is not measured is not built. (The
+  stronger "larger half" phrasing depends on 0023's withdrawn size claim and is not asserted here; the
+  0% coverage stands on its own and is the load-bearing fact.)
+  Explains strong AI-SAST leaderboard scores alongside low real-world recall, and makes benchmark choice
+  a load-bearing decision. Also: Juice Shop's /api/Challenges carries no CWE/endpoint, so the E8/E9
+  runtime probers still lack a recall denominator (hand-labelling deferred).
+- [0025 Authorization is measured at the enforcement point; the finding is the defence-in-depth posture](0025-authorization-is-measured-at-the-enforcement-point-and-the-finding-is-defence-in-depth.md)
+  — two red-team lenses found the planned "detect missing authz" outcome unachievable here (the gateway
+  routes 8 endpoints, only 2 non-public, both correctly protected) and found E8's earlier finding was an
+  artefact of probing AROUND Kong. Reframed: judge at the enforcement point with a LIVE authenticated
+  identity; the finding is WHERE authorization is enforced. Measured on Juice Shop as agent-recon:
+  **2/2 non-public routed endpoints return 403 at the gateway but 200 at the app** — 100% rely solely on
+  Kong, a single point of failure any direct-to-app path defeats. Guarded by two fail-closed canaries
+  (session = identity liveness, synthetic = prober liveness) so a vacuous "clean" run is impossible, and
+  by a structural test that no LLM surface is reachable from the verdict path. Coverage bound stated:
+  8 routed endpoints, gateway-fronted slice only.
+- [0026 Research claims are governed by a written protocol; a correction must reach the instrument](0026-research-claims-are-governed-by-a-written-protocol-and-corrections-must-reach-the-instrument.md)
+  — 13 experiments had run with no written process, and a meta-analysis found 15 self-corrections of
+  which **every quantified one moved a claim against this lab's own headline**. Two live defects forced
+  the issue: 0021's retracted "+0.069, prior WINS" was **still being printed by the committed
+  instrument**, and the corrected number was not reproducible from committed data because the grouping
+  unit had been discarded. Root cause was structural — the runtime stack had DD1–DD10 pinning every
+  correction, the measurement stack had **zero tests**. Establishes `docs/research-protocol.md`
+  (preregister before measuring; the **estimand** is part of the preregistration; effect size and
+  interval, never a bare point estimate; adversarial review that reproduces before it attacks) and the
+  **correction-propagation law**: fix the instrument, pin it with a test carrying a negative control,
+  update decision + log, then grep the repo for surviving copies. Trialled on our own claims — it
+  **demolished** 0021 (now +0.095 per-application / tie pooled) and **confirmed** 0022 (+43.6%
+  [+31.5%,+58.4%], with the hidden caveat that 22 of 63 repos gain nothing). Also bounds the lab's
+  headline: "AI loses every comparison" is established **for gate roles only**.
+- [0027 The LLM belongs in the generative role, on absence-of-control classes](0027-the-llm-belongs-in-the-generative-role-on-absence-of-control-classes.md)
+  — every AI role this project had measured (judge 0018, verifier 0020, ranker 0021) was a **verdict/gate**
+  role the architecture forbids it to hold, so "AI loses every comparison" was structurally incomplete:
+  the **generative** role had zero measurements. Measured now, on the classes 0022–0024 proved pattern
+  SAST blind to: **Bandit + Semgrep flag an absence-class CWE in 0 of 60 vulnerable files**, while the
+  LLM names the ground-truth class in **6/60 (p = 0.0137)** and flags 10/60 (p = 0.00065) — on the
+  *identical* files, so file messiness is held fixed. Preregistered, powered by simulation, replicated on
+  a **disjoint** sample, positive-control gated. **Bounds are part of the claim:** ~10% hit rate,
+  file-level only (no model would emit structure — E16a), 33% non-answers, and RealVuln is public +
+  `llm_generated_corpus: true`, so capability and memorisation are **inseparable** and transfer to client
+  code is **unproven**. The headline is now two-part: deterministic wins in gate roles; the LLM supplies
+  what deterministic tooling cannot in the generative role.

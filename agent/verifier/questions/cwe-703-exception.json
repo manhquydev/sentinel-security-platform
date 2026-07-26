@@ -1,0 +1,11 @@
+{
+  "cwe": 703,
+  "category": "improper-exception-handling",
+  "note": "Clean-room, Sentinel-authored from CWE-703. Bandit flags bare/broad except and asserts; most are not security issues.",
+  "questions": [
+    "Does the flagged construct suppress or ignore an error that guards a SECURITY control (authentication, authorization, input validation, or an access check)?",
+    "Is a security-relevant failure being swallowed so execution continues as if it had succeeded?",
+    "Would an attacker gain anything (auth/validation bypass, info leak, or DoS) from this error being ignored?"
+  ],
+  "keep_if": "a security-relevant failure is silently ignored, letting execution proceed insecurely"
+}

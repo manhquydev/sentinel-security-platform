@@ -1,0 +1,29 @@
+# Week-11: run the containerised syndicate against the existing loopback planes (decision 0019).
+# network_mode: host so the container reaches the LiteLLM gateway (127.0.0.1:4000), Kong
+# (127.0.0.1:18443), DefectDojo (127.0.0.1:8080) and Phoenix (127.0.0.1:4317) already published on
+# the host. This is the project's documented `--network host` residual (README safety posture), not
+# a new exposure: the container makes only OUTBOUND calls to loopback and binds nothing.
+services:
+  syndicate:
+    build:
+      context: ../..
+      dockerfile: infra/agent/Dockerfile
+    image: sentinel-syndicate:local
+    container_name: sentinel-syndicate
+    network_mode: host
+    # Secrets (LITELLM_MASTER_KEY, DD_SERVICE_ACCOUNT_*, AGENT_RECON_SECRET) come from the git-ignored
+    # infra/.env — never baked into the image. Endpoint defaults live in the Dockerfile ENV.
+    env_file:
+      - ../.env
+    # Optional FinOps overrides (committed pricing/budget files); defaults are built-in.
+    environment:
+      - RECON_MODEL=${RECON_MODEL:-sast-sol}
+    # Durable checkpoint state outside the image so a run can resume across container restarts.
+    volumes:
+      - syndicate-out:/app/agent/out
+    restart: "no"
+    # Default command = deterministic no-cost demo (see Dockerfile CMD). For a real run:
+    #   docker compose -f infra/agent/docker-compose.yml run --rm syndicate --model sast-sol --thread r1
+
+volumes:
+  syndicate-out:

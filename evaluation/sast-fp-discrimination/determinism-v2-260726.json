@@ -1,0 +1,180 @@
+{
+  "n": 24,
+  "disagreements": 10,
+  "rate": 0.4167,
+  "ci95": [
+    0.2083,
+    0.625
+  ],
+  "identical_prose": 0,
+  "rows": [
+    {
+      "file": "accounts/views.py",
+      "arm": "absence",
+      "v1": "flagged",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "dsvw.py",
+      "arm": "absence",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "core/views.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "routes/account.py",
+      "arm": "absence",
+      "v1": "flagged",
+      "v2": "flagged",
+      "same_prose": false
+    },
+    {
+      "file": "portal/views.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "non-answer",
+      "same_prose": false
+    },
+    {
+      "file": "clinic/forms.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "non-answer",
+      "same_prose": false
+    },
+    {
+      "file": "legalcase/urls.py",
+      "arm": "absence",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "bad/libmfa.py",
+      "arm": "absence",
+      "v1": "flagged",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "accounts/urls.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "documents/views.py",
+      "arm": "absence",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/routers/audit_log.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "non-answer",
+      "same_prose": false
+    },
+    {
+      "file": "clinic_project/urls.py",
+      "arm": "absence",
+      "v1": "non-answer",
+      "v2": "non-answer",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/api/disputes.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/core/security.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "app/tests/models/test_model_benefits.py",
+      "arm": "control",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "crm/crm/admin.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "scripts/seed.py",
+      "arm": "control",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "portal/urls.py",
+      "arm": "control",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "auditlog/migrations/0001_initial.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "non-answer",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/routers/users.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "employees/services.py",
+      "arm": "control",
+      "v1": "non-answer",
+      "v2": "flagged",
+      "same_prose": false
+    },
+    {
+      "file": "audit/migrations/0001_initial.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/schemas/common.py",
+      "arm": "control",
+      "v1": "clean",
+      "v2": "clean",
+      "same_prose": false
+    },
+    {
+      "file": "backend/app/models.py",
+      "arm": "control",
+      "v1": "non-answer",
+      "v2": "clean",
+      "same_prose": false
+    }
+  ]
+}

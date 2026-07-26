@@ -1,0 +1,723 @@
+{
+  "generated_at": "2026-07-25T20:02:21.305832+00:00",
+  "model": "sast-grok45",
+  "granularity": "file-level (line-level unobtainable: see conformance finding)",
+  "counts": {
+    "positive": {
+      "clean": 30,
+      "non-answer": 20,
+      "flagged": 10
+    },
+    "negative": {
+      "clean": 30,
+      "non-answer": 9,
+      "flagged": 1
+    }
+  },
+  "flag_rate_vulnerable": 0.25,
+  "flag_rate_clean": 0.0323,
+  "separation": 0.2177,
+  "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
+  "rows": [
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "```python\n[redacted:secret]\n```\n```python\nf\"Use this link to reset your [redacted:secret]\n```\n```python\ndef invitation_accept(request, [redacted:secret]\n```\n```python\n[redacted:secret]\n```\n\nRedaction broke 4 lines. Rest fine."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-dsvw",
+      "file": "dsvw.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`cursor.fetc`. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-education-lms-django",
+      "file": "core/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`assignment_status`. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/account.py",
+      "verdict": "flagged",
+      "response": "**Critical vulns:**\n\n1. **RCE** `before_request` L118: `pickle.loads` on cookie \u2192 attacker-controlled deserialize.\n2. **SQLi** `search` L33: `text(f\"...{search_param}...\")` \u2192 inject via `search`.\n3. **IDOR** `get_personal_notes` L45: no `user_id == current_user.id` check.\n4. **Auth missing** `update_account` L68: no `@login_required`.\n5. **Broken hash** L88-89: incomplete `hashpw`, trailing comma \u2192 tuple assigned.\n6. **SSRF** `add_image` L60: fetches `form.url.data` unchecked.\n\n**Fix order:** kill pickle (use JSON), param bind search, authz check notes, add `@login_required`, fix hashpw, valid"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`appointment_book`. Need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic/forms.py",
+      "verdict": "clean",
+      "response": "```python\n[redacted:secret]\n```\n\nLine 32 broken by redaction. Rest fine."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-legal-case-django",
+      "file": "legalcase/urls.py",
+      "verdict": "clean",
+      "response": "Import after `urlpatterns` \u2014 move top.\n\nOps routes look generated/obfuscated. Auth? Needed?\n\nTask?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/libmfa.py",
+      "verdict": "clean",
+      "response": "Bugs:\n\n`mfa_validate` hardcodes secret \u2014 ignores DB/user. Always same TOTP.\n`set_trace_callback(print)` \u2014 SQL leak every call.\nSecrets in source.\n`mfa_reset_secret` always returns `False`.\n`mfa_enable` never sets secret.\nNo `conn.close()`.\n\nFix validate:\n\n```python\ndef mfa_validate(username, otp):\n    [redacted:secret]\n    if not [redacted:secret]\n    return pyotp.TOTP(secret).verify(otp)\n```\n\nDrop all `set_trace_callback`. Close conns. Generate secret once in reset/enable, store DB only.\n\n\u2192 skipped: conn pool/contextmgr, add when multi-thread."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "accounts/urls.py",
+      "verdict": "non-answer",
+      "response": "Standard Django auth URLs. Fine.\n\nWhat need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "documents/views.py",
+      "verdict": "non-answer",
+      "response": "Got `documents/views.py`. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/audit_log.py",
+      "verdict": "non-answer",
+      "response": "No ask. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_project/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? 20 `ops/*` routes + late import. Delete if unused."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-owasp-web-playground",
+      "file": "python/hackable/flag.txt",
+      "verdict": "non-answer",
+      "response": ""
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-dvblab",
+      "file": "backend/routes/transaction_routes.py",
+      "verdict": "flagged",
+      "response": "**SQL injection + IDOR + race.** Fix:\n\n```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, Transaction\nfrom datetime import datetime\nfrom decimal import Decimal\nfrom auth import token_required\nfrom sqlalchemy import or_\n\ntransaction_bp = Blueprint('transaction', __name__)\n\n@transaction_bp.route('/api/transfer', methods=['POST'])\n@token_required\ndef transfer(current_user):\n    data = request.get_json() or {}\n    to_user_id = data.get('to_user_id')\n    try:\n        amount = Decimal(str(data.get('amount', 0)))\n    except Exception:\n        return jsonify({'error':"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/messages.py",
+      "verdict": "clean",
+      "response": "Access holes:\n\n- `get_message` / `list_replies`: no role scope for manager/worker/admin beyond tenant checks. Any auth user reads any id.\n- `list_messages` manager branch: `is_internal_note == True` unscoped \u2192 all properties' notes.\n- `create_message`: no recipient/parent/role checks.\n\nWant fix? Say which endpoint."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/tenant_operations.py",
+      "verdict": "clean",
+      "response": "**Vulns (gated by weak token header only):**\n\n| Route | Issue |\n|---|---|\n| `tenant-boxfile-pull-086` | path traversal `packet_ref` |\n| `lease-meter-card-087` / `tenant-probe-357` | SSRF `url`/`endpoint` |\n| `tenant-return-lane-159` | open redirect `lane` |\n| `tenant-rebind-201` | mass assignment |\n| `tenant-stash-242` | path traversal + stores SSN/PAN |\n| `tenant-fold-280` | MD5 |\n| `tenant-fan-314` | unbounded `count` DoS |\n| `tenant-cast-581` | SSTI Jinja2 |\n| `tenant-shelf-590` | path traversal write |\n| `tenant-roll-601` | `random` not CSPRNG |\n| `tenant-lane-611` | NoSQL injection |\n| `t"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routers/users.py",
+      "verdict": "clean",
+      "response": "Authz hole `get_user`: managers fetch any user by id. No property scope.\n\n`list_users` manager path: empty `managed_ids` \u2192 `id.in_([])` false; only workers leak. All workers global, not property-scoped.\n\n`update_user`: raw `setattr` \u2014 if `UserUpdate` has `password`, stores plaintext. Hash or exclude.\n\n`create_user`/`update_user`: no role-escalation guard (admin can set any role; fine if intentional).\n\nFix get_user scope first if managers use it."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulnerable-python-apps",
+      "file": "Insecure_Frameworks/bad_mvc.py",
+      "verdict": "flagged",
+      "response": "Broken: `encrypt` undefined. XSS: raw `username`. AES-CBC unauthenticated + ephemeral `KEY`. Bare `except`. Cookie never issued.\n\nYAGNI: drop custom crypto server. Use Flask/`itsdangerous` or any real framework.\n\nIf forced keep stdlib-ish:\n\n```python\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nfrom http.cookies import SimpleCookie\nimport hmac, hashlib, base64, html, os\n\n[redacted:secret]\n\ndef sign(data: str) -> str:\n    raw = data.encode()\n    sig = hmac.new(SECRET, raw, hashlib.sha256).digest()\n    return base64.urlsafe_b64encode(sig + raw).decode()\n\ndef unsign([redacted:secret]"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "verdict": "clean",
+      "response": "Auth routes loaded. Task?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/routes.py",
+      "verdict": "non-answer",
+      "response": "File received. What need? Review / bug / change?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-healthcare-clinic-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`user_edit`. Task?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/support_operations.py",
+      "verdict": "non-answer",
+      "response": "Multiple vulns in ops routes. Path traversal, SSTI, cmd inject, XXE, open redirect, mass assign, weak MD5/random, SSL verify off, XSS `|safe`.\n\nWhat need? Fix all / one ticket / list only."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vampi",
+      "file": "api_views/main.py",
+      "verdict": "non-answer",
+      "response": "No ask. What need?\n\nIssues:\n- star import\n- hand-rolled JSON (use `jsonify`)\n- `db` via star import only\n- `populate_db` drops all \u2014 expose only if intentional\n\n```python\nfrom flask import jsonify\nfrom models.user_model import db, User\nfrom app import vuln\n\ndef populate_db():\n    db.drop_all()\n    db.create_all()\n    User.init_db_users()\n    return jsonify(message=\"Database populated.\")\n\ndef basic():\n    return jsonify(\n        message=\"VAmPI the Vulnerable API\",\n        help=\"VAmPI is a vulnerable on purpose API. It was created in order to evaluate the efficiency of third party tools in ident"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/core/urls.py",
+      "verdict": "clean",
+      "response": "Ops routes (L24\u201347): delete. partner_console junk. YAGNI.\n\n`path('')` twice: first wins (`am_dashboard`). Includes after never match bare `/`.\n\nKeep: admin, dashboards, accounts/crm includes, DEBUG static."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "clean",
+      "response": "Auth router dump. Redaction broke syntax (L31, L86, L119, L200\u2013204, L225). Real code likely `generate_token()` + `models.PasswordResetToken(...)`.\n\nLogic notes:\n- `update_me` password change: deletes all sessions, no new cookie \u2192 forced re-login. OK if intentional.\n- Reset confirm: same.\n- Enum protection: register/login/reset OK.\n- Dev token log: local only; strip before prod.\n\nWhat need? Fix / review / change?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/work_info/views.py",
+      "verdict": "flagged",
+      "response": "IDOR: any auth user loads any `user_id`. POST allowed, no handler.\n\n```python\n@require_http_methods([\"GET\"])\n@user_is_authenticated\ndef user_work_info_index(request, user_id):\n    if request.user.id != int(user_id):\n        return HttpResponseForbidden()\n    user = get_object_or_404(User, id=user_id)\n    return render(request, \"users/work_info/index.html\", {\n        \"current_user\": user,\n        \"work_info\": user.work_info.first(),\n    })\n```\n\n\u2192 skipped: staff override, add when roles exist."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vfapi",
+      "file": "main.py",
+      "verdict": "clean",
+      "response": "**SQL injection** `/select` `/user` PUT DELETE. f-string query. Fix: params.\n\n**NoSQL injection** POST `/find`. raw JSON \u2192 `find()`. Fix: whitelist keys.\n\n**MD5 passwords.** broken. Fix: bcrypt/argon2.\n\n**DELETE address** missing quotes + SQLi. line 235.\n\n**Error path** catches only `KeyboardInterrupt`, re-inits DB. line 163.\n\nWant fixes or leave as vuln lab?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "hr_portal/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, delete ops routes, or find bug?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/loan_operations.py",
+      "verdict": "clean",
+      "response": "Critical vulns. Gate token alone not enough.\n\n| # | Route | Issue |\n|---|-------|-------|\n| 1 | `/shell/loan-probe-507` | cmd inject: `os.system(\"ping -c 1 \" + host)` |\n| 2 | `/jinja/loan-cast-486` | SSTI: `Template(\"Result: \" + fragment)` |\n| 3 | `/parcel/loan-packlet-pull-038` | path traversal: `BASE_EXPORT_DIR / packet_ref` |\n| 4 | `/relay/loan-partner-probe-039` | SSRF: `urlopen(url)` |\n| 5 | `/xml/loan-fold-517` | XXE: `resolve_entities=True, no_network=False` |\n| 6 | `/dock/loan-shelf-495` | arbitrary write: `BASE_EXPORT_DIR / name` |\n| 7 | `/after/loan-lane-154` | open redirect: `Redire"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/notes.py",
+      "verdict": "clean",
+      "response": "`UnderwritingNoteOut` imported unused. Drop `_note_dict`/`_user_dict`. Return schema.\n\n```python\nfrom fastapi import APIRouter, Depends, HTTPException, Request\nfrom sqlalchemy.orm import Session, joinedload\nfrom app.core.database import get_db\nfrom app.core.security import require_user\nfrom app.models.user import User, UserRole\nfrom app.models.note import UnderwritingNote\nfrom app.models.application import LoanApplication\nfrom app.schemas.note import UnderwritingNoteCreate, UnderwritingNoteOut\nfrom app.utils.audit import log_audit\n\nrouter = APIRouter(prefix=\"/api/applications\", tags=[\"notes\"])"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "bad/libapi.py",
+      "verdict": "clean",
+      "response": "```python\nimport libuser\nimport secrets\nfrom pathlib import Path\n\n_KEYDIR = Path('/tmp/vulpy_keys')\n_KEYDIR.mkdir(mode=0o700, exist_ok=True)\n\ndef keygen(username, [redacted:secret]\n    if password is not None and not libuser.login(username, password):\n        return None\n    if not username or '/' in username or '..' in username or '.' in username:\n        return None\n    key = secrets.token_hex(32)\n    for f in _KEYDIR.glob(username + '.*'):\n        f.unlink()\n    p = _KEYDIR / f'{username}.{key}'\n    p.touch(mode=0o600)\n    return key\n\ndef authenticate(request):\n    key = request."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/admin/views.py",
+      "verdict": "clean",
+      "response": "Bug: `is_admin_user` likely decorator not predicate. Check call.\n\nQuery lazy OK (iterable).\n\n`redirect` import: prefer `from flask import redirect`.\n\n`AdminOnlyModelView` empty: delete if unused.\n\nNo other change needed."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/login/views.py",
+      "verdict": "clean",
+      "response": "**Plaintext password compare. Broken.**\n\n```python\nfrom werkzeug.security import check_password_hash\n\n# login POST branch:\nusername = request.form.get('username')\n[redacted:secret]\nuser = User.query.filter_by(username=username).first()\nif user and password and check_password_hash(user.password, password):\n    login_user(user)\n    return redirect(url_for('index'))\nreturn render_template('login/login.html', error='There was a problem logging in')\n```\n\nAlso: logout on GET is CSRF-able \u2014 restrict to POST.\n\n\u2192 skipped: rate limit, CSRF token, lockout. Add when public-facing."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vulpy",
+      "file": "good/mod_api.py",
+      "verdict": "clean",
+      "response": "```python\nfrom flask import Blueprint, request, jsonify\nimport libapi\nimport libposts\nfrom jsonschema import validate, ValidationError\n\nmod_api = Blueprint('mod_api', __name__)\n\nkey_schema = {\n    \"type\": \"object\",\n    \"required\": [\"username\", \"password\"],\n    \"properties\": {\n        \"username\": {\"type\": \"string\", \"pattern\": \"^[a-z]+$\"},\n        \"[redacted:secret]\n    },\n    \"additionalProperties\": False,\n}\n\npost_schema = {\n    \"type\": \"object\",\n    \"required\": [\"text\"],\n    \"properties\": {\n        \"text\": {\"type\": \"string\"},\n    },\n    \"additionalProperties\": Fa"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-flask-xss",
+      "file": "app/blueprints/api/views.py",
+      "verdict": "clean",
+      "response": "**Bugs:**\n\n`get` L25: `.first().serialize` before null check \u2192 AttributeError. Fix: query first, then serialize.\n\n`post` L46/49: bare `API_STATUS_ERROR` not `jsonify(...)`.\n\n`UsersView.get` L84: returns ORM object not `user.serialize`.\n\n`UsersView.post` incomplete (no create/return).\n\n`UsersView.put` empty.\n\n`UsersView` never registered (only `MessagesView.register`).\n\n```python\n# L24-31 fix\ndef get(self, id):\n    message = Message.query.filter_by(id=id).first()\n    if not message:\n        return jsonify(API_STATUS_ERROR)\n    response = {'message': message.serialize}\n    response.update(API_ST"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`admin_user_toggle_active`. What needed?"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-dsvpwa",
+      "file": "dsvpwa/attacks.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix vulns / explain?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "flagged",
+      "response": "`_set_session_cookie` broken: `[redacted:secret]\n\n```python\ndef _set_session_cookie(response: Response, user_id: int) -> str:\n    [redacted:secret]\n    secure = _settings.environment != \"development\"\n    response.set_cookie(\n        key=\"session\",\n        value=token,\n        httponly=True,\n        secure=secure,\n        samesite=\"lax\",\n        max_age=_settings.session_lifetime_hours * 3600,\n        path=\"/\",\n    )\n    return token\n```\n\nOther issues:\n- Register accepts any `payload.role` \u2014 open admin/vendor signup if role enum allows.\n- Log"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-hr-payroll-django",
+      "file": "config/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? File dump only. State task."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "accounts/views.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/auth.py",
+      "verdict": "flagged",
+      "response": "**Bugs**\n\n```python\n# L37, L49 \u2014 broken token create (redacted garbage)\n[redacted:secret]\n\n# L39, L55\nreturn {\"[redacted:secret]\n\n# L50 \u2014 already have datetime import path; use it\nfrom datetime import datetime, timedelta  # top\nuser.last_login = datetime.utcnow()\n```\n\n**Security**\n\nRegister accepts any `UserRole` \u2192 privilege escalation. Force buyer:\n\n```python\nrole = UserRole.BUYER  # ignore data.role\n```\n\n**Dead**\n\nDrop unused: `OAuth2PasswordRequestForm`, `create_notification`, `timedelta` (if unused after fix).\n\n**Ski"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/public_api.py",
+      "verdict": "non-answer",
+      "response": "No ask. What need?\n\nSpots:\n- Doc says X-API-Key; code uses `get_current_user` only.\n- Double `db.commit()` (85, 87).\n- Dispatcher `region_id` filter not clamped to their rids (empty result, not 403)."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-marketplace-commerce-fastapi",
+      "file": "app/seller_operations.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, fix vulns, delete dead routes?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/seller_operations.py",
+      "verdict": "clean",
+      "response": "**Critical vulns** (gate present but broken sinks):\n\n| # | Endpoint | Issue |\n|---|----------|-------|\n| 255 | `/formula/seller-cast-255` | `eval(expr)` RCE |\n| 396 | `/shell/seller-probe-396` | cmd inject `os.system(\"ping\u2026\"+host)` |\n| 022/394 | dock write | path traversal `name`/`packet_ref` |\n| 146 | `/after/seller-lane-146` | open redirect |\n| 321 | `/blurb/seller-tile-321` | XSS `\\|safe` |\n| 416 | `/mongo/seller-lane-416` | NoSQL inject raw filter |\n| 376 | `/origin/seller-mirror-376` | CORS reflect origin + credentials |\n| 189 | `/workset/seller-rebind-189` | mass assign role/approved/bal"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-support-desk-fastapi",
+      "file": "app/routers/admin.py",
+      "verdict": "clean",
+      "response": "File truncated mid-`new_api_key`. Lines 213/223 mangled by redaction.\n\nBroken:\n```python\n[redacted:secret]\n# ...\nf\"Temporary local [redacted:secret]\n```\n\nLikely:\n```python\n[redacted:secret]\n# ...\nf\"Temporary local [redacted:secret]\n```\n\nNeed: finish `data =` / full task?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "accounts/views.py",
+      "verdict": "clean",
+      "response": "Bugs:\n\n1. `employee_id` never required \u2014 empty slips through\n2. profile email update skips uniqueness check \u2014 collision risk\n3. no empty-password guard if both blank (len check alone weak)\n\nMinimal fix:\n\n```python\n# register \u2014 after strip fields\nif not employee_id:\n    errors.append('Employee ID is required.')\nif not password1:\n    errors.append('Password is required.')\n\n# profile POST \u2014 before save\nemail = request.POST.get('email', '').strip()\nif email != user.email and User.objects.filter(email=email).exists():\n    messages.error(request, 'Email already registered.')\n    return render(reques"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-legal-case-django",
+      "file": "legalcase/urls.py",
+      "verdict": "clean",
+      "response": "Delete lines 14\u201337. Mystery ops/* routes. YAGNI.\n\n```python\nfrom django.conf import settings\nfrom django.conf.urls.static import static\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path(\"django-admin/\", admin.site.urls),\n    path(\"\", include(\"cases.urls\")),\n]\n\nif settings.DEBUG:\n    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\n```\n\n\u2192 skipped: case_operations wiring. add when real ops needed."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-djangoat",
+      "file": "app/views/users/messages/views.py",
+      "verdict": "flagged",
+      "response": "**Bugs**\n\n1. **IDOR**: any user read/delete any message by `message_id`. No ownership check.\n2. **Spoof creator**: POST accepts arbitrary `creator_id`. Must force `current_user`.\n3. **Typo**: error path key `available_receipients` \u2260 template `available_recipients`.\n4. **Bare `except Exception`**: swallows everything; hides real failures.\n\n**Minimal fix**\n\n```python\n@require_http_methods([\"GET\", \"POST\"])\n@user_is_authenticated\ndef user_messages(request, user_id):  # pylint: disable=unused-argument\n    current_user = utils.current_user(request)\n\n    if request.method == \"GET\":\n        return ren"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "portal/views.py",
+      "verdict": "non-answer",
+      "response": "File truncated mid-`appointment_complete`. What need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "config/urls.py",
+      "verdict": "non-answer",
+      "response": "Ops routes look lab/vuln endpoints. Delete unless required.\n\n```python\n# drop lines 28\u201350 if not intentional\n```\n\nWhat need?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/core/partner_console.py",
+      "verdict": "clean",
+      "response": "`partner_console.py`: 15+ critical vulns (pickle RCE, cmd inject, SSTI, open redirect, path traversal, mass assign, CORS+creds, hardcoded PINs).\n\nIntent? Audit list / fix / delete?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/reports.py",
+      "verdict": "clean",
+      "response": "**Bug line 152.** End-date filter broken (day+1 fails month-end; ternary nonsense).\n\n```python\nfrom datetime import timedelta\n# ...\nif end_date:\n    try:\n        dt = datetime.strptime(end_date, \"%Y-%m-%d\")\n        query = query.filter(Job.actual_end < dt + timedelta(days=1))\n    except ValueError:\n        pass\n```\n\n\u2192 skipped: N+1 joins (customer/worker/region per row), unused `format` param, silent date parse. Add joins when export volume hurts."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/routers/auth.py",
+      "verdict": "clean",
+      "response": "Broken redactions. Restore:\n\n```python\ndef _set_session_cookie(response: Response, [redacted:secret]\n```\n\n```python\n    sess, [redacted:secret]\n        db,\n        user,\n        user_agent=request.headers.get(\"user-agent\"),\n        ip_address=(request.client.host if request.client else None),\n    )\n```\n\n```python\n        [redacted:secret]\n```\n\n\u2192 skipped: nothing else. File otherwise fine."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/auth.py",
+      "verdict": "flagged",
+      "response": "**Auth review (security-first)**\n\n**Must fix**\n- Register 409 leaks email existence. Comment admits it. Always return 201-shaped ok or generic 400.\n- Cookie `secure=False` \u2014 prod break. Gate on settings/env.\n- Reset token printed to stdout. Never ship that path.\n\n**Should fix**\n- New reset request leaves old tokens valid. Invalidate prior unused tokens for user first.\n- `datetime.utcnow()` naive. Use `datetime.now(timezone.utc)`.\n- No rate limit on `/password-reset/request` / login. Brute + spam open.\n\n**OK as-is**\n- Dummy bcrypt on missing user.\n- Session revoke on password change/reset.\n- Lo"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-kimi-code-seeded-v2-healthcare-clinic-django",
+      "file": "clinic_portal/patient_operations.py",
+      "verdict": "clean",
+      "response": "Need? Review vulns? Fix? Diff? State goal."
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-vampi",
+      "file": "api_views/books.py",
+      "verdict": "flagged",
+      "response": "BOLA when `vuln=True`. Line 51 filters title only, skips owner. Bare `except` swallows all.\n\nSecure path already in else (62\u201363). Delete vuln branch if not demo."
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-education-lms-django",
+      "file": "apikeys/management/commands/deliver_webhooks.py",
+      "verdict": "clean",
+      "response": "**Redelivers every run.** No skip on existing `WebhookDelivery` for same webhook+submission. Spams targets.\n\n**Stale counter.** `failure_count=wh.failure_count + 1` races inside loop; use F().\n\n**Minimal fix:**\n\n```python\nfrom django.db.models import F\n\n# inside for s in qs / for wh in webhooks, before POST:\nif WebhookDelivery.objects.filter(\n    webhook=wh, event=event, payload__submission_id=s.pk, succeeded=True\n).exists():\n    continue\n```\n\n```python\n# on fail:\nWebhook.objects.filter(pk=wh.pk).update(failure_count=F(\"failure_count\") + 1)\n```\n\n\u2192 skipped: retry backoff, dead-letter, outbox ta"
+    },
+    {
+      "arm": "positive",
+      "repo": "realvuln-extremely-vulnerable-flask-app",
+      "file": "routes/notes.py",
+      "verdict": "flagged",
+      "response": "**IDOR delete.** No `note.user_id == current_user.id` check. Any user deletes any note.\n\n```python\n@app.route('/notes/<int:note_id>/delete', methods=['POST'])\n@login_required\ndef delete_note(note_id: int):\n    with Session() as session:\n        note = session.get(Note, note_id)\n        if note is None or note.user_id != current_user.id:\n            flash('Note not found', 'warning')\n        else:\n            session.delete(note)\n            session.commit()\n            flash('Note deleted', 'info')\n    return redirect('/home')\n```\n\n\u2192 skipped: soft-delete, CSRF token check (Flask-WTF form if no"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/workers.py",
+      "verdict": "non-answer",
+      "response": "What need? Review / fix / change?"
+    },
+    {
+      "arm": "positive",
+      "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/main.py",
+      "verdict": "clean",
+      "response": "File truncated at `webhook_out(`. What do you need?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/disputes.py",
+      "verdict": "clean",
+      "response": "**Bugs:**\n\n1. `User` never imported \u2014 NameError on every route using it.\n```python\nfrom app.models.user import User\n```\n\n2. `order.vendor.owner_id` (L46, L206) \u2014 lazy load may fail if relationship not configured/loaded. Use `order.vendor_id` + query, or ensure relationship.\n\n3. `add_message` double-commits (L144 then L153). One commit after status flip.\n\n4. No guard: message/resolve on already-resolved dispute allowed.\n\n5. `generate_dispute_number` \u2014 collision possible, no unique retry.\n\n6. Inline `__import__(\"datetime\")` / mid-fn import \u2014 move to top.\n\n**Fix (minimal):**\n```python\nfrom dateti"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/core/security.py",
+      "verdict": "clean",
+      "response": "Broken type hints (redaction mangled them). Fix:\n\n```python\ndef get_password_hash([redacted:secret]\n    return pwd_context.hash(password)\n\ndef decode_token([redacted:secret]\n```\n\nAlso: drop unused `Union`. `datetime.utcnow()` deprecated \u2192 `datetime.now(timezone.utc)` when you touch it.\n\n\u2192 skipped: full rewrite, add when rotating secrets or adding refresh tokens."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/models/test_model_benefits.py",
+      "verdict": "clean",
+      "response": "No ask. What do?\n\nFile: test_model_benefits.py \u2014 filesystem side-effects, RequestFactory file upload, backup=\"true\" string."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/crm/admin.py",
+      "verdict": "clean",
+      "response": "No ask. What do?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-fintech-lending-fastapi",
+      "file": "scripts/seed.py",
+      "verdict": "clean",
+      "response": "File truncated mid-tuple L277. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "portal/urls.py",
+      "verdict": "non-answer",
+      "response": "What need?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-legal-case-django",
+      "file": "auditlog/migrations/0001_initial.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, change, bug?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/users.py",
+      "verdict": "clean",
+      "response": "Redundant disable/enable. Patch `is_active` already covers both.\n\n`request: Request = None` broken. Use `request: Request` (FastAPI injects).\n\nDouble commit on create. One transaction:\n\n```python\ndb.add(u)\ndb.flush()\nif req.role == UserRole.customer:\n    db.add(CustomerProfile(user_id=u.id))\nelif req.role == UserRole.field_worker:\n    db.add(WorkerProfile(user_id=u.id))\ndb.commit()\ndb.refresh(u)\n```\n\nRole change on update: no profile create/delete. Add when needed.\n\nWhat want? Delete enable/disable? Fix request? Profile on role change?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "employees/services.py",
+      "verdict": "flagged",
+      "response": "Authz helpers look solid. Few notes:\n\n**OK**\n- `visible_employees_for` as sole entry point \u2014 correct IDOR defense\n- manager self-include via `Q(user_id=user.id)`\n- unauthenticated \u2192 empty qs\n\n**Watch**\n1. `manager_id=user.id` \u2014 only correct if `manager` FK \u2192 `User`. If FK \u2192 `EmployeeProfile`, wrong. Confirm model.\n2. `assert_*` skip auth check. Call after login middleware or add `if not user.is_authenticated: raise`.\n3. `user.role` AttributeError if missing. Guard or use `getattr(user, \"role\", None)`.\n4. `payroll_specialist` sees all, edits none \u2014 intentional? Doc says yes for edit.\n\nNo code c"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "audit/migrations/0001_initial.py",
+      "verdict": "clean",
+      "response": "AuditLog mig. UUID PK, action choices, actor SET_NULL. Need model? Review? Indexes?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/app/schemas/common.py",
+      "verdict": "clean",
+      "response": "File received. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/models.py",
+      "verdict": "non-answer",
+      "response": "File truncated at `APIKey`. What needed?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-logistics-dispatch-fastapi",
+      "file": "scripts/run_due_notifications.py",
+      "verdict": "clean",
+      "response": "**Dupe bug.** Script re-creates same notifications every run.\n\n```python\nimport sys\nfrom datetime import datetime, timedelta, timezone\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\nsys.path.append(str(ROOT))\n\nfrom sqlalchemy import select\n\nfrom backend.app.core.database import SessionLocal\nfrom backend.app.models import Job, JobStatus, Notification\n\n\ndef main():\n    db = SessionLocal()\n    try:\n        now = datetime.now(timezone.utc)\n        soon = now + timedelta(hours=2)\n        jobs = db.scalars(\n            select(Job).where(\n                Job.status.in_([JobStatu"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/routers/admin_misc.py",
+      "verdict": "clean",
+      "response": "Broken by redaction. Restored:\n\n```python\n# create_webhook ~L41-45\n[redacted:secret]\nhook = models.Webhook(\n    name=payload.name.strip(),\n    url=payload.url,\n    [redacted:secret]\n    events=\",\".join(sorted(set(payload.events))),\n    created_by_user_id=user.id,\n)\n\n# create_api_key ~L127\n[redacted:secret]\n    user_id=user.id,\n    name=payload.name.strip(),\n    key_prefix=prefix,\n    key_hash=key_hash,\n)\n\n# revoke_api_key ~L150\n[redacted:secret]\n    db.query(models.ApiKey)\n    .filter(models.ApiKey.id == key_id, models.ApiKe"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "policies/forms.py",
+      "verdict": "clean",
+      "response": "Duplicate forms. `PolicyEditForm` \u2248 `PolicyForm` + `bump_version`.\n\nWant merge, review, or something else?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/scripts/seed.py",
+      "verdict": "clean",
+      "response": "seed.py truncated line 304. Need: complete? review? fix?"
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-dvpwa",
+      "file": "sqli/dao/course.py",
+      "verdict": "clean",
+      "response": "**Bug `get_many`:** `execute(q, **params)` wrong. Needs dict, not kwargs. `LIMIT +` / `OFFSET +` noise.\n\n```python\n@staticmethod\nasync def get_many(conn: Connection, limit: Optional[int] = None,\n                   offset: Optional[int] = None):\n    q = 'SELECT id, title, description FROM courses'\n    params = {}\n    if limit is not None:\n        q += ' LIMIT %(limit)s'\n        params['limit'] = limit\n    if offset is not None:\n        q += ' OFFSET %(offset)s'\n        params['offset'] = offset\n    async with conn.cursor() as cur:\n        await cur.execute(q, params)\n        return [Course.from"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-support-desk-fastapi",
+      "file": "backend/app/seed.py",
+      "verdict": "non-answer",
+      "response": "What need with `seed.py`?"
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/models/test_model_pay.py",
+      "verdict": "clean",
+      "response": "`[redacted:secret]\n\n`self.key_model` created, never passed to `Pay.create`. Drop if unused.\n\n```python\nself.parent = User.objects.create(\n    email=input_email, [redacted:secret]\n    is_admin=input_admin, first_name=input_first_name,\n    last_name=input_last_name, created_at=u_input_create_date,\n    updated_at=u_input_update_date\n)\n```\n\n\u2192 skipped: Crypto deprecation, add when encrypt path fails."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-vulpy",
+      "file": "utils/ca-csr-create.py",
+      "verdict": "clean",
+      "response": "Delete script. Use openssl:\n\n```\nopenssl req -new -key /tmp/acme.key -out /tmp/acme.csr -subj \"/C=AR/ST=BA/L=Buenos Aires/O=ACME CORP/CN=acme.com\" -passin pass:\"$PASS\"\n```\n\n\u2192 skipped: python+cryptography, add when need custom extensions/SANs."
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-djangoat",
+      "file": "app/tests/vulnerabilities/test_extra_remote_code_execution.py",
+      "verdict": "clean",
+      "response": "Pickle RCE. `user` POST field unpickled \u2192 `subprocess.Popen`.\n\nFix app: never `pickle.loads` untrusted input. Use JSON or `django.core.signing`.\n\nWon\u2019t expand exploit/PoC."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-crm-saas-django",
+      "file": "crm/crm/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? File only. No ask."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "crm/views/imports_exports.py",
+      "verdict": "non-answer",
+      "response": "What need? Review, fix, refactor, test?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/audit.py",
+      "verdict": "non-answer",
+      "response": "Audit helper. Fine. Redacts top-level secrets, truncates, flush only.\n\nNested secrets leak. Truncate can break JSON. Add when needed.\n\nWhat do you want?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-education-lms-django",
+      "file": "lms/forms.py",
+      "verdict": "clean",
+      "response": "Got `lms/forms.py`. Need?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-hr-payroll-django",
+      "file": "portal/management/commands/seed_demo.py",
+      "verdict": "clean",
+      "response": "Need? File truncated mid-`create_documents`. Task?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-logistics-dispatch-fastapi",
+      "file": "backend/app/security.py",
+      "verdict": "clean",
+      "response": "`datetime.utcnow()` deprecated. Use `datetime.now(timezone.utc)`.\n\n```python\nfrom datetime import datetime, timedelta, timezone\n\ndef now_utc() -> datetime:\n    return datetime.now(timezone.utc)\n```\n\nRest fine. bcrypt 12, hmac.compare_digest, secrets.token_urlsafe all correct.\n\nskipped: path-traversal hardening on `safe_filename` (only basename chars), add when serving under user-controlled dirs."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-crm-saas-django",
+      "file": "operations/urls.py",
+      "verdict": "non-answer",
+      "response": "What need? File is flat Django urlpatterns. No ask."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "portal_core/management/commands/seed_data.py",
+      "verdict": "clean",
+      "response": "File truncated mid-token `if added_tas`. Rest of seed missing.\n\nComplete from L327 (drop orphan `if`; wipe already handled):\n\n```python\n        OnboardingTask.objects.all().delete()\n        added_tasks = 0\n        for p in [employee_demo.employee_profile, *seeded_profiles[:18]]:\n            for title, days, status in ONBOARDING_TEMPLATES:\n                OnboardingTask.objects.create(\n                    title=title,\n                    description=f\"Auto-seeded task \u2014 {title} for {p.user.display_name}.\",\n                    assignee=p,\n                    due_date=timezone.now().date() + date"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/documents.py",
+      "verdict": "clean",
+      "response": "delete: manager miss ticket/inspection scope (see ok, delete 403). list: N+1 in `_doc_visible_to` + py filter.\n\nFix delete:\n\n```python\nelif is_manager(user):\n    prop_id = doc.property_id\n    if not prop_id and doc.lease_id:\n        lease = db.get(Lease, doc.lease_id)\n        prop_id = lease.unit.property_id if lease else None\n    elif not prop_id and doc.ticket_id:\n        t = db.get(MaintenanceTicket, doc.ticket_id)\n        prop_id = t.unit.property_id if t else None\n    elif not prop_id and doc.inspection_id:\n        insp = db.get(Inspection, doc.inspection_id)\n        prop_id = insp.unit.p"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-crm-saas-django",
+      "file": "crm/views/contacts.py",
+      "verdict": "clean",
+      "response": "Bare `except Exception` L32. Catch `IntegrityError` only.\n\nDup email: unique constraint + form validation, not try/except.\n\nWhat change?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-high-seeded-v2-property-management-fastapi",
+      "file": "backend/app/routes/integrations.py",
+      "verdict": "clean",
+      "response": "Broken query L102\u2013104. Restore:\n\n```python\n    [redacted:secret]\n        select(ApiKey).where(ApiKey.key_hash == hash_secret(x_api_key), ApiKey.is_active.is_(True))\n    ).first()\n    if not [redacted:secret]\n```\n\n\u2192 skipped: revoke/delete endpoints, add when needed."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-fintech-lending-fastapi",
+      "file": "backend/tests/test_auth.py",
+      "verdict": "clean",
+      "response": "```python\nimport pytest\nfrom fastapi.testclient import TestClient\nfrom app.main import app\nfrom app.core.database import SessionLocal, engine\nfrom app.core.security import get_password_hash\nfrom app.models.user import User, UserRole\nfrom app.core.database import Base\n\nclient = TestClient(app)\n\n@pytest.fixture(scope=\"module\", autouse=True)\ndef setup_db():\n    Base.metadata.drop_all(bind=engine)\n    Base.metadata.create_all(bind=engine)\n    db = SessionLocal()\n    user = User(email=\"[redacted:pii:email]\", hashed_password=get_password_hash(\"TestPass123!\"), first_name=\"Test\", last_name=\"User\", role=Us"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-legal-case-django",
+      "file": "accounts/models.py",
+      "verdict": "clean",
+      "response": "Redundant `is_active_account` \u2014 use Django `is_active`.\n\n`can_*` thin wrappers OK if called often; else inline `role ==`.\n\n```python\nclass Role(models.TextChoices):\n    FIRM_ADMIN = 'firm_admin', 'Firm Admin'\n    ATTORNEY = 'attorney', 'Attorney'\n    PARALEGAL = 'paralegal', 'Paralegal'\n    CLIENT = 'client', 'Client'\n\nclass User(AbstractUser):\n    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CLIENT)\n    phone = models.CharField(max_length=50, blank=True)\n    require_password_change = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/api/vendors.py",
+      "verdict": "clean",
+      "response": "**Payout store bug.** Masks on write \u2014 full numbers gone forever. Can't pay vendors.\n\n```python\n# update_payout \u2014 store encrypted/full, mask only on read/response\nif data.payout_account_number:\n    vendor.payout_account_number = data.payout_account_number  # encrypt here if needed\n```\n\nMask in schema/response layer, not DB.\n\n**Other:**\n- `create_vendor`: no role flip to `VENDOR_MANAGER` \u2014 user stuck without access to `/my-vendor`.\n- `data.dict()` \u2192 Pydantic v2 wants `model_dump()`.\n- `list_vendors`/`get_vendor`: any auth user sees all; tighten if admin-only.\n- Slug race: unique constraint + re"
+    },
+    {
+      "arm": "negative",
+      "repo": "realvuln-vulpy",
+      "file": "utils/rsa-sign.py",
+      "verdict": "clean",
+      "response": "RSA-PSS SHA256 signer. Key load line mangled by redaction (`load_pem_private_key` missing). Hardcoded `/tmp/acme.key`. No argv check.\n\nNeed: fix, review, or run?"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-codex-seeded-v2-education-lms-django",
+      "file": "lms/tests.py",
+      "verdict": "clean",
+      "response": "`login_as` missing `)`. Fix:\n\n```python\ndef login_as(self, user):\n    self.client.login(username=user.username, [redacted:secret]\n```\n\n`make_user` hardcodes password string \u2014 use `self.password` instead."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-hr-payroll-django",
+      "file": "portal_core/management/commands/run_scheduled.py",
+      "verdict": "clean",
+      "response": "`review_notes` None \u2192 TypeError. `assignee` None \u2192 AttributeError.\n\n```python\nfor task in overdue:\n    if not task.assignee or not task.assignee.user_id:\n        continue\n    notify(\n        recipient=task.assignee.user,\n        title=f\"Onboarding task overdue: {task.title}\",\n        body=f\"Due on {task.due_date}.\",\n        severity=\"warning\",\n        link=f\"/onboarding/{task.id}/\",\n    )\n    task.review_notes = ((task.review_notes or \"\") + \" [OVERDUE_REMINDER_SENT]\").strip()[:255]\n    task.save(update_fields=[\"review_notes\"])\n    counts[\"overdue_tasks\"] += 1\n```\n\n\u2192 skipped: bulk ack/notify qu"
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-claude-code-seeded-v2-marketplace-commerce-fastapi",
+      "file": "backend/app/routers/payouts.py",
+      "verdict": "clean",
+      "response": "No status transition guard. Paid\u2192pending allowed. processed_at sticky.\n\nRace: concurrent PUT overwrites. No row lock.\n\nnotify before commit OK if same session.\n\nYAGNI rest. Ship as-is unless transitions matter.\n\nAdd when: need audit-proof state machine or concurrent admin edits."
+    },
+    {
+      "arm": "negative",
+      "repo": "vc-kimi-code-seeded-v2-hr-payroll-django",
+      "file": "hr_requests/migrations/0001_initial.py",
+      "verdict": "non-answer",
+      "response": "Migration: HRRequest + HRRequestComment. What need?"
+    }
+  ]
+}

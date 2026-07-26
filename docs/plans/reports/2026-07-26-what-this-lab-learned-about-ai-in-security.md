@@ -1,0 +1,167 @@
+# What this lab actually learned about AI in security
+
+Synthesis across 28 experiments (E1–E28). Written 2026-07-26 at the close of the research session that
+adopted `docs/research-protocol.md` and then turned it on the lab's own published claims.
+
+Sources: `docs/ai-sast-research-log.md` (entries are authoritative), decisions 0018–0027.
+
+---
+
+## The one-sentence answer
+
+**AI does not belong where it decides; it belongs where it proposes.** Every measured attempt to give a
+model a *verdict* role — judge, verifier, ranker — ended with the model losing, tying, or refusing. The
+one role never tested until this session, *proposing candidates for deterministic code to verify*, is
+the only place the model supplies something the deterministic layer cannot produce at all.
+
+---
+
+## 1. Where AI loses (established, repeatedly)
+
+| role | experiment | result |
+|---|---|---|
+| judge findings correct/incorrect | E1, 0018 | **refuses 12/12** under correct provenance |
+| verify and drop false positives | E2, 0020 | **hides 3 of 8 real vulnerabilities** — unsafe |
+| rank findings for triage | E3/E14, 0021 | **loses** to a free CWE prior: −0.095 [−0.128, −0.063] per application |
+| narrate a syndicate run | E13 | **+$0.05, +35 s, zero additional findings** |
+
+These are gate roles, and the architecture already forbids the model to hold them — a structural test
+(DD1) asserts no model is reachable from the verdict path. The measurements say the architecture was
+right for reasons beyond principle.
+
+## 2. Where AI wins (established this session)
+
+On **absence-of-control** classes — missing authorization, missing ownership checks, no rate limit, no
+authentication, information exposure — pattern SAST is not merely weak. It is **structurally blind**:
+Bandit and Semgrep emit **33 distinct CWE classes across the corpus and not one is absence-class**. There
+is no rule that can express an absent control, because an absent control writes no token to match.
+
+There, the model contributes:
+
+| measurement | result |
+|---|---|
+| flags files with an absent control vs clean files | **9/60 vs 0/40, p = 0.0078** (corrected classifier; published as 10/60 vs 1/40, p = 0.024) |
+| names the ground-truth class | 6 of 10 flags |
+| specificity | **0 of 40** clean files — the one flag was a classifier false positive |
+| deterministic engines on the identical files | **0 of 60** |
+
+Three preregistered controls, each removing a different rival explanation:
+
+| rival explanation | control | outcome |
+|---|---|---|
+| "it reacts to messy code" | E18 — defective files with no absent control | **0/80** vs 9/60, **p = 0.0003** (corrected classifier) |
+| "it recalls a public corpus" | ~~E19~~ → **E23** — both arms measured fresh, aggregate rates | anonymised **14/53** vs original 11/53, +0.057 [−0.038, +0.151] — **no collapse**; equivalence not established |
+| "it recognises endpoint code" | ~~E20~~ → **E24 + E28** — both arms fresh, file role held fixed, **replicated** | 9/40 vs 2/42 (+0.177, p = 0.020); re-run 8/40 vs 1/42 (**+0.176**, p = 0.012) — the difference reproduced to **0.001** |
+
+**A Stage-8 review of this entire chain, plus the determinism check it prompted, cost two of these
+controls.** E19 and E20 were withdrawn because they treated single LLM verdicts as fixed values;
+**E22/E29 measured ~40% of raw verdicts differ (n=38) — but E31 shows most is clean<->non-answer churn; FLAG decisions churn on only ~1 file in 12, with the model never returning identical prose (0/38)**. E23 and E24 rebuilt both controls on designs that
+survive that noise — measuring every arm fresh in the same run and comparing aggregate rates rather than
+per-file labels. Both re-established their conclusions; E24's is sturdier than the one it replaced.
+
+The same review found the prose classifier — the single point of failure for every result here — had
+**four demonstrated defects and no test**. Fixing them moved the survivors *toward* the finding: E17 to
+9/60 vs **0/40** (p = 0.0078, specificity now perfect) and E18 to **0/80** (p = 0.0003).
+
+And an undisclosed confound: **our own gateway redacts `token=`/`password=`/`authorization:` in the
+source before the model sees it** — 37% of absence-class files damaged, twice the occurrences of the
+clean arm, because that arm *is* auth code. It biases against every positive result, so the findings
+hold despite a handicap and the ~15–19% sensitivity is a **floor**.
+
+## 3. What is still not true
+
+- **Every published sensitivity figure is a FLOOR.** E26 caught the scoring classifier missing a
+  *correct* model finding (a precisely-described missing webhook signature verification, for which the
+  vocabulary had no term) and counting a validation complaint as an absence claim. Between-arm
+  comparisons survive — the same classifier scored both sides — but absolute rates understate the model,
+  and the gateway-redaction confound pushes the same way.
+- **It is a weak detector, and this is not fixable at the prompt/retry level.** ~19–25% of vulnerable
+  files flagged; four in five missed. E21 tested whether the 33% non-answer rate was hiding detections:
+  53% of non-answers do resolve on a retry, but **9 of 10 resolve to `clean`**, moving sensitivity only
+  0.167 → 0.183. The low sensitivity is a **genuine property of the model on this task**.
+- **File-level only.** Five model aliases × three output formats × an assistant prefill produced **zero**
+  machine-readable structure (E16a), while correctly identifying planted defects. The models will not be
+  told what shape to answer in; the disposal layer has to consume prose.
+- **A third of calls are non-answers**, and roughly half of those are a *stable* refusal on those
+  particular files rather than transient noise (E21: 9 of 19 persisted through a retry).
+- **Structural familiarity is untested** — mutation changed names, not control-flow shapes.
+- **Transfer is HALF answered (E25).** The lab spent the session recording that no genuinely unseen
+  target existed. It was wrong — this project's own source, written 1–3 days before the measurement, is
+  provably outside any deployed model's training set. Run over 25 of those files the model produced
+  **zero** absence-class findings, reproducing its perfect corpus specificity on unseen input. So **specificity transfers**. The other half was then closed by building the missing target (E26): four
+  matched pairs of Flask handlers authored minutes before measurement, shown blind — the model found
+  **3 of 4** planted absence-of-control defects and made **0 of 4** false claims on the controls.
+  **Both halves now have evidence outside the memorised corpus**, with the caveat that n = 8 and the
+  defects are of classes this author chose.
+- **One model, one language, one corpus** — and that corpus is synthetic-seeded, not organic CVEs.
+
+**Therefore: a research result and a roadmap item, not a shippable feature.** The business case sells the
+deterministic layer plus a bounded, metered AI cost. It does not sell this.
+
+## 4. What the deterministic layer is actually worth
+
+| finding | measurement |
+|---|---|
+| multi-engine union recall | **+43.6% relative [+31.5%, +58.4%]**, no measurable precision cost *vs Bandit* — but **22 of 63 repos gain nothing**, so the promise is portfolio-level, never per-application |
+| presence vs absence detection | **6.2×** (corrected from a published 9.5× after a CWE-attribution bug misfiled 61% of vulnerabilities) |
+| the standard benchmark | contains **0 of 2740** absence-of-control cases — the class is not under-measured, it is **unmeasured** |
+| cost of the AI layer | **$0.048–0.051 per run**, ~7k tokens, ~35 s, stable across three live runs |
+
+## 5. What the lab learned about itself — the most transferable part
+
+Twelve quantified corrections in this project's history. **Every one moved a claim against the lab's own
+headline. Not one ever found an understatement.** That asymmetry is the finding a reader should take
+away, because it will hold for anyone doing this work.
+
+Concrete failures, each now guarded:
+
+| failure | how it was caught | guard |
+|---|---|---|
+| a **retracted claim still live in code** — the committed instrument printed "+0.069, prior WINS" a day after the decision withdrew it | writing the protocol | correction-propagation law; SM3 |
+| the **grouping unit discarded** from the artefact, so the corrected number was unreproducible | Stage-5 check | SM2 verifies the join or aborts |
+| **wrong estimand** — 98% of the ranked pairs were cross-repository | Stage-8 review of my own work | SM4 pins both estimands |
+| **two vacuous tests** — one recomputed the expression it asserted; one exempted any file containing the word "ties" | Stage-8 review | rewritten as empirical + line-scoped |
+| **a harness bug printed `RECALL=0.000`**, which read exactly like the null result we half-expected | Stage-5 question | positive control now gates every run |
+| a **classifier that scored "access control looks properly implemented" as a finding** | audited on synthetic cases *before* reading data | SM8 |
+| a **mutator that renamed a module path**, breaking imports invisibly to an AST node-count check | validation before measuring | imports asserted byte-identical |
+| a **preregistered control arm silently dropped** during a redesign | caught before publication | run, and the claim it restored recorded in order |
+
+**The seven rules worth keeping:**
+
+1. **Preregister, and name the estimand in it.** Pooling across groups and averaging within them answered
+   the same question in *opposite directions* here.
+2. **A correction is not done until the instrument is fixed and a test pins it.** A prose amendment is a
+   note about a correction, not a correction.
+3. **Every run needs a positive control.** A broken instrument fails in the flattering direction — it
+   hands you the null result you were expecting, wearing the costume of rigor.
+4. **Have someone else attack it who did not build it**, and have them review the *tests*, not just the
+   result. Both vacuous assertions were written by the author of the code they guarded.
+5. **Report the fragility next to the number.** "p = 0.042" and "one observation would flip it" are the
+   same fact, and only publishing both is honest.
+6. **`temperature=0` is not determinism — measure it, then design around it.** The payoff is concrete:
+   two independent runs of the same comparison gave differences of **+0.177 and +0.176** while each arm
+   moved by a file. Labels churn at ~40%; the aggregate difference reproduced to 0.001.
+   The original rule, stated fully: This instrument differs on **~40% of raw verdicts**, but flag decisions on only ~1 file in 12 (E31) on
+   identical input and never returned identical prose (0/14). Two preregistered experiments were
+   withdrawn for treating a single verdict as a fixed value. On a noisy instrument, **rates are
+   measurable and labels are not**: the same 53 files scored 10, 10, 11 across three runs — individual
+   verdicts churn, the aggregate holds to ~2 points. Never reuse one run's verdicts in a paired design.
+7. **"Don't discard what re-analysis needs" must name every form of discarding.** The rule was written
+   about a dropped grouping column. Eight hours later the same author truncated model responses at 400
+   characters — which 37–40% exceeded — making two experiments permanently non-re-verifiable and causing
+   a naive re-score to erase a significant result. **Dropping a column, truncating a string and rounding
+   a float are one error.** A narrowly-worded rule does not generalise on its own; the strongest evidence
+   is that its own author violated it the same night.
+
+## 6. Open questions, in priority order
+
+1. **Structural familiarity** — does detection survive control-flow-level mutation, not just renaming?
+2. **A genuinely unseen target** — the only way to settle transfer. Candidate: code written after the
+   model's cutoff, or a private codebase with hand-built ground truth.
+3. **Line-level attribution** — blocked by E16a's conformance failure; would need an extraction layer
+   over prose, or a model that follows format instructions.
+4. ~~**Sensitivity** — is it an instrument artefact?~~ **ANSWERED (E21): no.** Recovering non-answers
+   adds 1.6 points. It is a model/prompt ceiling, not a measurement gap. **Now open instead:** is it a
+   *prompt* ceiling or a *model* ceiling? Separating those needs a prompt tuned on held-out files and a
+   second model family — neither of which this session had the budget to do without overfitting.
+5. **Generalisation beyond one pinned application** for every runtime finding (0025).

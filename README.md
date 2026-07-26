@@ -89,7 +89,7 @@ flowchart LR
 | `attack-surface/` | Juice Shop attack‑surface schema, manifest, baselines. |
 | `benchmark/` | AI‑SAST scoring harness, targets, results. |
 | `tests/` | Behavioral guards (redaction, SSRF allowlist, close‑decision gate, CI workflow safety). |
-| `docs/` | [`WORKFLOW.md`](docs/WORKFLOW.md), `product/`, `decisions/`, `journal/`, `plans/`. Map: [`docs/README.md`](docs/README.md). |
+| `docs/` | [`WORKFLOW.md`](docs/WORKFLOW.md), [`research-protocol.md`](docs/research-protocol.md) (how an experiment is run here), `product/`, `decisions/`, `journal/`, `plans/`. Map: [`docs/README.md`](docs/README.md). |
 
 ## Running the pieces (local)
 
@@ -201,10 +201,66 @@ residual is **measured** (recall on planted PII, false‑positive on security co
 CI regression guard that fails closed on an absent corpus
 ([decision 0017](docs/decisions/0017-week9-pii-redaction-is-structural-at-capture-measured-not-trusted.md)).
 
+**Built (Week‑10):** a [pentest‑eval pipeline](evaluation/pentest-eval/) whose verdict is a
+**deterministic code oracle**, never an LLM. A red‑team found the read‑only fuzzer's observable surface
+is exactly one endpoint, so recall over it alone would be vacuous; Week‑10 splits into a `synthetic:true`
+oracle corpus with a KNOWN confusion matrix (asserted as independent ground truth) and an enriched real
+corpus (the known SQLi search + benign read paths, labelled from public sources) scored over a committed,
+**redacted** live capture. The syndicate does identify the observable SQLi (recall 1/1 coverage) and
+false‑positives on **zero** benign endpoints (the load‑bearing FP=0 gate); unobservable auth/state‑change
+vulns are deferred (0016), never faked. A narrow narrative LLM judge is built only to be **measured** —
+under the security‑correct provenance the hardened models refuse the grading role (0/12), so it is
+demonstrated unfit to be load‑bearing
+([decision 0018](docs/decisions/0018-week10-eval-is-a-deterministic-oracle-over-an-observable-subset-judge-measured-not-trusted.md)).
+
+**Built (Week‑11):** production‑ization scoped honestly to the hardware. Per‑run **FinOps**
+([agent/finops.py](agent/finops.py)) MEASURES exact tokens + latency per pentest run and labels cost a
+derived estimate (on‑prem = $0), with a deterministic cost/token/latency/error budget guard for
+spike alerting — opt‑in and non‑invasive, so Weeks 1–10 are untouched. The syndicate ships as a slim,
+digest‑pinned [container](infra/agent/) (RAG degrades gracefully, so no ML stack) verified running the
+full pipeline against the live planes. The **on‑prem / air‑gapped** serving path is a gateway alias
+(`local‑onprem`) verified **live via Ollama** (`qwen2.5:0.5b` on the 4 GB GPU; an agent provenance‑labelled
+call + FinOps at $0), with [vLLM](infra/vllm/) committed as the datacenter path. vLLM production throughput,
+autoscaling, and the gateway‑container→host‑model hop (sandbox forbids non‑loopback binds) are deferred
+with the constraint named
+([decision 0019](docs/decisions/0019-week11-production-is-a-containerised-syndicate-per-run-finops-and-an-on-prem-serving-path.md)).
+
+**Built (Week‑12):** the PRD, business case, and stakeholder handover — scoped to what the project
+actually **measured**, not to a pitch. The one honest positioning: Sentinel is **not** "AI finds more"
+(every measured AI‑vs‑deterministic contest in the research log ended in the deterministic method winning,
+tying, or the question being unanswerable — E13's live run added **zero** findings over the $0 deterministic
+path for +$0.05 and +35s). The business case rests on three measured pillars instead — cheap continuous
+deterministic detection (+44% recall, free), a bounded, metered AI cost (~$0.05/run), and the
+**Security‑FOR‑AI** layer (Agent IAM, provenance gateway, PII redaction, HITL) that offense‑only competitors
+lack — and states its ten unmeasured gaps out loud rather than claiming past them
+([Week‑12 report](docs/2026-07-26_NguyenManhQuy_Week12.md), VI). ROI is framed as *frequency to close the
+gap between costly manual pentests*, never as replacing human judgment.
+
+**Built (research programme):** a written [research protocol](docs/research-protocol.md) governing any
+claim that leaves this repo — preregister before measuring, name the *estimand* in the preregistration,
+never a bare point estimate, **measure instrument stability before designing around it**, adversarial
+review that reproduces before it attacks, and a **correction‑propagation law**: a correction is not done
+until the *instrument* is fixed and a test pins it
+([decision 0026](docs/decisions/0026-research-claims-are-governed-by-a-written-protocol-and-corrections-must-reach-the-instrument.md)).
+Adopted after the branch caught a **retracted claim still executing in committed code**, and immediately
+turned on its own results: it demolished one load‑bearing claim, confirmed another, and withdrew two
+experiments of its own once `temperature=0` was measured **not** to mean deterministic.
+
+It also produced the first measured place for the model
+([decision 0027](docs/decisions/0027-the-llm-belongs-in-the-generative-role-on-absence-of-control-classes.md)):
+in the **generative** role on absence‑of‑control classes — where the deterministic engines emit 33 CWE
+classes and **none** can express an absent control — the model discriminates those files from clean ones
+(p = 0.0078), from merely‑defective ones (p = 0.0003), and from same‑role handlers lacking the defect
+(p = 0.020, replicated to 0.001), with transfer confirmed on code written days before measurement.
+**Bounds are part of the claim:** sensitivity ~19–22% is a *floor*, file‑level only, one model, one
+corpus. The 31 experiments and every correction are in
+[`docs/ai-sast-research-log.md`](docs/ai-sast-research-log.md); the synthesis is
+[here](docs/plans/reports/2026-07-26-what-this-lab-learned-about-ai-in-security.md).
+
 **Roadmap (later phases):** real state‑changing execution behind the Week‑8 gate (deferred per
 decision 0016) and the Week‑7 LlamaFirewall sidecar (both gated on explicit decisions / an HF
-license); eval pipeline + vLLM/FinOps deploy + PRD (Weeks 10–12); GraphRAG (deferred per decision
-0011).
+license); GraphRAG (deferred per decision 0011); a second, non‑memorised target to test whether the
+findings generalise beyond the pinned Juice Shop build.
 The full vision and its rationale are in
 [`docs/project-sentinel-architecture-proposal.md`](docs/project-sentinel-architecture-proposal.md)
 and [`docs/project-understanding-benchmark-to-sentinel.md`](docs/project-understanding-benchmark-to-sentinel.md)

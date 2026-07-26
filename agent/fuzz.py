@@ -196,7 +196,7 @@ def _guide(findings: list[Finding]) -> str:
         llm.Msg("user", "FLAGGED SIGNALS (untrusted):\n" + "\n".join(lines),
                 llm.target_derived(source="fuzz-responses", target="juice-shop")),
     ]
-    return llm.chat(msgs, model=os.environ.get("RECON_MODEL", "sast-sol"), max_tokens=300).strip()
+    return llm.chat(msgs, model=os.environ.get("RECON_MODEL", "sast-grok45"), max_tokens=300).strip()
 
 
 def main(argv=None) -> int:

@@ -132,3 +132,12 @@ rag/.cache/
 # Week-4 agent local virtualenv and generated maps are not committed
 agent/.venv/
 agent/out/
+
+# Week-plus AI-SAST: RealVuln corpus is fetched at eval time (Apache-2.0), never committed (decision 0018/0019 pattern)
+evaluation/sast-fp-discrimination/corpus/
+
+# Runtime probe evidence can contain identity-bearing response bodies once probes authenticate.
+# Commit redacted summaries/decisions instead of raw artefacts (red-team B2).
+evaluation/absence-detection/*-probe-*.json
+evaluation/absence-detection/defence-in-depth-map-*.json
+evaluation/absence-detection/exposure-gap-*.json

@@ -1,0 +1,11 @@
+{
+  "cwe": 78,
+  "category": "command-injection",
+  "note": "Clean-room, Sentinel-authored from CWE-78.",
+  "questions": [
+    "Is an OS/shell command constructed using a value derived from request/user input?",
+    "Is that value passed to os.system / subprocess with shell=True / popen (or equivalent) rather than a fixed argv list?",
+    "Is there NO validation, allow-listing, or shell-escaping between the input and the command execution?"
+  ],
+  "keep_if": "untrusted input reaches an OS command without sanitization or allow-listing"
+}

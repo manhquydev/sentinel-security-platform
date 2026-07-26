@@ -1,0 +1,15 @@
+# Week-11 SLIM runtime deps for the containerised syndicate (decision 0019).
+#
+# The agent shares the rag venv in development, but at runtime RAG enrichment is BEST-EFFORT and
+# lazily imported (agent/recon.py:78-87 catches ImportError — "its absence must not fail recon").
+# So the container installs ONLY the agent's direct runtime deps, NOT rag's heavy ML stack
+# (onnxruntime/fastembed/numpy). RAG context simply degrades to empty inside the container, logged
+# to stderr. Pins mirror agent/requirements.txt + the requests pin from rag/requirements.txt.
+pydantic==2.13.4
+requests==2.34.2
+langgraph==1.2.9
+langgraph-checkpoint-sqlite==3.1.0
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-grpc==1.44.0
+openinference-semantic-conventions==0.1.30
+cryptography==49.0.0

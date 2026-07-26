@@ -1,0 +1,130 @@
+{
+  "k": 3,
+  "rows": [
+    {
+      "file": "accounts/views.py",
+      "arm": "absence",
+      "verdicts": [
+        "clean",
+        "clean",
+        "flagged"
+      ],
+      "theta": 0.3333333333333333
+    },
+    {
+      "file": "dsvw.py",
+      "arm": "absence",
+      "verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "core/views.py",
+      "arm": "absence",
+      "verdicts": [
+        "non-answer",
+        "non-answer",
+        "non-answer"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "routes/account.py",
+      "arm": "absence",
+      "verdicts": [
+        "flagged",
+        "flagged",
+        "flagged"
+      ],
+      "theta": 1.0
+    },
+    {
+      "file": "portal/views.py",
+      "arm": "absence",
+      "verdicts": [
+        "non-answer",
+        "clean",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "clinic/forms.py",
+      "arm": "absence",
+      "verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "backend/app/api/disputes.py",
+      "arm": "control",
+      "verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "backend/app/core/security.py",
+      "arm": "control",
+      "verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "app/tests/models/test_model_benefits.py",
+      "arm": "control",
+      "verdicts": [
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "crm/crm/admin.py",
+      "arm": "control",
+      "verdicts": [
+        "clean",
+        "non-answer",
+        "clean"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "scripts/seed.py",
+      "arm": "control",
+      "verdicts": [
+        "non-answer",
+        "non-answer",
+        "non-answer"
+      ],
+      "theta": 0.0
+    },
+    {
+      "file": "portal/urls.py",
+      "arm": "control",
+      "verdicts": [
+        "non-answer",
+        "clean",
+        "non-answer"
+      ],
+      "theta": 0.0
+    }
+  ],
+  "buckets": {
+    "churning": 1,
+    "stable-0": 10,
+    "stable-1": 1
+  }
+}
