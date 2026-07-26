@@ -1,10 +1,10 @@
 {
   "n_pairs": 12,
   "sensitivity": 0.5833,
-  "false_positive_rate": 0.1667,
+  "false_positive_rate": 0.0833,
   "tp": 7,
-  "fp": 2,
-  "fisher_p_one_sided": 0.0447,
+  "fp": 1,
+  "fisher_p_one_sided": 0.0136,
   "rows": [
     {
       "file": "invoices_b.py",
@@ -122,7 +122,7 @@
       "file": "download_b.py",
       "truth": "controlled",
       "why": "org_id in get()",
-      "verdict": "flagged",
+      "verdict": "clean",
       "response": "Org filter on get. IDOR blocked.\n\nfilename=original_name. Django sanitizes Content-Disposition. OK recent versions.\n\nopen_blob trust blob_key. Storage must validate.\n\n\u2192 skipped: content_type, extra ACL. Add when mime known / finer perms needed."
     },
     {
@@ -174,5 +174,24 @@
       "verdict": "clean",
       "response": "**Leak:** traceback + exception text to client. Drop both.\n\n```python\n@bp.get(\"/account\")\ndef account():\n    ref = request.args.get(\"ref\", \"\")\n    if not ref:\n        return jsonify({\"error\": \"ref required\"}), 400\n    acct = session.query(Account).filter(Account.external_ref == ref).one_or_none()\n    if acct is None:\n        return jsonify({\"error\": \"not found\"}), 404\n    return jsonify({\"id\": acct.id, \"status\": acct.status})\n```\n\n\u2192 skipped: logging, add when ops need it."
     }
-  ]
+  ],
+  "superseded": {
+    "2026-07-26T04:28:01.100212+00:00": {
+      "reason": "verdicts re-derived from stored prose after classifier fixes",
+      "previous": {
+        "tp": 7,
+        "fp": 2,
+        "sensitivity": 0.5833,
+        "false_positive_rate": 0.1667,
+        "fisher_p_one_sided": 0.0447
+      },
+      "rows_changed": [
+        {
+          "file": "download_b.py",
+          "from": "flagged",
+          "to": "clean"
+        }
+      ]
+    }
+  }
 }

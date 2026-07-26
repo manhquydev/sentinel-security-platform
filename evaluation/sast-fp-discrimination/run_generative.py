@@ -191,7 +191,16 @@ _CLASS_VOCAB = {
     639: r"idor|bola|ownership|owner check|any (?:user|one) can", # authz bypass via user-controlled key
     200: r"disclos|leak|exposure|expose|enumerat|reveal",         # information exposure
     862: r"authoriz|access control|no auth\b|missing auth",       # missing authorization
-    306: r"unauthenticated|no authentication|missing authentication",
+    # CWE-306 "Missing Authentication for Critical Function". The first version of this pattern spelled
+    # the concept out in full — "no authentication", "missing authentication" — and matched 0 of 440
+    # real responses, because the model writes telegraphically: "no auth", "No admin gate", "Any login
+    # marks sent". Every CWE-306 file was therefore uncreditable by construction, which reads as a
+    # measured miss and is not one. The terms below come from the CWE's own definition of the condition
+    # (the function is reachable with no authentication at all), not from whichever phrasing happened to
+    # appear in a run.
+    306: (r"unauthenticated|no authentication|missing authentication|without authentication|"
+          r"not authenticated|no ?auth\b|no login|anonymous (?:access|user)|"
+          r"requires? no (?:auth|login|credential)"),
     284: r"access control|authoriz",
     863: r"authoriz|access control",
     285: r"authoriz|access control",
@@ -207,6 +216,29 @@ def names_ground_truth_class(text: str, gt_cwes) -> bool:
     """
     return any(re.search(_CLASS_VOCAB[c], text or "", re.I)
                for c in gt_cwes if c in _CLASS_VOCAB)
+
+
+def names_class_absence(text: str, cwe: int) -> bool:
+    """True if the prose says the control for `cwe` is ABSENT — not merely that the topic came up.
+
+    Bare vocabulary matching conflates two different things. "Rate limiting is applied per IP" and "no
+    rate limiting on login" both contain the CWE-307 terms, and an audit found the class patterns firing
+    on 3-8% of prose in which the model had concluded the file was fine. That is the regex talking, not
+    the model. Requiring the class term and an absence marker to land in the same sentence window — with
+    the reassurance test running first, as it does for the file-level verdict — drops firing on all-clear
+    prose to zero for every class except CWE-200, whose vocabulary ("disclose", "leak", "expose") stays
+    ambiguous enough that it cannot carry an attribution claim at all.
+    """
+    rx = _CLASS_VOCAB.get(cwe)
+    if not rx:
+        return False
+    sents = _sentences(_strip_code(text or ""))
+    for window in sents + [f"{a} {b}" for a, b in zip(sents, sents[1:])]:
+        if _PRESENT_OK.search(window):
+            continue
+        if re.search(rx, window, re.I) and (_ABSENCE.search(window) or _INHERENT.search(window)):
+            return True
+    return False
 
 
 def classify_prose(text: str) -> str:

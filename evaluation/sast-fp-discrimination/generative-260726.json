@@ -5,8 +5,8 @@
   "counts": {
     "positive": {
       "non-answer": 17,
-      "clean": 27,
-      "flagged": 15,
+      "clean": 28,
+      "flagged": 14,
       "file-missing": 1
     },
     "negative": {
@@ -14,9 +14,9 @@
       "non-answer": 18
     }
   },
-  "flag_rate_vulnerable": 0.3571,
+  "flag_rate_vulnerable": 0.3333,
   "flag_rate_clean": 0.0,
-  "separation": 0.3571,
+  "separation": 0.3333,
   "contamination_bound": "RealVuln is public and LLM-seeded (llm_generated_corpus=true); a positive result mixes capability with memorisation and cannot transfer to private code",
   "rows": [
     {
@@ -44,7 +44,7 @@
       "arm": "positive",
       "repo": "realvuln-dvblab",
       "file": "backend/routes/auth_routes.py",
-      "verdict": "flagged",
+      "verdict": "clean",
       "response": "```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, LoginAttempt\nfrom datetime import datetime, timedelta\nimport jwt\nfrom auth import token_required\nimport yaml\nimport os\n\nauth_bp = Blueprint('auth', __name__)\n\n@auth_bp.route('/api/register', methods=['POST'])\ndef register():\n    data = request.get_json() or {}\n    username = data.get('username')\n    [redacted:secret]\n    if not username or not [redacted:secret]\n    if User.query.filter_by(username=username).first():\n        return jsonify({'error': 'Username already exists'}), 400\n    user = User(username=username, balance=0)\n    user.set_password(password)\n    db.session.add(user)\n    db.session.commit()\n    return jsonify({'message': 'User registered successfully', 'id': user.id}), 201\n\n@auth_bp.route('/api/login', methods=['POST'])\ndef login():\n    data = request.get_json() or {}\n    username = data.get('username')\n    [redacted:secret]\n    user = User.query.filter_by(username=username).first()\n    if user and user.check_password(password):\n        [redacted:secret]\n            {\n                'user_id': user.id,\n                'username': username,\n                'exp': datetime.utcnow() + timedelta(days=1)\n            },\n            os.environ['JWT_SECRET'],\n            algorithm='HS256'\n        )\n        db.session.add(LoginAttempt(\n            username=username,\n            ip_address=request.remote_addr,\n            created_at=datetime.utcnow(),\n            success=True\n        ))\n        db.session.commit()\n        return jsonify({\n            '[redacted:secret]\n            'user': {\n                'id': user.id,\n                'username': user.username,\n                'balance': float(user.balance)\n            }\n        })\n    db.session.add(LoginAttempt(\n        username=username or '',\n        ip_address=request.remote_addr,\n        created_at=datetime.utcnow(),\n        success=False\n    ))\n    db.session.commit()\n    return jsonify({'error': 'Invalid username or password'}), 401\n\n@auth_bp.route('/api/logout', methods=['POST'])\n@token_required\ndef logout(current_user):\n    return jsonify({'message': 'Logged out successfully'})\n\n@auth_bp.route('/api/me', methods=['GET'])\n@token_required\ndef get_current_user(current_user):\n    return jsonify({\n        'id': current_user.id,\n        'username': current_user.username,\n        'balance': float(current_user.balance),\n        'profile': current_user.get_profile()\n    })\n\n@auth_bp.route('/api/profile', methods=['GET'])\n@token_required\ndef get_profile(current_user):\n    profile_data = current_user.get_profile() or {}\n    return jsonify({\n        'fullName': profile_data.get('fullName', current_user.username),\n        'email': current_user.email,\n        'phone': profile_data.get('phone', ''),\n        'address': profile_data.get('address', '')\n    })\n\n@auth_bp.route('/api/profile', methods=['PUT'])\n@token_required\ndef update_profile(current_user):\n    data = request.get_json() or {}\n    current_user.email = data.get('email')\n    profile_data = {\n        'fullName': data.get('fullName'),\n        'phone': data.get('phone'),\n        'address': data.get('address')\n    }\n    current_user.set_profile(profile_data)\n    db.session.commit()\n    return jsonify({\n        'message': 'Profile updated successfully',\n        'profile': {\n            'fullName': profile_data['fullName'],\n            'email': current_user.email,\n            'phone': profile_data['phone'],\n            'address': profile_data['address']\n        }\n    })\n\n@auth_bp.route('/api/update-password', methods=['POST'])\n@token_required\ndef update_password(current_user):\n    data = request.get_json() or {}\n    new_password = data.get('new_password')\n    if not new_password:\n        return jsonify({'error': 'new_password required'}), 400\n    current_user.set_password(new_password)\n    db.sessi"
     },
     {
@@ -719,5 +719,34 @@
       "verdict": "clean",
       "response": "CRM URL map. 47 routes. CRUD orgs/contacts/deals/escalations/docs/api-keys/webhooks + admin + reports.\n\nNo question. Need: review? missing routes? refactor? what."
     }
-  ]
+  ],
+  "superseded": {
+    "2026-07-26T04:28:01.120078+00:00": {
+      "reason": "verdicts re-derived from stored prose after classifier fixes",
+      "previous": {
+        "counts": {
+          "positive": {
+            "non-answer": 17,
+            "clean": 27,
+            "flagged": 15,
+            "file-missing": 1
+          },
+          "negative": {
+            "clean": 22,
+            "non-answer": 18
+          }
+        },
+        "flag_rate_vulnerable": 0.3571,
+        "flag_rate_clean": 0.0,
+        "separation": 0.3571
+      },
+      "rows_changed": [
+        {
+          "file": "backend/routes/auth_routes.py",
+          "from": "flagged",
+          "to": "clean"
+        }
+      ]
+    }
+  }
 }

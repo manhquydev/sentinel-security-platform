@@ -53,12 +53,12 @@
     },
     {
       "file": "agent/lake.py",
-      "verdict": "clean",
+      "verdict": "non-answer",
       "response": "Broken by redaction markers.\n\nL61: `[redacted:secret]\nL68: `[redacted:secret]\n\nWhat do you want done with this file?"
     },
     {
       "file": "agent/llm.py",
-      "verdict": "clean",
+      "verdict": "non-answer",
       "response": "Broken L79: redaction artifact. Should be:\n\n```python\nheaders={\"[redacted:secret]\n```\n\nRest: provenance labels mandatory, fail-closed, finops on error path. Fine.\n\nWhat need?"
     },
     {
@@ -131,5 +131,28 @@
       "verdict": "clean",
       "response": "Task?"
     }
-  ]
+  ],
+  "superseded": {
+    "2026-07-26T04:28:01.179002+00:00": {
+      "reason": "verdicts re-derived from stored prose after classifier fixes",
+      "previous": {
+        "counts": {
+          "clean": 17,
+          "non-answer": 8
+        }
+      },
+      "rows_changed": [
+        {
+          "file": "agent/lake.py",
+          "from": "clean",
+          "to": "non-answer"
+        },
+        {
+          "file": "agent/llm.py",
+          "from": "clean",
+          "to": "non-answer"
+        }
+      ]
+    }
+  }
 }

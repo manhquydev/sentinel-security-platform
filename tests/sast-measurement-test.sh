@@ -456,6 +456,83 @@ PY
 then ok "authored-unseen stays significant and keeps per-defect class labels for the breakdown"
 else bad "SM18: the authored-unseen result lost significance or its class detail"; fi
 
+sect "SM19: every stored verdict re-derives from its own stored prose"
+if run_py <<'PY'
+import glob, json, sys
+sys.path.insert(0, "evaluation/sast-fp-discrimination")
+import run_generative as rg
+from rescore_artefacts import drifted, truncated, _rows
+# A verdict is not raw data — the prose is. The verdict is the classifier's reading of it, so every
+# classifier fix silently ages every stored verdict. Eleven rows across seven artefacts had drifted
+# away from their own data before this guard existed, and it had gone unnoticed because the freshness
+# guard (SM17) compares COMMIT TIMES: an artefact committed alongside its instrument passes while still
+# disagreeing with it. Freshness is not reproducibility, and only this check tests the latter.
+bad = {}
+checked = 0
+unverifiable = []
+for path in sorted(glob.glob("evaluation/sast-fp-discrimination/*.json")):
+    doc = json.load(open(path))
+    rows = _rows(doc)
+    if not rows:
+        continue
+    if truncated(doc):
+        # Reported, never silently skipped: these artefacts are not "fine", they are unverifiable,
+        # and a guard that printed nothing about them would let that distinction quietly disappear.
+        unverifiable.append(path.split("/")[-1])
+        continue
+    checked += len(rows)
+    d = drifted(doc)
+    if d:
+        bad[path.split("/")[-1]] = [(r.get("file"), r["verdict"], now) for r, now in d]
+print("  rows re-derived=%d  disagreeing=%d  unverifiable(truncated prose)=%s"
+      % (checked, sum(len(v) for v in bad.values()), unverifiable or "none"))
+for k, v in bad.items():
+    print("    %s: %s" % (k, v))
+# Negative control: the check must actually notice a planted disagreement, or it passes vacuously.
+planted = {"rows": [{"file": "x.py", "verdict": "flagged",
+                     "response": "Looks fine. No issues found."}]}
+caught = len(drifted(planted)) == 1
+print("  planted-disagreement caught=%s" % caught)
+sys.exit(0 if not bad and caught and checked > 300 else 1)
+PY
+then ok "no stored verdict disagrees with re-reading its own prose, and a planted disagreement is caught"
+else bad "SM19: an artefact's stored verdicts no longer match what the classifier reads from its prose"; fi
+
+sect "SM20: no class-attribution vocabulary is dead, and each is specific to prose claiming a defect"
+if run_py <<'PY'
+import glob, json, re, sys
+sys.path.insert(0, "evaluation/sast-fp-discrimination")
+import run_generative as rg
+# CWE-306's vocabulary demanded verbose phrasing ("no authentication", "missing authentication") that
+# the model never writes — it writes "no auth", "No admin gate". It matched 0 of 440 real responses, so
+# every CWE-306 file was uncreditable by construction while looking like a measured miss. A vocabulary
+# that cannot fire is not a strict measure, it is a broken one.
+prose = []
+for path in glob.glob("evaluation/sast-fp-discrimination/*.json"):
+    doc = json.load(open(path))
+    for value in doc.values():
+        if isinstance(value, list):
+            prose += [r["response"] for r in value
+                      if isinstance(r, dict) and isinstance(r.get("response"), str) and len(r["response"]) > 40]
+flagged = [t for t in prose if rg.classify_prose(t) == "flagged"]
+clean = [t for t in prose if rg.classify_prose(t) == "clean"]
+dead, weak = [], []
+for cwe, rx in sorted(rg._CLASS_VOCAB.items()):
+    f = sum(1 for t in flagged if rg.names_class_absence(t, cwe))
+    c = sum(1 for t in clean if rg.names_class_absence(t, cwe))
+    print("  CWE-%-4s flagged %2d/%d  clean %2d/%d" % (cwe, f, len(flagged), c, len(clean)))
+    if f == 0:
+        dead.append(cwe)
+    # Specificity floor: a class term appearing as often in prose concluding "fine" as in prose claiming
+    # a defect measures the regex, not the model. CWE-200 fails this and is excluded from attribution.
+    elif c / max(len(clean), 1) > 0.5 * (f / len(flagged)):
+        weak.append(cwe)
+print("  dead=%s  insufficiently-specific=%s" % (dead, weak))
+sys.exit(0 if not dead and not weak and len(prose) > 300 else 1)
+PY
+then ok "every class vocabulary fires on real prose and fires far more on defect claims than on all-clear prose"
+else bad "SM20: a class-attribution vocabulary is dead or fires as readily on prose claiming nothing is wrong"; fi
+
 sect "summary"
 printf 'PASS=%d FAIL=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

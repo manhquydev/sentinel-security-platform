@@ -43,7 +43,7 @@
       "arm": "positive",
       "repo": "realvuln-dvblab",
       "file": "backend/routes/auth_routes.py",
-      "verdict": "flagged",
+      "verdict": "clean",
       "response": "**Critical vulns. Fix now.**\n\n```python\nfrom flask import Blueprint, request, jsonify\nfrom models import db, User, LoginAttempt\nfrom datetime import datetime, timedelta\nimport jwt\nfrom auth import token_required\nimport yaml\nimport os\n\nauth_bp = Blueprint('auth', __name__)\nJWT_SECRET = os.environ['JWT_SECRET']  # never hardcode\n\n@auth_bp.route('/api/register', methods=['POST'])\ndef register():\n    data = request.get_json() or {}\n    username = data.get('username')\n    [redacted:secret]\n    if not username or not [redacted:secret]"
     },
     {
@@ -57,7 +57,7 @@
       "arm": "positive",
       "repo": "vc-claude-code-seeded-v2-legal-case-django",
       "file": "cases/views_clients.py",
-      "verdict": "clean",
+      "verdict": "flagged",
       "response": "**Bug:** `client_edit` missing client access check. Any attorney edits any client by ID.\n\n```python\n@firm_staff_required\ndef client_edit(request, client_id: int):\n    client = get_object_or_404(Client, pk=client_id)\n    if request.user.role not in {Role.FIRM_ADMIN, Role.ATTORNEY}:\n        raise PermissionDenied(\"Only attorneys or firm admins can edit clients.\")\n    if request.user.role != Role.FIRM_ADMIN:\n        if not matters_visible_to(request.user).filter(client=client).exists():\n            raise PermissionDenied(\"You do not have access to this client.\")\n    if request.method == \"POST\":\n "
     },
     {
@@ -298,5 +298,38 @@
       "verdict": "clean",
       "response": "Dead comment only. Bare `register` fine for uncustomized models.\n\n```python\nfrom django.contrib import admin\n\nfrom . import models\n\n\n@admin.register(models.UserProfile)\nclass UserProfileAdmin(admin.ModelAdmin):\n    list_display = (\"user\", \"role\", \"phone\", \"must_reset_password\")\n    list_filter = (\"role\", \"must_reset_password\")\n    search_fields = (\"user__username\", \"user__email\", \"user__first_name\", \"user__last_name\")\n\n\n@admin.register(models.PatientProfile)\nclass PatientProfileAdmin(admin.ModelAdmin):\n    list_display = (\"full_name\", \"date_of_birth\", \"email\", \"phone\", \"primary_provider\", \"act"
     }
-  ]
+  ],
+  "superseded": {
+    "2026-07-26T04:28:01.129466+00:00": {
+      "reason": "verdicts re-derived from stored prose after classifier fixes",
+      "previous": {
+        "counts": {
+          "positive": {
+            "non-answer": 4,
+            "clean": 15,
+            "flagged": 5
+          },
+          "negative": {
+            "clean": 8,
+            "non-answer": 8
+          }
+        },
+        "flag_rate_vulnerable": 0.25,
+        "flag_rate_clean": 0.0,
+        "separation": 0.25
+      },
+      "rows_changed": [
+        {
+          "file": "backend/routes/auth_routes.py",
+          "from": "flagged",
+          "to": "clean"
+        },
+        {
+          "file": "cases/views_clients.py",
+          "from": "clean",
+          "to": "flagged"
+        }
+      ]
+    }
+  }
 }
