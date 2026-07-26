@@ -3,21 +3,25 @@
     "generative-260726.json",
     "generative-rerun2-260726.json",
     "generative-rerun3-260726.json",
-    "generative-rerun4-260726.json"
+    "generative-rerun4-260726.json",
+    "generative-rerun5-260726.json",
+    "generative-rerun6-260726.json"
   ],
-  "k": 4,
+  "k": 6,
   "n_positive": 24,
   "n_clean": 16,
   "hit_counts": {
-    "0": 15,
-    "1": 4,
-    "2": 3,
-    "3": 0,
-    "4": 2
+    "0": 14,
+    "1": 3,
+    "2": 2,
+    "3": 3,
+    "4": 0,
+    "5": 1,
+    "6": 1
   },
-  "never_flagged": 15,
-  "flagged_in_all": 2,
+  "never_flagged": 14,
+  "flagged_in_all": 1,
   "single_reading_rate": 0.1875,
   "clean_control_flags": 0,
-  "clean_control_observations": 64
+  "clean_control_observations": 96
 }

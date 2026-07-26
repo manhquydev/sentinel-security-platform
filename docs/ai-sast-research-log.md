@@ -42,7 +42,7 @@ audited on 2026-07-26.
 | E17 | generative role, powered replication | **STANDS as corrected** — 10/60 vs 1/40 (p = 0.024) → **9/60 vs 0/40 (p = 0.0078)** after the classifier fixes; framing corrected (the deterministic zero is *structural*, so it is capability addition, not a horse race) |
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
-| E48 | four readings of the headline design | **STANDS** — **2/24 files flagged in ALL four readings** (class attribution had 0/53 in five): the COARSE question has a reliable core, the fine one does not. 15/24 never flagged; union delivers 66% of independence at k=4; **0 flags in 64 clean-control observations** |
+| E48 | repeated readings of the headline design | **STANDS** — at k=6: **1/24 flagged in all six, 1 more at 5/6** (class attribution had 0/53 in five), so the COARSE question has a small reliable core and the fine one has none. 14/24 never flagged; union decays to **58% of independence at k=6**; **0 flags in 96 clean-control observations** |
 | E47 | is the PRIMARY claim also a rate? | **STANDS — split verdict** — specificity **0/16 flags in both readings** (a floor, unmoved across every run ever done); sensitivity behaves as a rate: 5 then 3 flags overlapping in **2**, union 6/24, **18/24 flagged in neither** |
 | E46 | what does k readings actually buy? | **STANDS** — 5 readings x 53 files: **0/53 fired in all five**; ownership 15/53 ever, 38/53 never; CWE-307 3/53 ever, 50/53 never. Union delivers **70% of the independence projection at k=5** and decaying. Free from committed artefacts |
 | E45 | how much of the corpus carries no signal? | **STANDS** — **41/53 = 0.774 [0.645, 0.865]** never named across two independent readings (upper bound); model-corrected **~0.60-0.77 truly at zero**. For **CWE-307 it is 52/53 = 0.981 [0.901, 0.997]**. k readings buy coverage of ~2 files in 5, at k x cost. Computed from committed data, zero new calls |
@@ -3752,8 +3752,30 @@ Sixteen clean files across four readings. **No flag.** Combined with every earli
 now produced zero flags in every observation this project has ever taken — SM23 asserts this across all
 committed artefacts and is what will catch the first breach if one ever comes.
 
-**Honest bounds.** Twenty-four positive files is small, and a propensity of 1.000 measured on four readings
-carries the interval [0.510, 1.000] — "always" here means "four for four", which is consistent with a true
-propensity of 0.6. The claim supported is that a reliable core **exists**, not that these two particular
-files are certainties. Distinguishing them needs more readings of those two files specifically, which is
-cheap and is the obvious next step.
+**Honest bounds, and what happened when they were tested.** Twenty-four positive files is small, and a
+propensity of 1.000 on four readings carries [0.510, 1.000] — "always" meaning "four for four" is
+consistent with a true propensity of 0.6. So two more readings were run.
+
+### Deepened to k=6
+
+| flagged in | files | propensity | 95% CI |
+|---|---|---|---|
+| 0 of 6 | **14** | 0.000 | [0.000, 0.390] |
+| 1 of 6 | 3 | 0.167 | [0.030, 0.564] |
+| 2 of 6 | 2 | 0.333 | [0.097, 0.700] |
+| 3 of 6 | 3 | 0.500 | [0.188, 0.812] |
+| 5 of 6 | 1 | 0.833 | [0.436, 0.970] |
+| **6 of 6** | **1** | 1.000 | [0.610, 1.000] |
+
+**One of the two "perfect" files regressed to 5 of 6.** The caution written above was the right caution:
+four-for-four was partly luck, and the reliable core is **one file at 6/6 and one at 5/6** rather than two
+certainties. It did not vanish — two of twenty-four files still answer yes almost every time, which class
+attribution never managed on any file — but it is smaller and less absolute than k=4 implied.
+
+The union curve continues its decay and the decay is now unmistakable: **100%, 81%, 71%, 65%, 61%, 58%** of
+the independence projection at k=1 through 6. Each reading is worth less than the last by a widening
+margin, and at k=6 the design delivers barely over half of what a naive model promises. Union coverage is
+10.0 of 24 files for six times the cost.
+
+**Specificity across all six readings: 0 flags in 96 clean-control observations.** The floor has now held
+for ninety-six consecutive opportunities to break it.
