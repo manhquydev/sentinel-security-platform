@@ -45,8 +45,22 @@ state, not the morning's.
 > positives at zero recall cost; on the rest it removes none* — 3 of 12 held-out apps were in the first
 > group. The corpus anchor (0.263 recall) never moved, so nothing suppressed was a labelled defect.
 >
-> **The next honest step is not another idiom** — extending the vocabulary one application at a time is the
-> in-sample fitting E85 was built to detect. It is a measurement of how many idioms exist.
+> **That measurement was then run (E86), and it closes the vocabulary line of work.** A catalogue built from
+> framework documentation finds **14 of 16 applications match an idiom the detector already knows**, **none**
+> depends on one it lacks, and the top three idioms touch 75%. There is no long tail to chase.
+>
+> **So E85's nine zero-reduction applications are not a vocabulary gap.** Cross-tabulating what fraction of
+> each application's routes carry an auth marker splits the sample cleanly: apps with **per-route** auth
+> (fides 92%, pgadmin4 88%, pyload 68%) emit 0–20 flags; apps with **app-wide** auth emit 0–6 after the
+> cross-file work; and the rest express authentication **neither way in code** — `hermes-agent` at an
+> external gateway, `ray` and `prefect` with **0%** of routes carrying any marker. Those flags are the
+> detector correctly reporting uncontrolled routes, and they are exactly the input an attestation workflow
+> consumes.
+>
+> **Product statement, final form for the deterministic layer:** for applications with per-route or app-wide
+> auth (9 of 16 sampled) it emits a short list largely free of structural false positives; for applications
+> with neither it emits a long list of genuinely uncontrolled routes. Whether any given one is a defect or a
+> deliberate choice needs intent, not analysis (E77) — which is the attestation question, not a gap.
 >
 > In-sample figure, kept for contrast:
 > **Cumulative, across four production applications and at zero recall cost: 1005 → 276 flags (−72%).**

@@ -1,0 +1,303 @@
+{
+  "generated_at": "2026-07-27T03:51:52.856909+00:00",
+  "question": "how many centralised-auth idioms exist, and can a finite vocabulary converge?",
+  "catalogue_source": "framework documentation (Flask, FastAPI/Starlette, Django/DRF, Tornado, aiohttp, Sanic) \u2014 NOT read from the repositories scored here",
+  "applications": 16,
+  "idiom_frequency": {
+    "fastapi:Security() / Depends() auth": 8,
+    "flask:Flask-Login login_required": 6,
+    "flask:Flask-HTTPAuth": 2,
+    "tornado:get_current_user / @authenticated": 6,
+    "django:@login_required / LoginRequiredMixin": 4,
+    "starlette:AuthenticationMiddleware": 2,
+    "starlette:requires() decorator": 2,
+    "flask:before_request hook": 4,
+    "django:AuthenticationMiddleware in MIDDLEWARE": 1,
+    "flask:Flask-Security/Principal decorators": 1,
+    "fastapi:app/router dependencies=": 1
+  },
+  "known_to_detector": [
+    "django:@login_required / LoginRequiredMixin",
+    "django:AuthenticationMiddleware in MIDDLEWARE",
+    "django:DRF DEFAULT_PERMISSION_CLASSES",
+    "django:LoginRequiredMiddleware",
+    "django:permission_classes on a view",
+    "fastapi:Security() / Depends() auth",
+    "fastapi:app/router dependencies=",
+    "flask:Flask-Login login_required",
+    "flask:before_request hook",
+    "starlette:AuthenticationMiddleware"
+  ],
+  "apps_matching_nothing": [
+    "spiral-project/ihatemoney",
+    "tomasvotava/fastapi-sso"
+  ],
+  "apps_matching_only_unknown": [],
+  "coverage_curve": {
+    "1": 8,
+    "2": 11,
+    "3": 12,
+    "5": 12,
+    "8": 13,
+    "11": 14
+  },
+  "fraction_unexplained": 0.125,
+  "verdict": "VOCABULARY IS FINISHABLE \u2014 a short catalogue explains nearly every application",
+  "limitation": "counts mechanisms present, not route-level coverage",
+  "per_repo": [
+    {
+      "repo": "NousResearch/hermes-agent",
+      "routes": 288,
+      "flags": 250,
+      "idioms": [
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required"
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "ethyca/fides",
+      "routes": 250,
+      "flags": 20,
+      "idioms": [
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-HTTPAuth",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "unknown": [
+        "flask:Flask-HTTPAuth",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "marimo-team/marimo",
+      "routes": 118,
+      "flags": 6,
+      "idioms": [
+        "django:@login_required / LoginRequiredMixin",
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required",
+        "starlette:AuthenticationMiddleware",
+        "starlette:requires() decorator",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "django:@login_required / LoginRequiredMixin",
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required",
+        "starlette:AuthenticationMiddleware"
+      ],
+      "unknown": [
+        "starlette:requires() decorator",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "open-webui/open-webui",
+      "routes": 506,
+      "flags": 0,
+      "idioms": [
+        "fastapi:Security() / Depends() auth",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "unknown": [
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "Chainlit/chainlit",
+      "routes": 40,
+      "flags": 17,
+      "idioms": [
+        "fastapi:Security() / Depends() auth",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "unknown": [
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "OctoPrint/OctoPrint",
+      "routes": 111,
+      "flags": 86,
+      "idioms": [
+        "flask:Flask-HTTPAuth",
+        "flask:Flask-Login login_required",
+        "flask:before_request hook",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "flask:Flask-Login login_required",
+        "flask:before_request hook"
+      ],
+      "unknown": [
+        "flask:Flask-HTTPAuth",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "dgtlmoon/changedetection.io",
+      "routes": 86,
+      "flags": 0,
+      "idioms": [
+        "django:@login_required / LoginRequiredMixin",
+        "flask:Flask-Login login_required",
+        "flask:before_request hook"
+      ],
+      "known": [
+        "django:@login_required / LoginRequiredMixin",
+        "flask:Flask-Login login_required",
+        "flask:before_request hook"
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "fastapi-users/fastapi-users",
+      "routes": 20,
+      "flags": 8,
+      "idioms": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "khoj-ai/khoj",
+      "routes": 102,
+      "flags": 1,
+      "idioms": [
+        "django:AuthenticationMiddleware in MIDDLEWARE",
+        "starlette:AuthenticationMiddleware",
+        "starlette:requires() decorator"
+      ],
+      "known": [
+        "django:AuthenticationMiddleware in MIDDLEWARE",
+        "starlette:AuthenticationMiddleware"
+      ],
+      "unknown": [
+        "starlette:requires() decorator"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "mlflow/mlflow",
+      "routes": 88,
+      "flags": 71,
+      "idioms": [
+        "flask:before_request hook",
+        "tornado:get_current_user / @authenticated"
+      ],
+      "known": [
+        "flask:before_request hook"
+      ],
+      "unknown": [
+        "tornado:get_current_user / @authenticated"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "pgadmin-org/pgadmin4",
+      "routes": 304,
+      "flags": 0,
+      "idioms": [
+        "django:@login_required / LoginRequiredMixin",
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required",
+        "flask:Flask-Security/Principal decorators",
+        "flask:before_request hook"
+      ],
+      "known": [
+        "django:@login_required / LoginRequiredMixin",
+        "fastapi:Security() / Depends() auth",
+        "flask:Flask-Login login_required",
+        "flask:before_request hook"
+      ],
+      "unknown": [
+        "flask:Flask-Security/Principal decorators"
+      ],
+      "any_idiom": true
+    },
+    {
+      "repo": "prefecthq/prefect",
+      "routes": 193,
+      "flags": 141,
+      "idioms": [
+        "fastapi:app/router dependencies="
+      ],
+      "known": [
+        "fastapi:app/router dependencies="
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "pyload/pyload",
+      "routes": 56,
+      "flags": 11,
+      "idioms": [
+        "django:@login_required / LoginRequiredMixin",
+        "flask:Flask-Login login_required"
+      ],
+      "known": [
+        "django:@login_required / LoginRequiredMixin",
+        "flask:Flask-Login login_required"
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "ray-project/ray",
+      "routes": 101,
+      "flags": 95,
+      "idioms": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "known": [
+        "fastapi:Security() / Depends() auth"
+      ],
+      "unknown": [],
+      "any_idiom": true
+    },
+    {
+      "repo": "spiral-project/ihatemoney",
+      "routes": 35,
+      "flags": 30,
+      "idioms": [],
+      "known": [],
+      "unknown": [],
+      "any_idiom": false
+    },
+    {
+      "repo": "tomasvotava/fastapi-sso",
+      "routes": 39,
+      "flags": 18,
+      "idioms": [],
+      "known": [],
+      "unknown": [],
+      "any_idiom": false
+    }
+  ]
+}

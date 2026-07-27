@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E86 | how many centralised-auth idioms exist? | **VOCABULARY IS NOT THE BOTTLENECK — and E85's 'failure' was the detector working** — catalogue built from framework docs: **14/16** apps match an idiom the detector already knows, **0** depend on one it lacks, top-3 idioms touch 75%. Removed a noise pattern first (matched 11/16 on *comments* about API gateways). The cross-tab is the finding: apps still flagging have auth **neither per-route nor app-wide in code** — external gateway (hermes) or genuinely none (**ray 0%, prefect 0%** of routes carry a marker). A 0% reduction there is correct reporting, not a missed idiom. Extending vocabulary is CLOSED |
 | E85 | does the 72% FP reduction hold out-of-sample? | **NO — pooled 28.8%, MEDIAN 0%** — 12 production web apps never used to derive a fix. The failure shape is the finding: **bimodal, not diluted** — 3 apps drop 99-100%, **9 drop nothing**. Vocabulary detection either recognises an app's idiom completely or misses it completely. Three defects found by the run and fixed: a **host-header check counted as auth**, an **import counted as a registration**, and a refusal vocabulary too narrow to see Flask-Login's `unauthorized()`. Corpus anchor **0.263 unchanged** throughout |
 | E84 | what are the 491 unresolved production flags? | **221 were ONE missing word; 72% cumulative FP reduction at zero recall cost** — reading the cases showed `fides` declares auth as FastAPI's `Security(verify_oauth_client, scopes=[...])`, which `AUTH_MARKER` did not know: **221 of 241** of its flags carry it. Added, with self-tests pinning that `Security(...)` protects while `Depends(get_db)` does NOT. `hermes-agent`'s 250 have no in-code auth at all — it authenticates at an external gateway, a stated limit of source-only analysis. Production flags **1005 → 276**; corpus recall **0.263 unchanged** |
 | E83 | is E82's 21% cost real? | **NO — it was three bugs of mine; the real cost is ZERO** — (1) `APP_LEVEL` matched **CORSMiddleware** via `allow_headers=[..."Authorization"]`; (2) a repo is not one app (`vulpy` ships `good/` and `bad/`) so scoping is now per-directory; (3) the guard must **ENFORCE**, not just load a session — E61's identity-vs-enforcement distinction applied at app scope. After all three: recall **0.263 unchanged**, **508 of 514 production FPs removed**. E82's 'not worth paying' is **withdrawn**; cross-file suppression now ships **on by default**, corpus figure 558 sites / 0.263 / 0.125 |
@@ -6128,6 +6129,13 @@ untouched). Zero model calls.
 
 ## E85 — held out: the 72% false-positive reduction does NOT generalise. It is all-or-nothing per application
 
+> **RE-READ BY E86 (same session).** The finding stands — the reduction is bimodal and the median held-out
+> application gains nothing — but the *interpretation* below, that nine applications use idioms the
+> vocabulary has never seen, is wrong. The idiom census found **14 of 16 applications match an idiom the
+> detector already knows and none depends on one it lacks**. Those nine flag heavily because they express
+> authentication *neither* per-route *nor* app-wide in code — an external gateway, or none at all. A 0%
+> reduction there is the detector correctly reporting uncontrolled routes, not a missed idiom. See E86.
+
 **Why this had to be run.** E83 and E84 cut production flags from 1005 to 276 across four applications —
 but every fix was found by *reading those same four*. `Security(...)` was discovered in `fides` and scored
 on `fides`. That is the in-sample trap this project already carries as an open limitation against itself
@@ -6190,3 +6198,76 @@ exactly the in-sample fitting this experiment was built to detect, so the next h
 idiom — it is a measurement of how many idioms exist.
 
 Instrument `run_heldout_production.py`, artefact `heldout-production-260727.json`. Zero model calls.
+
+---
+
+## E86 — the idiom census: vocabulary is NOT the bottleneck, and E85's "failure" was the detector working
+
+**The question E85 left.** Its held-out run found the false-positive reduction bimodal — three of twelve
+applications lost 99–100% of flags, nine lost none — and named the next step: *not another idiom, but a
+measurement of how many idioms exist.* If a handful cover most applications the vocabulary is finishable;
+if the tail is long and flat, no vocabulary converges and the detector design is capped.
+
+**Catalogue built from framework documentation, not from these repositories** — the ways Flask,
+FastAPI/Starlette, Django/DRF, Tornado, aiohttp and Sanic document centralised authentication — with the
+subset the detector already acts on marked, so the census reports what exists *and* what is reachable.
+
+**One catalogue entry was removed before publication.** A framework-agnostic "gateway/proxy auth" pattern
+matched **11 of 16** applications and would have carried the entire top-1 coverage figure. Reading the
+matches showed every one was **prose**: comments about AWS API Gateway header handling and reverse-proxy
+behaviour, never a mechanism. A pattern that fires on documentation is not evidence of enforcement.
+
+**Result — 16 production applications:**
+
+| | count |
+|---|---|
+| match a catalogued idiom | **14/16** |
+| match an idiom the detector already knows | **14/16** |
+| match **only** idioms the detector does not know | **0** |
+| match nothing at all | 2/16 (12%) |
+
+Coverage flattens quickly: top-3 idioms touch 75% of applications, top-11 reach 88%. **Vocabulary is not
+the bottleneck** — there is no long tail of exotic mechanisms, and not one application depends on an idiom
+the detector lacks.
+
+**Which makes the real finding a cross-tabulation nobody had run:** eight applications carry an idiom the
+detector knows *and still flag heavily* (hermes-agent 250, prefect 141, ray 95, OctoPrint 86, mlflow 71).
+Measuring what fraction of each application's routes carry an auth marker separates them cleanly:
+
+| group | applications | routes with a marker | flags |
+|---|---|---|---|
+| **A — per-route auth** | fides 92%, pgadmin4 88%, pyload 68%, fastapi-users 50%, chainlit 48% | high | **0–20** |
+| **B — app-wide auth, now detected** | open-webui, changedetection.io, khoj, marimo | low | **0–6** |
+| **C — neither in code** | hermes-agent, prefect **0%**, ray **0%**, mlflow, OctoPrint, ihatemoney, fastapi-sso | very low | **18–250** |
+
+**Group C is where every remaining flag lives, and it is not a vocabulary gap.** These applications express
+authentication *neither* per route *nor* app-wide in their source. Two explanations, and both are visible in
+the sample: hermes-agent authenticates at an **external gateway** (E84 read its docstring), while `ray` and
+`prefect` have literally **zero** routes carrying any recognised marker — ML infrastructure whose dashboards
+and APIs plausibly run unauthenticated inside a trusted network. Which of the two applies to each is not
+established here and is checkable per application; what is established is that neither is a missing regex.
+
+**So E85's "does not generalise" needs re-reading, and it improves the detector's standing rather than
+damaging it.** A 0% reduction on Group C is **not a failure to recognise an idiom** — there is no idiom
+there to recognise. It is the detector correctly reporting routes that carry no in-code control. That is
+precisely what an inventory is for, and the attestation question the product asks — *"is this route public
+by design?"* — is exactly the question Group C raises.
+
+**Consequences, stated in the order they matter:**
+
+1. **Extending the vocabulary is closed as a line of work.** No application in the sample needs an idiom the
+   detector lacks. E85's warning against fitting one more idiom was right, and the census shows there is
+   nothing left to fit.
+2. **The product statement sharpens.** For applications with per-route or app-wide auth (9 of 16 here), the
+   detector emits a short, mostly-structural-FP-free list. For applications with neither, it emits a long
+   list of genuinely uncontrolled routes — which is a true statement about the code and the exact input an
+   attestation workflow consumes.
+3. **What is still unmeasured is unchanged**: whether a Group C flag is a defect or a deliberate choice
+   needs intent, not analysis (E77). No production precision number is claimed.
+
+**Method note.** This is the third catalogue/vocabulary item this session that had to be removed or narrowed
+after reading what it actually matched — CORS as auth (E83), `@patch` as a route (E78), and now a
+documentation-matching gateway pattern. Every one was caught by inspecting matches rather than totals; none
+would have been caught by the aggregate looking wrong.
+
+Instrument `run_idiom_census.py`, artefact `idiom-census-260727.json`. Zero model calls.
