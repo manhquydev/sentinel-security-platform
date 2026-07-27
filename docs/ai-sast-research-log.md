@@ -43,6 +43,7 @@ audited on 2026-07-26.
 | E21 | is low sensitivity an artefact of non-answers? | **STANDS (negative)** — 53% of non-answers resolve but 9/10 resolve to *clean*; sensitivity 0.167 -> 0.183. ~19% is **real** |
 | E20 | file role or missing control? | **INCONCLUSIVE (withdrawn)** — reused arm A′ against a freshly measured arm C under a 36%-unstable instrument |
 | E75 | does the model transfer to organic post-cutoff production code? | **REVERSED BY E79 — the collapse was an instrument artefact (wrong prompt + truncation + dup site); corrected result INCONCLUSIVE, pre 0.300 vs post 0.200**. Original (defective) reading below: — paired pre-fix/post-fix files from maintainer-confirmed fixes, one advisory published 2 days before the run: **pre 2/13 = 0.154, post 2/13 = 0.154**, discordance 2 vs 2. Below the 0.229 collapse line AND **the arms do not separate at all** — the model flags the repair as often as the defect. Two of my own instrument defects found and fixed first (prompt not the corpus prompt; truncation hid **56.5%** of labelled routes), both of which had produced a STRONGER collapse. Generative-role numbers are now explicitly corpus-only |
+| E85 | does the 72% FP reduction hold out-of-sample? | **NO — pooled 28.8%, MEDIAN 0%** — 12 production web apps never used to derive a fix. The failure shape is the finding: **bimodal, not diluted** — 3 apps drop 99-100%, **9 drop nothing**. Vocabulary detection either recognises an app's idiom completely or misses it completely. Three defects found by the run and fixed: a **host-header check counted as auth**, an **import counted as a registration**, and a refusal vocabulary too narrow to see Flask-Login's `unauthorized()`. Corpus anchor **0.263 unchanged** throughout |
 | E84 | what are the 491 unresolved production flags? | **221 were ONE missing word; 72% cumulative FP reduction at zero recall cost** — reading the cases showed `fides` declares auth as FastAPI's `Security(verify_oauth_client, scopes=[...])`, which `AUTH_MARKER` did not know: **221 of 241** of its flags carry it. Added, with self-tests pinning that `Security(...)` protects while `Depends(get_db)` does NOT. `hermes-agent`'s 250 have no in-code auth at all — it authenticates at an external gateway, a stated limit of source-only analysis. Production flags **1005 → 276**; corpus recall **0.263 unchanged** |
 | E83 | is E82's 21% cost real? | **NO — it was three bugs of mine; the real cost is ZERO** — (1) `APP_LEVEL` matched **CORSMiddleware** via `allow_headers=[..."Authorization"]`; (2) a repo is not one app (`vulpy` ships `good/` and `bad/`) so scoping is now per-directory; (3) the guard must **ENFORCE**, not just load a session — E61's identity-vs-enforcement distinction applied at app scope. After all three: recall **0.263 unchanged**, **508 of 514 production FPs removed**. E82's 'not worth paying' is **withdrawn**; cross-file suppression now ships **on by default**, corpus figure 558 sites / 0.263 / 0.125 |
 | E82 | build cross-file awareness — does it unblock E81? | **PRICING CORRECTED BY E83 — the cost was my own bugs, real cost is zero.** Original (wrong) finding: — `scan_repo` collects app-wide enforcement and cross-file router mounts before judging any file; default path byte-identical so no published number moves. The two mechanisms differ completely in price: **router propagation costs 0 recall** (and is unexercised — none of the 4 production apps use it); **app-wide suppression removes ALL 514 production FPs but costs 16/76 corpus TPs = 21% of recall**, because global guards carve out public paths and defects live there (carve-outs measured: 32/12/8/45). Off by default: a measured loss for an unmeasurable gain. E81's block STANDS; resolution is carve-out-aware suppression |
@@ -6122,3 +6123,70 @@ remain are no longer dominated by a structural blindness this project had alread
 Instrument `detect_absent_auth.py` (`AUTH_MARKER` + `Security(`, two self-tests), artefacts
 `absent-auth-detector-260726.json`, `rank-absent-auth-260726.json` (both unchanged in value — the corpus is
 untouched). Zero model calls.
+
+---
+
+## E85 — held out: the 72% false-positive reduction does NOT generalise. It is all-or-nothing per application
+
+**Why this had to be run.** E83 and E84 cut production flags from 1005 to 276 across four applications —
+but every fix was found by *reading those same four*. `Security(...)` was discovered in `fides` and scored
+on `fides`. That is the in-sample trap this project already carries as an open limitation against itself
+(E61's ENFORCEMENT vocabulary, still flagged in E74), and a reduction measured where the fixes were derived
+is a statement about fit, not about the detector.
+
+**Design.** Twelve production web applications drawn from advisories **never used to derive any fix**, the
+set fixed before measurement, compared within-repository: "before" is E56's single-file behaviour with the
+pre-E78/E83 regexes restored, "after" is what ships today.
+
+| | in-sample (4 apps, E83/E84) | **held-out (12 apps)** |
+|---|---|---|
+| pooled flags | 1005 → 276 | **671 → 478** |
+| pooled reduction | **72.5%** | **28.8%** |
+| median per-repo reduction | — | **0.0%** |
+| range | — | 0% – 100% |
+| repositories flagged MORE | — | **0** |
+
+**The reduction does not generalise, and the shape of the failure is the finding.** The distribution is
+**bimodal, not diluted**: three held-out applications drop 99–100% (khoj, changedetection.io, pgadmin4) and
+**nine drop nothing at all**. The median production application gets **zero benefit**. The pooled 28.8% is
+carried entirely by the three that happen to use a centralised-auth idiom the vocabulary already knows.
+
+That is the honest characterisation of vocabulary-based detection: it does not degrade gracefully across
+applications, it either recognises an application's idiom completely or misses it completely. Each new
+framework convention is a new item, and there is no evidence the list is near-complete — nine of twelve
+held-out apps use something not in it.
+
+**Three defects found *by* the held-out run, each verified in source before acting:**
+
+1. **A host-header check counted as authentication.** pgadmin4's `@app.before_request def limit_host_addr()`
+   returns 403 for Host-header injection — a real control, not an auth control. The enforcement gate
+   accepted it because it refuses. Fixed: a global guard must refuse **on an identity or permission
+   condition**, not merely refuse. (pgadmin4 remains suppressed, correctly, via a *second* hook that does
+   `abort(401)` on `current_user.is_authenticated`.)
+2. **An import counted as a registration.** `from starlette.middleware.authentication import
+   AuthenticationMiddleware` names the class without installing it. Import lines are now stripped before
+   app-level patterns are applied.
+3. **The refusal vocabulary was too narrow**, and this one cut the other way: changedetection.io refuses
+   with `return login_manager.unauthorized()` — Flask-Login's standard form — which the gate did not know,
+   so a genuine auth guard was rejected. Added, alongside explicit 401/403 responses.
+
+Defects 1 and 3 point in opposite directions, which is the useful part: the same tightening that removed a
+false suppression also exposed a false rejection. Both were found by reading the specific application, not
+by inspecting an aggregate.
+
+**The corpus anchor never moved through any of it: recall 76/289 = 0.263** (562 reported route handlers,
+site precision 70/562 = 0.125). That is what makes the held-out reduction interpretable at all — whatever
+was suppressed on production code, it was not labelled defects.
+
+**What this does to the product statement.** E84's "72% fewer false positives" must not be quoted as a
+property of the detector. The supportable claim is narrower and testable: *on applications whose
+centralised authentication uses a recognised idiom, the cross-file layer removes essentially all
+structural false positives at zero recall cost; on applications that do not, it removes none.* Three of
+twelve held-out applications were in the first group.
+
+**And the real limit is now visible.** Nine held-out applications flag at the old rate because their auth
+is expressed in a way the vocabulary has never seen. Extending the vocabulary one application at a time is
+exactly the in-sample fitting this experiment was built to detect, so the next honest step is not another
+idiom — it is a measurement of how many idioms exist.
+
+Instrument `run_heldout_production.py`, artefact `heldout-production-260727.json`. Zero model calls.

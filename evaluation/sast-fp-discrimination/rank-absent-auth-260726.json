@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-26T19:43:21.349356+00:00",
+  "generated_at": "2026-07-27T03:42:06.219041+00:00",
   "question": "can a free, unfitted ordering lift the absence detector's real defects?",
   "unit": "finding site (file+line); TP fixed once in canonical order, identical for all rankers",
-  "sites": 558,
+  "sites": 562,
   "real_defects": 70,
-  "site_precision": 0.1254,
+  "site_precision": 0.1246,
   "signals": [
     "write_method",
     "sensitive_name",
@@ -16,47 +16,47 @@
   "depths": {
     "0.05": {
       "observed": 0.0,
-      "chance_p95": 0.1,
+      "chance_p95": 0.0857,
       "p_value": 1.0,
       "lift_over_chance": 0.0,
       "grouped_ci": [
         0.0,
-        0.01282051282051282
+        0.0125
       ],
       "negative_control_line": 0.0143
     },
     "0.10": {
       "observed": 0.0286,
       "chance_p95": 0.1571,
-      "p_value": 0.997,
+      "p_value": 0.995,
       "lift_over_chance": 0.286,
       "grouped_ci": [
         0.0,
-        0.09523809523809523
+        0.0875
       ],
       "negative_control_line": 0.1857
     },
     "0.20": {
       "observed": 0.1571,
       "chance_p95": 0.2714,
-      "p_value": 0.8795,
+      "p_value": 0.8615,
       "lift_over_chance": 0.786,
       "grouped_ci": [
-        0.078125,
-        0.2459016393442623
+        0.07692307692307693,
+        0.25333333333333335
       ],
       "negative_control_line": 0.4143
     },
     "0.50": {
-      "observed": 0.4571,
-      "chance_p95": 0.5857,
-      "p_value": 0.832,
-      "lift_over_chance": 0.914,
+      "observed": 0.4429,
+      "chance_p95": 0.6,
+      "p_value": 0.8765,
+      "lift_over_chance": 0.886,
       "grouped_ci": [
-        0.34375,
-        0.5714285714285714
+        0.3380281690140845,
+        0.5416666666666666
       ],
-      "negative_control_line": 0.7
+      "negative_control_line": 0.6857
     }
   },
   "negative_control": "source line number \u2014 no security content",
@@ -64,15 +64,15 @@
   "verdict": "INVERTED \u2014 the ordering is significantly WORSE than shuffling; the signals anti-correlate with real defects",
   "stratum_precision": {
     "3": {
-      "sites": 64,
+      "sites": 65,
       "real": 4
     },
     "2": {
-      "sites": 175,
+      "sites": 176,
       "real": 19
     },
     "1": {
-      "sites": 299,
+      "sites": 301,
       "real": 42
     },
     "0": {

@@ -204,8 +204,21 @@ def _global_guard_enforces(src: str) -> bool:
             continue
         start, end = _handler_span(lines, i)
         body = "\n".join(lines[start:end])
-        if ENFORCEMENT.search(body) or AUTH_MARKER.search(body) or re.search(
-                r"\babort\s*\(|\braise\b|redirect\s*\(", body):
+        # Refusing is not enough — it must refuse ON AN IDENTITY OR PERMISSION CONDITION. pgadmin4's
+        # `limit_host_addr` returns 403 for Host-header injection: a real control, but not authentication,
+        # and counting it suppressed 31 flags that no auth guard covers (E85). So the body needs both a
+        # refusal AND a reference to who the caller is or what they may do.
+        # Refusal forms, each added from a verified application rather than guessed: `abort(401)`
+        # (pgadmin4), `login_manager.unauthorized()` (changedetection.io — Flask-Login's standard
+        # refusal), an explicit 401/403 response, a redirect to login.
+        refuses = bool(ENFORCEMENT.search(body)) or bool(re.search(
+            r"\babort\s*\(|\braise\b|redirect\s*\("
+            r"|\.unauthorized\s*\(|make_response\s*\([^)]*40[13]"
+            r"|status_code\s*=\s*40[13]|Response\s*\([^)]*40[13]", body))
+        identity = bool(AUTH_MARKER.search(body)) or bool(re.search(
+            r"is_authenticated|current_user|\bsession\b|\blogin\b|\bpermission|\btoken\b|"
+            r"\buser\b|is_admin|is_staff|is_superuser", body, re.I))
+        if refuses and identity:
             return True
     return False
 
@@ -232,7 +245,9 @@ def scan_repo(root: str, skip_dirs: set[str] | None = None) -> RepoContext:
             # auth-shaped class name is taken at its word (its body is elsewhere).
             hook_only = bool(re.search(r"@\w+\.before_request", src)) and not re.search(
                 r"add_middleware\s*\(\s*(?:\w+\.)*\w*(?:auth|jwt|session)\w*"
-                r"|LoginRequiredMiddleware|AuthenticationMiddleware", src, re.I)
+                r"|LoginRequiredMiddleware|AuthenticationMiddleware",
+                "\n".join(l for l in src.splitlines() if not re.match(r"\s*(?:from|import)\s", l)),
+                re.I)
             enforces = _global_guard_enforces(src) if hook_only else True
             if enforces and (APP_LEVEL.search(src) or APP_DEPS.search(src) or DRF_DEFAULT.search(src)):
                 app_wide = True

@@ -36,6 +36,19 @@ state, not the morning's.
 > which the marker vocabulary did not know — **221 of its 241 flags**. Added, with self-tests pinning that
 > `Security(...)` protects while a generic `Depends(get_db)` does not.
 >
+> **HELD OUT (E85): the −72% does NOT generalise.** On twelve production web applications never used to
+> derive any fix, the pooled reduction is **28.8%** and the **median per-repo reduction is 0%** — the
+> distribution is bimodal, three apps drop 99–100% and nine drop nothing. Vocabulary-based detection either
+> recognises an application's centralised-auth idiom completely or misses it completely; it does not
+> degrade gracefully. The supportable product claim is therefore narrow: *on applications whose
+> centralised auth uses a recognised idiom, the cross-file layer removes essentially all structural false
+> positives at zero recall cost; on the rest it removes none* — 3 of 12 held-out apps were in the first
+> group. The corpus anchor (0.263 recall) never moved, so nothing suppressed was a labelled defect.
+>
+> **The next honest step is not another idiom** — extending the vocabulary one application at a time is the
+> in-sample fitting E85 was built to detect. It is a measurement of how many idioms exist.
+>
+> In-sample figure, kept for contrast:
 > **Cumulative, across four production applications and at zero recall cost: 1005 → 276 flags (−72%).**
 > Corpus figures untouched throughout: 0.263 recall, 558 route handlers, 0.125 site precision.
 >

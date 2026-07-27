@@ -1,0 +1,140 @@
+{
+  "generated_at": "2026-07-27T03:41:33.196278+00:00",
+  "question": "do E83/E84's false-positive reductions survive on production applications the fixes were never derived from?",
+  "why": "every fix was found by reading the four in-sample apps; a 72% reduction measured there is a statement about fit, not about the detector",
+  "held_out_repositories": 12,
+  "skipped": [
+    "oraios/serena (lib, 0 routes)",
+    "startreedata/mcp-pinot (lib, 0 routes)",
+    "ManoManoTech/firefighter-incident (lib, 0 routes)",
+    "nautobot/nautobot-app-ssot (lib, 0 routes)",
+    "lablup/backend.ai (lib, 0 routes)",
+    "jupyterhub/jupyter-server-proxy (lib, 0 routes)",
+    "tomerfiliba-org/rpyc (lib, 0 routes)",
+    "nautobot/nautobot (lib, 0 routes)",
+    "jupyter-server/jupyter_server (lib, 0 routes)",
+    "mage-ai/mage-ai (lib, 0 routes)"
+  ],
+  "in_sample_excluded": [
+    "BerriAI/litellm",
+    "Labs64/NetLicensing-MCP",
+    "NousResearch/hermes-agent",
+    "aegra/aegra",
+    "apache/airflow",
+    "arthurkatcher/google-maps-mcp",
+    "ethyca/fides",
+    "homeassistant-ai/ha-mcp",
+    "janeczku/calibre-web",
+    "jupyterlab/jupyterlab",
+    "langflow-ai/langflow",
+    "marimo-team/marimo",
+    "maziggy/bambuddy",
+    "nicolargo/glances",
+    "nltk/nltk",
+    "open-webui/open-webui",
+    "parisneo/lollms",
+    "pylixm/django-mdeditor",
+    "strawberry-graphql/strawberry",
+    "volcengine/OpenViking",
+    "zenml-io/zenml"
+  ],
+  "old_config": "E56 single-file: no RepoContext, pre-@patch ROUTE, pre-anchor APP_LEVEL, AUTH_MARKER without Security()",
+  "total_old": 671,
+  "total_new": 478,
+  "pooled_reduction": 0.2876,
+  "median_repo_reduction": 0.0,
+  "reduction_range": [
+    0.0,
+    1.0
+  ],
+  "repos_worse": [],
+  "in_sample_comparator": 0.725,
+  "corpus_recall_unchanged": 0.263,
+  "verdict": "DOES NOT HOLD \u2014 the in-sample reduction does not generalise",
+  "per_repo": [
+    {
+      "repo": "ray-project/ray",
+      "routes": 101,
+      "old": 95,
+      "new": 95,
+      "reduction": 0.0
+    },
+    {
+      "repo": "OctoPrint/OctoPrint",
+      "routes": 111,
+      "old": 86,
+      "new": 86,
+      "reduction": 0.0
+    },
+    {
+      "repo": "mlflow/mlflow",
+      "routes": 88,
+      "old": 71,
+      "new": 71,
+      "reduction": 0.0
+    },
+    {
+      "repo": "khoj-ai/khoj",
+      "routes": 102,
+      "old": 94,
+      "new": 1,
+      "reduction": 0.9894
+    },
+    {
+      "repo": "prefecthq/prefect",
+      "routes": 193,
+      "old": 141,
+      "new": 141,
+      "reduction": 0.0
+    },
+    {
+      "repo": "dgtlmoon/changedetection.io",
+      "routes": 86,
+      "old": 69,
+      "new": 0,
+      "reduction": 1.0
+    },
+    {
+      "repo": "pyload/pyload",
+      "routes": 56,
+      "old": 11,
+      "new": 11,
+      "reduction": 0.0
+    },
+    {
+      "repo": "spiral-project/ihatemoney",
+      "routes": 35,
+      "old": 30,
+      "new": 30,
+      "reduction": 0.0
+    },
+    {
+      "repo": "pgadmin-org/pgadmin4",
+      "routes": 304,
+      "old": 31,
+      "new": 0,
+      "reduction": 1.0
+    },
+    {
+      "repo": "Chainlit/chainlit",
+      "routes": 40,
+      "old": 17,
+      "new": 17,
+      "reduction": 0.0
+    },
+    {
+      "repo": "fastapi-users/fastapi-users",
+      "routes": 20,
+      "old": 8,
+      "new": 8,
+      "reduction": 0.0
+    },
+    {
+      "repo": "tomasvotava/fastapi-sso",
+      "routes": 39,
+      "old": 18,
+      "new": 18,
+      "reduction": 0.0
+    }
+  ]
+}
