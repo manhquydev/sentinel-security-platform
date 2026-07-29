@@ -6,7 +6,7 @@
 # repointed at a managed host with no compose change.
 #
 # Brought up with the shared secrets file:
-#   docker compose --env-file ../.env -f infra/defectdojo-db/docker-compose.yml up -d
+#   docker compose --env-file infra/.env -f infra/defectdojo-db/docker-compose.yml up -d
 ---
 services:
   dd-postgres:

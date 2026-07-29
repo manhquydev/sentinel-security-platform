@@ -41,6 +41,53 @@ it can read and write the product's findings, not administer the instance.
 
 ## Run it locally
 
+## Charter topology startup
+
+From the repository root, start the existing Charter Compose owners with:
+
+```bash
+bash scripts/sentinel-charter-up.sh
+```
+
+This requires Docker access, the existing private environment configuration with
+its readable ADC file, the established DefectDojo network and certificate
+material, and no existing Charter Kong containers or database volume. The
+launcher starts the existing Compose owners only; its executable contract and
+offline proof are [`sentinel-charter-up.sh`](sentinel-charter-up.sh) and
+[`sentinel-charter-launcher-test.sh`](../tests/sentinel-charter-launcher-test.sh).
+
+It does not scan, import, run the controller, obtain an approval, execute a
+request, or verify service health. A successful launcher invocation is not a
+fresh completed Charter run.
+
+## Charter controller
+
+`bash scripts/sentinel-demo.sh run --profile charter --run-id <id>` creates a private
+`.sentinel-runs/<id>/manifest.json`. CI handoff additionally requires a matching Trivy sanitized
+JSON artifact, SHA-256, and its versioned metadata sidecar. `verify`, `resume`, and `--teardown`
+are separate commands; teardown never removes shared volumes.
+
+New runs use `sentinel-run/v2`. Before any resume, the controller recomputes a
+closed, secret-free execution identity and rechecks every private (`0700` run,
+`0600` artifact) checkpoint. A changed descriptor, altered artifact, or a
+prepared/unknown import or executor effect stops without invoking an adapter,
+signer, scanner, or executor; start a separately authorized new run rather than
+repairing the old directory. `sentinel-run/v1` remains readable by `verify` as
+historical evidence, but every pending v1 run (including R5) returns `legacy
+manifest lacks exhaustive resume identity` and is never backfilled or resumed.
+Manifests store digests and typed safe artifacts only—never credentials, raw
+scan output, provider responses, or rendered secret values.
+
+The local charter path requires the literal Juice Shop target, a reviewed pinned Nuclei
+image (or the explicit documented local-binary override), `SENTINEL_LITELLM_ALIAS`, and a
+credentialed LiteLLM route. After it writes the fixed request spec, it exits `75` while
+waiting for a human-signed approval envelope. Resume with both
+`SENTINEL_CHARTER_APPROVAL_FILE` and `SENTINEL_CHARTER_PUBLIC_KEY`; the envelope must bind
+that exact run-local spec. The controller never reads the executor OAuth secret. An executable
+`SENTINEL_CHARTER_EXECUTOR_ADAPTER` owns that secret in its separate context, invokes
+`sentinel-charter-executor.py`, and returns only its sanitized receipt result. Without the
+adapter the request stage fails closed.
+
 ```bash
 # one scan → import → gate, then verify
 TARGET_SRC="$PWD" IMAGE="bkimminich/juice-shop@sha256:…" TARGET_URL="http://127.0.0.1:13000" \

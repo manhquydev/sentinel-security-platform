@@ -5,8 +5,8 @@
 #
 # Bring-up (shared secrets file, see infra/.env.example):
 #   docker network create dd-net
-#   docker compose --env-file ../.env -f infra/defectdojo-db/docker-compose.yml up -d
-#   docker compose --env-file ../.env -f infra/defectdojo/docker-compose.yml up -d
+#   docker compose --env-file infra/.env -f infra/defectdojo-db/docker-compose.yml up -d
+#   docker compose --env-file infra/.env -f infra/defectdojo/docker-compose.yml up -d
 #
 # Every Django container boots through scripts/dd-entrypoint.sh, which runs
 # scripts/dd-boot-guard.sh before Django is imported. See that script for why the

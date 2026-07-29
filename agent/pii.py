@@ -87,6 +87,14 @@ _CARD_LABELED = re.compile(
     re.IGNORECASE,
 )
 
+# A phone-shaped value is sensitive only when it is labelled as a telephone number. This avoids
+# corrupting scanner ports, payload lengths, and numeric security evidence.
+_PHONE_LABELED = re.compile(
+    r"(?P<key>\b(?:phone|telephone|tel|mobile|msisdn)\b[\"']?\s*[:=]\s*[\"']?)"
+    r"(?P<num>\+?\d(?:[ .()\-]?\d){7,14})",
+    re.IGNORECASE,
+)
+
 
 def _luhn_ok(digits: str) -> bool:
     """Standard Luhn checksum over the bare digit string (separators already stripped)."""
@@ -136,6 +144,44 @@ def redact(text: str | None) -> tuple[str | None, list[PiiFinding]]:
         return None
 
     _count_sub(_CARD_LABELED, "card", _card_repl)
+
+    # A tabular response names a card column once and then carries bare values on later rows.
+    # Do not use a global bare-PAN rule: redact only the field under an explicit card header.
+    lines = text.splitlines(keepends=True)
+    if len(lines) >= 2:
+        for header_no, header in enumerate(lines[:-1]):
+            found: tuple[int, str] | None = None
+            for delimiter in ("\t", "|", ","):
+                fields = [part.strip().lower() for part in header.rstrip("\r\n").split(delimiter)]
+                matches = [index for index, field in enumerate(fields)
+                           if re.fullmatch(r"(?:card(?:[_\s-]?(?:number|no|num|pan))?|pan|ccnum|"
+                                           r"cc[_\s-]?number|credit[_\s-]?card)", field)]
+                if len(matches) == 1 and len(fields) > 1:
+                    found = (matches[0], delimiter)
+                    break
+            if found is None:
+                continue
+            card_index, delimiter = found
+            for row_no in range(header_no + 1, len(lines)):
+                ending = "\n" if lines[row_no].endswith("\n") else ""
+                fields = lines[row_no].rstrip("\r\n").split(delimiter)
+                if len(fields) <= card_index:
+                    continue
+                bare = re.sub(r"[ ._\-]", "", fields[card_index].strip())
+                if _luhn_ok(bare):
+                    fields[card_index] = _placeholder("card")
+                    lines[row_no] = delimiter.join(fields) + ending
+                    findings.append(PiiFinding("card", 1))
+            break
+        text = "".join(lines)
+
+    def _phone_repl(m: re.Match[str]) -> str | None:
+        digits = re.sub(r"\D", "", m.group("num"))
+        if 8 <= len(digits) <= 15:
+            return m.group("key") + _placeholder("phone")
+        return None
+
+    _count_sub(_PHONE_LABELED, "phone", _phone_repl)
     _count_sub(_EMAIL, "email", lambda m: _placeholder("email"))
     _count_sub(_JWT, "jwt", lambda m: _placeholder("jwt"))
     _count_sub(_UUID, "uuid", lambda m: _placeholder("uuid"))

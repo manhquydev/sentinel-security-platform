@@ -78,6 +78,11 @@ services:
       EMBED_MODEL: "${EMBED_MODEL:-}"
       EMBED_API_KEY: "${EMBED_API_KEY:-}"
       EMBED_API_BASE: "${EMBED_API_BASE:-}"
+      # Vertex AI uses Application Default Credentials. The user-owned credential is
+      # mounted as a single read-only file below, never copied into the image or repo.
+      VERTEXAI_PROJECT: "${VERTEXAI_PROJECT:?VERTEXAI_PROJECT must be set}"
+      VERTEXAI_LOCATION: "${VERTEXAI_LOCATION:-us-central1}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/var/secrets/vertex/application_default_credentials.json"
       # Week-11 (decision 0019): the on-prem `local-onprem` model alias reaches a model served on
       # the HOST (Ollama/vLLM). Default points at host.docker.internal so the container can hop to it;
       # override for a different endpoint. (In a sandbox that forbids non-loopback binds the host
@@ -94,6 +99,7 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./guardrails:/app/guardrails:ro
+      - "${VERTEXAI_ADC_PATH:?VERTEXAI_ADC_PATH must be set}:/var/secrets/vertex/application_default_credentials.json:ro"
     # Week-11: reach a HOST-served on-prem model (Ollama/vLLM) for the `local-onprem` alias.
     extra_hosts:
       - "host.docker.internal:host-gateway"

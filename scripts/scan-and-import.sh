@@ -27,7 +27,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/.." && pwd)"
-SCANNERS_DIR="$REPO_ROOT/scanners"
+SCANNERS_DIR="${SCANNERS_DIR:-$REPO_ROOT/scanners}"
 OUT_DIR="${OUT_DIR:-$SCANNERS_DIR/out}"
 
 # ---------------------------------------------------------------- gate --------
@@ -139,6 +139,313 @@ rekey_suppresses_close() { # <incoming scheme> <lake scheme> -> prints true|fals
   if [ "$1" = "relative" ] && [ "$2" = "absolute" ]; then echo true; else echo false; fi
 }
 
+# ---------------------------------------------------------- charter profile --
+# The charter path is deliberately separate from the legacy shared OUT_DIR
+# workflow below.  A raw scanner report can contain request/response material;
+# it belongs in one private, controller-created run root and has no status
+# sidecar or caller-selected output directory.
+charter_state() { # <run-root>; never performs an import
+  local root="${1:?charter run root required}"
+  python3 - "$root" <<'PY'
+import hashlib, json, pathlib, sys
+
+root = pathlib.Path(sys.argv[1])
+intent_path = root / "import-intent.json"
+observation_path = root / "import-observation.json"
+try:
+    intent = json.loads(intent_path.read_text(encoding="utf-8"))
+    request = intent.get("request")
+    if (not isinstance(intent.get("run_id"), str) or not intent["run_id"]
+            or not isinstance(intent.get("sanitized_sha256"), str)
+            or not isinstance(request, dict)
+            or request.get("close_old_findings") is not False):
+        raise ValueError("invalid intent")
+    sanitized = root / "nuclei.sanitized.jsonl"
+    if (not sanitized.is_file()
+            or hashlib.sha256(sanitized.read_bytes()).hexdigest() != intent["sanitized_sha256"]):
+        raise ValueError("sanitized artifact does not match intent")
+except Exception:
+    print("import-outcome-unknown", file=sys.stderr)
+    raise SystemExit(1)
+
+try:
+    observed = json.loads(observation_path.read_text(encoding="utf-8"))
+    if (observed.get("state") != "completed"
+            or observed.get("sanitized_sha256") != intent["sanitized_sha256"]
+            or not isinstance(observed.get("remote_test_id"), (str, int))
+            or not str(observed["remote_test_id"])
+            or not isinstance(observed.get("response_sha256"), str)
+            or not observed["response_sha256"]
+            or not isinstance(observed.get("gate"), dict)
+            or observed["gate"].get("state") != "passed"
+            or not isinstance(observed["gate"].get("reported"), int)):
+        raise ValueError("incomplete observation")
+except Exception:
+    # A POST may have completed just before a process crash.  Repeating it is a
+    # mutation with an unknown prior outcome, so resume stops for later remote
+    # reconciliation instead of performing a blind second reimport.
+    print("import-outcome-unknown", file=sys.stderr)
+    raise SystemExit(1)
+
+print("completed")
+PY
+}
+
+charter_write_intent() { # <root> <run-id> <sanitized-file>
+  local root="$1" run_id="$2" sanitized="$3" tmp
+  tmp="$(mktemp "$root/.import-intent.XXXXXX")"
+  chmod 600 "$tmp"
+  python3 - "$tmp" "$run_id" "$sanitized" <<'PY'
+import hashlib, json, pathlib, sys
+
+out = pathlib.Path(sys.argv[1])
+run_id = sys.argv[2]
+sanitized = pathlib.Path(sys.argv[3])
+payload = {
+    "state": "intent",
+    "run_id": run_id,
+    "scanner": "nuclei",
+    "scan_type": "Nuclei Scan",
+    "test_title": "Sentinel charter nuclei",
+    "sanitized_sha256": hashlib.sha256(sanitized.read_bytes()).hexdigest(),
+    "request": {
+        "close_old_findings": False,
+        "deduplication_execution_mode": "async_wait",
+    },
+}
+pathlib.Path(out).write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+PY
+  mv -f "$tmp" "$root/import-intent.json"
+}
+
+charter_write_observation() { # <root> <sanitized-file> <response-file> <reported>
+  local root="$1" sanitized="$2" response="$3" reported="$4" tmp
+  tmp="$(mktemp "$root/.import-observation.XXXXXX")"
+  chmod 600 "$tmp"
+  python3 - "$tmp" "$sanitized" "$response" "$reported" <<'PY'
+import hashlib, json, pathlib, sys
+
+out = pathlib.Path(sys.argv[1])
+sanitized = pathlib.Path(sys.argv[2])
+response = pathlib.Path(sys.argv[3])
+reported = int(sys.argv[4])
+try:
+    body = response.read_bytes()
+    doc = json.loads(body)
+except Exception as exc:
+    raise SystemExit(f"charter import response is not valid JSON: {exc}")
+remote = doc.get("test") or doc.get("test_id") or doc.get("id")
+if not isinstance(remote, (str, int)) or not str(remote):
+    raise SystemExit("charter import response has no remote Test identity")
+payload = {
+    "state": "completed",
+    "sanitized_sha256": hashlib.sha256(sanitized.read_bytes()).hexdigest(),
+    "remote_test_id": remote,
+    "response_sha256": hashlib.sha256(body).hexdigest(),
+    "gate": {"state": "passed", "reported": reported},
+}
+out.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+PY
+  mv -f "$tmp" "$root/import-observation.json"
+}
+
+charter_validate_prepared_import() { # <root>; closes the intent-to-POST mutation window
+  python3 - "$1" <<'PY'
+import hashlib, json, os, pathlib, stat, sys
+
+root = pathlib.Path(sys.argv[1])
+def load(name):
+    path = root / name
+    item = path.lstat()
+    if path.is_symlink() or not stat.S_ISREG(item.st_mode) or stat.S_IMODE(item.st_mode) != 0o600:
+        raise ValueError(f"unsafe {name}")
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value: raise ValueError(f"duplicate key in {name}")
+            value[key] = item
+        return value
+    return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique)
+
+try:
+    admission, intent = load("scan-admission.json"), load("import-intent.json")
+    sanitized = root / "nuclei.sanitized.jsonl"
+    item = sanitized.lstat()
+    if sanitized.is_symlink() or not stat.S_ISREG(item.st_mode) or stat.S_IMODE(item.st_mode) != 0o600:
+        raise ValueError("unsafe sanitized artifact")
+    digest = hashlib.sha256(sanitized.read_bytes()).hexdigest()
+    if (set(admission) != {"schema_version", "run_id", "sanitized_path", "sanitized_sha256", "template_manifest_sha256", "runtime"}
+            or admission["schema_version"] != "sentinel-scan-admission/v1"
+            or not isinstance(admission["run_id"], str) or not admission["run_id"]
+            or admission["sanitized_path"] != "nuclei.sanitized.jsonl"
+            or admission["runtime"] != "nuclei"):
+        raise ValueError("invalid scan admission")
+    if (set(intent) != {"state", "run_id", "scanner", "scan_type", "test_title", "sanitized_sha256", "request"}
+            or intent["state"] != "intent" or intent["run_id"] != admission["run_id"]
+            or intent["scanner"] != "nuclei" or intent["scan_type"] != "Nuclei Scan"
+            or intent["test_title"] != "Sentinel charter nuclei"
+            or intent["request"] != {"close_old_findings": False, "deduplication_execution_mode": "async_wait"}
+            or admission["sanitized_sha256"] != digest or intent["sanitized_sha256"] != digest):
+        raise ValueError("prepared import no longer matches admitted input")
+    if any(not isinstance(value, str) or len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value)
+           for value in (admission["sanitized_sha256"], admission["template_manifest_sha256"], intent["sanitized_sha256"])):
+        raise ValueError("invalid prepared import digest")
+except Exception as exc:
+    raise SystemExit(f"invalid prepared charter import: {exc}")
+PY
+}
+
+# These two commands are the controller-owned v2 seam.  The first is purely
+# admission: it may scan and redact but has no import capability.  The second
+# accepts only the fixed, already-admitted pair; it never creates an intent.
+charter_admit() { # --run-root <private phase1> --run-id <id>
+  [ "$#" -eq 4 ] && [ "$1" = --run-root ] && [ "$3" = --run-id ] || { echo 'scan-and-import: charter-admit --run-root ROOT --run-id ID' >&2; return 2; }
+  local root=$2 run_id=$4 raw san tmp manifest_digest sanitized_digest
+  case "$run_id" in *[!A-Za-z0-9._-]*|"") return 2;; esac
+  [ -d "$root" ] && [ ! -L "$root" ] && [ "$(stat -c '%a' "$root")" = 700 ] || { echo 'scan-and-import: unsafe admission root' >&2; return 2; }
+  umask 077
+  raw=$(mktemp "$root/.raw.XXXXXX"); chmod 600 "$raw"
+  if ! SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" "$SCANNERS_DIR/run-nuclei.sh" "$raw"; then
+    echo 'scan-and-import: charter scan failed; private quarantine retained' >&2; return 1
+  fi
+  san="$root/nuclei.sanitized.jsonl"; [ ! -e "$san" ] || { echo 'scan-and-import: admission artifact already exists' >&2; return 1; }
+  tmp=$(mktemp "$root/.sanitized.XXXXXX"); chmod 600 "$tmp"
+  if ! CHARTER_ORIGIN=http://127.0.0.1:13000 "$SCANNERS_DIR/redact-report.sh" nuclei "$raw" "$tmp"; then
+    rm -f "$tmp"; echo 'scan-and-import: charter redaction failed; private quarantine retained' >&2; return 1
+  fi
+  mv -f "$tmp" "$san"; chmod 600 "$san"
+  sanitized_digest=$(sha256sum "$san" | awk '{print $1}')
+  manifest_digest=$(sha256sum "$SCANNERS_DIR/charter-template-manifest.json" | awk '{print $1}')
+  python3 - "$root/scan-admission.json" "$run_id" "$sanitized_digest" "$manifest_digest" <<'PY'
+import json, os, sys
+path, run_id, artifact, templates = sys.argv[1:]
+value = {"schema_version":"sentinel-scan-admission/v1", "run_id":run_id,
+         "sanitized_path":"nuclei.sanitized.jsonl", "sanitized_sha256":artifact,
+         "template_manifest_sha256":templates,
+         "runtime":"nuclei"}
+fd=os.open(path, os.O_WRONLY|os.O_CREAT|os.O_EXCL, 0o600)
+with os.fdopen(fd, "w", encoding="utf-8") as out:
+    json.dump(value,out,sort_keys=True,separators=(",",":")); out.write("\n"); out.flush(); os.fsync(out.fileno())
+PY
+  rm -f "$raw" "$root"/.nuclei-stderr.*
+}
+
+charter_import() { # --run-root <private phase1>
+  [ "$#" -eq 2 ] && [ "$1" = --run-root ] || { echo 'scan-and-import: charter-import --run-root ROOT' >&2; return 2; }
+  local root=$2 san="$2/nuclei.sanitized.jsonl" response reported lock fd importer
+  [ -d "$root" ] && [ ! -L "$root" ] && [ "$(stat -c '%a' "$root")" = 700 ] || return 2
+  [ -f "$root/scan-admission.json" ] && [ ! -L "$root/scan-admission.json" ] && [ -f "$root/import-intent.json" ] && [ ! -L "$root/import-intent.json" ] && [ -f "$san" ] && [ ! -L "$san" ] || return 1
+  charter_state "$root" >/dev/null 2>&1 && { echo 'scan-and-import: already observed import is not replayable' >&2; return 1; }
+  lock="${CHARTER_LOCK_FILE:-$(dirname "$root")/.charter-import.lock}"; exec {fd}>"$lock"
+  flock -n "$fd" || return 75
+  charter_validate_prepared_import "$root" || return 1
+  response=$(mktemp "$root/.import-response.XXXXXX"); chmod 600 "$response"; importer="${CHARTER_IMPORT_REPORT:-$SCANNERS_DIR/import-report.sh}"
+  if ! CLOSE_OLD_FINDINGS=false "$importer" 'Nuclei Scan' "$san" 'Sentinel charter nuclei' >"$response"; then
+    echo 'scan-and-import: charter import outcome unknown; private quarantine retained' >&2; return 1
+  fi
+  reported=$(python3 - "$san" <<'PY'
+import sys
+print(sum(1 for line in open(sys.argv[1], encoding='utf-8') if line.strip()))
+PY
+)
+  gate_response "$response" "$reported" || return 1
+  charter_write_observation "$root" "$san" "$response" "$reported"
+}
+
+charter_run() {
+  local run_id="" run_root="" raw san_tmp san response reported charter_lock_file charter_lock_fd charter_import_report
+  case "${1:-}" in
+    --resume)
+      [ "$#" -eq 2 ] || { echo "scan-and-import: charter --resume <run-root>" >&2; return 2; }
+      charter_state "$2"
+      return $?
+      ;;
+    "") ;;
+    --run-id)
+      [ "$#" -eq 2 ] || { echo "scan-and-import: charter --run-id <id>" >&2; return 2; }
+      run_id="$2"
+      ;;
+    *) echo "scan-and-import: charter [--run-id <id>] | charter --resume <run-root>" >&2; return 2 ;;
+  esac
+  run_id="${run_id:-$(date -u +%Y%m%dT%H%M%SZ)}"
+  case "$run_id" in *[!A-Za-z0-9._-]*|"") echo "scan-and-import: unsafe charter run id" >&2; return 2;; esac
+
+  # The run directory is intentionally selected and created here, not inherited
+  # from OUT_DIR.  On scanner/redaction/import failure it remains a 0700
+  # quarantine.  An operator may inspect it under the same-UID limitation and
+  # erase it only after handling the failure: `rm -rf <charter-run-root>`.
+  local runs_base="${CHARTER_RUNS_DIR:-$REPO_ROOT/scanners/charter-runs}"
+  umask 077
+  mkdir -p "$runs_base"
+  chmod 700 "$runs_base"
+  run_root="$(mktemp -d "$runs_base/${run_id}.XXXXXX")"
+  chmod 700 "$run_root"
+
+  raw="$(mktemp "$run_root/.raw.XXXXXX")"
+  chmod 600 "$raw"
+  if ! SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$run_root" TARGET_URL="${TARGET_URL:-}" \
+      "$SCANNERS_DIR/run-nuclei.sh" "$raw"; then
+    echo "scan-and-import: charter scan failed; private quarantine retained" >&2
+    return 1
+  fi
+
+  san="$run_root/nuclei.sanitized.jsonl"
+  san_tmp="$(mktemp "$run_root/.sanitized.XXXXXX")"
+  chmod 600 "$san_tmp"
+  if ! CHARTER_ORIGIN=http://127.0.0.1:13000 "$SCANNERS_DIR/redact-report.sh" nuclei "$raw" "$san_tmp"; then
+    rm -f "$san_tmp"
+    echo "scan-and-import: charter redaction failed; private quarantine retained" >&2
+    return 1
+  fi
+  mv -f "$san_tmp" "$san"
+  chmod 600 "$san"
+
+  # All charter reimports address one fixed Test title.  Serialize from the
+  # durable intent through response gate and terminal observation; a contending
+  # controller must stop before it can POST or write a second intent.
+  charter_lock_file="${CHARTER_LOCK_FILE:-$runs_base/.charter-import.lock}"
+  exec {charter_lock_fd}>"$charter_lock_file"
+  if ! flock -n "$charter_lock_fd"; then
+    echo "scan-and-import: another charter run holds the import lock — refusing before import" >&2
+    return 75
+  fi
+
+  charter_write_intent "$run_root" "$run_id" "$san"
+  response="$(mktemp "$run_root/.import-response.XXXXXX")"
+  chmod 600 "$response"
+  charter_import_report="${CHARTER_IMPORT_REPORT:-$SCANNERS_DIR/import-report.sh}"
+  # Charter imports never close old findings.  This explicit assignment prevents
+  # a caller environment from changing the approved profile policy.
+  if ! CLOSE_OLD_FINDINGS=false "$charter_import_report" "Nuclei Scan" "$san" "Sentinel charter nuclei" >"$response"; then
+    echo "scan-and-import: charter import outcome unknown; private quarantine retained" >&2
+    return 1
+  fi
+  reported="$(python3 - "$san" <<'PY'
+import sys
+print(sum(1 for line in open(sys.argv[1], encoding="utf-8") if line.strip()))
+PY
+)"
+  if ! gate_response "$response" "$reported"; then
+    echo "scan-and-import: charter completeness gate failed" >&2
+    return 1
+  fi
+  # Completion is written only after the mandatory response gate has passed.
+  # Until this point raw output and scanner stderr remain in the private run
+  # root for recovery of any failed/unknown import outcome.
+  charter_write_observation "$run_root" "$san" "$response" "$reported"
+  if ! charter_state "$run_root" >/dev/null; then
+    echo "scan-and-import: charter import outcome unknown; refusing a retry" >&2
+    return 1
+  fi
+  # Sanitized artifact and import records are durable; erase raw scanner output
+  # and stderr only after the complete charter success path.
+  rm -f "$raw" "$run_root"/.nuclei-stderr.*
+  local sanitized_digest manifest_digest
+  sanitized_digest="$(sha256sum "$san" | awk '{print $1}')"
+  manifest_digest="$(sha256sum "$SCANNERS_DIR/charter-template-manifest.json" | awk '{print $1}')"
+  echo "scan-and-import: charter completed literal-origin template-manifest=$manifest_digest sanitized-sha256=$sanitized_digest" >&2
+}
+
 case "${1:-run}" in
   gate)
     gate_response "${2:?response json required}" "${3:?reported count required}"
@@ -151,6 +458,21 @@ case "${1:-run}" in
   rekey)
     rekey_suppresses_close "${2:?incoming scheme required}" "${3:?lake scheme required}"
     exit 0
+    ;;
+  charter-state)
+    charter_state "${2:?charter run root required}"
+    exit $?
+    ;;
+  charter-admit)
+    shift; charter_admit "$@"; exit $?
+    ;;
+  charter-import)
+    shift; charter_import "$@"; exit $?
+    ;;
+  charter)
+    shift
+    charter_run "$@"
+    exit $?
     ;;
   run) ;;
   *) echo "scan-and-import: unknown subcommand '$1'" >&2; exit 2 ;;

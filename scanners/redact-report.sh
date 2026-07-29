@@ -134,7 +134,6 @@ ET.ElementTree(out).write(outp, encoding="utf-8", xml_declaration=True)
 PY
     ;;
   nuclei)
-    need jq
     # Build a NEW object per JSONL line with only whitelisted keys.
     #
     # matcher-name and info.classification are NOT secret-bearing and are both
@@ -144,18 +143,88 @@ PY
     # were auto-closed as remediated and re-created with cwe=0, and eight
     # security-header findings collapsed into one because matcher-name is part
     # of the parser's own de-duplication key.
-    jq -c '{
-      "template-id": .["template-id"],
-      "template": .template,
-      "type": .type,
-      "host": .host,
-      "matched-at": .["matched-at"],
-      "matcher-name": .["matcher-name"],
-      "info": (if .info then {name: .info.name, severity: .info.severity,
-                              tags: .info.tags, description: .info.description,
-                              classification: .info.classification} else null end),
-      "timestamp": .timestamp
-    } | '"$DROP_NULLS" "$input" >"$output"
+    # In charter mode URL-looking values are not merely stripped: they are
+    # rebuilt from the fixed origin plus a normalized path.  Nuclei can echo a
+    # request URL in both fields, so preserving a host or encoded path from raw
+    # output would cross the sanitized boundary even when query/fragment are
+    # removed.  Generic mode preserves the established parser contract.
+    need python3
+    CHARTER_ORIGIN="${CHARTER_ORIGIN:-}" python3 - "$input" "$output" <<'PY'
+import json, os, posixpath, sys
+from urllib.parse import quote, unquote, urlsplit
+
+inp, outp = sys.argv[1:3]
+origin = os.environ.get("CHARTER_ORIGIN", "")
+if origin and origin != "http://127.0.0.1:13000":
+    print("redact(nuclei): invalid charter origin", file=sys.stderr)
+    raise SystemExit(2)
+
+def canonical_path(value):
+    """Return a safe, absolute locator path without accepting raw authority."""
+    try:
+        path = urlsplit(value).path if isinstance(value, str) else ""
+    except ValueError:
+        path = ""
+    # Decode to a fixed point.  A single pass allows `%253f` to become `%3f`
+    # and survive in a published locator.  Delimiters are then a hard boundary:
+    # no query, fragment, userinfo, or authority-like suffix is a safe endpoint
+    # locator, even when the delimiter arrived percent-encoded.
+    while True:
+        decoded = unquote(path)
+        if decoded == path:
+            break
+        path = decoded
+    for delimiter in ("?", "#", "@", ":"):
+        if delimiter in path:
+            path = path.split(delimiter, 1)[0]
+    path = path.replace("\\", "/")
+    path = "".join(ch for ch in path if ord(ch) >= 0x20 and ord(ch) != 0x7f)
+    if not path.startswith("/"):
+        path = "/"
+    trailing = path.endswith("/")
+    path = posixpath.normpath(path)
+    if not path.startswith("/"):
+        path = "/" + path
+    if trailing and path != "/":
+        path += "/"
+    return "/".join(quote(part, safe="-._~:@") for part in path.split("/"))
+
+def value_or_none(value):
+    return value if value is not None else None
+
+with open(inp, encoding="utf-8") as source, open(outp, "w", encoding="utf-8") as sink:
+    for number, line in enumerate(source, 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            print(f"redact(nuclei): invalid JSONL line {number}: {exc}", file=sys.stderr)
+            raise SystemExit(5)
+        info = row.get("info")
+        result = {
+            "template-id": value_or_none(row.get("template-id")),
+            "template": value_or_none(row.get("template")),
+            "type": value_or_none(row.get("type")),
+            "host": value_or_none(row.get("host")),
+            "matched-at": value_or_none(row.get("matched-at")),
+            "matcher-name": value_or_none(row.get("matcher-name")),
+            "info": ({key: info.get(key) for key in ("name", "severity", "tags", "description", "classification")}
+                     if isinstance(info, dict) else None),
+            "timestamp": value_or_none(row.get("timestamp")),
+        }
+        if origin:
+            locator = canonical_path(row.get("matched-at") or row.get("host") or "")
+            result["host"] = origin + locator
+            result["matched-at"] = origin + locator
+        def remove_nulls(obj):
+            if isinstance(obj, dict):
+                return {k: remove_nulls(v) for k, v in obj.items() if v is not None}
+            if isinstance(obj, list):
+                return [remove_nulls(v) for v in obj]
+            return obj
+        sink.write(json.dumps(remove_nulls(result), separators=(",", ":")) + "\n")
+PY
     ;;
   semgrep)
     need jq

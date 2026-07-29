@@ -6,6 +6,10 @@
 #       exits 1 (fail-closed) otherwise.
 #   target-allowlist.sh ready <url>      → polls until the target answers HTTP
 #       or TARGET_READY_TIMEOUT elapses; exits 0/1.
+#   target-allowlist.sh charter-validate <url> → accepts only the charter's
+#       literal origin, before DNS or network I/O.
+#   target-allowlist.sh charter-ready <url> → checks that literal origin only;
+#       a redirect is not readiness.
 #
 # Rule (matches the reviewed phase-03 decision): a resolved IP that is loopback,
 # link-local, cloud-metadata, RFC1918, or ULA is REJECTED unless it is
@@ -31,7 +35,7 @@
 #   Port is enforced only when the matching entry specifies one.
 set -euo pipefail
 
-sub="${1:?usage: validate|ready <url>}"
+sub="${1:?usage: validate|ready|charter-validate|charter-ready <url>}"
 url="${2:?url required}"
 ALLOWLIST="${ALLOWLIST:-}"
 
@@ -99,6 +103,58 @@ print(ips[0])
 PY
 }
 
+# The charter does not inherit the generic allowlist.  Its target is intentionally
+# a string-level policy: parsing is only used to reject malformed authority forms,
+# while equality to the one canonical spelling rejects paths, query strings,
+# fragments, userinfo, IPv6, hostname aliases, and default-port ambiguity before
+# any resolver or HTTP client is started.
+_charter_validate() {
+  python3 - "$url" <<'PY'
+import sys
+from urllib.parse import urlsplit
+
+expected = "http://127.0.0.1:13000"
+value = sys.argv[1]
+try:
+    parts = urlsplit(value)
+    valid = (
+        value == expected
+        and parts.scheme == "http"
+        and parts.hostname == "127.0.0.1"
+        and parts.port == 13000
+        and not parts.username and not parts.password
+        and not parts.path and not parts.query and not parts.fragment
+    )
+except ValueError:
+    valid = False
+if not valid:
+    print("target-allowlist: charter target must be the literal http://127.0.0.1:13000", file=sys.stderr)
+    raise SystemExit(1)
+print(expected)
+PY
+}
+
+_charter_ready() {
+  _charter_validate >/dev/null || {
+    echo "target-allowlist: refusing charter readiness poll" >&2
+    exit 1
+  }
+  timeout="${TARGET_READY_TIMEOUT:-60}"
+  deadline=$(( $(date +%s) + timeout ))
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    # Do not opt into curl's redirect following.  A 3xx is explicitly rejected
+    # rather than being allowed to become readiness for another endpoint.
+    code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 --max-redirs 0 "$url" 2>/dev/null || true)"
+    case "$code" in
+      2??) printf '%s\n' 'http://127.0.0.1:13000'; return 0 ;;
+      3??) echo "target-allowlist: charter target redirected; refusing readiness" >&2; return 1 ;;
+    esac
+    sleep 2
+  done
+  echo "target-allowlist: charter target not ready within ${timeout}s" >&2
+  return 1
+}
+
 case "$sub" in
   validate) _validate ;;
   ready)
@@ -115,5 +171,7 @@ case "$sub" in
       sleep 2
     done
     echo "target-allowlist: $url not ready within ${timeout}s" >&2; exit 1 ;;
-  *) echo "unknown subcommand: $sub (validate|ready)" >&2; exit 2 ;;
+  charter-validate) _charter_validate ;;
+  charter-ready) _charter_ready ;;
+  *) echo "unknown subcommand: $sub (validate|ready|charter-validate|charter-ready)" >&2; exit 2 ;;
 esac

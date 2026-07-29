@@ -34,7 +34,7 @@ fi
 
 # The frozen DeepSeek scorecard is reproducible only through the cheap-sast alias, so a
 # rename here is silent data loss with no error at the point of failure.
-for alias in cheap-sast sast-sol sast-terra sast-gpt55 judge embed; do
+for alias in cheap-sast sast-sol sast-terra sast-gpt55 judge embed sast-charter-vertex-gemini-flash-lite; do
   if python3 - "$CFG" "$alias" <<'PY'
 import sys, yaml
 cfg = yaml.safe_load(open(sys.argv[1]))
@@ -45,6 +45,26 @@ PY
   else bad "alias missing: $alias"
   fi
 done
+
+sect "Vertex charter alias has the native provider route and read-only ADC boundary"
+if python3 - "$CFG" <<'PY'
+import sys, yaml
+cfg = yaml.safe_load(open(sys.argv[1])) or {}
+models = {m.get("model_name"): m.get("litellm_params", {}) for m in cfg.get("model_list", [])}
+params = models.get("sast-charter-vertex-gemini-flash-lite")
+if params != {"model": "vertex_ai/gemini-2.5-flash-lite", "stream": False}:
+    raise SystemExit(1)
+PY
+then ok "Vertex alias is pinned to Gemini Flash Lite with non-streaming chat"
+else bad "Vertex alias is absent or has an unexpected provider route"
+fi
+if grep -Fq 'VERTEXAI_PROJECT: "${VERTEXAI_PROJECT:?' "$COMPOSE" \
+  && grep -Fq 'GOOGLE_APPLICATION_CREDENTIALS: "/var/secrets/vertex/application_default_credentials.json"' "$COMPOSE" \
+  && grep -Fq ':/var/secrets/vertex/application_default_credentials.json:ro"' "$COMPOSE"; then
+  ok "Vertex ADC is passed as a read-only single-file mount"
+else
+  bad "Vertex ADC environment or read-only mount is missing"
+fi
 
 sect "parity with the config the gateway was moved from"
 if [ -f "$LEGACY" ]; then
@@ -96,11 +116,30 @@ if grep -Eq '(api_key|master_key|database_url):[[:space:]]*["'"'"']?(sk-|ghp_|gi
 else
   ok "no literal credential in config.yaml"
 fi
-# -q would suppress the output this pipeline depends on, making the check vacuously pass.
-if grep -E '^[[:space:]]*(api_key|master_key|database_url):' "$CFG" | grep -qv 'os\.environ/'; then
-  bad "a credential field bypasses os.environ"
+# `local-onprem` deliberately supplies the literal non-secret value
+# "on-prem-local" because the host-served model ignores authentication. Parse the
+# alias so that exact dummy is allowed without permitting a real credential literal.
+if python3 - "$CFG" <<'PY'
+import sys, yaml
+cfg = yaml.safe_load(open(sys.argv[1])) or {}
+errors = []
+for entry in cfg.get("model_list", []):
+    name = entry.get("model_name")
+    params = entry.get("litellm_params", {})
+    for key in ("api_key", "master_key", "database_url"):
+        value = params.get(key)
+        if value is None or (isinstance(value, str) and value.startswith("os.environ/")):
+            continue
+        if name == "local-onprem" and key == "api_key" and value == "on-prem-local":
+            continue
+        errors.append(f"{name}.{key} is a literal")
+print("\n".join(errors))
+raise SystemExit(bool(errors))
+PY
+then
+  ok "credential fields read from the environment or use the documented on-prem dummy"
 else
-  ok "credential fields read from the environment"
+  bad "a credential field bypasses os.environ"
 fi
 
 sect "no hand-written pricing is added on top of what LiteLLM computes"

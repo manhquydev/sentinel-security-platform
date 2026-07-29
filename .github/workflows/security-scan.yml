@@ -47,6 +47,7 @@ jobs:
           TRIVY_SCANNERS="secret,misconfig" \
             ./scanners/run-trivy.sh "$GITHUB_WORKSPACE/trivy.raw.json"
           ./scanners/redact-report.sh trivy "$GITHUB_WORKSPACE/trivy.raw.json" "$GITHUB_WORKSPACE/trivy.san.json"
+          sha256sum "$GITHUB_WORKSPACE/trivy.san.json" | awk '{print "{\"type\":\"trivy-sanitized-json\",\"version\":\"1\",\"sha256\":\"" $1 "\"}"}' > "$GITHUB_WORKSPACE/trivy.san.metadata.json"
 
       - name: Upload redacted report
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
@@ -54,5 +55,7 @@ jobs:
           name: sast-reports
           # ONLY the redacted report. The raw report carries the matched source,
           # including any literal secret, and is never uploaded from a public repo.
-          path: trivy.san.json
+          path: |
+            trivy.san.json
+            trivy.san.metadata.json
           if-no-files-found: error

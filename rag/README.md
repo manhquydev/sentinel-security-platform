@@ -26,6 +26,18 @@ query  →  Postgres FTS  ┘→  Reciprocal Rank Fusion  →  top-k  ←── 
   changed document also has its stale chunks pruned. The shippable form of "continuously updating"
   (an identical chunk may legitimately recur across two documents and is kept under each).
 
+## Offline Charter corpus contract
+
+```bash
+tests/run-charter-rag-contract.sh
+```
+
+This hermetic command runs the committed eight-case Charter corpus and retrieval
+contract through `rag/.venv/bin/python`. It does not source an environment file,
+start Docker, connect to pgvector, download a model, or run a live suite. It is
+not a replacement for `tests/rag-retrieval-test.sh`, which remains the separate
+live-store retrieval contract.
+
 ## Setup
 
 ```bash

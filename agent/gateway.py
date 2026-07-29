@@ -44,7 +44,7 @@ def _token() -> str:
     r = requests.post(f"{BASE}/oauth/oauth2/token",
                       json={"client_id": "agent-recon", "client_secret": secret,
                             "grant_type": "client_credentials"},
-                      verify=False, timeout=TIMEOUT)  # loopback self-signed cert
+                      verify=False, timeout=TIMEOUT, allow_redirects=False)  # loopback self-signed cert
     r.raise_for_status()
     tok = r.json().get("access_token")
     if not tok:
@@ -62,14 +62,14 @@ class Gateway:
         """GET a path through the gateway. Returns (status, body). A 403 is a real authorization
         result (the ACL refused the path), not an error to retry — surfaced as the status."""
         r = requests.get(f"{BASE}{path}", headers={"Authorization": f"Bearer {self._tok}"},
-                         verify=False, timeout=TIMEOUT)
+                         verify=False, timeout=TIMEOUT, allow_redirects=False)
         return r.status_code, r.text
 
     def probe(self, path: str) -> tuple[int, str, str]:
         """Like get(), but also returns the response Content-Type — the fuzzing signal detector
         needs it to spot a content-type change (e.g. a JSON endpoint returning an HTML error)."""
         r = requests.get(f"{BASE}{path}", headers={"Authorization": f"Bearer {self._tok}"},
-                         verify=False, timeout=TIMEOUT)
+                         verify=False, timeout=TIMEOUT, allow_redirects=False)
         return r.status_code, r.text, r.headers.get("content-type", "")
 
     def reachable(self, path: str) -> bool:

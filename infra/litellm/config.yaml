@@ -50,6 +50,14 @@ model_list:
       api_key: os.environ/ROUTER_API_KEY
       stream: false
 
+  # Charter analysis needs native strict JSON Schema rather than best-effort JSON mode.
+  # This isolated alias uses the host's Google ADC through the read-only mount declared
+  # in docker-compose.yml; it deliberately does not change any frozen benchmark route.
+  - model_name: sast-charter-vertex-gemini-flash-lite
+    litellm_params:
+      model: vertex_ai/gemini-2.5-flash-lite
+      stream: false
+
   # Router tiers under test, on the clawcmc agent router.
   #
   # The router defaults to streaming: without an explicit stream:false it answers

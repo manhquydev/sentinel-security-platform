@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "path": "charter-templates/http-security-headers.yaml",
+      "sha256": "827ebd1cb7f9d8ddf69efdecebeafcdeb8dc53632c7ad9958815c6da34dbde6c",
+      "review_status": "approved",
+      "protocol": "http"
+    }
+  ]
+}

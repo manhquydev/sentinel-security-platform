@@ -1,0 +1,23 @@
+id: charter-http-missing-security-headers
+
+info:
+  name: Charter HTTP missing security headers
+  author: sentinel-maintainers
+  severity: info
+  description: Reports an approved local HTTP endpoint that lacks a baseline security header.
+  tags: charter,http,headers
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/"
+    matchers-condition: or
+    matchers:
+      - type: dsl
+        name: missing-content-security-policy
+        dsl:
+          - '!contains(to_lower(all_headers), "content-security-policy")'
+      - type: dsl
+        name: missing-x-content-type-options
+        dsl:
+          - '!contains(to_lower(all_headers), "x-content-type-options")'

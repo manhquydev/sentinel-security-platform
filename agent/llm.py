@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 import requests
 
@@ -55,8 +56,35 @@ def _spans(msgs: list[Msg]) -> list[dict]:
     return spans
 
 
+def base_url() -> str:
+    """Return an origin-only gateway base so the client always appends one `/v1` segment."""
+    value = os.environ.get("LITELLM_BASE", BASE).rstrip("/")
+    parsed = urlsplit(value)
+    if (parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.path not in {"", "/"}
+            or parsed.query or parsed.fragment or parsed.username or parsed.password):
+        raise ValueError("LITELLM_BASE must be an origin without path, query, fragment, or userinfo")
+    return value
+
+
+def preflight(model: str, timeout: int = 10) -> None:
+    """Verify the expected LiteLLM instance is live before a required labelled chat.
+
+    A non-200 liveliness response (including a stale responder's 404) is a fatal stage failure;
+    callers must not silently downgrade to a no-LLM success path.
+    """
+    del model  # The subsequent credentialed chat proves alias routing; health proves same-base identity.
+    key = os.environ.get("LITELLM_MASTER_KEY")
+    if not key:
+        raise RuntimeError("LITELLM_MASTER_KEY is not set (source infra/.env)")
+    response = requests.get(f"{base_url()}/health/liveliness",
+                            headers={"Authorization": f"Bearer {key}"}, timeout=timeout)
+    if response.status_code != 200:
+        raise RuntimeError(f"LiteLLM liveliness preflight failed with HTTP {response.status_code}")
+
+
 def chat(msgs: list[Msg], model: str, max_tokens: int = 1024,
-         temperature: float = 0.0, timeout: int = 90) -> str:
+         temperature: float = 0.0, timeout: int = 90,
+         response_format: dict | None = None) -> str:
     """Send a provenance-declared chat request and return the assistant text. Raises on transport
     error or a gateway refusal (fail-closed), which the caller must not swallow."""
     key = os.environ.get("LITELLM_MASTER_KEY")
@@ -69,13 +97,15 @@ def chat(msgs: list[Msg], model: str, max_tokens: int = 1024,
         "max_tokens": max_tokens,
         "temperature": temperature,
     }
+    if response_format is not None:
+        payload["response_format"] = response_format
     import time
 
     from . import finops  # function-local import: avoids a module-load cycle (finops imports no agent)
 
     start = time.monotonic()
     try:
-        r = requests.post(f"{BASE}/v1/chat/completions",
+        r = requests.post(f"{base_url()}/v1/chat/completions",
                           headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                           json=payload, timeout=timeout)
         r.raise_for_status()
@@ -89,3 +119,12 @@ def chat(msgs: list[Msg], model: str, max_tokens: int = 1024,
     finops.record(model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0),
                   time.monotonic() - start)
     return content
+
+
+def checked_chat(msgs: list[Msg], model: str, max_tokens: int = 1024,
+                 temperature: float = 0.0, timeout: int = 90,
+                 response_format: dict | None = None) -> str:
+    """Required-stage chat: same-origin 200 liveliness followed by the credentialed labelled call."""
+    preflight(model, timeout=min(timeout, 10))
+    return chat(msgs, model=model, max_tokens=max_tokens, temperature=temperature, timeout=timeout,
+                response_format=response_format)

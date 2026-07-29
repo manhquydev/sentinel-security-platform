@@ -59,11 +59,19 @@ services:
       # public, read-only  -> group read-public
       - name: public-read
         paths:
-          - /rest/products/search
           - /.well-known/security.txt
           - /api-docs/swagger.json
           - /metrics
           - /robots.txt
+        methods:
+          - GET
+        strip_path: false
+
+      # The charter search route is separated so the executor never receives the broad
+      # read-public group. Query equality is enforced by the immutable executor RequestSpec.
+      - name: charter-search
+        paths:
+          - /rest/products/search
         methods:
           - GET
         strip_path: false
@@ -132,6 +140,13 @@ plugins:
         - read-authenticated
       hide_groups_header: true
   - name: acl
+    route: charter-search
+    config:
+      allow:
+        - read-public
+        - charter-read
+      hide_groups_header: true
+  - name: acl
     route: admin-read
     config:
       allow:
@@ -166,3 +181,14 @@ consumers:
       - name: probe-admin-cc
         client_id: probe-admin
         client_secret: ${PROBE_ADMIN_SECRET}
+
+  # Held only by scripts/sentinel-charter-executor.py's operator environment. Kong authenticates
+  # this trusted executor and applies exact-route ACLs; it does not verify human approval.
+  - username: sentinel-charter-executor
+    acls:
+      - group: charter-read
+      - group: write-basket
+    oauth2_credentials:
+      - name: sentinel-charter-executor-cc
+        client_id: sentinel-charter-executor
+        client_secret: ${SENTINEL_CHARTER_EXECUTOR_SECRET}

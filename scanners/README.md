@@ -65,6 +65,48 @@ The single pinned IP is emitted so scanners can be forced onto it (anti-DNS-rebi
 
 Juice Shop is loopback, so it must be explicitly allowed: `ALLOWLIST="127.0.0.1:13000"`.
 
+## Sentinel charter scanner profile
+
+The six-week charter is intentionally narrower than the legacy scanner path.
+Run it only through the controller entry point:
+
+```bash
+TARGET_URL=http://127.0.0.1:13000 ../scripts/scan-and-import.sh charter --run-id <safe-id>
+```
+
+`target-allowlist.sh charter-validate` accepts exactly the literal
+`http://127.0.0.1:13000`, with no trailing slash, path, query, fragment,
+userinfo, hostname, IPv6 spelling, alternate scheme, or alternate port. It does
+so before DNS or HTTP I/O. `charter-ready` accepts only a 2xx response and treats
+a 3xx response as a failure; it never follows a redirect.
+
+Charter Nuclei scans use only the files under `charter-templates/`. The committed
+`charter-template-manifest.json` enumerates every file, its SHA-256, `approved`
+review status, and `http` protocol. The wrapper verifies that manifest before it
+starts Nuclei, mounts/selects only that directory, disables update checks, and
+uses `-dr -ni -no-interactsh`. It therefore rejects bundled, downloaded, missing,
+extra, changed, DNS, and OAST templates. This is a repository-integrity and
+operator-controlled-host prerequisite; it is not a claim that a hostile but
+approved template is network-isolated.
+
+The controller creates an independent `0700` run root (not `OUT_DIR`). Raw output
+and scanner stderr remain private `0600` files there; the sanitized Nuclei report
+is atomically published as `nuclei.sanitized.jsonl` with mode `0600`. Sanitization
+rebuilds `host` and `matched-at` from the approved origin plus a normalized path,
+so raw authority, userinfo, query, fragment, and encoded variants do not cross the
+boundary. On success the raw report and private scanner stderr are erased. On a
+failure the complete run root is the operator-only quarantine; after investigation,
+erase it explicitly with `rm -rf <charter-run-root>` under the documented same-UID
+threat-model limitation. Ordinary status output contains only the literal-origin
+profile and manifest/sanitized digests, never raw values or raw filenames.
+
+Before a charter reimport, `import-intent.json` records the run, sanitized digest,
+scanner/test identity, and explicit `close_old_findings=false`; after a successful
+response, `import-observation.json` records the remote Test identity and response
+digest. `scan-and-import.sh charter --resume <run-root>` only reconciles those
+records. If an observation is absent or inconsistent, it returns
+`import-outcome-unknown` and never issues a blind second reimport.
+
 ### Redirect and egress containment (DAST)
 
 The DAST wrappers constrain where the scanner can go beyond the seed URL:
@@ -187,15 +229,46 @@ version-recorded, not pulled unpinned from a registry at scan time.
   `REQUIRE_SEMGREP=1` to fail instead of skip).
 - `../tests/target-allowlist-test.sh` — allow/reject cases for the SSRF guard,
   including 6 negative controls.
+- `../tests/charter-scan-safety-test.sh` — literal-origin, reviewed-template
+  manifest, URL sanitization, raw lifecycle declarations, no-close, and
+  no-blind-resume contracts; entirely offline.
+
+## Fresh-clone Trivy image scan (no secrets)
+
+Run this from the repository root. This local proof needs Docker daemon and socket access, `jq`, and public pinned images available to Docker. It needs no DefectDojo credentials, instance, or target-app service. It scans a digest-pinned image and writes only the sanitized
+report outside the private workspace; it does not import findings or verify a lake.
+
+```bash
+(
+  set -euo pipefail
+  command -v jq >/dev/null || { echo "jq is required for redaction" >&2; exit 1; }
+  workspace="$(mktemp -d)"
+  trap 'rm -rf "$workspace"' EXIT
+  source scanners/image-pins.env
+  export IMAGE="$JUICE_SHOP_IMAGE" TRIVY_SCANNERS="secret,misconfig"
+  sanitized_report="$(mktemp -t trivy.sanitized.XXXXXX.json)"
+  ./scanners/run-trivy.sh "$workspace/trivy.raw.json"
+  ./scanners/redact-report.sh trivy "$workspace/trivy.raw.json" "$sanitized_report"
+  rm -rf "$workspace"
+  trap - EXIT
+  printf 'sanitized report: %s\n' "$sanitized_report"
+)
+```
+
+`TRIVY_SCANNERS=secret,misconfig` avoids the vulnerability database download. The
+private raw report and status sidecar are removed immediately after redaction; the
+exit trap also cleans them after any failure.
+
+## Provisioned import and verification
+
+`import-report.sh` and the historic lake baseline are separate, provisioned
+operations. They need a configured DefectDojo service account; a fresh clone of
+the committed repository does not reproduce the historical two-product baseline.
 
 ## End-to-end (local)
 
-```bash
-export ALLOWLIST="127.0.0.1:13000" TARGET_URL="http://127.0.0.1:13000"
-./run-trivy.sh /tmp/trivy.json            # (IMAGE=... for an image scan)
-./redact-report.sh trivy /tmp/trivy.json /tmp/trivy.san.json
-./import-report.sh "Trivy Scan" /tmp/trivy.san.json
-```
+For an authorized import after a scanner report has been sanitized, use the
+provisioned DefectDojo path above and `./import-report.sh "Trivy Scan" <sanitized-report>`.
 
 Scan artifacts are secret-bearing until redacted — write them to a scratch/gitignored
 path, never commit a raw report.

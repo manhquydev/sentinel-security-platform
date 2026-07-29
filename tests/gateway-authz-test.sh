@@ -16,9 +16,11 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE="$REPO_ROOT/infra/kong/docker-compose.yml"
 TMPL="$REPO_ROOT/infra/kong/kong.declarative.yml.tmpl"
+RENDER="$REPO_ROOT/infra/kong/render-config.sh"
 ENV_FILE="${ENV_FILE:-$REPO_ROOT/infra/.env}"
 BASE="${KONG_PROXY:-https://127.0.0.1:18443}"
 REQUIRE_KONG="${REQUIRE_KONG:-0}"
+SKIP_KONG_LIVE="${SKIP_KONG_LIVE:-0}"
 
 PASS=0; FAIL=0; SKIP=0
 ok()   { printf '  \033[32mPASS\033[0m %s\n' "$1"; PASS=$((PASS+1)); }
@@ -80,6 +82,41 @@ fi
 # ---------------------------------------------------------------------------
 sect "static: authorization policy is fail-closed and honest"
 
+# Render with non-secret dummy values; verify the new executor placeholder is substituted and a
+# missing value fails without echoing any supplied value.
+render_tmp="$(mktemp -d)"; render_sentinel="$(mktemp)"; trap 'rm -rf "$render_tmp"; rm -f "$render_sentinel"' EXIT
+printf 'caller-owned-rendered-config\n' >"$render_sentinel"
+cat >"$render_tmp/env" <<'EOF'
+KONG_PROVISION_KEY=dummy-provision
+AGENT_RECON_SECRET=dummy-recon
+PROBE_ADMIN_SECRET=dummy-probe
+SENTINEL_CHARTER_EXECUTOR_SECRET=dummy-executor
+EOF
+if ENV_FILE="$render_tmp/env" OUT="$render_tmp/kong.rendered.yml" bash "$RENDER" >/dev/null 2>"$render_tmp/render.err" \
+  && ! grep -qE '\$\{[A-Z_]' "$render_tmp/kong.rendered.yml" \
+  && [ "$(cat "$render_sentinel")" = 'caller-owned-rendered-config' ] \
+  && ! grep -q 'dummy-executor' "$render_tmp/render.err"; then
+  ok "Kong renderer substitutes executor secret without unresolved placeholders or echo"
+else bad "Kong renderer did not safely substitute executor secret"; fi
+sed -i '/SENTINEL_CHARTER_EXECUTOR_SECRET/d' "$render_tmp/env"
+if ! ENV_FILE="$render_tmp/env" OUT="$render_tmp/missing.yml" bash "$RENDER" >"$render_tmp/missing.out" 2>"$render_tmp/missing.err" \
+  && grep -q 'required Kong configuration is invalid' "$render_tmp/missing.err" \
+  && ! grep -q 'dummy-' "$render_tmp/missing.err"; then
+  ok "Kong renderer fails missing executor secret without echoing secret values"
+else bad "Kong renderer missing-secret failure is unsafe"; fi
+
+render_marker="$render_tmp/evaluated"
+cat >"$render_tmp/env" <<EOF
+KONG_PROVISION_KEY=\$(touch $render_marker)
+AGENT_RECON_SECRET=dummy-recon
+PROBE_ADMIN_SECRET=dummy-probe
+SENTINEL_CHARTER_EXECUTOR_SECRET=dummy-executor
+EOF
+if ENV_FILE="$render_tmp/env" OUT="$render_tmp/literal.yml" bash "$RENDER" >/dev/null 2>"$render_tmp/literal.err" \
+  && [ ! -e "$render_marker" ]; then
+  ok "Kong renderer treats shell-looking secret values as data"
+else bad "Kong renderer evaluated private environment content"; fi
+
 # The template is checked in and must carry NO real secret — only ${PLACEHOLDER}s.
 if grep -E 'client_secret:|provision_key:' "$TMPL" | grep -vqE '\$\{[A-Z_]+\}'; then
   bad "the committed template contains a non-placeholder secret"
@@ -112,7 +149,7 @@ acl_report="$(python3 - "$TMPL" <<'PY'
 import sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 acl_routes = {p.get("route") for p in (d.get("plugins") or []) if p.get("name") == "acl"}
-resource = ["public-read", "authenticated-read", "admin-read", "basket-write"]
+resource = ["public-read", "charter-search", "authenticated-read", "admin-read", "basket-write"]
 for r in resource:
     print(("GUARDED " if r in acl_routes else "UNGUARDED ") + r)
 print("TOKENACL " + ("yes" if "oauth-token" in acl_routes else "no"))
@@ -142,19 +179,32 @@ else
   ok "agent-recon holds only read-public in the policy"
 fi
 
+# The charter executor is a separate local identity, never an agent grant. It has only the two
+# fixed-route ACL groups; approval remains executor-side rather than a Kong claim.
+executor_groups="$(awk '/username: sentinel-charter-executor/{f=1} f&&/group:/{print} /oauth2_credentials:/{if(f)exit}' "$TMPL")"
+if grep -q 'charter-read' <<<"$executor_groups" && grep -q 'write-basket' <<<"$executor_groups" \
+  && ! grep -qE 'read-admin|read-authenticated' <<<"$executor_groups" \
+  && grep -q 'SENTINEL_CHARTER_EXECUTOR_SECRET' "$TMPL"; then
+  ok "charter executor has dedicated charter-read/write-basket OAuth identity"
+else
+  bad "charter executor identity is missing or over-privileged"
+fi
+
 # ---------------------------------------------------------------------------
 sect "live: authorization boundary against the running gateway"
 
 reach() { curl -sk --max-time 5 -o /dev/null -w '%{http_code}' "$BASE/rest/products/search?q=probe" 2>/dev/null; }
-if [ "$(reach)" = "000" ]; then
+if [ "$SKIP_KONG_LIVE" = "1" ]; then
+  skip "live Kong checks explicitly skipped"
+elif [ "$(reach)" = "000" ]; then
   msg="gateway not reachable at $BASE"
   if [ "$REQUIRE_KONG" = "1" ]; then bad "$msg (REQUIRE_KONG=1)"; else skip "$msg"; fi
 else
-  if [ ! -f "$ENV_FILE" ]; then
-    if [ "$REQUIRE_KONG" = "1" ]; then bad "no $ENV_FILE for client secrets"; else skip "no $ENV_FILE for client secrets"; fi
+  if [ -z "${AGENT_RECON_SECRET:-}" ] || [ -z "${PROBE_ADMIN_SECRET:-}" ] || [ -z "${KONG_PROVISION_KEY:-}" ]; then
+    if [ "$REQUIRE_KONG" = "1" ]; then bad "injected live-test secrets are unavailable"; else skip "injected live-test secrets are unavailable"; fi
   else
-    # shellcheck disable=SC1090
-    set -a; . "$ENV_FILE"; set +a
+    # Values must be injected by a secret manager or caller; never source the
+    # private env file just to run a test.
     mint() { curl -sk --max-time 5 -X POST "$BASE/oauth/oauth2/token" -H 'Content-Type: application/json' \
       --data "{\"client_id\":\"$1\",\"client_secret\":\"$2\",\"grant_type\":\"client_credentials\"}" \
       | python3 -c 'import sys,json;print(json.load(sys.stdin).get("access_token",""))' 2>/dev/null; }

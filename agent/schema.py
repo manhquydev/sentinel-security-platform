@@ -35,6 +35,11 @@ class Finding(BaseModel):
     severity: Severity
     scanner: ScannerKind
     cwe: Optional[int] = Field(None, description="CWE id, if the scanner reported one")
+    # Optional additions preserve the existing map contract while retaining the source facts
+    # needed by the separate charter JSONL report.
+    location: Optional[str] = Field(None, description="Scanner-reported endpoint or file location")
+    evidence: list[str] = Field(default_factory=list,
+                                description="Sanitized deterministic scanner evidence")
     rag_refs: list[str] = Field(default_factory=list,
                                 description="Provenance ids of RAG context used (source:source_ref)")
 

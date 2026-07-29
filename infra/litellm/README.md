@@ -52,10 +52,29 @@ the `cheap-sast` alias rather than on any particular key.
 | `DEEPSEEK_API_KEY` | only to re-score the frozen arm | Backs the `cheap-sast` alias. |
 | `JUDGE_MODEL`, `JUDGE_API_KEY` | no | Placeholder for the V2 judge variant. |
 | `EMBED_MODEL`, `EMBED_API_KEY`, `EMBED_API_BASE` | no | Embeddings. Unused against the router, which exposes none. |
+| `VERTEXAI_PROJECT` | yes | Google Cloud project used by the isolated charter-analysis route. |
+| `VERTEXAI_LOCATION` | no | Vertex region; the Compose default is the executable authority. |
+| `VERTEXAI_ADC_PATH` | yes | Local path to user-owned Google Application Default Credentials (ADC). |
 
 Clients authenticate with **virtual keys**, never the master key. Per-tier, per-run keys
 exist because two tiers sharing one key destroys per-arm attribution — which is the only
 accounting left while spend is unavailable.
+
+## Vertex charter route
+
+The charter analysis route is isolated from the frozen benchmark aliases: its purpose is
+to obtain a provider-native strict JSON-schema response without changing a reproducible
+benchmark arm. It uses the operator's existing Google ADC, not a credential committed to
+the repository or baked into the image. `VERTEXAI_ADC_PATH` therefore names one local
+credential file; Compose mounts only that file read-only into the LiteLLM container.
+
+The executable owners are [`config.yaml`](config.yaml) for the alias and provider route,
+[`docker-compose.yml`](docker-compose.yml) for the non-secret environment contract and
+credential boundary, and
+[`tests/litellm-gateway-test.sh`](../../tests/litellm-gateway-test.sh) for the static
+contract check. Keep exact model, mount, and startup details there: code/config own
+**what/how**; this document owns only **why/where**. Do not copy, print, commit, or mount
+the ADC directory as a whole.
 
 ## The guardrail
 

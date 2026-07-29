@@ -31,6 +31,8 @@ scripts/
 
 ## Bring-up
 
+Run these commands from the repository root.
+
 ```bash
 cp infra/.env.example infra/.env
 scripts/dd-gen-keys.sh              # paste the output into infra/.env
@@ -39,8 +41,8 @@ chmod 600 infra/.env
 scripts/dd-gen-db-certs.sh          # local CA + server cert
 docker network create dd-net
 
-docker compose --env-file ../.env -f infra/defectdojo-db/docker-compose.yml up -d
-docker compose --env-file ../.env -f infra/defectdojo/docker-compose.yml up -d
+docker compose --env-file infra/.env -f infra/defectdojo-db/docker-compose.yml up -d
+docker compose --env-file infra/.env -f infra/defectdojo/docker-compose.yml up -d
 
 scripts/dd-bootstrap.sh             # prints the CI token exactly once
 scripts/dd-smoke.sh                 # must exit 0

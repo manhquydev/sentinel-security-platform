@@ -38,6 +38,12 @@ frames the split).
 deliberately privileged consumer used only as the test's positive control — it proves the
 admin route is live, so `agent-recon`'s 403 is a real authorization decision, not a dead route.
 
+`sentinel-charter-executor` is a separate local operator consumer with `charter-read` and
+`write-basket`. Its `SENTINEL_CHARTER_EXECUTOR_SECRET` belongs only to
+`scripts/sentinel-charter-executor.py`, never an agent or supervisor. Kong authenticates that
+trusted executor and enforces routes; the executor's SQLite state plus an Ed25519 human-decision
+envelope enforce approval. Kong is not an approval-capability service.
+
 ## Bring-up (local)
 
 Prerequisites: the Juice Shop harness up (it owns the `juice-net` bridge Kong joins), Docker
