@@ -141,3 +141,7 @@ evaluation/sast-fp-discrimination/corpus/
 evaluation/absence-detection/*-probe-*.json
 evaluation/absence-detection/defence-in-depth-map-*.json
 evaluation/absence-detection/exposure-gap-*.json
+.sentinel-runs/
+
+# Historical 12-week assignment brief — keep local only, never push
+docs/Project_Sentinel_VinUni_x_VinSOC_12-week.md
