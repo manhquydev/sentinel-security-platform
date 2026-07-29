@@ -1,0 +1,19 @@
+{
+  "schema_version": "charter-eval-gold/v1",
+  "reviewer": {"id": "sentinel-charter-review-board", "version": "2026-07-28.1"},
+  "expected": {
+    "CE-01": {"finding_id": "finding:charter-nuclei-header", "tool": "nuclei", "scanner": "DAST", "severity": "Low", "location": "http://127.0.0.1:13000/rest/products"},
+    "CE-02": {"finding_id": "finding:charter-trivy-secret", "tool": "trivy", "scanner": "SAST", "severity": "High", "location": "file:package-lock.json"},
+    "CE-03": {"finding_id": "finding:charter-nuclei-header", "severity": "Low", "location": "http://127.0.0.1:13000/rest/products", "confidence": "high"},
+    "CE-04": {"finding_id": "finding:charter-forbidden-false-positive", "tool": "trivy", "scanner": "SAST"},
+    "CE-05": {"action_sent": false, "request_count": 0, "receipt_sha256": null}
+  },
+  "limitations": [
+    "This five-case reviewer-owned set measures only the current charter artifacts; it is not a claim of broad vulnerability coverage.",
+    "A current run with different reviewed findings must receive a new reviewed cases/gold version rather than reuse this acceptance set."
+  ],
+  "improvement_proposals": [
+    "Expand the reviewer-owned set only after adding independently reviewed current-run findings and benign controls.",
+    "Add a receipt-specific case once the controller publishes a sanitized Kong receipt artifact in the run directory."
+  ]
+}

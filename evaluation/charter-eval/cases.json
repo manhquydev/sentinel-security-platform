@@ -1,0 +1,11 @@
+{
+  "schema_version": "charter-eval-cases/v1",
+  "reviewer": {"id": "sentinel-charter-review-board", "version": "2026-07-28.1"},
+  "cases": [
+    {"case_id": "CE-01", "version": "1", "artifact": "normalized", "truth": "positive"},
+    {"case_id": "CE-02", "version": "1", "artifact": "normalized", "truth": "positive"},
+    {"case_id": "CE-03", "version": "1", "artifact": "report", "truth": "positive"},
+    {"case_id": "CE-04", "version": "1", "artifact": "normalized", "truth": "negative"},
+    {"case_id": "CE-05", "version": "1", "artifact": "request", "truth": "positive"}
+  ]
+}
