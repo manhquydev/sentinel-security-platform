@@ -104,6 +104,13 @@ Out of scope:
   on 2026-08-02: preflight 18/0, runbook contract 35/0, Sentinel demo 201/0,
   shell syntax, diff check, plan validation, and independent review. This is
   readiness evidence only; it creates no approval or live acceptance evidence.
+- [~] Phase-4 runtime readiness attempt (2026-08-02) — the no-secret `base`
+  preflight passed every non-scanner repository, operator-boundary, Docker
+  health, and loopback gate, then correctly stopped at `scanner-selector`.
+  Neither an admitted `SENTINEL_NUCLEI_IMAGE_DIGEST` nor a local
+  `SENTINEL_NUCLEI_BIN` is currently selected. Cached Docker images are not
+  admission evidence, so no image digest was inferred or written. No proposal,
+  approval, adapter, OAuth, Docker mutation, or target request occurred.
 - [x] Week-1 fresh-clone documentation slice — corrected the Trivy image-input
   quick-start, separated its no-secret scan/redaction proof from provisioned lake
   import/verification, and repaired repository-root Compose examples. Offline
