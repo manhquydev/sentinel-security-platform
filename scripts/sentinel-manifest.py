@@ -38,7 +38,7 @@ IDENTITY_FIELDS = {
     "controller": {"sentinel_demo_sha256", "sentinel_manifest_sha256", "stage_order_sha256", "profile", "source", "request_kind"},
     "target_and_scan": {"target_origin", "target_allowlist_sha256", "run_nuclei_sha256", "redact_report_sha256", "scan_and_import_sha256", "template_manifest_sha256", "scanner_runtime"},
     "analysis": {"normalize_findings_sha256", "recon_sha256", "report_sha256", "charter_contracts_sha256", "response_guard_sha256", "pii_sha256", "prompt_sha256", "llm_sha256", "corpus_manifest_sha256", "retrieval_contract_sha256", "model_alias", "model_config_sha256"},
-    "gateway_and_request": {"kong_render_script_sha256", "kong_rendered_config_sha256", "charter_requests_sha256", "charter_proposal_sha256", "charter_approval_sha256", "charter_receipt_sha256", "executor_sha256", "adapter_capture_sha256"},
+    "gateway_and_request": {"kong_render_script_sha256", "kong_rendered_config_sha256", "charter_requests_sha256", "charter_proposal_sha256", "charter_approval_sha256", "charter_receipt_sha256", "charter_audit_recovery_sha256", "executor_sha256", "adapter_capture_sha256"},
     "evaluation": {"result_report_sha256", "cases_sha256", "gold_sha256"},
     "ci_handoff": {"value"},
 }
@@ -56,6 +56,13 @@ STAGE_ARTIFACTS = {
     "ci-normalize-import": {"trivy.normalized.jsonl": "normalized-jsonl/v1"},
 }
 NO_OUTPUT_STAGES = {"preflight", "labelled-chat", "topology-ready", "response-guard", "final-report", "evaluation", "finalize"}
+AUDIT_RECOVERY_FORBIDDEN_ARTIFACTS = (
+    "receipt.json",
+    "request-descriptor.json",
+    "request.json",
+    "artifact-bindings.json",
+    "charter-evaluation.json",
+)
 
 
 def fail(message: str) -> None:
@@ -230,6 +237,37 @@ def _parse_artifact(kind: str, raw: bytes) -> None:
                 fail("invalid receipt/v2 artifact")
         else:
             fail("invalid receipt/v2 artifact")
+    elif kind == "audit-recovery/v1":
+        try:
+            from agent.charter_receipt import AUDIT_SOURCE
+        except ImportError as exc:
+            fail(f"invalid audit-recovery/v1 artifact: {exc}")
+        if (set(value) != {"schema_version", "request_id", "status", "started_at", "manifest_created_at_ms",
+                           "recovery_started_at_ms", "source", "source_digest"}
+                or value.get("schema_version") != "sentinel-charter-audit/v1"
+                or not isinstance(value.get("request_id"), str) or not value["request_id"]
+                or type(value.get("status")) is not int or not 200 <= value["status"] < 500
+                or type(value.get("started_at")) is not int or value["started_at"] < 0
+                or type(value.get("manifest_created_at_ms")) is not int or value["manifest_created_at_ms"] < 0
+                or type(value.get("recovery_started_at_ms")) is not int
+                or value["recovery_started_at_ms"] < value["manifest_created_at_ms"]
+                or not value["manifest_created_at_ms"] <= value["started_at"] <= value["recovery_started_at_ms"]
+                or value.get("source") != AUDIT_SOURCE or not _is_digest(value.get("source_digest"))):
+            fail("invalid audit-recovery/v1 artifact")
+    elif kind == "audit-recovery-report/v1":
+        if (set(value) != {"schema_version", "request_id", "audit_sha256", "limitation"}
+                or value.get("schema_version") != "sentinel-audit-recovery-report/v1"
+                or not isinstance(value.get("request_id"), str) or not value["request_id"]
+                or not _is_digest(value.get("audit_sha256"))
+                or value.get("limitation") != "gateway-transit-status-only"):
+            fail("invalid audit recovery report")
+    elif kind == "audit-evaluation/v1":
+        if (set(value) != {"schema_version", "request_id", "audit_sha256", "result", "limitation"}
+                or value.get("schema_version") != "sentinel-audit-evaluation/v1"
+                or not isinstance(value.get("request_id"), str) or not value["request_id"]
+                or not _is_digest(value.get("audit_sha256")) or value.get("result") != "limited"
+                or value.get("limitation") != "not-a-receipt-or-response-guard-evaluation"):
+            fail("invalid audit evaluation")
     elif kind == "request-descriptor/v1":
         if value != {"schema_version": "sentinel-request-descriptor/v1", "receipt": "receipt.json"}:
             fail("invalid request-descriptor/v1 artifact")
@@ -248,7 +286,7 @@ def valid_artifact_ledger(doc: dict, run_root: Path | None = None) -> None:
     # controller progression order.  The immutable stored index is the ledger's
     # sole ordering authority.
     passed = sorted(
-        ((name, record) for name, record in doc["stages"].items() if record["status"] == "passed"),
+        ((name, record) for name, record in doc["stages"].items() if record["status"] in {"passed", "recovered"}),
         key=lambda item: item[1]["index"],
     )
     if len(ledger) != len(passed): fail("missing artifact checkpoint")
@@ -273,6 +311,20 @@ def valid_artifact_ledger(doc: dict, run_root: Path | None = None) -> None:
                 raw = regular_bytes(run_root / entry["path"], root=run_root, nonempty=True)
                 if digest(raw) != entry["sha256"]: fail("artifact digest mismatch")
                 _parse_artifact(entry["type"], raw)
+        if stage == "executor" and got == {
+            "audit-recovery.json": "audit-recovery/v1",
+            "audit-recovery-report.json": "audit-recovery-report/v1",
+            "audit-evaluation.json": "audit-evaluation/v1",
+        }:
+            if run_root is not None:
+                audit = _typed_json(regular_bytes(run_root / "audit-recovery.json", root=run_root, nonempty=True), "audit-recovery/v1")
+                report = _typed_json(regular_bytes(run_root / "audit-recovery-report.json", root=run_root, nonempty=True), "audit recovery report")
+                evaluation = _typed_json(regular_bytes(run_root / "audit-evaluation.json", root=run_root, nonempty=True), "audit evaluation")
+                audit_digest = digest(regular_bytes(run_root / "audit-recovery.json", root=run_root, nonempty=True))
+                if (report.get("request_id") != audit.get("request_id") or evaluation.get("request_id") != audit.get("request_id")
+                        or report.get("audit_sha256") != audit_digest or evaluation.get("audit_sha256") != audit_digest):
+                    fail("audit recovery reports are not bound to the audit artifact")
+            continue
         if set(got) != set(expected) or any(
                 got[path] != allowed if isinstance(allowed, str) else got[path] not in allowed
                 for path, allowed in expected.items()):
@@ -286,33 +338,51 @@ def valid_effect_ledger(doc: dict, run_root: Path | None = None) -> None:
     pending: dict[tuple[str, str], dict] = {}
     complete: set[tuple[str, str]] = set()
     observed: set[tuple[str, str]] = set()
+    last_state: dict[tuple[str, str], str] = {}
     for event in events:
         if not isinstance(event, dict) or not {"stage", "effect", "state", "intent_path", "intent_sha256"}.issubset(event): fail("invalid effect event")
         stage, effect, state = event["stage"], event["effect"], event["state"]
         pair = (stage, effect)
-        if (stage, effect) not in {("scan-redact-import", "defectdojo-import"), ("executor", "charter-request")} or state not in {"prepared", "observed", "unknown"} or not _safe_relative_path(event["intent_path"]) or not _is_digest(event["intent_sha256"]):
+        if (stage, effect) not in {("scan-redact-import", "defectdojo-import"), ("executor", "charter-request")} or state not in {"prepared", "observed", "unknown", "recovered"} or not _safe_relative_path(event["intent_path"]) or not _is_digest(event["intent_sha256"]):
             fail("invalid effect event")
         exact = {"stage", "effect", "state", "intent_path", "intent_sha256"}
-        if state == "observed": exact |= {"observation_path", "observation_sha256"}
+        if state in {"observed", "recovered"}: exact |= {"observation_path", "observation_sha256"}
         if set(event) != exact: fail("invalid effect event fields")
         if state == "prepared":
             if pair in pending or pair in complete: fail("invalid effect transition")
             pending[pair] = event
-        else:
+        elif state in {"observed", "unknown"}:
             prior = pending.pop(pair, None)
             if prior is None or prior["intent_path"] != event["intent_path"] or prior["intent_sha256"] != event["intent_sha256"]: fail("invalid effect transition")
             if state == "observed" and (not _safe_relative_path(event["observation_path"]) or not _is_digest(event["observation_sha256"])): fail("invalid observed effect")
             complete.add(pair)
             if state == "observed": observed.add(pair)
+        else:
+            if pair != ("executor", "charter-request") or last_state.get(pair) not in {"prepared", "unknown"}:
+                fail("invalid audit recovery transition")
+            if not (_safe_relative_path(event["observation_path"]) and _is_digest(event["observation_sha256"])):
+                fail("invalid recovered effect")
+            observed.add(pair)
+        last_state[pair] = state
         if run_root is not None:
             intent = regular_bytes(run_root / event["intent_path"], root=run_root, nonempty=True)
             if digest(intent) != event["intent_sha256"]: fail("effect intent digest mismatch")
             _parse_artifact("import-intent/v1" if effect == "defectdojo-import" else "request-spec/v1", intent)
-            if state == "observed":
+            if state in {"observed", "recovered"}:
                 observation = regular_bytes(run_root / event["observation_path"], root=run_root, nonempty=True)
                 if digest(observation) != event["observation_sha256"]: fail("effect observation digest mismatch")
                 if effect == "defectdojo-import":
                     _parse_artifact("import-observation/v1", observation)
+                elif state == "recovered":
+                    _parse_artifact("audit-recovery/v1", observation)
+                    try:
+                        from agent.charter_receipt import ReceiptContractError, decode_object, validate_audit
+                        from agent.charter_requests import load_spec
+                        audit = decode_object(observation)
+                        spec = load_spec(_typed_json(intent, "request spec"))
+                        validate_audit(audit, spec)
+                    except (ImportError, ReceiptContractError, ValueError) as exc:
+                        fail(f"invalid recovered executor effect: {exc}")
                 else:
                     receipt = _typed_json(observation, "receipt observation")
                     schema = receipt.get("schema_version")
@@ -325,7 +395,7 @@ def valid_effect_ledger(doc: dict, run_root: Path | None = None) -> None:
     # A passed remote-producer stage without its terminal observation would make
     # a checkpoint look resumable even though the effect had no durable outcome.
     for stage, effect in (("scan-redact-import", "defectdojo-import"), ("executor", "charter-request")):
-        if doc.get("stages", {}).get(stage, {}).get("status") == "passed" and (stage, effect) not in observed:
+        if doc.get("stages", {}).get(stage, {}).get("status") in {"passed", "recovered"} and (stage, effect) not in observed:
             fail("passed remote stage lacks observed effect")
 
 
@@ -435,14 +505,14 @@ def valid(doc: dict) -> None:
     for name, stage in stages.items():
         index = stage_order.index(name)
         allowed_stage = {"status", "at_ms", "index"}
-        if is_v2 and isinstance(stage, dict) and stage.get("status") == "passed": allowed_stage.add("checkpoint_sha256")
+        if is_v2 and isinstance(stage, dict) and stage.get("status") in {"passed", "recovered"}: allowed_stage.add("checkpoint_sha256")
         if (not isinstance(stage, dict)
                 or set(stage) != allowed_stage
-                or stage["status"] not in {"passed", "failed", "skipped", "rejected"}
+                or stage["status"] not in {"passed", "failed", "skipped", "rejected", "recovered"}
                 or not isinstance(stage["at_ms"], int) or stage["at_ms"] < 0
                 or stage["index"] != index):
             fail("invalid stage record")
-        if is_v2 and stage["status"] == "passed" and not _is_digest(stage.get("checkpoint_sha256")):
+        if is_v2 and stage["status"] in {"passed", "recovered"} and not _is_digest(stage.get("checkpoint_sha256")):
             fail("invalid stage checkpoint digest")
     if {stage["index"] for stage in stages.values()} != set(range(len(stages))):
         fail("non-contiguous stages")
@@ -468,12 +538,12 @@ def valid(doc: dict) -> None:
         fail("invalid RunMetrics/v1")
     result = doc.get("result")
     if (not isinstance(result, dict) or set(result) != {"status", "action_sent"}
-            or result["status"] not in {"pending", "passed", "failed", "rejected"}
+            or result["status"] not in {"pending", "passed", "failed", "rejected", "recovered"}
             or not isinstance(result["action_sent"], bool)):
         fail("invalid result")
-    if result["status"] == "passed" and result["action_sent"] != bool(metrics["request_count"]):
+    if result["status"] in {"passed", "recovered"} and result["action_sent"] != bool(metrics["request_count"]):
         fail("passed action result does not match request metric")
-    if result["status"] != "passed" and result["action_sent"]:
+    if result["status"] not in {"passed", "recovered"} and result["action_sent"]:
         fail("non-passed result cannot send an action")
     if result["status"] == "rejected" and metrics["request_count"] != 0:
         fail("rejected result cannot record a request")
@@ -485,7 +555,7 @@ def valid(doc: dict) -> None:
         valid_resume_identity(doc["resume_identity"], input_value["source"])
         valid_artifact_ledger(doc)
         valid_effect_ledger(doc)
-    if result["status"] in {"passed", "rejected"}:
+    if result["status"] in {"passed", "rejected", "recovered"}:
         if not identity["output_sha256"] or identity["output_sha256"] != output_digest(doc):
             fail("output hash mismatch")
     elif identity["output_sha256"]:
@@ -497,6 +567,13 @@ def valid(doc: dict) -> None:
                 or stage_order != ["preflight", "labelled-chat", "verify-ci-artifact", "ci-normalize-import"]
                 or len(stages) != 4 or any(stages.get(name, {}).get("status") != "passed" for name in stage_order)):
             fail("invalid ci terminal semantics")
+    if result["status"] == "recovered":
+        if (is_ci or result["action_sent"] is not True or metrics["request_count"] != 1
+                or len(stages) != 8
+                or any(stages.get(name, {}).get("status") != "passed" for name in stage_order[:7])
+                or stages.get("executor", {}).get("status") != "recovered"
+                or any(name in stages for name in stage_order[8:])):
+            fail("invalid audit recovery terminal semantics")
 
 def write(path: Path, doc: dict) -> None:
     valid(doc)
@@ -783,6 +860,119 @@ def effect(path: Path, event: object) -> None:
     write(path, trial)
 
 
+def recover_audit(path: Path, event: object, checkpoint: object) -> None:
+    """Atomically publish one bounded `unknown` -> `recovered` audit result."""
+    if not isinstance(event, dict) or not isinstance(checkpoint, dict) or set(checkpoint) != {"entries"}:
+        fail("invalid audit recovery input")
+    doc = load(path); valid(doc)
+    if doc["schema_version"] != "sentinel-run/v2":
+        fail("audit recovery requires a v2 manifest")
+    if doc["input"]["source"] != "local" or doc["result"]["status"] != "failed":
+        fail("audit recovery requires an interrupted local executor")
+    stage_order = doc["stage_order"]
+    if (len(doc["stages"]) != 8 or stage_order[7] != "executor"
+            or any(doc["stages"].get(name, {}).get("status") != "passed" for name in stage_order[:7])
+            or doc["stages"].get("executor", {}).get("status") != "failed"):
+        fail("audit recovery requires a failed executor as the first incomplete boundary")
+    events = doc["effect_ledger"]
+    if not events:
+        fail("audit recovery requires a stranded executor effect")
+    if events[-1].get("state") == "unknown":
+        if len(events) < 2:
+            fail("audit recovery requires a prepared executor effect")
+        prepared, unknown = events[-2], events[-1]
+        if unknown.get("intent_path") != prepared.get("intent_path") or unknown.get("intent_sha256") != prepared.get("intent_sha256"):
+            fail("audit recovery request binding mismatch")
+    else:
+        prepared = events[-1]
+    if (prepared.get("stage"), prepared.get("effect")) != ("executor", "charter-request"):
+        fail("audit recovery requires an executor effect")
+    expected_event = {
+        "stage": "executor", "effect": "charter-request", "state": "recovered",
+        "intent_path": prepared["intent_path"], "intent_sha256": prepared["intent_sha256"],
+    }
+    if not isinstance(event, dict) or set(event) != set(expected_event) | {"observation_path", "observation_sha256"}:
+        fail("invalid audit recovery event")
+    if any(event[key] != value for key, value in expected_event.items()):
+        fail("invalid audit recovery event")
+    try:
+        from agent.charter_receipt import ReceiptContractError, decode_object, validate_audit
+        from agent.charter_requests import load_spec
+        import sqlite3
+        spec = load_spec(_typed_json(regular_bytes(path.parent / "request-spec.json", root=path.parent, nonempty=True), "request spec"))
+        audit = validate_audit(
+            decode_object(regular_bytes(path.parent / "audit-recovery.json", root=path.parent, nonempty=True)),
+            spec,
+        )
+        state_db = path.parent / "executor-state.sqlite"
+        item = state_db.lstat()
+        if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode) or item.st_size == 0:
+            fail("unsafe audit recovery SQLite state")
+        connection = sqlite3.connect(f"file:{state_db}?mode=ro", uri=True)
+        try:
+            row = connection.execute("SELECT state, receipt_digest FROM requests WHERE id=?", (spec.request_id,)).fetchone()
+        finally:
+            connection.close()
+        if row != ("terminal", audit["source_digest"]):
+            fail("audit recovery SQLite state does not bind the audit artifact")
+    except (ImportError, ReceiptContractError, ValueError, sqlite3.Error) as exc:
+        fail(f"invalid audit recovery terminal state: {exc}")
+    trial = json.loads(json.dumps(doc))
+    trial["effect_ledger"].append(event)
+    index = trial["stages"]["executor"]["index"]
+    proof = {"stage": "executor", "index": index, "entries": checkpoint["entries"]}
+    ledger = {**proof, "sha256": json_digest(proof)}
+    trial["stages"]["executor"] = {
+        "status": "recovered", "at_ms": int(time.time() * 1000), "index": index,
+        "checkpoint_sha256": ledger["sha256"],
+    }
+    trial["artifact_ledger"].append(ledger)
+    trial["metrics"]["request_count"] = 1
+    trial["result"] = {"status": "recovered", "action_sent": True}
+    complete_output_hash(trial)
+    valid_artifact_ledger(trial, path.parent)
+    valid_effect_ledger(trial, path.parent)
+    _audit_recovery_forbids_normal_artifacts(path.parent)
+    write(path, trial)
+
+
+def _audit_recovery_forbids_normal_artifacts(run_dir: Path) -> None:
+    for name in AUDIT_RECOVERY_FORBIDDEN_ARTIFACTS:
+        item = run_dir / name
+        if item.exists() or item.is_symlink():
+            fail("normal executor artifact is prohibited in audit recovery")
+
+
+def verify_audit_recovery(path: Path) -> None:
+    """Verify the final bounded audit-only terminal state without acquiring logs."""
+    doc = load(path); valid(doc)
+    if doc["schema_version"] != "sentinel-run/v2" or doc["result"] != {"status": "recovered", "action_sent": True}:
+        fail("manifest is not an audit recovery terminal state")
+    valid_artifact_ledger(doc, path.parent)
+    valid_effect_ledger(doc, path.parent)
+    _audit_recovery_forbids_normal_artifacts(path.parent)
+    try:
+        from agent.charter_receipt import ReceiptContractError, decode_object, validate_audit
+        from agent.charter_requests import load_spec
+        import sqlite3
+        spec = load_spec(_typed_json(regular_bytes(path.parent / "request-spec.json", root=path.parent, nonempty=True), "request spec"))
+        audit_bytes = regular_bytes(path.parent / "audit-recovery.json", root=path.parent, nonempty=True)
+        audit = validate_audit(decode_object(audit_bytes), spec)
+        state_db = path.parent / "executor-state.sqlite"
+        item = state_db.lstat()
+        if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode) or item.st_size == 0:
+            fail("unsafe audit recovery SQLite state")
+        connection = sqlite3.connect(f"file:{state_db}?mode=ro", uri=True)
+        try:
+            row = connection.execute("SELECT state, receipt_digest FROM requests WHERE id=?", (spec.request_id,)).fetchone()
+        finally:
+            connection.close()
+        if row != ("terminal", audit["source_digest"]):
+            fail("audit recovery SQLite state does not bind the audit artifact")
+    except (ImportError, ReceiptContractError, ValueError, sqlite3.Error) as exc:
+        fail(f"invalid audit recovery terminal state: {exc}")
+
+
 def authorize_resume(path: Path, resume_identity: object) -> str:
     doc = load(path); valid(doc)
     if doc["schema_version"] == "sentinel-run/v1": fail("legacy manifest lacks exhaustive resume identity")
@@ -888,6 +1078,13 @@ def main(args: list[str]) -> None:
         return
     if args and args[0] == "effect" and len(args) == 3:
         effect(Path(args[1]), _json_argument(args[2], "effect event"))
+        return
+    if args and args[0] == "recover-audit" and len(args) == 4:
+        recover_audit(Path(args[1]), _json_argument(args[2], "audit recovery event"),
+                      _json_argument(args[3], "audit recovery checkpoint"))
+        return
+    if args and args[0] == "verify-audit-recovery" and len(args) == 2:
+        verify_audit_recovery(Path(args[1]))
         return
     if args and args[0] == "authorize-resume" and len(args) == 3:
         print(authorize_resume(Path(args[1]), _json_argument(args[2], "resume identity")))

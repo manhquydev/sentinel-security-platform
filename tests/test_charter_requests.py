@@ -5,7 +5,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import pytest
 from agent.charter_approval import CharterApproval, sign, verify
-from agent.charter_receipt import ReceiptContractError, decode_object, validate_adapter_result, validate_receipt
+from agent.charter_receipt import (AUDIT_SOURCE, ReceiptContractError, decode_object,
+                                   validate_adapter_result, validate_audit, validate_receipt)
 from agent.charter_requests import *
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -210,6 +211,36 @@ def test_receipt_contract_get_and_post_truth_tables_and_malformed_values():
             validate_receipt(value, post if value.get("request_id") == post.request_id else get)
 
 
+def test_audit_v1_is_a_separate_bounded_gateway_transit_contract():
+    request = spec()
+    audit = {
+        "schema_version": "sentinel-charter-audit/v1",
+        "request_id": request.request_id,
+        "status": 200,
+        "started_at": 1_000,
+        "manifest_created_at_ms": 900,
+        "recovery_started_at_ms": 1_100,
+        "source": AUDIT_SOURCE,
+        "source_digest": "a" * 64,
+    }
+    assert validate_audit(audit, request) == audit
+    for forbidden in ("body", "preview", "bytes", "quarantine", "receipt_digest",
+                      "response_guard", "consumer", "method", "path", "query"):
+        with pytest.raises(ReceiptContractError):
+            validate_audit({**audit, forbidden: "not-audit-evidence"}, request)
+    for invalid in (
+        {**audit, "started_at": True},
+        {**audit, "started_at": "1000"},
+        {**audit, "manifest_created_at_ms": 1_001},
+        {**audit, "recovery_started_at_ms": 999},
+        {**audit, "source": "fixture"},
+        {**audit, "status": 404},
+        {**audit, "source_digest": "A" * 64},
+    ):
+        with pytest.raises(ReceiptContractError):
+            validate_audit(invalid, request)
+
+
 def test_get_preview_guard_media_utf8_and_pii_contracts():
     key = Ed25519PrivateKey.generate()
     cases = (
@@ -284,10 +315,10 @@ def test_unknown_restart_audit_and_transport_contract():
       try: run(s,sign(s,key),FakeTransport(),st,key)
       except CharterRequestError: pass
       st.close(); st=RequestStore(path); assert st.state(s.request_id)=="unknown"
-      try: st.reconcile_audit(s.request_id,[])
+      try: st.reconcile_audit(s.request_id,[],created_at_ms=0,recovery_started_at_ms=2000)
       except CharterRequestError: pass
-      line=json.dumps({"request":{"headers":{"x-sentinel-request-id":s.request_id},"method":"GET","uri":"/rest/products/search?q=apple"},"response":{"status":200},"consumer":{"username":EXECUTOR_CONSUMER}})
-      receipt=st.reconcile_audit(s.request_id,parse_kong_file_log(line.encode()))
+      line=json.dumps({"started_at":1000,"request":{"headers":{"x-sentinel-request-id":s.request_id},"method":"GET","uri":"/rest/products/search?q=apple"},"response":{"status":200},"consumer":{"username":EXECUTOR_CONSUMER}})
+      receipt=st.reconcile_audit(s.request_id,parse_kong_file_log(line.encode()),created_at_ms=0,recovery_started_at_ms=2000)
       assert receipt["status"]==200 and st.state(s.request_id)=="terminal"
       s2=spec(run="r2"); t2=FakeTransport(status=302,body=b"x"*70000)
       try: run(s2,sign(s2,key),t2,st,key)
@@ -327,11 +358,11 @@ def test_concurrent_durable_reservation_caps_at_five():
       assert results.count("ok")==5 and results.count("refused")==1 and len(t.calls)==5
 
 
-def _audit_record(request, *, status=200, source_digest="a" * 64, query=None):
+def _audit_record(request, *, status=200, source_digest="a" * 64, query=None, started_at=1_000):
     return {"request_id": request.request_id, "consumer": EXECUTOR_CONSUMER,
             "method": request.method, "path": request.path,
             "query": request.query if query is None else query,
-            "status": status, "source_digest": source_digest}
+            "status": status, "source_digest": source_digest, "started_at": started_at}
 
 
 def _make_unknown(store, request, key):
@@ -380,12 +411,27 @@ def test_precommit_terminalization_failure_reopens_unknown_then_audits_without_o
         with pytest.raises(CharterRequestError):
             run(request, transport=retry, store=reopened, key=key)
         assert retry.mints == [] and retry.calls == []
-        receipt = reopened.reconcile_audit(request.request_id, [_audit_record(request)])
+        receipt = reopened.reconcile_audit(request.request_id, [_audit_record(request)],
+                                           created_at_ms=0, recovery_started_at_ms=2_000)
         states = [row[0] for row in reopened.db.execute(
             "SELECT state FROM events WHERE id=? ORDER BY rowid", (request.request_id,))]
-    assert receipt["receipt_digest"] == "a" * 64
+    assert receipt["source_digest"] == "a" * 64
     assert states == ["prepared", "dispatched", "unknown", "terminal"]
     assert "observed" not in states
+
+
+def test_durable_audit_projection_terminalizes_unknown_without_reparsing_source():
+    with tempfile.TemporaryDirectory() as directory:
+        key = Ed25519PrivateKey.generate()
+        store = RequestStore(directory + "/state.db")
+        request = spec(run="durable-audit-projection")
+        _make_unknown(store, request, key)
+        store.terminalize_audit_projection(request.request_id, "a" * 64)
+        assert store.state(request.request_id) == "terminal"
+        with pytest.raises(CharterRequestError):
+            store.terminalize_audit_projection(request.request_id, "a" * 64)
+        with pytest.raises(CharterRequestError):
+            store.terminalize_audit_projection(request.request_id, "not-a-digest")
 
 
 def test_audit_validation_requires_exact_digest_type_and_immutable_query_before_transition():
@@ -402,34 +448,67 @@ def test_audit_validation_requires_exact_digest_type_and_immutable_query_before_
         missing_digest = _audit_record(get)
         missing_digest.pop("source_digest")
         with pytest.raises(CharterRequestError):
-            store.reconcile_audit(get.request_id, [missing_digest])
+            store.reconcile_audit(get.request_id, [missing_digest], created_at_ms=0, recovery_started_at_ms=2_000)
         for digest in (None, "", "A" * 64, "a" * 63, "g" * 64):
             with pytest.raises(CharterRequestError):
-                store.reconcile_audit(get.request_id, [_audit_record(get, source_digest=digest)])
+                store.reconcile_audit(get.request_id, [_audit_record(get, source_digest=digest)], created_at_ms=0, recovery_started_at_ms=2_000)
         for status in (True, "200", 200.0):
             with pytest.raises(CharterRequestError):
-                store.reconcile_audit(get.request_id, [_audit_record(get, status=status)])
+                store.reconcile_audit(get.request_id, [_audit_record(get, status=status)], created_at_ms=0, recovery_started_at_ms=2_000)
         with pytest.raises(CharterRequestError):
-            store.reconcile_audit(get.request_id, [_audit_record(get, query="q=pear")])
+            store.reconcile_audit(get.request_id, [_audit_record(get, query="q=pear")], created_at_ms=0, recovery_started_at_ms=2_000)
         with pytest.raises(CharterRequestError):
-            store.reconcile_audit(get.request_id, [_audit_record(get), _audit_record(get)])
+            store.reconcile_audit(get.request_id, [_audit_record(get), _audit_record(get)], created_at_ms=0, recovery_started_at_ms=2_000)
         assert store.state(get.request_id) == "unknown"
 
         post = spec("POST", "audit-post")
         _make_unknown(store, post, key)
         with pytest.raises(CharterRequestError):
-            store.reconcile_audit(post.request_id, [_audit_record(post, query="q=apple")])
+            store.reconcile_audit(post.request_id, [_audit_record(post, query="q=apple")], created_at_ms=0, recovery_started_at_ms=2_000)
         assert store.state(post.request_id) == "unknown"
+
+
+@pytest.mark.parametrize("started_at", (None, True, 999, 2_001, 1_000.0, "1000"))
+def test_audit_timestamp_is_exact_integer_epoch_ms_in_closed_recovery_window(started_at):
+    with tempfile.TemporaryDirectory() as directory:
+        key = Ed25519PrivateKey.generate()
+        store = RequestStore(directory + "/state.db")
+        request = spec(run=f"audit-time-{type(started_at).__name__}")
+        _make_unknown(store, request, key)
+        record = _audit_record(request, started_at=started_at)
+        if started_at is None:
+            record.pop("started_at")
+        with pytest.raises(CharterRequestError):
+            store.reconcile_audit(request.request_id, [record],
+                                  created_at_ms=1_000, recovery_started_at_ms=2_000)
+        assert store.state(request.request_id) == "unknown"
+
+
+def test_audit_timestamp_ambiguity_refuses_even_with_one_other_valid_match():
+    with tempfile.TemporaryDirectory() as directory:
+        key = Ed25519PrivateKey.generate()
+        store = RequestStore(directory + "/state.db")
+        request = spec(run="audit-time-ambiguous")
+        _make_unknown(store, request, key)
+        with pytest.raises(CharterRequestError):
+            store.reconcile_audit(
+                request.request_id,
+                [_audit_record(request, started_at=1_000), _audit_record(request, started_at=2_000)],
+                created_at_ms=1_000,
+                recovery_started_at_ms=2_000,
+            )
+        assert store.state(request.request_id) == "unknown"
 
 
 def test_kong_parser_preserves_query_evidence_for_reconciliation():
     request = spec()
-    raw = json.dumps({"request": {"headers": {"x-sentinel-request-id": request.request_id},
+    raw = json.dumps({"started_at": 1_000, "request": {"headers": {"x-sentinel-request-id": request.request_id},
                       "method": "GET", "uri": "/rest/products/search?q=apple&extra=1"},
                       "response": {"status": 200}, "consumer": {"username": EXECUTOR_CONSUMER}}).encode()
     records = parse_kong_file_log(raw)
     assert records[0]["path"] == "/rest/products/search"
     assert records[0]["query"] == "q=apple&extra=1"
+    assert records[0]["started_at"] == 1_000
 
 
 def test_postcommit_terminalization_failure_keeps_one_terminal_receipt_after_reopen():
@@ -520,7 +599,7 @@ def test_audit_status_outside_fixed_policy_does_not_transition(method, status):
         _make_unknown(store, request, key)
         events_before = store.db.execute("SELECT count(*) FROM events WHERE id=?", (request.request_id,)).fetchone()[0]
         with pytest.raises(CharterRequestError):
-            store.reconcile_audit(request.request_id, [_audit_record(request, status=status)])
+            store.reconcile_audit(request.request_id, [_audit_record(request, status=status)], created_at_ms=0, recovery_started_at_ms=2_000)
         assert store.state(request.request_id) == "unknown"
         assert store.db.execute("SELECT count(*) FROM events WHERE id=?", (request.request_id,)).fetchone()[0] == events_before
 
@@ -534,7 +613,7 @@ def test_audit_nondict_candidate_is_refused_without_state_or_event_transition(in
         _make_unknown(store, request, key)
         events_before = store.db.execute("SELECT count(*) FROM events WHERE id=?", (request.request_id,)).fetchone()[0]
         with pytest.raises(CharterRequestError, match="invalid audit evidence"):
-            store.reconcile_audit(request.request_id, [_audit_record(request), invalid_record])
+            store.reconcile_audit(request.request_id, [_audit_record(request), invalid_record], created_at_ms=0, recovery_started_at_ms=2_000)
         assert store.state(request.request_id) == "unknown"
         assert store.db.execute("SELECT count(*) FROM events WHERE id=?", (request.request_id,)).fetchone()[0] == events_before
 
@@ -563,11 +642,11 @@ def test_kong_parser_skips_malformed_nested_shape_then_reconciles_later_valid_re
         store = RequestStore(directory + "/state.db")
         request = spec(run="audit-valid-after-malformed")
         _make_unknown(store, request, key)
-        valid = json.dumps({"request": {"headers": {"x-sentinel-request-id": request.request_id},
+        valid = json.dumps({"started_at":1000,"request": {"headers": {"x-sentinel-request-id": request.request_id},
                             "method": "GET", "uri": "/rest/products/search?q=apple"},
                             "response": {"status": 200}, "consumer": {"username": EXECUTOR_CONSUMER}}).encode()
         records = parse_kong_file_log(malformed + b"\n" + valid)
-        receipt = store.reconcile_audit(request.request_id, records)
+        receipt = store.reconcile_audit(request.request_id, records, created_at_ms=0, recovery_started_at_ms=2_000)
     assert receipt["status"] == 200 and len(records) == 1
 
 

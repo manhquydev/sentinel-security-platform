@@ -118,6 +118,17 @@ def _load_manifest(run_dir: Path) -> tuple[dict[str, Any], Path]:
             or metrics.get("version") != "RunMetrics/v1"
             or any(type(metrics[name]) is not int or metrics[name] < 0 for name in METRIC_FIELDS)):
         raise EvaluationError("manifest RunMetrics/v1 is missing, extra, or malformed")
+    if value["result"]["status"] == "recovered":
+        audit_path = _inside(run_dir, "audit-recovery.json")
+        _require_private_regular(audit_path)
+        try:
+            from agent.charter_receipt import ReceiptContractError, decode_object, validate_audit
+            from agent.charter_requests import load_spec
+            spec = load_spec(_load_json(_inside(run_dir, "request-spec.json")))
+            validate_audit(decode_object(audit_path.read_bytes()), spec)
+        except (OSError, ReceiptContractError, ValueError) as exc:
+            raise EvaluationError("audit-only recovery artifact is invalid") from exc
+        raise EvaluationError("audit-only recovery cannot satisfy receipt, response-guard, or evaluation evidence")
     if value["result"]["status"] not in {"passed", "rejected"} or value["required_skips"]:
         raise EvaluationError("manifest is not a completed no-skip current run")
     return value, path

@@ -10,6 +10,11 @@ _RESULT_FIELDS = {"request_id", "status", "bytes", "receipt_digest", "post_expec
 _V1_FIELDS = {"schema_version", "request_id", "status", "bytes", "receipt_digest"}
 _V2_ACCEPTED_FIELDS = _V1_FIELDS | {"preview", "preview_truncated"}
 _V2_QUARANTINE_FIELDS = _V1_FIELDS | {"quarantine"}
+AUDIT_SOURCE = "docker-logs-sentinel-kong"
+_AUDIT_V1_FIELDS = {
+    "schema_version", "request_id", "status", "started_at", "manifest_created_at_ms",
+    "recovery_started_at_ms", "source", "source_digest",
+}
 _QUARANTINE_CODES = frozenset((
     "media-missing", "media-duplicate", "media-malformed", "media-unsupported", "decode-invalid-utf8",
     "objective-change", "secret-disclosure", "out-of-scope-tool",
@@ -142,3 +147,36 @@ def validate_receipt(value: object, spec: _RequestSpec) -> dict[str, Any]:
         raise ReceiptContractError("receipt has an unknown schema version")
     return {"schema_version": "sentinel-charter-receipt/v1", "request_id": request_id,
             "status": status, "bytes": byte_count, "receipt_digest": digest}
+
+
+def validate_audit(value: object, spec: _RequestSpec) -> dict[str, Any]:
+    """Validate the distinct, response-free Kong transit/status recovery artifact."""
+    request_id, method = _validated_context(spec)
+    if not isinstance(value, dict) or set(value) != _AUDIT_V1_FIELDS:
+        raise ReceiptContractError("audit has wrong fields")
+    if value.get("schema_version") != "sentinel-charter-audit/v1":
+        raise ReceiptContractError("audit has an unknown schema version")
+    status, started_at, manifest_created_at_ms, recovery_started_at_ms, source, digest = (
+        value.get("status"), value.get("started_at"), value.get("manifest_created_at_ms"),
+        value.get("recovery_started_at_ms"), value.get("source"), value.get("source_digest"),
+    )
+    if (value.get("request_id") != request_id or type(status) is not int
+            or (method == "GET" and not 200 <= status < 300)
+            or (method == "POST" and not 400 <= status < 500)
+            or type(started_at) is not int or started_at < 0
+            or type(manifest_created_at_ms) is not int or manifest_created_at_ms < 0
+            or type(recovery_started_at_ms) is not int or recovery_started_at_ms < manifest_created_at_ms
+            or not manifest_created_at_ms <= started_at <= recovery_started_at_ms
+            or source != AUDIT_SOURCE
+            or type(digest) is not str or not _DIGEST.fullmatch(digest)):
+        raise ReceiptContractError("audit has invalid gateway transit metadata")
+    return {
+        "schema_version": "sentinel-charter-audit/v1",
+        "request_id": request_id,
+        "status": status,
+        "started_at": started_at,
+        "manifest_created_at_ms": manifest_created_at_ms,
+        "recovery_started_at_ms": recovery_started_at_ms,
+        "source": AUDIT_SOURCE,
+        "source_digest": digest,
+    }

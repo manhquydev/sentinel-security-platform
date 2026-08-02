@@ -7,7 +7,7 @@ RUNS="${SENTINEL_RUNS_DIR:-$HERE/../.sentinel-runs}"
 MANIFEST_TOOL=(python3 "$HERE/sentinel-manifest.py")
 CHARTER_PYTHON="${SENTINEL_PYTHON:-$HERE/../rag/.venv/bin/python}"
 
-usage() { echo 'usage: sentinel-demo.sh run --profile charter --run-id ID [--artifact-input PATH --artifact-sha256 SHA] | resume ID [--artifact-input PATH --artifact-sha256 SHA] | verify ID | --teardown ID' >&2; }
+usage() { echo 'usage: sentinel-demo.sh run --profile charter --run-id ID [--artifact-input PATH --artifact-sha256 SHA] | resume ID [--artifact-input PATH --artifact-sha256 SHA] | recover-audit ID | verify ID | --teardown ID' >&2; }
 die() { echo "sentinel-demo: $*" >&2; exit 2; }
 safe_id() { [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]; }
 hash_file() { sha256sum "$1" | awk '{print $1}'; }
@@ -219,7 +219,7 @@ inputs={
  "controller":{"sentinel_demo_sha256":h("scripts/sentinel-demo.sh"),"sentinel_manifest_sha256":h("scripts/sentinel-manifest.py"),"stage_order_sha256":hashlib.sha256((b"preflight\nlabelled-chat\n" + (b"verify-ci-artifact\nci-normalize-import\n" if source=="ci" else b"topology-ready\nscan-redact-import\nanalysis-report\nproposal\napproval\nexecutor\nresponse-guard\nfinal-report\nevaluation\nfinalize\n"))).hexdigest(),"profile":"charter","source":source,"request_kind":request_kind},
  "target_and_scan":{"target_origin":"http://127.0.0.1:13000","target_allowlist_sha256":h("scanners/target-allowlist.sh"),"run_nuclei_sha256":h("scanners/run-nuclei.sh"),"redact_report_sha256":h("scanners/redact-report.sh"),"scan_and_import_sha256":h("scripts/scan-and-import.sh"),"template_manifest_sha256":h("scanners/charter-template-manifest.json"),"scanner_runtime":json.loads(runtime)},
  "analysis":{"normalize_findings_sha256":h("agent/normalize_findings.py"),"recon_sha256":h("agent/recon.py"),"report_sha256":h("agent/report.py"),"charter_contracts_sha256":h("agent/charter_contracts.py"),"response_guard_sha256":h("agent/charter_response_guard.py"),"pii_sha256":h("agent/pii.py"),"prompt_sha256":h("agent/prompts/charter-system-prompt.md"),"llm_sha256":h("agent/llm.py"),"corpus_manifest_sha256":h("rag/charter-corpus-manifest.json"),"retrieval_contract_sha256":h("rag/retrieve.py"),"model_alias":alias,"model_config_sha256":h("infra/litellm/config.yaml")},
- "gateway_and_request":{"kong_render_script_sha256":h("infra/kong/render-config.sh"),"kong_rendered_config_sha256":rendered,"charter_requests_sha256":h("agent/charter_requests.py"),"charter_proposal_sha256":h("agent/charter_proposal.py"),"charter_approval_sha256":h("agent/charter_approval.py"),"charter_receipt_sha256":h("agent/charter_receipt.py"),"executor_sha256":h("scripts/sentinel-charter-executor.py"),"adapter_capture_sha256":h("scripts/sentinel-adapter-capture.py")},
+ "gateway_and_request":{"kong_render_script_sha256":h("infra/kong/render-config.sh"),"kong_rendered_config_sha256":rendered,"charter_requests_sha256":h("agent/charter_requests.py"),"charter_proposal_sha256":h("agent/charter_proposal.py"),"charter_approval_sha256":h("agent/charter_approval.py"),"charter_receipt_sha256":h("agent/charter_receipt.py"),"charter_audit_recovery_sha256":h("agent/charter_audit_recovery.py"),"executor_sha256":h("scripts/sentinel-charter-executor.py"),"adapter_capture_sha256":h("scripts/sentinel-adapter-capture.py")},
  "evaluation":{"result_report_sha256":h("evaluation/charter-eval/result-report.py"),"cases_sha256":h("evaluation/charter-eval/cases.json"),"gold_sha256":h("evaluation/charter-eval/gold.json")},
  "ci_handoff":{"value":json.loads(ci)}, }
 print(json.dumps({"schema_version":"sentinel-charter-resume-identity/v1","inputs":inputs,"sha256":hashlib.sha256(json.dumps(inputs,sort_keys=True,separators=(",",":")).encode()).hexdigest()},sort_keys=True,separators=(",",":")))
@@ -266,7 +266,7 @@ value={"stage":stage,"effect":effect,"state":state,"intent_path":str(pathlib.Pat
 # in the manifest rather than trusting an adapter-supplied path.
 if pathlib.Path(intent).parent.name == 'phase1': value['intent_path']='phase1/'+pathlib.Path(intent).name
 else: value['intent_path']=pathlib.Path(intent).name
-if state=='observed':
+if state in {'observed','audited'}:
     value['observation_path']='phase1/'+pathlib.Path(observation).name if pathlib.Path(observation).parent.name=='phase1' else pathlib.Path(observation).name
     value['observation_sha256']=row(observation)
 print(json.dumps(value,sort_keys=True,separators=(",",":")))
@@ -565,17 +565,26 @@ contracts = {
  "ci-normalize-import":{"trivy.normalized.jsonl":"normalized-jsonl/v1"}, }
 required=contracts.get(stage,{})
 if stage == "executor":
-    try:
-        receipt = json.loads((root / "receipt.json").read_text(encoding="utf-8"))
-        schema = receipt.get("schema_version")
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        raise SystemExit("invalid receipt checkpoint artifact") from exc
-    if schema == "sentinel-charter-receipt/v1":
-        required = {"receipt.json": "receipt/v1", **required}
-    elif schema == "sentinel-charter-receipt/v2":
-        required = {"receipt.json": "receipt/v2", **required}
+    audit = root / "audit-recovery.json"
+    if audit.exists():
+        required = {
+            "audit-recovery.json": "audit-recovery/v1",
+            "audit-recovery-report.json": "audit-recovery-report/v1",
+            "audit-evaluation.json": "audit-evaluation/v1",
+        }
     else:
-        raise SystemExit("invalid receipt checkpoint artifact")
+        required = {"request-descriptor.json":"request-descriptor/v1"}
+        try:
+            receipt = json.loads((root / "receipt.json").read_text(encoding="utf-8"))
+            schema = receipt.get("schema_version")
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise SystemExit("invalid receipt checkpoint artifact") from exc
+        if schema == "sentinel-charter-receipt/v1":
+            required = {"receipt.json": "receipt/v1", **required}
+        elif schema == "sentinel-charter-receipt/v2":
+            required = {"receipt.json": "receipt/v2", **required}
+        else:
+            raise SystemExit("invalid receipt checkpoint artifact")
 entries=[]
 for relative, kind in required.items():
     path=root/relative; item=path.lstat()
@@ -870,6 +879,106 @@ PY
   fi
 }
 
+recover_audit() {
+  [[ "$#" -eq 1 ]] || die 'recover-audit requires exactly one safe run id'
+  local id=$1 dir path doc result recovery_started audit_payload state audit_digest report_payload evaluation_payload event checkpoint
+  safe_id "$id" || die 'safe run id required'
+  guard_private_run_path "$id" || die 'unsafe private run path'
+  dir="$RUNS/$id"; path="$dir/manifest.json"
+  doc=$("${MANIFEST_TOOL[@]}" read "$path")
+  result=$(python3 - "$doc" <<'PY'
+import json, sys
+value=json.loads(sys.argv[1])
+if value["input"]["source"] != "local":
+    raise SystemExit(1)
+print(value["result"]["status"])
+PY
+  ) || die 'audit recovery requires a local manifest'
+  if [[ "$result" == recovered ]]; then
+    "${MANIFEST_TOOL[@]}" verify-audit-recovery "$path" || die 'existing audit recovery is not verifiable'
+    return 0
+  fi
+  [[ "$result" == failed ]] || die 'audit recovery requires a stranded failed executor'
+  state=$("$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$dir") \
+    || die 'audit recovery durable state is incomplete or inconsistent'
+  if [[ "$state" == none ]]; then
+    recovery_started=$("$CHARTER_PYTHON" - <<'PY'
+import time
+print(int(time.time() * 1000))
+PY
+)
+    audit_payload=$("$CHARTER_PYTHON" -m agent.charter_audit_recovery acquire "$dir" "$recovery_started") \
+      || die 'fixed Kong audit source did not prove exactly one bounded request'
+    write_private_json_once "$dir/audit-recovery.json" "$audit_payload" \
+      || die 'could not safely publish audit recovery artifact'
+    state=audit-artifact-durable
+  fi
+  if [[ "$state" == audit-artifact-durable ]]; then
+    "$CHARTER_PYTHON" -m agent.charter_audit_recovery terminalize "$dir" \
+      || die 'could not terminalize the durable audit recovery'
+    state=sqlite-terminal
+  fi
+  if [[ "$state" == sqlite-terminal ]]; then
+    state=$("$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$dir") \
+      || die 'audit recovery durable state is incomplete or inconsistent'
+    [[ "$state" == sqlite-terminal ]] || die 'audit recovery durable state advanced unexpectedly'
+  fi
+  if [[ "$state" == sqlite-terminal || "$state" == limited-artifacts-complete ]]; then
+    audit_payload=$("$CHARTER_PYTHON" - "$dir/audit-recovery.json" <<'PY'
+from pathlib import Path
+import sys
+print(Path(sys.argv[1]).read_text(encoding="utf-8").strip())
+PY
+) || die 'durable audit artifact is unreadable'
+  else
+    die 'audit recovery durable state is not resumable'
+  fi
+  audit_digest=$(hash_file "$dir/audit-recovery.json")
+  report_payload=$(python3 - "$audit_payload" "$audit_digest" <<'PY'
+import json, sys
+audit=json.loads(sys.argv[1])
+print(json.dumps({
+ "schema_version":"sentinel-audit-recovery-report/v1",
+ "request_id":audit["request_id"], "audit_sha256":sys.argv[2],
+ "limitation":"gateway-transit-status-only",
+}, sort_keys=True, separators=(",",":")))
+PY
+)
+  evaluation_payload=$(python3 - "$audit_payload" "$audit_digest" <<'PY'
+import json, sys
+audit=json.loads(sys.argv[1])
+print(json.dumps({
+ "schema_version":"sentinel-audit-evaluation/v1",
+ "request_id":audit["request_id"], "audit_sha256":sys.argv[2], "result":"limited",
+ "limitation":"not-a-receipt-or-response-guard-evaluation",
+}, sort_keys=True, separators=(",",":")))
+PY
+)
+  if [[ "$state" == sqlite-terminal ]]; then
+    write_private_json_once "$dir/audit-recovery-report.json" "$report_payload" \
+      || die 'could not safely publish audit recovery report'
+    write_private_json_once "$dir/audit-evaluation.json" "$evaluation_payload" \
+      || die 'could not safely publish audit evaluation'
+  fi
+  state=$("$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$dir") \
+    || die 'audit recovery durable state changed before manifest publication'
+  [[ "$state" == limited-artifacts-complete ]] \
+    || die 'audit recovery limited artifacts are incomplete before manifest publication'
+  event=$(python3 - "$dir/request-spec.json" "$dir/audit-recovery.json" <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+intent, observation = map(Path, sys.argv[1:])
+print(json.dumps({
+ "stage":"executor","effect":"charter-request","state":"recovered",
+ "intent_path":"request-spec.json","intent_sha256":hashlib.sha256(intent.read_bytes()).hexdigest(),
+ "observation_path":"audit-recovery.json","observation_sha256":hashlib.sha256(observation.read_bytes()).hexdigest(),
+}, sort_keys=True, separators=(",",":")))
+PY
+)
+  checkpoint=$(checkpoint_for_stage "$dir" executor) || die 'audit recovery artifact is not checkpointable'
+  "${MANIFEST_TOOL[@]}" recover-audit "$path" "$event" "$checkpoint" || die 'could not bind audit recovery to the stranded manifest'
+}
+
 teardown() {
   local id=${1:-}
   safe_id "$id" || die 'safe run id required'
@@ -901,6 +1010,7 @@ case "${1:-}" in
   run) shift; run_new "$@" ;;
   verify) shift; verify "$@" ;;
   resume) shift; resume "$@" ;;
+  recover-audit) shift; recover_audit "$@" ;;
   --teardown) shift; teardown "$@" ;;
   *) usage; exit 2 ;;
 esac

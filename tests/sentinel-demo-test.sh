@@ -246,7 +246,7 @@ inputs={
 "controller":{"sentinel_demo_sha256":h("scripts/sentinel-demo.sh"),"sentinel_manifest_sha256":h("scripts/sentinel-manifest.py"),"stage_order_sha256":hashlib.sha256((b"preflight\nlabelled-chat\n"+(b"verify-ci-artifact\nci-normalize-import\n" if source=="ci" else b"topology-ready\nscan-redact-import\nanalysis-report\nproposal\napproval\nexecutor\nresponse-guard\nfinal-report\nevaluation\nfinalize\n"))).hexdigest(),"profile":"charter","source":source,"request_kind":"get"},
 "target_and_scan":{"target_origin":"http://127.0.0.1:13000","target_allowlist_sha256":h("scanners/target-allowlist.sh"),"run_nuclei_sha256":h("scanners/run-nuclei.sh"),"redact_report_sha256":h("scanners/redact-report.sh"),"scan_and_import_sha256":h("scripts/scan-and-import.sh"),"template_manifest_sha256":h("scanners/charter-template-manifest.json"),"scanner_runtime":{"kind":"image","digest":d}},
 "analysis":{"normalize_findings_sha256":h("agent/normalize_findings.py"),"recon_sha256":h("agent/recon.py"),"report_sha256":h("agent/report.py"),"charter_contracts_sha256":h("agent/charter_contracts.py"),"response_guard_sha256":h("agent/charter_response_guard.py"),"pii_sha256":h("agent/pii.py"),"prompt_sha256":h("agent/prompts/charter-system-prompt.md"),"llm_sha256":h("agent/llm.py"),"corpus_manifest_sha256":h("rag/charter-corpus-manifest.json"),"retrieval_contract_sha256":h("rag/retrieve.py"),"model_alias":"sast-charter-vertex-gemini-flash-lite","model_config_sha256":h("infra/litellm/config.yaml")},
-"gateway_and_request":{"kong_render_script_sha256":h("infra/kong/render-config.sh"),"kong_rendered_config_sha256":rendered,"charter_requests_sha256":h("agent/charter_requests.py"),"charter_proposal_sha256":h("agent/charter_proposal.py"),"charter_approval_sha256":h("agent/charter_approval.py"),"charter_receipt_sha256":h("agent/charter_receipt.py"),"executor_sha256":h("scripts/sentinel-charter-executor.py"),"adapter_capture_sha256":h("scripts/sentinel-adapter-capture.py")},
+"gateway_and_request":{"kong_render_script_sha256":h("infra/kong/render-config.sh"),"kong_rendered_config_sha256":rendered,"charter_requests_sha256":h("agent/charter_requests.py"),"charter_proposal_sha256":h("agent/charter_proposal.py"),"charter_approval_sha256":h("agent/charter_approval.py"),"charter_receipt_sha256":h("agent/charter_receipt.py"),"charter_audit_recovery_sha256":h("agent/charter_audit_recovery.py"),"executor_sha256":h("scripts/sentinel-charter-executor.py"),"adapter_capture_sha256":h("scripts/sentinel-adapter-capture.py")},
 "evaluation":{"result_report_sha256":h("evaluation/charter-eval/result-report.py"),"cases_sha256":h("evaluation/charter-eval/cases.json"),"gold_sha256":h("evaluation/charter-eval/gold.json")},"ci_handoff":{"value":ci}}
 print(json.dumps({"schema_version":"sentinel-charter-resume-identity/v1","inputs":inputs,"sha256":hashlib.sha256(json.dumps(inputs,sort_keys=True,separators=(',',':')).encode()).hexdigest()},separators=(',',':')))
 PY
@@ -1024,6 +1024,404 @@ for recovery_case in 'candidate-planned absent absent' 'candidate-planned presen
     bad "CI recovery failed: $recovery_case"
   fi
 done
+
+# Phase-3 audit recovery is a deliberately separate, no-dispatch path.  The
+# fake `docker` only stands in for the fixed command name; the controller never
+# accepts a log file, JSON, URL, container, or source-selection option.
+unknown_executor_adapter="$tmp/unknown-executor-adapter"
+cat >"$unknown_executor_adapter" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+"$SENTINEL_CHARTER_PYTHON" - "$1" "$2" "$3" "$4" <<'PY'
+import json, sys
+from cryptography.hazmat.primitives import serialization
+from agent.charter_approval import CharterApproval
+from agent.charter_requests import RequestStore, load_spec
+
+spec_path, approval_path, db_path, public_path = sys.argv[1:]
+spec = load_spec(json.load(open(spec_path, encoding="utf-8")))
+approval = CharterApproval(**json.load(open(approval_path, encoding="utf-8")))
+public = serialization.load_pem_public_key(open(public_path, "rb").read())
+store = RequestStore(db_path)
+try:
+    store.authorize_prepare(spec, approval, public)
+    store.dispatched(spec.request_id)
+    store.unknown(spec.request_id)
+finally:
+    store.close()
+PY
+exit 1
+EOF
+chmod +x "$unknown_executor_adapter"
+
+audit_fake_bin="$tmp/audit-fake-bin"; mkdir "$audit_fake_bin"; chmod 700 "$audit_fake_bin"
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+if [[ -n "${SENTINEL_AUDIT_DOCKER_CALLS:-}" ]]; then printf '%s\n' "$*" >>"$SENTINEL_AUDIT_DOCKER_CALLS"; fi
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" "${SENTINEL_AUDIT_TEST_MODE:-valid}" <<'PY'
+import json, sys
+spec = json.load(open(sys.argv[1], encoding="utf-8"))
+manifest = json.load(open(sys.argv[2], encoding="utf-8"))
+if sys.argv[3] == "missing-time":
+    started = {}
+else:
+    started = {"started_at": manifest["created_at_ms"]}
+print(json.dumps({
+  **started,
+  "request":{"headers":{"x-sentinel-request-id":spec["request_id"],"Authorization":"audit-secret-marker"},
+             "method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},
+  "response":{"status":200},
+  "consumer":{"username":"sentinel-charter-executor"},
+}, separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+
+audit_docker_calls="$tmp/audit-docker-calls"
+audit_tmp="$tmp/audit-tmp"; mkdir "$audit_tmp"; chmod 700 "$audit_tmp"
+
+prepare_unknown_audit_run(){
+  local id=$1 approval
+  approval=$(prepare_pending_approval "$id")
+  resume_approval "$id" "$approval"
+  expect_status 1 env -u SENTINEL_STAGE_ADAPTER -u SENTINEL_COMPONENT_RUNNER SENTINEL_RUNS_DIR="$tmp/runs" SENTINEL_CHARTER_PUBLIC_KEY="$operator_public" SENTINEL_CHARTER_EXECUTOR_ADAPTER="$unknown_executor_adapter" SENTINEL_CHARTER_PYTHON="$CHARTER_PYTHON" "$DEMO" resume "$id"
+}
+
+prepare_unknown_audit_run audit-recovery-valid
+audit_dir="$tmp/runs/audit-recovery-valid"
+python3 - "$audit_dir/manifest.json" "$audit_dir/executor-state.sqlite" <<'PY'
+import json, sqlite3, sys
+manifest = json.load(open(sys.argv[1]))
+assert manifest["result"]["status"] == "failed"
+assert manifest["stages"]["executor"]["status"] == "failed"
+assert [entry["state"] for entry in manifest["effect_ledger"][-2:]] == ["prepared", "unknown"]
+assert sqlite3.connect(sys.argv[2]).execute("SELECT state FROM requests").fetchone()[0] == "unknown"
+PY
+expect env PATH="$audit_fake_bin:$PATH" TMPDIR="$audit_tmp" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_AUDIT_TEST_RUN="$audit_dir" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-recovery-valid
+python3 - "$audit_dir" <<'PY'
+import json, sqlite3, sys
+from pathlib import Path
+root=Path(sys.argv[1])
+manifest=json.load(open(root/"manifest.json"))
+audit=json.load(open(root/"audit-recovery.json"))
+report=json.load(open(root/"audit-recovery-report.json"))
+evaluation=json.load(open(root/"audit-evaluation.json"))
+assert manifest["result"] == {"status":"recovered","action_sent":True}
+assert manifest["stages"]["executor"]["status"] == "recovered"
+assert manifest["effect_ledger"][-1]["state"] == "recovered"
+assert {entry["path"]:entry["type"] for entry in manifest["artifact_ledger"][-1]["entries"]} == {
+ "audit-recovery.json":"audit-recovery/v1",
+ "audit-recovery-report.json":"audit-recovery-report/v1",
+ "audit-evaluation.json":"audit-evaluation/v1",
+}
+assert set(audit) == {"schema_version","request_id","status","started_at","manifest_created_at_ms","recovery_started_at_ms","source","source_digest"}
+assert audit["source"] == "docker-logs-sentinel-kong"
+assert report["audit_sha256"] == evaluation["audit_sha256"]
+assert report["limitation"] == "gateway-transit-status-only"
+assert evaluation["result"] == "limited"
+assert sqlite3.connect(root/"executor-state.sqlite").execute("SELECT state FROM requests").fetchone()[0] == "terminal"
+assert not any((root/name).exists() for name in ("receipt.json","request-descriptor.json","request.json","artifact-bindings.json","charter-evaluation.json"))
+assert "audit-secret-marker" not in "".join((root/name).read_text(encoding="utf-8") for name in ("audit-recovery.json","audit-recovery-report.json","audit-evaluation.json","manifest.json"))
+PY
+ok 'fixed-source audit recovery publishes bounded audit-only evidence and no receipt/guard result'
+[ "$(wc -l <"$audit_docker_calls")" -eq 1 ] && [ "$(cat "$audit_docker_calls")" = 'logs sentinel-kong' ] && [ -z "$(find "$audit_tmp" -type f -print -quit)" ] && ok 'audit acquisition uses exact Docker argv and persists no raw Kong log' || bad 'audit acquisition recorded raw Kong data or used an unexpected Docker argv'
+
+rm -f "$audit_fake_bin/docker"
+expect env SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-recovery-valid
+if env SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" verify audit-recovery-valid; then bad 'audit-only recovery verified as a full acceptance run'; else ok 'audit-only recovery is rejected by normal verify'; fi
+if "$CHARTER_PYTHON" "$EVAL" evaluate --run-dir "$audit_dir"; then bad 'audit-only recovery reached normal evaluator'; else ok 'audit-only recovery is rejected by normal evaluator'; fi
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8"))
+print(json.dumps({"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+prepare_unknown_audit_run audit-recovery-missing-time
+invalid_audit_dir="$tmp/runs/audit-recovery-missing-time"
+before_manifest=$(sha256sum "$invalid_audit_dir/manifest.json" | awk '{print $1}')
+before_state=$(python3 - "$invalid_audit_dir/executor-state.sqlite" <<'PY'
+import sqlite3, sys
+print(sqlite3.connect(sys.argv[1]).execute("SELECT state FROM requests").fetchone()[0])
+PY
+)
+expect_status 2 env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_TEST_RUN="$invalid_audit_dir" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-recovery-missing-time
+[ "$(sha256sum "$invalid_audit_dir/manifest.json" | awk '{print $1}')" = "$before_manifest" ] && [ "$before_state" = unknown ] && [ ! -e "$invalid_audit_dir/audit-recovery.json" ] && ok 'missing audit timestamp leaves manifest and unknown reservation unchanged' || bad 'invalid audit evidence changed durable state'
+
+# A durable audit artifact is a restart boundary: after it exists, recovery may
+# finish SQLite/report/manifest work but must never re-acquire Kong logs.
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+if [[ -n "${SENTINEL_AUDIT_DOCKER_CALLS:-}" ]]; then printf '%s\n' "$*" >>"$SENTINEL_AUDIT_DOCKER_CALLS"; fi
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"],"Authorization":"audit-secret-marker"},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+
+seed_durable_audit(){
+  local id=$1 dir started payload
+  prepare_unknown_audit_run "$id"
+  dir="$tmp/runs/$id"
+  started=$(python3 - <<'PY'
+import time
+print(int(time.time() * 1000))
+PY
+)
+  payload=$(env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_AUDIT_TEST_RUN="$dir" "$CHARTER_PYTHON" -m agent.charter_audit_recovery acquire "$dir" "$started") || return 1
+  "$CHARTER_PYTHON" - "$dir/audit-recovery.json" "$payload" <<'PY'
+import json, os, sys
+from pathlib import Path
+path=Path(sys.argv[1]); value=json.loads(sys.argv[2])
+fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+with os.fdopen(fd,"w",encoding="utf-8") as out:
+    json.dump(value,out,sort_keys=True,separators=(",",":"));out.write("\n");out.flush();os.fsync(out.fileno())
+PY
+}
+
+write_no_docker(){
+  cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ -n "${SENTINEL_AUDIT_DOCKER_CALLS:-}" ]]; then printf '%s\n' "unexpected:$*" >>"$SENTINEL_AUDIT_DOCKER_CALLS"; fi
+exit 98
+EOF
+  chmod +x "$audit_fake_bin/docker"
+}
+
+: >"$audit_docker_calls"
+seed_durable_audit audit-restart-artifact || bad 'could not construct durable audit-artifact restart fixture'
+write_no_docker
+expect env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-restart-artifact
+[ "$(wc -l <"$audit_docker_calls")" -eq 1 ] && ok 'audit-artifact restart terminalizes without a second Docker read' || bad 'audit-artifact restart re-read Docker'
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+if [[ -n "${SENTINEL_AUDIT_DOCKER_CALLS:-}" ]]; then printf '%s\n' "$*" >>"$SENTINEL_AUDIT_DOCKER_CALLS"; fi
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+: >"$audit_docker_calls"
+seed_durable_audit audit-restart-sqlite || bad 'could not construct durable SQLite restart fixture'
+"$CHARTER_PYTHON" -m agent.charter_audit_recovery terminalize "$tmp/runs/audit-restart-sqlite" || bad 'could not terminalize durable SQLite restart fixture'
+write_no_docker
+expect env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-restart-sqlite
+[ "$(wc -l <"$audit_docker_calls")" -eq 1 ] && ok 'SQLite-terminal restart publishes limited artifacts without Docker' || bad 'SQLite-terminal restart re-read Docker'
+
+prepare_unknown_audit_run audit-normal-artifact
+normal_dir="$tmp/runs/audit-normal-artifact"; printf '{}\n' >"$normal_dir/receipt.json"; chmod 600 "$normal_dir/receipt.json"
+: >"$audit_docker_calls"; write_no_docker
+expect_status 2 env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-normal-artifact
+[ ! -s "$audit_docker_calls" ] && ok 'normal receipt artifacts prohibit recovery before Docker' || bad 'normal receipt artifact reached Docker'
+
+prepare_unknown_audit_run audit-effect-binding-mismatch
+binding_dir="$tmp/runs/audit-effect-binding-mismatch"
+python3 - "$binding_dir/manifest.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+document = json.load(open(path, encoding="utf-8"))
+document["effect_ledger"][-1]["intent_sha256"] = "b" * 64
+open(path, "w", encoding="utf-8").write(json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n")
+PY
+chmod 600 "$binding_dir/manifest.json"
+expect_status 1 "$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$binding_dir"
+ok 'direct audit state rejects an unknown effect with mismatched immutable request binding'
+
+prepare_unknown_audit_run audit-effect-kind-mismatch
+kind_dir="$tmp/runs/audit-effect-kind-mismatch"
+python3 - "$kind_dir/manifest.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+document = json.load(open(path, encoding="utf-8"))
+document["effect_ledger"][-1]["stage"] = "scan-redact-import"
+document["effect_ledger"][-1]["effect"] = "defectdojo-import"
+open(path, "w", encoding="utf-8").write(json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n")
+PY
+chmod 600 "$kind_dir/manifest.json"
+expect_status 1 "$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$kind_dir"
+ok 'direct audit state rejects an unknown effect with a mismatched stage or effect'
+
+prepare_unknown_audit_run audit-malformed-artifact
+malformed_dir="$tmp/runs/audit-malformed-artifact"; printf '{}\n' >"$malformed_dir/audit-recovery.json"; chmod 600 "$malformed_dir/audit-recovery.json"
+: >"$audit_docker_calls"; write_no_docker
+expect_status 2 env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-malformed-artifact
+[ ! -s "$audit_docker_calls" ] && ok 'malformed durable audit artifact fails closed before Docker' || bad 'malformed audit artifact reached Docker'
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+seed_durable_audit audit-digest-mismatch || bad 'could not construct digest-mismatch fixture'
+"$CHARTER_PYTHON" -m agent.charter_audit_recovery terminalize "$tmp/runs/audit-digest-mismatch" || bad 'could not terminalize digest-mismatch fixture'
+python3 - "$tmp/runs/audit-digest-mismatch/audit-recovery.json" <<'PY'
+import json, sys
+path=sys.argv[1]; value=json.load(open(path)); value["source_digest"]="b"*64
+open(path,"w",encoding="utf-8").write(json.dumps(value,sort_keys=True,separators=(",",":"))+"\n")
+PY
+chmod 600 "$tmp/runs/audit-digest-mismatch/audit-recovery.json"
+: >"$audit_docker_calls"; write_no_docker
+expect_status 2 env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-digest-mismatch
+[ ! -s "$audit_docker_calls" ] && ok 'SQLite digest mismatch fails closed before Docker' || bad 'SQLite digest mismatch reached Docker'
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+seed_durable_audit audit-partial-artifacts || bad 'could not construct partial-artifact fixture'
+"$CHARTER_PYTHON" -m agent.charter_audit_recovery terminalize "$tmp/runs/audit-partial-artifacts" || bad 'could not terminalize partial-artifact fixture'
+printf '{}\n' >"$tmp/runs/audit-partial-artifacts/audit-recovery-report.json"
+chmod 600 "$tmp/runs/audit-partial-artifacts/audit-recovery-report.json"
+: >"$audit_docker_calls"; write_no_docker
+expect_status 2 env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_DOCKER_CALLS="$audit_docker_calls" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-partial-artifacts
+[ ! -s "$audit_docker_calls" ] && ok 'partial limited artifacts fail closed before Docker' || bad 'partial limited artifacts reached Docker'
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+
+seed_durable_audit audit-direct-normal-artifact || bad 'could not construct direct audit publication fixture'
+"$CHARTER_PYTHON" -m agent.charter_audit_recovery terminalize "$tmp/runs/audit-direct-normal-artifact" || bad 'could not terminalize direct audit publication fixture'
+python3 - "$tmp/runs/audit-direct-normal-artifact" <<'PY'
+import hashlib, json, os, sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+audit = json.loads((root / "audit-recovery.json").read_text(encoding="utf-8"))
+digest = hashlib.sha256((root / "audit-recovery.json").read_bytes()).hexdigest()
+documents = {
+    "audit-recovery-report.json": {
+        "schema_version": "sentinel-audit-recovery-report/v1",
+        "request_id": audit["request_id"],
+        "audit_sha256": digest,
+        "limitation": "gateway-transit-status-only",
+    },
+    "audit-evaluation.json": {
+        "schema_version": "sentinel-audit-evaluation/v1",
+        "request_id": audit["request_id"],
+        "audit_sha256": digest,
+        "result": "limited",
+        "limitation": "not-a-receipt-or-response-guard-evaluation",
+    },
+}
+for name, value in documents.items():
+    fd = os.open(root / name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as out:
+        json.dump(value, out, sort_keys=True, separators=(",", ":"))
+        out.write("\n")
+        out.flush()
+        os.fsync(out.fileno())
+PY
+direct_dir="$tmp/runs/audit-direct-normal-artifact"
+direct_state=$("$CHARTER_PYTHON" -m agent.charter_audit_recovery state "$direct_dir") || bad 'could not complete direct audit publication fixture'
+[ "$direct_state" = limited-artifacts-complete ] || bad 'direct audit publication fixture has incomplete limited evidence'
+printf '{}\n' >"$direct_dir/receipt.json"; chmod 600 "$direct_dir/receipt.json"
+direct_event=$("$CHARTER_PYTHON" - "$direct_dir/request-spec.json" "$direct_dir/audit-recovery.json" <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+intent, observation = map(Path, sys.argv[1:])
+print(json.dumps({
+    "stage": "executor", "effect": "charter-request", "state": "recovered",
+    "intent_path": "request-spec.json",
+    "intent_sha256": hashlib.sha256(intent.read_bytes()).hexdigest(),
+    "observation_path": "audit-recovery.json",
+    "observation_sha256": hashlib.sha256(observation.read_bytes()).hexdigest(),
+}, sort_keys=True, separators=(",", ":")))
+PY
+)
+direct_checkpoint=$("$CHARTER_PYTHON" - "$direct_dir" <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+entries = []
+for name, kind in (
+    ("audit-recovery.json", "audit-recovery/v1"),
+    ("audit-recovery-report.json", "audit-recovery-report/v1"),
+    ("audit-evaluation.json", "audit-evaluation/v1"),
+):
+    entries.append({
+        "path": name,
+        "type": kind,
+        "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest(),
+    })
+print(json.dumps({"entries": entries}, sort_keys=True, separators=(",", ":")))
+PY
+) || bad 'could not checkpoint direct audit publication fixture'
+direct_manifest_before=$(sha256sum "$direct_dir/manifest.json" | awk '{print $1}')
+expect_status 1 "$MANIFEST" recover-audit "$direct_dir/manifest.json" "$direct_event" "$direct_checkpoint"
+[ "$(sha256sum "$direct_dir/manifest.json" | awk '{print $1}')" = "$direct_manifest_before" ] \
+  && ok 'direct manifest audit publication rejects normal artifacts without changing terminal state' \
+  || bad 'direct manifest audit publication accepted a normal artifact'
+
+cat >"$audit_fake_bin/docker" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[ "$#" -eq 2 ] && [ "$1" = logs ] && [ "$2" = sentinel-kong ] || exit 64
+python3 - "$SENTINEL_AUDIT_TEST_RUN/request-spec.json" "$SENTINEL_AUDIT_TEST_RUN/manifest.json" <<'PY'
+import json, sys
+spec=json.load(open(sys.argv[1], encoding="utf-8")); manifest=json.load(open(sys.argv[2], encoding="utf-8"))
+print(json.dumps({"started_at":manifest["created_at_ms"],"request":{"headers":{"x-sentinel-request-id":spec["request_id"]},"method":spec["method"],"uri":spec["path"] + (("?" + spec["query"]) if spec["query"] else "")},"response":{"status":200},"consumer":{"username":"sentinel-charter-executor"}},separators=(",",":")))
+PY
+EOF
+chmod +x "$audit_fake_bin/docker"
+prepare_unknown_audit_run audit-prepared-crash
+prepared_dir="$tmp/runs/audit-prepared-crash"
+prepared_manifest=$(python3 - "$prepared_dir/manifest.json" <<'PY'
+import json, sys
+value=json.load(open(sys.argv[1], encoding="utf-8"))
+value["effect_ledger"].pop()
+print(json.dumps(value,sort_keys=True,separators=(",",":")))
+PY
+)
+printf '%s\n' "$prepared_manifest" | "$MANIFEST" "$prepared_dir/manifest.json" || bad 'could not create prepared/SQLite-unknown crash fixture'
+expect env PATH="$audit_fake_bin:$PATH" SENTINEL_AUDIT_TEST_RUN="$prepared_dir" SENTINEL_RUNS_DIR="$tmp/runs" "$DEMO" recover-audit audit-prepared-crash
+python3 - "$prepared_dir/manifest.json" "$prepared_dir/executor-state.sqlite" <<'PY'
+import json, sqlite3, sys
+manifest=json.load(open(sys.argv[1]))
+assert manifest["result"]["status"] == "recovered"
+assert [event["state"] for event in manifest["effect_ledger"][-2:]] == ["prepared", "recovered"]
+assert sqlite3.connect(sys.argv[2]).execute("SELECT state FROM requests").fetchone()[0] == "terminal"
+PY
+ok 'prepared manifest plus SQLite-unknown crash pair recovers once without dispatch'
 
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

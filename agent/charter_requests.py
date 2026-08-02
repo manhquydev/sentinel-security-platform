@@ -274,6 +274,13 @@ class RequestStore:
         """Atomically settle an indeterminate request from validated audit evidence."""
         self._terminalize_from(request_id, receipt, "unknown")
 
+    def terminalize_audit_projection(self, request_id: str, source_digest: str) -> None:
+        """Settle only from an already durable, schema-validated audit projection."""
+        if (not isinstance(source_digest, str) or len(source_digest) != 64
+                or any(character not in "0123456789abcdef" for character in source_digest)):
+            raise CharterRequestError("audit projection is unverifiable")
+        self._terminalize_audit(request_id, source_digest)
+
     def refuse_observed(self, request_id: str) -> None:
         if self.state(request_id) == "observed":
             raise CharterRequestError("request recovery required")
@@ -281,7 +288,13 @@ class RequestStore:
     def state(self, request_id: str) -> str | None:
         row = self.db.execute("SELECT state FROM requests WHERE id=?", (request_id,)).fetchone(); return row[0] if row else None
 
-    def reconcile_audit(self, request_id: str, audit_records: list[dict]) -> dict:
+    def audit_candidate(self, request_id: str, audit_records: list[dict], *,
+                        created_at_ms: int, recovery_started_at_ms: int) -> dict:
+        """Validate one time-bounded Kong audit projection without mutating state."""
+        if (type(created_at_ms) is not int or created_at_ms < 0
+                or type(recovery_started_at_ms) is not int
+                or recovery_started_at_ms < created_at_ms):
+            raise CharterRequestError("invalid audit recovery window")
         row = self.db.execute("SELECT state,method,path FROM requests WHERE id=?", (request_id,)).fetchone()
         if not row or row[0] != "unknown": raise CharterRequestError("request is not reconcilable")
         expected_query = "q=apple" if (row[1], row[2]) == ("GET", "/rest/products/search") else ""
@@ -289,20 +302,31 @@ class RequestStore:
             raise CharterRequestError("request is not reconcilable")
         if not all(isinstance(record, dict) for record in audit_records):
             raise CharterRequestError("invalid audit evidence")
-        matches = [r for r in audit_records if r.get("request_id") == request_id
-                   and r.get("consumer") == EXECUTOR_CONSUMER and r.get("method") == row[1]
-                   and r.get("path") == row[2] and r.get("query") == expected_query
-                   and _status_matches_policy(row[1], r.get("status"))
-                   and isinstance(r.get("source_digest"), str)
-                   and len(r["source_digest"]) == 64
-                   and all(character in "0123456789abcdef" for character in r["source_digest"])]
-        if len(matches) != 1: raise CharterRequestError("audit receipt absent or ambiguous")
-        receipt = matches[0]["source_digest"]
-        self._terminalize_audit(request_id, receipt)
-        return {"request_id": request_id, "status": matches[0]["status"], "receipt_digest": receipt}
+        candidates = [r for r in audit_records if r.get("request_id") == request_id
+                      and r.get("consumer") == EXECUTOR_CONSUMER and r.get("method") == row[1]
+                      and r.get("path") == row[2] and r.get("query") == expected_query]
+        if len(candidates) != 1: raise CharterRequestError("audit record absent or ambiguous")
+        match = candidates[0]
+        if (not _status_matches_policy(row[1], match.get("status"))
+                or type(match.get("started_at")) is not int
+                or not created_at_ms <= match["started_at"] <= recovery_started_at_ms
+                or not isinstance(match.get("source_digest"), str)
+                or len(match["source_digest"]) != 64
+                or any(character not in "0123456789abcdef" for character in match["source_digest"])):
+            raise CharterRequestError("audit record is unverifiable")
+        return {"request_id": request_id, "status": match["status"], "started_at": match["started_at"],
+                "source_digest": match["source_digest"]}
 
-    def reconcile_audit_file(self, request_id: str, path: str) -> dict:
-        return self.reconcile_audit(request_id, parse_kong_file_log(open(path, "rb").read()))
+    def reconcile_audit(self, request_id: str, audit_records: list[dict], *,
+                        created_at_ms: int, recovery_started_at_ms: int) -> dict:
+        """Settle one unknown request from a previously validated audit projection."""
+        candidate = self.audit_candidate(
+            request_id, audit_records, created_at_ms=created_at_ms,
+            recovery_started_at_ms=recovery_started_at_ms,
+        )
+        receipt = candidate["source_digest"]
+        self._terminalize_audit(request_id, receipt)
+        return candidate
     def close(self): self.db.close()
 
 
@@ -329,6 +353,7 @@ def parse_kong_file_log(raw: bytes) -> list[dict]:
             if parsed.scheme or parsed.netloc or parsed.fragment or type(response["status"]) is not int: continue
             records.append({"request_id": request_id, "consumer": consumer["username"],
                             "method": request["method"], "path": path, "query": query, "status": response["status"],
+                            "started_at": value.get("started_at"),
                             "source_digest": hashlib.sha256(line).hexdigest()})
         except (KeyError, TypeError, ValueError, json.JSONDecodeError):
             continue
