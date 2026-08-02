@@ -31,6 +31,28 @@ compatibility features. Use them only when explicitly requested or required by
 an external orchestrator.
 <!-- HARNESS:END -->
 
+## Autonomy Authorization (maintainer override)
+
+This override intentionally relaxes the conservative defaults of the Harness
+block above. It is placed outside the `HARNESS:BEGIN/END` markers so a harness
+re-run does not clobber it. For this project the maintainer authorizes agents
+(Codex and Claude Code) to work autonomously, like a full coding agent:
+
+- You MAY inspect, edit, create, run, test, and spawn parallel subagents to
+  complete a clear task in one continuous flow. The "answers/reviews are
+  read-only" and "stop before edits / pause on ambiguity" defaults do NOT apply
+  to authorized delivery work — proceed and self-correct instead of stopping to
+  ask at each step.
+- Prefer acting over asking. Ask only when a decision is genuinely the
+  maintainer's (pricing, schema shape, irreversible scope) or cannot be resolved
+  from the repo/live state.
+- A durable `docs/plans/active/` file is optional, not a gate: create one only
+  for genuinely multi-session or high-risk work; small/bounded changes need none.
+
+Non-negotiable rails still apply: never commit or print secrets/`infra/.env`
+contents; confirm before truly destructive or hard-to-reverse actions; do not
+weaken or delete tests to make them pass; keep changes scoped to the request.
+
 ## Pre-Approved File Access
 
 Two paths are pre-approved as project-known, not generically secret, so
