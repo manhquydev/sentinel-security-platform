@@ -75,29 +75,18 @@ paths, and policy only).
     time window. A local `receipt_digest` is adapter metadata, not authoritative
     Kong evidence.
 
-## Automation posture (loopback lab)
+## Approval posture (loopback lab)
 
-Owner `manhquy` authorized full automation of the approve-and-dispatch chain in
-the bounded loopback lab on 2026-07-30. This **supersedes, for this local lab
-only, the earlier "no automatic approval" handoff bound**: an agent may sign and
-dispatch without an interactive human step here. The decision is recorded, not silent.
-The approval control itself is unchanged — a valid Ed25519 approval envelope is
-still mandatory and is still verified by the executor before any dispatch; only the
-human keystroke is automated by an owner-held key in this lab. This lab exception
-does NOT relax the product charter's human-approval requirement for any non-lab or
-risky request; `README.md` and `docs/Project_Sentinel_6-week.md` remain the product
-authority outside this loopback lab.
+For every future approved acceptance dispatch, the operator must sign a fresh
+approval artifact only after the fresh v2 request is available for review.
+Automatic signing or dispatch is prohibited, including in the loopback lab.
+The fresh signed artifact is the required operator confirmation; a previous
+approval, test key, or automation exception does not authorize a new run.
 
-Safety does not rest on the human step; it rests on compiled-in bounds in
-`agent/charter_requests.py`:
-
-- Immutable gateway origin `https://127.0.0.1:18443` (asserted; cannot be
-  redirected to any external target).
-- Exactly two purpose-bound requests are accepted: `GET /rest/products/search?q=apple`
-  and `POST /rest/basket` body `{}` (expected 4xx, no target-state change). Any
-  other method/path/query/body is refused at `load_spec`, so auto-approval cannot
-  sign anything outside this set.
-- Target is loopback Juice Shop only. No destructive payloads are expressible.
+The request policy remains bounded in
+`agent/charter_requests.py`; it does not replace this confirmation gate.
+`README.md` and `docs/Project_Sentinel_6-week.md` remain the product authority
+outside the local lab.
 
 Operator artifacts (outside the repo, never committed):
 
@@ -105,28 +94,11 @@ Operator artifacts (outside the repo, never committed):
 - `~/.sentinel/charter-approval-manhquy.ed25519.pub.pem` — public key (`SENTINEL_CHARTER_PUBLIC_KEY`).
 - `~/.sentinel/executor-secret.env` — the executor OAuth secret, read only by the adapter (600).
 - `~/.sentinel/charter-executor-adapter.sh` — `SENTINEL_CHARTER_EXECUTOR_ADAPTER` (700).
-- `~/.sentinel/charter-auto-approve.sh` — signs a fresh spec non-interactively (700).
 - `~/.sentinel/charter-operator.env` — non-secret env; `source` it before a run.
 
 Kong consumer `sentinel-charter-executor` is provisioned (OAuth2 client-credentials,
 ACL `charter-read` + `write-basket`); its secret lives in `infra/.env` (git-ignored)
 and is mirrored only into the adapter's secret store.
-
-Verified 2026-07-30 — the **approved-request dispatch + authoritative Kong audit
-sub-gate only** (NOT the full six-week charter acceptance). Both compiled-in
-requests were auto-approved and dispatched fresh v2:
-
-- `GET /rest/products/search?q=apple` → adapter receipt `status 200`; Kong file-log
-  `consumer=sentinel-charter-executor route=charter-search status=200 method=GET`.
-- `POST /rest/basket` `{}` → adapter receipt `status 401`, `post_expected_4xx: true`
-  (non-mutating); Kong file-log `consumer=sentinel-charter-executor route=basket-write
-  status=401 method=POST`.
-
-Still pending (not proven by the above): the complete controller live demonstration
-(scan → import → analysis → proposal → approval → executor → evaluation) and the
-six-week ledger closure in
-`docs/plans/active/2026-07-28-sentinel-six-week-charter-delivery.md`. README and the
-ledger still correctly say the *full* terminal live demo is not yet claimed.
 
 ## No-secret rules
 
@@ -149,21 +121,31 @@ Record pass or block for each item by name only.
 - `plans/260730-1018-sentinel-fresh-bounded-live-acceptance-closure/` remains the
   active AgentKit execution slice for this work.
 
-### Required environment-variable names or files
+### Base-mode environment-variable names
 
+- `TARGET_URL` set to the loopback target.
 - `SENTINEL_LITELLM_ALIAS`
-- `SENTINEL_CHARTER_APPROVAL_FILE`
+- `LITELLM_MASTER_KEY` present for the controller's labelled-chat stage.
 - `SENTINEL_CHARTER_PUBLIC_KEY`
 - `SENTINEL_CHARTER_EXECUTOR_ADAPTER`
 - Exactly one admitted scanner runtime selector:
   - `SENTINEL_NUCLEI_IMAGE_DIGEST`, or
   - `SENTINEL_NUCLEI_BIN`
+  - do not set the legacy `NUCLEI_BIN`.
+
+### Dispatch-only environment-variable names or files
+
+- `SENTINEL_CHARTER_APPROVAL_FILE`, a fresh owner-held approval artifact (600).
+- `SENTINEL_RUNS_DIR` when a non-default run directory is used.
 
 ### Required local services
 
 - Juice Shop reachable on `127.0.0.1:13000`
 - Charter Kong reachable on `127.0.0.1:18443`
 - LiteLLM reachable on `127.0.0.1:4000`
+- DefectDojo nginx reachable on `127.0.0.1:8080`
+- LiteLLM, Kong, and Juice Shop report Docker health `healthy`; DefectDojo nginx
+  is running.
 
 ### Required evidence policy
 
@@ -178,13 +160,40 @@ If any item above is missing, stop with a blocked readiness report. Do not
 download tooling, create secrets, generate approval keys, or infer operator
 authority inside this runbook.
 
+## Executable preflight
+
+Run the no-secret base check before creating a proposal:
+
+```bash
+scripts/sentinel-live-preflight.sh base
+```
+
+`READY_FOR_FRESH_PROPOSAL` means only that local prerequisites are currently
+ready. It is not an approval, dispatch, target request, audit record, or live
+acceptance result.
+
+After the controller has produced a fresh v2 request and the operator has
+signed its approval artifact, verify that specific dispatch candidate:
+
+```bash
+scripts/sentinel-live-preflight.sh dispatch RUN_ID
+```
+
+`READY_FOR_APPROVED_DISPATCH` is still readiness only. It does not invoke the
+adapter, mint OAuth, send a target request, resume the controller, or prove the
+terminal acceptance evidence.
+
 ## Fresh v2 proposal flow
 
 1. Start from a new run ID.
-2. Run the controller only far enough to produce a fresh v2 `request-spec.json`.
-3. Verify that the request is current and unexpired.
-4. Hand the exact run-local spec to the recorded approval authority.
-5. Store only the run-local approval artifact selected by that authority.
+2. Run `scripts/sentinel-live-preflight.sh base`; stop unless it reports
+   `READY_FOR_FRESH_PROPOSAL`.
+3. Run the controller only far enough to produce a fresh v2 `request-spec.json`.
+4. Verify that the request is current and unexpired.
+5. Hand the exact run-local spec to the recorded approval authority.
+6. Store only the fresh run-local approval artifact selected by that authority.
+7. Run `scripts/sentinel-live-preflight.sh dispatch RUN_ID`; stop unless it
+   reports `READY_FOR_APPROVED_DISPATCH`.
 
 Do not substitute a test key, old approval file, or any artifact derived from
 R5. If the approval source rejects or revokes, treat that as a valid terminal
@@ -213,8 +222,10 @@ gate passes.
 1. Confirm the executor adapter is the recorded principal boundary.
 2. Confirm the trusted public key path matches the recorded approval-key source.
 3. Confirm the selected scanner runtime is explicitly admitted for this run.
-4. Resume the controller with the fresh approval artifact.
-5. Capture only sanitized evidence:
+4. Confirm `scripts/sentinel-live-preflight.sh dispatch RUN_ID` just reported
+   `READY_FOR_APPROVED_DISPATCH`.
+5. Resume the controller with the fresh approval artifact.
+6. Capture only sanitized evidence:
    - manifest path
    - run ID
    - request ID

@@ -95,6 +95,15 @@ Out of scope:
   as an offline contract. It verifies non-evaluating private-env handling,
   prerequisite/fresh-Kong rejection, exact owner order, and bounded `running`
   status admission; it does not supply service-health or fresh live-Charter proof.
+- [x] Operator acceptance preflight slice — `scripts/sentinel-live-preflight.sh`
+  now checks the documented no-secret base prerequisites and a named fresh
+  signed dispatch candidate without invoking the adapter, OAuth, Docker
+  mutation, or target. It requires a current v2 spec, an owner-held `0600`
+  approval artifact, one scanner selector, the pinned operator public key, and
+  Docker health plus loopback reachability for the local services. Offline proof
+  on 2026-08-02: preflight 18/0, runbook contract 35/0, Sentinel demo 201/0,
+  shell syntax, diff check, plan validation, and independent review. This is
+  readiness evidence only; it creates no approval or live acceptance evidence.
 - [x] Week-1 fresh-clone documentation slice — corrected the Trivy image-input
   quick-start, separated its no-secret scan/redaction proof from provisioned lake
   import/verification, and repaired repository-root Compose examples. Offline
