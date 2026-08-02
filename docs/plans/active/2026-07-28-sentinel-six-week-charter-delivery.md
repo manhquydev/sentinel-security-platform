@@ -73,18 +73,24 @@ Out of scope:
 - [x] Phase 1 — literal lab/import safety (offline proof passed 2026-07-28).
 - [x] Phase 2 — normalized findings and grounded analysis (a separate Vertex Gemini
   Flash Lite alias passed the native strict-schema probe and produced a live grounded report).
-- [~] Phase 3 — approved safe request executor (offline implementation,
-  purpose-binding, receipt metadata, and atomic local bounded-response
-  terminalization are complete). The formerly planned R5 live approval path is
+- [~] Phase 3 — approved safe request executor and bounded controller audit-v1
+  recovery are complete as offline/component proof. Recovery now acquires only
+  the fixed `docker logs sentinel-kong` source in memory, admits exactly one
+  correlated/time-bounded record, and resumes only from validated durable
+  checkpoints without re-reading Docker. The formerly planned R5 live approval path is
   blocked/non-resumable because its persisted v1 spec is invalid under v2 and expired;
   no target request was sent.
 - [x] Phase 4 — controller and manifest through proposal, including the separately
   verified offline CI artifact terminal/binding (the live literal-origin R5 run
   passed scan/import/analysis/proposal and recorded a pending approval stage; it
   cannot now resume because its persisted spec fails the current v2 loader).
-- [~] Phase 5 — no-skip acceptance, recovery, docs, demo (offline E2E/evaluation pass;
-  evaluator UUID false-positive remediation is complete with focused and demo
-  regression evidence; complete live demonstration remains pending).
+- [x] Phase 5 — current Week-3 strict model-request contract, supported RAG
+  interpreter command, and six-week as-built architecture have independent
+  offline proof (121 tests, Python compilation, and diff check on 2026-08-01).
+  This completion does not promote the still-pending production acceptance path:
+  fresh preflight using current operator-owned material, and one terminal
+  production-controller run with same-run final-report/evaluation evidence
+  remain open. An audit-only `recovered` result is not a live-success claim.
 - [x] Topology readiness slice — deterministic existing-owner startup is complete
   as an offline contract. It verifies non-evaluating private-env handling,
   prerequisite/fresh-Kong rejection, exact owner order, and bounded `running`
@@ -303,10 +309,12 @@ Out of scope:
 The charter implementation has a real structured-output provider and a historical live path
 through the fixed request proposal. No live dispatch occurred for R5. Its v1 persisted request
 spec is invalid under current v2 policy and expired, so it is not an approval candidate and
-cannot supply terminal evaluator/manifest evidence. A fresh v2 proposal/new run, if desired,
-requires separate user authority; it must not rewrite, re-sign, or backfill R5. Local normal
-bounded-response terminalization is complete; remote unknown reconciliation and historical
-`observed`-state remediation remain separate debt.
+cannot supply terminal evaluator/manifest evidence. The loopback-lab authority record and a
+fresh bounded v2 approved-request dispatch + correlated Kong-audit sub-gate are now recorded in
+`docs/operations/sentinel-live-acceptance-runbook.md`; that evidence must not rewrite, re-sign,
+or backfill R5. Local normal bounded-response terminalization is complete; controller-visible
+remote `unknown` recovery, full terminal controller evidence, and historical `observed`-state
+remediation remain separate debt.
 The CI artifact handoff terminal is complete as a separate offline, no-secret
 boundary; it neither advances the pending R5 approval nor supplies live CI or full
 charter terminal evidence.
