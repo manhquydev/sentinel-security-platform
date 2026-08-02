@@ -177,6 +177,9 @@ class Week1AggregateManifest(BaseModel):
     schema_version: Literal["week1-submission/v1"] = "week1-submission/v1"
     source_kind: Literal["week1-submission"] = "week1-submission"
     aggregate_count: int = Field(ge=0)
+    # Optional so historical v1 manifests remain parseable. New producer output
+    # always supplies it; the Week-3 analysis intake requires it.
+    aggregate_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     inputs: list[Week1InputMetadata] = Field(min_length=3, max_length=3)
     counts: Week1AggregateCounts
 
@@ -334,6 +337,19 @@ def _safe_retained_text(value: object, label: str) -> str:
     if not _REDACTION_TOKEN.sub("", clean).strip():
         raise ValueError(f"{label} has no safe content after redaction")
     return clean
+
+
+def is_safe_week1_projection(value: object) -> bool:
+    """Return whether text is already a non-empty Week-1 safe projection.
+
+    The Week-3 compatibility reader uses this fixed-point check to prove that
+    a supplied aggregate retains the producer's redaction contract before it
+    can reach retrieval, a model, or a report.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return False
+    clean = _redact_persisted(value) or ""
+    return clean == value and bool(_REDACTION_TOKEN.sub("", clean).strip())
 
 
 def _redact_persisted(text: str | None) -> str | None:
@@ -875,16 +891,17 @@ def normalize_week1_submission_to_files(
     jsonl = b"".join(
         record.model_dump_json(exclude_none=True).encode("utf-8") + b"\n" for record in result.records
     )
-    manifest_data = (
-        result.manifest.model_dump_json(exclude_none=True, indent=2).encode("utf-8") + b"\n"
-    )
+    issued_manifest = result.manifest.model_copy(update={
+        "aggregate_sha256": hashlib.sha256(jsonl).hexdigest(),
+    })
+    manifest_data = issued_manifest.model_dump_json(exclude_none=True, indent=2).encode("utf-8") + b"\n"
     try:
         _publish_pair_exclusive(Path(output_jsonl), jsonl, Path(output_manifest), manifest_data)
     except FileExistsError:
         return _failure("output-exists", "an output destination already exists")
     except (OSError, ValueError):
         return _failure("artifact-publication-failed", "aggregate outputs could not be published")
-    return result
+    return Week1ImportResult(result.records, issued_manifest)
 
 
 def main(argv: list[str] | None = None) -> int:

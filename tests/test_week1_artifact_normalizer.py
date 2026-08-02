@@ -174,6 +174,10 @@ class Week1ArtifactNormalizerTest(unittest.TestCase):
             self.assertEqual(manifest["schema_version"], SCHEMA_VERSION)
             self.assertEqual(manifest["source_kind"], "week1-submission")
             self.assertEqual(manifest["aggregate_count"], 4)
+            self.assertEqual(
+                manifest["aggregate_sha256"],
+                hashlib.sha256((Path(directory) / "week1.aggregate.jsonl").read_bytes()).hexdigest(),
+            )
             self.assertEqual(os.stat(Path(directory) / "week1.aggregate.jsonl").st_mode & 0o777, 0o600)
             self.assertEqual(
                 os.stat(Path(directory) / "week1.aggregate.manifest.json").st_mode & 0o777, 0o600,

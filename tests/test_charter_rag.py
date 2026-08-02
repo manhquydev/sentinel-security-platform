@@ -1,6 +1,7 @@
 """Offline contract tests for the committed six-week charter knowledge corpus."""
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import sys
@@ -24,7 +25,7 @@ MANIFEST = REPO_ROOT / "rag" / "charter-corpus-manifest.json"
 class CharterCorpusTests(unittest.TestCase):
     def test_committed_corpus_is_complete_and_digest_bound(self) -> None:
         corpus = ingest.validate_charter_corpus(MANIFEST)
-        self.assertEqual(len(corpus.documents), 24)
+        self.assertEqual(len(corpus.documents), 25)
         self.assertEqual(len([item for item in corpus.documents if item.id.startswith(("sqli-", "xss-"))]), 8)
         self.assertRegex(corpus.corpus_digest, r"^[0-9a-f]{64}$")
         for document in corpus.documents:
@@ -34,6 +35,16 @@ class CharterCorpusTests(unittest.TestCase):
             self.assertTrue(document.license)
             self.assertTrue(document.version)
             self.assertRegex(document.sha256, r"^[0-9a-f]{64}$")
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["required_coverage"]["scanner_tool_docs"], ["nuclei", "trivy", "semgrep"])
+        semgrep = next(document for document in manifest["documents"] if document["id"] == "tool-semgrep")
+        self.assertEqual(semgrep["coverage"], {"scanner_tool_docs": "semgrep"})
+        for field in ("source", "source_ref", "source_license", "content_origin", "version", "content"):
+            self.assertTrue(semgrep[field])
+        self.assertEqual(
+            semgrep["sha256"],
+            hashlib.sha256(semgrep["content"].encode("utf-8")).hexdigest(),
+        )
 
     def test_sqli_and_xss_retrieval_return_bounded_content_and_provenance(self) -> None:
         for query in ("SQL Injection", "XSS"):
