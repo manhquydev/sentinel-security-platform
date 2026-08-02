@@ -58,8 +58,21 @@ check_environment() {
 }
 
 check_scanner_selector() {
-  SCANNERS_DIR="$ROOT/scanners" "$ROOT/scripts/scan-and-import.sh" charter-selector >/dev/null 2>&1 \
-    && pass scanner-selector || block scanner-selector
+  local reason
+  reason="$(SCANNERS_DIR="$ROOT/scanners" "$ROOT/scripts/scan-and-import.sh" charter-selector-status 2>/dev/null)" || true
+  if [[ "$reason" == admitted ]]; then
+    pass scanner-selector
+  else
+    block scanner-selector
+    case "$reason" in
+      legacy-selector|conflicting-selectors|invalid-image-digest|missing-image-policy|unreadable-image-policy|missing-image-policy-pin|image-policy-mismatch|missing-selector|unsafe-local-binary|unregistered-local-binary)
+        printf 'INFO scanner-selector-reason %s\n' "$reason"
+        ;;
+      *)
+        printf '%s\n' 'INFO scanner-selector-reason selector-unavailable'
+        ;;
+    esac
+  fi
 }
 
 check_operator_boundary() {

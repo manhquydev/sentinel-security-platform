@@ -125,6 +125,15 @@ Out of scope:
   `SENTINEL_NUCLEI_BIN` is currently selected. Cached Docker images are not
   admission evidence, so no image digest was inferred or written. No proposal,
   approval, adapter, OAuth, Docker mutation, or target request occurred.
+- [x] Scanner-block operator diagnostic (2026-08-02) — the same no-secret
+  preflight now reports only an allowlisted `scanner-selector-reason` category
+  when scanner admission fails, including the current
+  `missing-image-policy-pin` state. It does not print the supplied digest,
+  local binary path, raw selector error, or secret. Offline proof:
+  preflight 36/0, scanner safety 32/0, runbook contract 37/0, Sentinel demo
+  201/0, shell syntax, diff check, plan validation, and independent review.
+  This is diagnostic hardening only: it does not select/admit a runtime or
+  advance Phase 4 acceptance.
 - [x] Week-1 fresh-clone documentation slice — corrected the Trivy image-input
   quick-start, separated its no-secret scan/redaction proof from provisioned lake
   import/verification, and repaired repository-root Compose examples. Offline

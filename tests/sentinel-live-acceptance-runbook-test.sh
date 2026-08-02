@@ -46,6 +46,8 @@ require 'scripts/sentinel-live-preflight\.sh base' 'runbook names base preflight
 require 'scripts/sentinel-live-preflight\.sh dispatch RUN_ID' 'runbook names dispatch preflight command'
 require 'READY_FOR_FRESH_PROPOSAL' 'runbook names fresh proposal readiness result'
 require 'READY_FOR_APPROVED_DISPATCH' 'runbook names approved dispatch readiness result'
+require 'scanner-selector-reason' 'runbook documents safe scanner-block diagnostics'
+require 'missing-image-policy-pin' 'runbook documents the missing scanner-policy-pin blocker'
 require 'Automatic signing or dispatch is prohibited' 'runbook requires fresh operator approval'
 require 'still readiness only' 'runbook keeps green preflight out of acceptance evidence'
 require 'A local `receipt_digest` is adapter metadata, not authoritative Kong evidence' 'runbook distinguishes local digest from authoritative audit'

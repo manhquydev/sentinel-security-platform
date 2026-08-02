@@ -10,6 +10,7 @@ pass=0
 fail=0
 ok() { printf 'PASS %s\n' "$1"; pass=$((pass + 1)); }
 bad() { printf 'FAIL %s\n' "$1" >&2; fail=$((fail + 1)); }
+output_omits() { ! grep -Fq "$1" "$tmp/out"; }
 
 fixture="$tmp/fixture"
 mkdir -p "$fixture/scripts" "$fixture/rag/.venv/bin" "$fixture/infra/litellm" \
@@ -156,11 +157,23 @@ else
   bad 'valid base readiness failed'
 fi
 
+: >"$fixture/scanners/image-pins.env"
+if run_preflight base >"$tmp/out" 2>&1; then
+  bad 'image policy without a pin passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'image policy without a pin fails closed' || bad 'missing image pin refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason missing-image-policy-pin' "$tmp/out" && ok 'missing image pin has a safe operator diagnostic' || bad 'missing image pin diagnostic missing'
+fi
+printf 'export NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:%s"\n' "$(printf 'a%.0s' {1..64})" >"$fixture/scanners/image-pins.env"
+
 : >"$tmp/docker.log"
 if FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST="$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
   bad 'unapproved scanner image passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'unapproved image selector fails closed' || bad 'unapproved image selector refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason image-policy-mismatch' "$tmp/out" && ok 'unapproved image has a safe operator diagnostic' || bad 'unapproved image diagnostic missing'
+  output_omits "$(printf 'b%.0s' {1..64})" && ok 'unapproved image digest is not disclosed' || bad 'unapproved image digest leaked'
+  output_omits 'scan-and-import:' && ok 'raw selector error is not disclosed' || bad 'raw selector error leaked'
 fi
 
 mkdir "$tmp/attacker-scanners"
@@ -169,24 +182,38 @@ if SCANNERS_DIR="$tmp/attacker-scanners" FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST="$
   bad 'environment-selected scanner policy passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'preflight ignores an environment-selected scanner policy' || bad 'scanner policy path refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason image-policy-mismatch' "$tmp/out" && ok 'environment-selected policy has no path disclosure' || bad 'environment-selected policy diagnostic missing'
+  output_omits "$tmp/attacker-scanners" && ok 'environment-selected policy path is not disclosed' || bad 'environment-selected policy path leaked'
 fi
 
 if NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
   bad 'legacy image selector passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'legacy image selector fails closed' || bad 'legacy image selector refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason legacy-selector' "$tmp/out" && ok 'legacy image has a safe operator diagnostic' || bad 'legacy image diagnostic missing'
 fi
 
 if NUCLEI_BIN=/bin/true run_preflight base >"$tmp/out" 2>&1; then
   bad 'legacy binary selector passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'legacy binary selector fails closed' || bad 'legacy binary selector refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason legacy-selector' "$tmp/out" && ok 'legacy binary has a safe operator diagnostic' || bad 'legacy binary diagnostic missing'
+  output_omits /bin/true && ok 'legacy binary path is not disclosed' || bad 'legacy binary path leaked'
 fi
 
 if FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST= SENTINEL_NUCLEI_BIN=/bin/true run_preflight base >"$tmp/out" 2>&1; then
   bad 'unregistered local binary passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'unregistered local binary fails closed' || bad 'local binary refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason unregistered-local-binary' "$tmp/out" && ok 'local binary has a safe operator diagnostic' || bad 'local binary diagnostic missing'
+  output_omits /bin/true && ok 'unregistered local binary path is not disclosed' || bad 'unregistered local binary path leaked'
+fi
+
+if FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST= SENTINEL_NUCLEI_BIN= run_preflight base >"$tmp/out" 2>&1; then
+  bad 'missing scanner selector passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'missing scanner selector fails closed' || bad 'missing scanner selector refusal missing'
+  grep -Fxq 'INFO scanner-selector-reason missing-selector' "$tmp/out" && ok 'missing selector has a safe operator diagnostic' || bad 'missing selector diagnostic missing'
 fi
 
 : >"$tmp/docker.log"

@@ -299,43 +299,74 @@ PY
 # wrapper's legacy variables. An image selector is admitted only if it matches
 # the reviewable scanner policy. The generic wrapper still owns the policy
 # value, so no controller environment can override it.
+selector_problem() { # <safe reason> <operator-safe message>
+  CHARTER_NUCLEI_SELECTOR_REASON=$1
+  echo "scan-and-import: $2" >&2
+  return 2
+}
+
 charter_nuclei_selector() {
   local image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}" policy_file policy_image expected
+  CHARTER_NUCLEI_SELECTOR_REASON=
   [[ -z "${NUCLEI_IMAGE:-}" && -z "${NUCLEI_BIN:-}" ]] || {
-    echo 'scan-and-import: legacy NUCLEI_* selector is forbidden for controller admission' >&2
+    selector_problem legacy-selector 'legacy NUCLEI_* selector is forbidden for controller admission'
     return 2
   }
   if [[ -n "$image" && -n "$binary" ]]; then
-    echo 'scan-and-import: exactly one Sentinel Nuclei selector is required' >&2
+    selector_problem conflicting-selectors 'exactly one Sentinel Nuclei selector is required'
     return 2
   fi
   if [[ -n "$image" ]]; then
     [[ "$image" =~ ^[0-9a-f]{64}$ ]] || {
-      echo 'scan-and-import: unsafe Sentinel Nuclei image digest' >&2
+      selector_problem invalid-image-digest 'unsafe Sentinel Nuclei image digest'
       return 2
     }
     policy_file="$SCANNERS_DIR/image-pins.env"
     [[ -f "$policy_file" && ! -L "$policy_file" && -r "$policy_file" ]] || {
-      echo 'scan-and-import: missing Nuclei image policy' >&2
+      selector_problem missing-image-policy 'missing Nuclei image policy'
       return 2
     }
     policy_image="$(env -u NUCLEI_IMAGE bash -eu -c '. "$1"; printf "%s" "${NUCLEI_IMAGE:-}"' bash "$policy_file")" || {
-      echo 'scan-and-import: unreadable Nuclei image policy' >&2
+      selector_problem unreadable-image-policy 'unreadable Nuclei image policy'
+      return 2
+    }
+    [[ "$policy_image" =~ ^projectdiscovery/nuclei@sha256:[0-9a-f]{64}$ ]] || {
+      selector_problem missing-image-policy-pin 'Nuclei image policy has no approved digest pin'
       return 2
     }
     expected="projectdiscovery/nuclei@sha256:$image"
     [[ "$policy_image" == "$expected" ]] || {
-      echo 'scan-and-import: Sentinel Nuclei image does not match the approved policy pin' >&2
+      selector_problem image-policy-mismatch 'Sentinel Nuclei image does not match the approved policy pin'
       return 2
     }
     printf '%s\n' "$expected"
     return 0
   fi
-  [[ -n "$binary" && -f "$binary" && -x "$binary" && ! -L "$binary" ]] || {
-    echo 'scan-and-import: Sentinel Nuclei binary selector is unsafe' >&2
+  [[ -n "$binary" ]] || {
+    selector_problem missing-selector 'an admitted Sentinel Nuclei selector is required'
     return 2
   }
-  echo 'scan-and-import: local Nuclei binary lacks a recorded checksum and provenance policy' >&2
+  [[ -n "$binary" && -f "$binary" && -x "$binary" && ! -L "$binary" ]] || {
+    selector_problem unsafe-local-binary 'Sentinel Nuclei binary selector is unsafe'
+    return 2
+  }
+  selector_problem unregistered-local-binary 'local Nuclei binary lacks a recorded checksum and provenance policy'
+  return 2
+}
+
+charter_nuclei_selector_status() {
+  if charter_nuclei_selector >/dev/null 2>&1; then
+    printf '%s\n' admitted
+    return 0
+  fi
+  case "${CHARTER_NUCLEI_SELECTOR_REASON:-}" in
+    legacy-selector|conflicting-selectors|invalid-image-digest|missing-image-policy|unreadable-image-policy|missing-image-policy-pin|image-policy-mismatch|missing-selector|unsafe-local-binary|unregistered-local-binary)
+      printf '%s\n' "$CHARTER_NUCLEI_SELECTOR_REASON"
+      ;;
+    *)
+      printf '%s\n' selector-unavailable
+      ;;
+  esac
   return 2
 }
 
@@ -516,6 +547,10 @@ case "${1:-run}" in
     ;;
   charter-selector)
     charter_nuclei_selector
+    exit $?
+    ;;
+  charter-selector-status)
+    charter_nuclei_selector_status
     exit $?
     ;;
   charter-admit)

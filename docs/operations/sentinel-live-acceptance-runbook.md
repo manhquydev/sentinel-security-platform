@@ -173,7 +173,14 @@ scripts/sentinel-live-preflight.sh base
 
 `READY_FOR_FRESH_PROPOSAL` means only that local prerequisites are currently
 ready. It is not an approval, dispatch, target request, audit record, or live
-acceptance result.
+acceptance result. If scanner admission blocks, preflight adds one
+`INFO scanner-selector-reason <category>` line. The category is intentionally
+limited to an operator-safe cause—such as `missing-image-policy-pin`,
+`image-policy-mismatch`, or `unregistered-local-binary`—and never prints a
+selector value, local path, secret, or raw runtime detail. Record an approved
+image pin, or the approved local-binary provenance record, through the
+maintainer's normal scanner-policy review before retrying. Do not infer either
+record from Docker cache or a historic binary.
 
 After the controller has produced a fresh v2 request and the operator has
 signed its approval artifact, verify that specific dispatch candidate:
