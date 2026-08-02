@@ -105,7 +105,7 @@ Out of scope:
   safety 32/0, runbook contract 35/0, Sentinel demo 201/0,
   shell syntax, diff check, plan validation, and independent review. This is
   readiness evidence only; it creates no approval or live acceptance evidence.
-- [~] Scanner-selector admission repair — controller image selection now must
+- [x] Scanner-selector admission repair — controller image selection now must
   match the reviewable `NUCLEI_IMAGE` pin in `scanners/image-pins.env`, and the
   generic wrapper keeps that policy pin over inherited environment values.
   Legacy controller selectors and unrecorded local binaries fail closed before
@@ -118,6 +118,13 @@ Out of scope:
   provenance; no image value was inferred from cache. See
   `plans/reports/research-260802-1420-nuclei-runtime-provenance.md`. This does
   not advance live acceptance.
+- [x] Nuclei image-policy approval (2026-08-02) — the maintainer approved the
+  x86_64 candidate recorded in
+  `plans/reports/research-260802-1523-nuclei-image-candidate-provenance.md`;
+  `scanners/image-pins.env` now holds the reviewed pin. A fresh read-only
+  registry manifest check matched the recorded digest; no image was pulled or
+  run. Static selector proof accepts only the matching digest and refuses a
+  mismatched digest before scanner invocation.
 - [~] Phase-4 runtime readiness attempt (2026-08-02) — the no-secret `base`
   preflight passed every non-scanner repository, operator-boundary, Docker
   health, and loopback gate, then correctly stopped at `scanner-selector`.
@@ -125,6 +132,11 @@ Out of scope:
   `SENTINEL_NUCLEI_BIN` is currently selected. Cached Docker images are not
   admission evidence, so no image digest was inferred or written. No proposal,
   approval, adapter, OAuth, Docker mutation, or target request occurred.
+- [~] Phase-4 fresh-proposal readiness (2026-08-02) — with the reviewed image
+  digest explicitly selected, the configured no-secret base preflight reports
+  `READY_FOR_FRESH_PROPOSAL`. This permits creation of a fresh v2 proposal
+  only; it is not an approval, executor dispatch, image pull, target request,
+  audit record, or live-acceptance result.
 - [x] Scanner-block operator diagnostic (2026-08-02) — the same no-secret
   preflight now reports only an allowlisted `scanner-selector-reason` category
   when scanner admission fails, including the current
