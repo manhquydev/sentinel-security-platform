@@ -15,12 +15,13 @@ fixture="$tmp/fixture"
 mkdir -p "$fixture/scripts" "$fixture/rag/.venv/bin" "$fixture/infra/litellm" \
   "$fixture/plans/260730-1018-sentinel-fresh-bounded-live-acceptance-closure" "$tmp/bin" "$tmp/home/.sentinel" "$tmp/runs"
 cp "$SOURCE" "$fixture/scripts/sentinel-live-preflight.sh"
+cp "$ROOT/scripts/scan-and-import.sh" "$fixture/scripts/scan-and-import.sh"
 chmod +x "$fixture/scripts/sentinel-live-preflight.sh"
-touch "$fixture/scripts/scan-and-import.sh"
 chmod +x "$fixture/scripts/scan-and-import.sh"
 mkdir -p "$fixture/scanners"
 touch "$fixture/scanners/target-allowlist.sh"
 chmod +x "$fixture/scanners/target-allowlist.sh"
+printf 'export NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:%s"\n' "$(printf 'a%.0s' {1..64})" >"$fixture/scanners/image-pins.env"
 ln -s "$ROOT/rag/.venv/bin/python" "$fixture/rag/.venv/bin/python"
 cp "$ROOT/infra/litellm/config.yaml" "$fixture/infra/litellm/config.yaml"
 touch "$fixture/infra/.env"
@@ -132,10 +133,11 @@ PY
 }
 
 run_preflight() {
+  local scanner_digest="${FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST-$(printf 'a%.0s' {1..64})}"
   HOME="$tmp/home" PATH="$tmp/bin:$PATH" DOCKER_LOG="$tmp/docker.log" ADAPTER_MARKER="$tmp/adapter-called" \
     SENTINEL_RUNS_DIR="$tmp/runs" TARGET_URL="http://127.0.0.1:13000" \
     SENTINEL_LITELLM_ALIAS="sast-charter-vertex-gemini-flash-lite" LITELLM_MASTER_KEY="redacted-master" \
-    SENTINEL_NUCLEI_IMAGE_DIGEST="$(printf 'a%.0s' {1..64})" \
+    SENTINEL_NUCLEI_IMAGE_DIGEST="$scanner_digest" \
     SENTINEL_CHARTER_PUBLIC_KEY="$tmp/home/.sentinel/charter-approval-manhquy.ed25519.pub.pem" \
     SENTINEL_CHARTER_EXECUTOR_ADAPTER="$tmp/home/.sentinel/charter-executor-adapter.sh" \
     SENTINEL_CHARTER_APPROVAL_FILE="$tmp/approval.json" \
@@ -155,16 +157,36 @@ else
 fi
 
 : >"$tmp/docker.log"
-if SENTINEL_NUCLEI_BIN=/bin/true run_preflight base >"$tmp/out" 2>&1; then
-  bad 'two scanner selectors passed'
+if FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST="$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'unapproved scanner image passed'
 else
-  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'two scanner selectors fail closed' || bad 'two selector refusal missing'
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'unapproved image selector fails closed' || bad 'unapproved image selector refusal missing'
+fi
+
+mkdir "$tmp/attacker-scanners"
+printf 'export NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:%s"\n' "$(printf 'b%.0s' {1..64})" >"$tmp/attacker-scanners/image-pins.env"
+if SCANNERS_DIR="$tmp/attacker-scanners" FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST="$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'environment-selected scanner policy passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'preflight ignores an environment-selected scanner policy' || bad 'scanner policy path refusal missing'
 fi
 
 if NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
   bad 'legacy image selector passed'
 else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'legacy image selector fails closed' || bad 'legacy image selector refusal missing'
+fi
+
+if NUCLEI_BIN=/bin/true run_preflight base >"$tmp/out" 2>&1; then
+  bad 'legacy binary selector passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'legacy binary selector fails closed' || bad 'legacy binary selector refusal missing'
+fi
+
+if FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST= SENTINEL_NUCLEI_BIN=/bin/true run_preflight base >"$tmp/out" 2>&1; then
+  bad 'unregistered local binary passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'unregistered local binary fails closed' || bad 'local binary refusal missing'
 fi
 
 : >"$tmp/docker.log"

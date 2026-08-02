@@ -9,9 +9,7 @@ set -euo pipefail
 
 out="${1:?output jsonl path required}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-configured_image="${NUCLEI_IMAGE:-}"
 [ -f "$HERE/image-pins.env" ] && . "$HERE/image-pins.env"
-[[ -n "$configured_image" ]] && NUCLEI_IMAGE="$configured_image"
 
 # Production = digest-pinned docker image. NUCLEI_BIN = a local nuclei binary
 # (fallback when the container registry is unreachable).

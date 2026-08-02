@@ -128,10 +128,13 @@ Record pass or block for each item by name only.
 - `LITELLM_MASTER_KEY` present for the controller's labelled-chat stage.
 - `SENTINEL_CHARTER_PUBLIC_KEY`
 - `SENTINEL_CHARTER_EXECUTOR_ADAPTER`
-- Exactly one admitted scanner runtime selector:
-  - `SENTINEL_NUCLEI_IMAGE_DIGEST`, or
-  - `SENTINEL_NUCLEI_BIN`
-  - do not set legacy `NUCLEI_IMAGE` or `NUCLEI_BIN`.
+- An image selector that matches the reviewable `NUCLEI_IMAGE` pin in
+  `scanners/image-pins.env`: `SENTINEL_NUCLEI_IMAGE_DIGEST`.
+  Do not set legacy `NUCLEI_IMAGE` or `NUCLEI_BIN`.
+- A local-binary selector is deliberately not admitted by this controller until
+  the authorized owner records its path, SHA-256, version, and verified release
+  provenance in scanner policy. Do not treat a cached or historic binary as that
+  record.
 
 ### Dispatch-only environment-variable names or files
 

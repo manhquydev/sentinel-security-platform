@@ -67,8 +67,12 @@ Juice Shop is loopback, so it must be explicitly allowed: `ALLOWLIST="127.0.0.1:
 
 ## Sentinel charter scanner profile
 
-The six-week charter is intentionally narrower than the legacy scanner path.
-Run it only through the controller entry point:
+The six-week charter acceptance flow is intentionally narrower than this legacy
+scanner pipeline. The controller-owned acceptance entry point is documented in
+[`sentinel-live-acceptance-runbook.md`](../docs/operations/sentinel-live-acceptance-runbook.md).
+The command below remains a scanner maintenance/integration path; it is not an
+operator acceptance command and it does not perform controller preflight,
+proposal, or approval validation:
 
 ```bash
 TARGET_URL=http://127.0.0.1:13000 ../scripts/scan-and-import.sh charter --run-id <safe-id>

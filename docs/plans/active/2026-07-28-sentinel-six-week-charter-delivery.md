@@ -99,18 +99,22 @@ Out of scope:
   now checks the documented no-secret base prerequisites and a named fresh
   signed dispatch candidate without invoking the adapter, OAuth, Docker
   mutation, or target. It requires a current v2 spec, an owner-held `0600`
-  approval artifact, one scanner selector, the pinned operator public key, and
-  Docker health plus loopback reachability for the local services. Offline proof
-  on 2026-08-02: preflight 19/0, runbook contract 35/0, Sentinel demo 201/0,
+  approval artifact, an image selector matching the repository scanner policy,
+  the pinned operator public key, and Docker health plus loopback reachability
+  for the local services. Offline proof on 2026-08-02: preflight 22/0, scanner
+  safety 32/0, runbook contract 35/0, Sentinel demo 201/0,
   shell syntax, diff check, plan validation, and independent review. This is
   readiness evidence only; it creates no approval or live acceptance evidence.
-- [x] Scanner-selector handoff repair — the controller now accepts only the
-  documented `SENTINEL_NUCLEI_*` selector and translates it at the scanner
-  invocation boundary; conflicting legacy selector variables fail closed before
-  a run is created. Offline proof on 2026-08-02: charter scan safety 30/0,
-  acceptance runbook 35/0, shell syntax, diff check, and a no-operational-
-  material preflight refusal check. This does not admit a scanner provenance
-  value or advance the live acceptance path.
+- [~] Scanner-selector admission repair — controller image selection now must
+  match the reviewable `NUCLEI_IMAGE` pin in `scanners/image-pins.env`, and the
+  generic wrapper keeps that policy pin over inherited environment values.
+  Legacy controller selectors and unrecorded local binaries fail closed before
+  scanner invocation; both preflight and the production controller ignore an
+  inherited `SCANNERS_DIR`. Offline proof on 2026-08-02: scanner safety 32/0,
+  preflight 22/0, runbook contract 35/0, Sentinel demo 201/0, shell syntax,
+  and diff check. The historic local binary remains unadmitted because no
+  current policy records its path, checksum, version, and release provenance;
+  no image value was inferred from cache. This does not advance live acceptance.
 - [~] Phase-4 runtime readiness attempt (2026-08-02) — the no-secret `base`
   preflight passed every non-scanner repository, operator-boundary, Docker
   health, and loopback gate, then correctly stopped at `scanner-selector`.

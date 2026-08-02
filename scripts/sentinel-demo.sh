@@ -348,7 +348,7 @@ PY
     scan-redact-import)
       [[ -z "${ARTIFACT:-}" ]] || return 1
       mkdir -m 700 "$dir/phase1"
-      if ! TARGET_URL=http://127.0.0.1:13000 "$HERE/scan-and-import.sh" charter-admit --run-root "$dir/phase1" --run-id "$(basename "$dir")" >/dev/null; then
+      if ! SCANNERS_DIR="$HERE/../scanners" TARGET_URL=http://127.0.0.1:13000 "$HERE/scan-and-import.sh" charter-admit --run-root "$dir/phase1" --run-id "$(basename "$dir")" >/dev/null; then
         printf 'failed\n'
         return 0
       fi

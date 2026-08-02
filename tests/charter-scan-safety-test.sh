@@ -149,11 +149,11 @@ if PATH="$WORK/bin:$PATH" FAKE_CURL_CODE=200 NUCLEI_DOCKER_ARGS="$WORK/nuclei-do
     NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$selected_digest" SENTINEL_PROFILE=charter \
     CHARTER_RUN_ROOT="$WORK/selector-wrapper-run" TARGET_URL=http://127.0.0.1:13000 \
     "$WORK/selector-wrapper/run-nuclei.sh" "$WORK/selector-wrapper-run/raw" >/dev/null 2>&1 \
-  && grep -Fxq "projectdiscovery/nuclei@sha256:$selected_digest" "$WORK/nuclei-docker.args" \
-  && ! grep -Fq "$configured_digest" "$WORK/nuclei-docker.args"; then
-  ok "wrapper preserves the controller-selected image over its default pin"
+  && grep -Fxq "projectdiscovery/nuclei@sha256:$configured_digest" "$WORK/nuclei-docker.args" \
+  && ! grep -Fq "$selected_digest" "$WORK/nuclei-docker.args"; then
+  ok "wrapper preserves its reviewable image pin over an inherited override"
 else
-  bad "wrapper did not execute the controller-selected image"
+  bad "wrapper accepted an inherited image override"
 fi
 
 sect "Nuclei URLs are rebuilt to the approved origin and path"
@@ -249,6 +249,7 @@ fi
 printf '{"test":17,"deduplication_complete":true,"statistics":{"after":{"total":{"total":1}}}}\n'
 EOF
 printf '{"version":1,"templates":[]}' >"$WORK/fake-scanners/charter-template-manifest.json"
+printf 'export NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:%s"\n' "$(printf 'a%.0s' {1..64})" >"$WORK/fake-scanners/image-pins.env"
 chmod 700 "$WORK/fake-scanners/"*.sh
 post_log="$WORK/posts"
 : >"$post_log"
@@ -268,6 +269,28 @@ if SCANNERS_DIR="$WORK/fake-scanners" CHARTER_SCANNER_SELECTOR_LOG="$selector_lo
   ok "controller maps the admitted image digest to the scanner runtime"
 else
   bad "controller did not map the admitted image digest to the scanner runtime"
+fi
+
+: >"$selector_log"
+if SCANNERS_DIR="$WORK/fake-scanners" CHARTER_SCANNER_SELECTOR_LOG="$selector_log" \
+    SENTINEL_NUCLEI_IMAGE_DIGEST="$(printf 'b%.0s' {1..64})" TARGET_URL=http://127.0.0.1:13000 \
+    "$CORE" charter-admit --run-root "$selector_root" --run-id selector-mismatch >/dev/null 2>&1; then
+  bad "controller admitted an image digest outside the reviewable policy"
+elif [ ! -s "$selector_log" ]; then
+  ok "controller rejects an image digest outside the reviewable policy before scanner invocation"
+else
+  bad "policy-mismatched image reached the scanner"
+fi
+
+: >"$selector_log"
+if SCANNERS_DIR="$WORK/fake-scanners" CHARTER_SCANNER_SELECTOR_LOG="$selector_log" \
+    SENTINEL_NUCLEI_BIN="$WORK/bin/nuclei" TARGET_URL=http://127.0.0.1:13000 \
+    "$CORE" charter-admit --run-root "$selector_root" --run-id selector-local-binary >/dev/null 2>&1; then
+  bad "controller admitted an unregistered local Nuclei binary"
+elif [ ! -s "$selector_log" ]; then
+  ok "controller rejects a local Nuclei binary without recorded provenance before scanner invocation"
+else
+  bad "unregistered local binary reached the scanner"
 fi
 
 # The import command receives only a previously admitted artifact.  If that

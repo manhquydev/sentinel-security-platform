@@ -296,11 +296,11 @@ PY
 }
 
 # The controller's scanner selector is deliberately different from the
-# wrapper's legacy variables.  The controller accepts only one Sentinel-scoped
-# selector and translates it at this boundary, so a preflight that admits a
-# selector reaches the exact scanner runtime recorded in its manifest.
-charter_admitted_nuclei() { # <private root> <private raw output>
-  local root=$1 raw=$2 image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}"
+# wrapper's legacy variables. An image selector is admitted only if it matches
+# the reviewable scanner policy. The generic wrapper still owns the policy
+# value, so no controller environment can override it.
+charter_nuclei_selector() {
+  local image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}" policy_file policy_image expected
   [[ -z "${NUCLEI_IMAGE:-}" && -z "${NUCLEI_BIN:-}" ]] || {
     echo 'scan-and-import: legacy NUCLEI_* selector is forbidden for controller admission' >&2
     return 2
@@ -314,17 +314,36 @@ charter_admitted_nuclei() { # <private root> <private raw output>
       echo 'scan-and-import: unsafe Sentinel Nuclei image digest' >&2
       return 2
     }
-    SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" \
-      NUCLEI_BIN= NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$image" \
-      "$SCANNERS_DIR/run-nuclei.sh" "$raw"
-    return
+    policy_file="$SCANNERS_DIR/image-pins.env"
+    [[ -f "$policy_file" && ! -L "$policy_file" && -r "$policy_file" ]] || {
+      echo 'scan-and-import: missing Nuclei image policy' >&2
+      return 2
+    }
+    policy_image="$(env -u NUCLEI_IMAGE bash -eu -c '. "$1"; printf "%s" "${NUCLEI_IMAGE:-}"' bash "$policy_file")" || {
+      echo 'scan-and-import: unreadable Nuclei image policy' >&2
+      return 2
+    }
+    expected="projectdiscovery/nuclei@sha256:$image"
+    [[ "$policy_image" == "$expected" ]] || {
+      echo 'scan-and-import: Sentinel Nuclei image does not match the approved policy pin' >&2
+      return 2
+    }
+    printf '%s\n' "$expected"
+    return 0
   fi
   [[ -n "$binary" && -f "$binary" && -x "$binary" && ! -L "$binary" ]] || {
-    echo 'scan-and-import: admitted Sentinel Nuclei binary is required' >&2
+    echo 'scan-and-import: Sentinel Nuclei binary selector is unsafe' >&2
     return 2
   }
+  echo 'scan-and-import: local Nuclei binary lacks a recorded checksum and provenance policy' >&2
+  return 2
+}
+
+charter_admitted_nuclei() { # <private root> <private raw output>
+  local root=$1 raw=$2 image
+  image="$(charter_nuclei_selector)" || return $?
   SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" \
-    NUCLEI_IMAGE= NUCLEI_BIN="$binary" "$SCANNERS_DIR/run-nuclei.sh" "$raw"
+    NUCLEI_BIN= NUCLEI_IMAGE="$image" "$SCANNERS_DIR/run-nuclei.sh" "$raw"
 }
 
 # These two commands are the controller-owned v2 seam.  The first is purely
@@ -493,6 +512,10 @@ case "${1:-run}" in
     ;;
   charter-state)
     charter_state "${2:?charter run root required}"
+    exit $?
+    ;;
+  charter-selector)
+    charter_nuclei_selector
     exit $?
     ;;
   charter-admit)
