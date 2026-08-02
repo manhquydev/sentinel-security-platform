@@ -38,6 +38,20 @@ start Docker, connect to pgvector, download a model, or run a live suite. It is
 not a replacement for `tests/rag-retrieval-test.sh`, which remains the separate
 live-store retrieval contract.
 
+## Charter request and contract suite
+
+Use the RAG virtualenv for the combined request/contract suite:
+
+```bash
+rag/.venv/bin/python -m pytest -q tests/test_charter_requests.py tests/test_charter_contracts.py
+```
+
+This command is an offline contract check; it does not establish a live RAG
+store or a completed Sentinel run. If the system `python3` fails because
+`psycopg` is unavailable, that is an unsupported interpreter environment, not
+by itself a regression in the RAG corpus or retrieval code. Reproduce with the
+command above before diagnosing an RAG regression.
+
 ## Setup
 
 ```bash

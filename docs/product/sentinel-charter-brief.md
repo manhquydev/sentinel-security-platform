@@ -74,8 +74,8 @@ report preserves scanner facts rather than inferring new ones.
 
 ## Next steps — Hướng phát triển tiếp theo
 
-The charter's optional extensions (tracked in the wider 12-week program, see the
-root `README.md` Status section): a multi-agent syndicate supervisor, structural
+The charter's optional extensions from the historical twelve-week research
+programme include a multi-agent syndicate supervisor, structural
 indirect-prompt-injection defense, adaptive evaluation and an LLM-as-judge, a
 hybrid/GraphRAG knowledge layer, and FinOps budgeting. All are bonus scope beyond
 the six-week minimum, not required for charter completion.

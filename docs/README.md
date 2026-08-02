@@ -3,6 +3,15 @@
 Start with the smallest current map. Retrieve compatibility, historical, or
 upstream-maintenance material only when the task explicitly needs it.
 
+## Sentinel
+
+- [Kiến trúc Sentinel sáu tuần (as-built)](sentinel-six-week-as-built-architecture.md):
+  luồng hiện có, ranh giới tin cậy và giới hạn bằng chứng live.
+- [Charter sáu tuần](Project_Sentinel_6-week.md): mục tiêu và tiêu chí nghiệm
+  thu của đồ án.
+- [Runbook nghiệm thu live](operations/sentinel-live-acceptance-runbook.md):
+  điều kiện vận hành cho một lần chạy local mới, không chứa bí mật.
+
 ## Installed Core
 
 - `WORKFLOW.md`: canonical request, planning, judgment, validation, and
