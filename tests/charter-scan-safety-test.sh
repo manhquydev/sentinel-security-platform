@@ -131,6 +131,31 @@ else
   bad "charter raw lifecycle modes are not private"
 fi
 
+mkdir -p "$WORK/selector-wrapper"
+cp "$REPO_ROOT/scanners/run-nuclei.sh" "$REPO_ROOT/scanners/target-allowlist.sh" \
+  "$REPO_ROOT/scanners/charter-template-manifest.json" "$REPO_ROOT/scanners/image-pins.env" \
+  "$WORK/selector-wrapper/"
+cp -a "$REPO_ROOT/scanners/charter-templates" "$WORK/selector-wrapper/"
+configured_digest="$(printf 'c%.0s' {1..64})"
+selected_digest="$(printf 'd%.0s' {1..64})"
+printf '\nexport NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:%s"\n' "$configured_digest" >>"$WORK/selector-wrapper/image-pins.env"
+cat >"$WORK/bin/docker" <<'EOF'
+#!/usr/bin/env sh
+printf '%s\n' "$@" >"$NUCLEI_DOCKER_ARGS"
+EOF
+chmod 700 "$WORK/bin/docker"
+mkdir -m 700 "$WORK/selector-wrapper-run"
+if PATH="$WORK/bin:$PATH" FAKE_CURL_CODE=200 NUCLEI_DOCKER_ARGS="$WORK/nuclei-docker.args" \
+    NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$selected_digest" SENTINEL_PROFILE=charter \
+    CHARTER_RUN_ROOT="$WORK/selector-wrapper-run" TARGET_URL=http://127.0.0.1:13000 \
+    "$WORK/selector-wrapper/run-nuclei.sh" "$WORK/selector-wrapper-run/raw" >/dev/null 2>&1 \
+  && grep -Fxq "projectdiscovery/nuclei@sha256:$selected_digest" "$WORK/nuclei-docker.args" \
+  && ! grep -Fq "$configured_digest" "$WORK/nuclei-docker.args"; then
+  ok "wrapper preserves the controller-selected image over its default pin"
+else
+  bad "wrapper did not execute the controller-selected image"
+fi
+
 sect "Nuclei URLs are rebuilt to the approved origin and path"
 cat >"$WORK/raw.jsonl" <<'EOF'
 {"template-id":"test","type":"http","host":"http://evil.example/?email=alice@example.test","matched-at":"http://user:token@evil.example/a%2fb?token=eyJhbGciOiJIUzI1NiJ9&pan=4532015112830366#fragment","matcher-name":"m","info":{"name":"n","severity":"low"}}
@@ -202,6 +227,9 @@ sect "charter import serialization, failure quarantine, and gate-aware completio
 mkdir "$WORK/fake-scanners" "$WORK/charter-runs"
 cat >"$WORK/fake-scanners/run-nuclei.sh" <<'EOF'
 #!/usr/bin/env sh
+if [ -n "${CHARTER_SCANNER_SELECTOR_LOG:-}" ]; then
+  printf '%s|%s\n' "${NUCLEI_IMAGE-unset}" "${NUCLEI_BIN-unset}" >>"$CHARTER_SCANNER_SELECTOR_LOG"
+fi
 printf '{"raw":"only-private"}\n' >"$1"
 printf 'private stderr\n' >"$(dirname "$1")/.nuclei-stderr.fake"
 EOF
@@ -224,6 +252,23 @@ printf '{"version":1,"templates":[]}' >"$WORK/fake-scanners/charter-template-man
 chmod 700 "$WORK/fake-scanners/"*.sh
 post_log="$WORK/posts"
 : >"$post_log"
+
+# The controller preflight admits Sentinel-scoped scanner selectors, while the
+# scanner wrapper intentionally consumes its legacy runtime variables.  Prove
+# the controller translates a digest into the immutable image reference at the
+# one scanner invocation boundary; this fake wrapper never contacts a target.
+selector_root="$WORK/selector-admission"; mkdir -m 700 "$selector_root"
+selector_log="$WORK/scanner-selector"
+selector_digest="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+: >"$selector_log"
+if SCANNERS_DIR="$WORK/fake-scanners" CHARTER_SCANNER_SELECTOR_LOG="$selector_log" \
+    SENTINEL_NUCLEI_IMAGE_DIGEST="$selector_digest" TARGET_URL=http://127.0.0.1:13000 \
+    "$CORE" charter-admit --run-root "$selector_root" --run-id selector-admission >/dev/null 2>&1 \
+  && [ "$(cat "$selector_log")" = "projectdiscovery/nuclei@sha256:$selector_digest|" ]; then
+  ok "controller maps the admitted image digest to the scanner runtime"
+else
+  bad "controller did not map the admitted image digest to the scanner runtime"
+fi
 
 # The import command receives only a previously admitted artifact.  If that
 # file changes after the durable prepared intent, it must stop before invoking

@@ -161,6 +161,12 @@ else
   grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'two scanner selectors fail closed' || bad 'two selector refusal missing'
 fi
 
+if NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$(printf 'b%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'legacy image selector passed'
+else
+  grep -Fxq 'BLOCK scanner-selector' "$tmp/out" && ok 'legacy image selector fails closed' || bad 'legacy image selector refusal missing'
+fi
+
 : >"$tmp/docker.log"
 if FAKE_DOCKER_UNHEALTHY=1 run_preflight base >"$tmp/out" 2>&1; then
   bad 'unhealthy topology passed'

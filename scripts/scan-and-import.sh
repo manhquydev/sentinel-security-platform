@@ -295,6 +295,38 @@ except Exception as exc:
 PY
 }
 
+# The controller's scanner selector is deliberately different from the
+# wrapper's legacy variables.  The controller accepts only one Sentinel-scoped
+# selector and translates it at this boundary, so a preflight that admits a
+# selector reaches the exact scanner runtime recorded in its manifest.
+charter_admitted_nuclei() { # <private root> <private raw output>
+  local root=$1 raw=$2 image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}"
+  [[ -z "${NUCLEI_IMAGE:-}" && -z "${NUCLEI_BIN:-}" ]] || {
+    echo 'scan-and-import: legacy NUCLEI_* selector is forbidden for controller admission' >&2
+    return 2
+  }
+  if [[ -n "$image" && -n "$binary" ]]; then
+    echo 'scan-and-import: exactly one Sentinel Nuclei selector is required' >&2
+    return 2
+  fi
+  if [[ -n "$image" ]]; then
+    [[ "$image" =~ ^[0-9a-f]{64}$ ]] || {
+      echo 'scan-and-import: unsafe Sentinel Nuclei image digest' >&2
+      return 2
+    }
+    SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" \
+      NUCLEI_BIN= NUCLEI_IMAGE="projectdiscovery/nuclei@sha256:$image" \
+      "$SCANNERS_DIR/run-nuclei.sh" "$raw"
+    return
+  fi
+  [[ -n "$binary" && -f "$binary" && -x "$binary" && ! -L "$binary" ]] || {
+    echo 'scan-and-import: admitted Sentinel Nuclei binary is required' >&2
+    return 2
+  }
+  SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" \
+    NUCLEI_IMAGE= NUCLEI_BIN="$binary" "$SCANNERS_DIR/run-nuclei.sh" "$raw"
+}
+
 # These two commands are the controller-owned v2 seam.  The first is purely
 # admission: it may scan and redact but has no import capability.  The second
 # accepts only the fixed, already-admitted pair; it never creates an intent.
@@ -305,7 +337,7 @@ charter_admit() { # --run-root <private phase1> --run-id <id>
   [ -d "$root" ] && [ ! -L "$root" ] && [ "$(stat -c '%a' "$root")" = 700 ] || { echo 'scan-and-import: unsafe admission root' >&2; return 2; }
   umask 077
   raw=$(mktemp "$root/.raw.XXXXXX"); chmod 600 "$raw"
-  if ! SENTINEL_PROFILE=charter CHARTER_RUN_ROOT="$root" TARGET_URL="${TARGET_URL:-}" "$SCANNERS_DIR/run-nuclei.sh" "$raw"; then
+  if ! charter_admitted_nuclei "$root" "$raw"; then
     echo 'scan-and-import: charter scan failed; private quarantine retained' >&2; return 1
   fi
   san="$root/nuclei.sanitized.jsonl"; [ ! -e "$san" ] || { echo 'scan-and-import: admission artifact already exists' >&2; return 1; }

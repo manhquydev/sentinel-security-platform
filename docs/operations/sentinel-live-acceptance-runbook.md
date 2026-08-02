@@ -131,7 +131,7 @@ Record pass or block for each item by name only.
 - Exactly one admitted scanner runtime selector:
   - `SENTINEL_NUCLEI_IMAGE_DIGEST`, or
   - `SENTINEL_NUCLEI_BIN`
-  - do not set the legacy `NUCLEI_BIN`.
+  - do not set legacy `NUCLEI_IMAGE` or `NUCLEI_BIN`.
 
 ### Dispatch-only environment-variable names or files
 

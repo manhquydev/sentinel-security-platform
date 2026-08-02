@@ -175,18 +175,22 @@ for line in open(path, encoding="utf-8"):
         raise SystemExit(0)
 raise SystemExit(1)
 PY
-  if [[ -n "${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" ]]; then
-    [[ "${SENTINEL_NUCLEI_IMAGE_DIGEST}" =~ ^[0-9a-f]{64}$ ]] || die 'unsafe scanner image digest'
-    runtime=$(python3 - "${SENTINEL_NUCLEI_IMAGE_DIGEST}" <<'PY'
+  local scanner_image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" scanner_binary="${SENTINEL_NUCLEI_BIN:-}"
+  [[ -z "${NUCLEI_BIN:-}" ]] || die 'legacy NUCLEI_BIN is not an admitted charter scanner selector'
+  [[ -z "${NUCLEI_IMAGE:-}" ]] || die 'legacy NUCLEI_IMAGE is not an admitted charter scanner selector'
+  if [[ -n "$scanner_image" && -n "$scanner_binary" ]]; then
+    die 'exactly one admitted charter scanner selector is required'
+  elif [[ -n "$scanner_image" ]]; then
+    [[ "$scanner_image" =~ ^[0-9a-f]{64}$ ]] || die 'unsafe scanner image digest'
+    runtime=$(python3 - "$scanner_image" <<'PY'
 import json,sys; print(json.dumps({"kind":"image","digest":sys.argv[1]}, separators=(",",":")))
 PY
 )
   else
-    local binary="${SENTINEL_NUCLEI_BIN:-${NUCLEI_BIN:-}}" version
-    [[ -n "$binary" && -x "$binary" && ! -L "$binary" ]] || die 'new v2 run requires an admitted scanner image digest or local binary'
-    version=$("$binary" -version 2>/dev/null | tr -d '\r\n')
+    [[ -n "$scanner_binary" && -f "$scanner_binary" && -x "$scanner_binary" && ! -L "$scanner_binary" ]] || die 'new v2 run requires an admitted scanner image digest or local binary'
+    version=$("$scanner_binary" -version 2>/dev/null | tr -d '\r\n')
     [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-+][A-Za-z0-9._-]+)?$ ]] || die 'local scanner version is not a safe Nuclei version literal'
-    runtime=$(python3 - "$(hash_file "$binary")" "$version" <<'PY'
+    runtime=$(python3 - "$(hash_file "$scanner_binary")" "$version" <<'PY'
 import json,sys; print(json.dumps({"kind":"local-binary","sha256":sys.argv[1],"version":sys.argv[2]}, separators=(",",":")))
 PY
 )

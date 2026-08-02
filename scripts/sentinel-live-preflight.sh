@@ -58,11 +58,12 @@ check_environment() {
 }
 
 check_scanner_selector() {
-  local image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}" legacy="${NUCLEI_BIN:-}" count=0
+  local image="${SENTINEL_NUCLEI_IMAGE_DIGEST:-}" binary="${SENTINEL_NUCLEI_BIN:-}" legacy_bin="${NUCLEI_BIN:-}" legacy_image="${NUCLEI_IMAGE:-}" count=0
   [[ -n "$image" ]] && count=$((count + 1))
   [[ -n "$binary" ]] && count=$((count + 1))
-  [[ -n "$legacy" ]] && count=$((count + 1))
-  if [[ "$count" -ne 1 || -n "$legacy" ]]; then
+  [[ -n "$legacy_bin" ]] && count=$((count + 1))
+  [[ -n "$legacy_image" ]] && count=$((count + 1))
+  if [[ "$count" -ne 1 || -n "$legacy_bin" || -n "$legacy_image" ]]; then
     block scanner-selector
   elif [[ -n "$image" && "$image" =~ ^[0-9a-f]{64}$ ]]; then
     pass scanner-selector
