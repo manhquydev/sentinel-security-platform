@@ -112,9 +112,12 @@ Out of scope:
   scanner invocation; both preflight and the production controller ignore an
   inherited `SCANNERS_DIR`. Offline proof on 2026-08-02: scanner safety 32/0,
   preflight 22/0, runbook contract 35/0, Sentinel demo 201/0, shell syntax,
-  and diff check. The historic local binary remains unadmitted because no
-  current policy records its path, checksum, version, and release provenance;
-  no image value was inferred from cache. This does not advance live acceptance.
+  and diff check. Fresh provenance research identifies the historic local
+  binary as v3.3.5, not the later v3.11.0 release, so it remains unadmitted:
+  no current policy records its path, checksum, version, and release
+  provenance; no image value was inferred from cache. See
+  `plans/reports/research-260802-1420-nuclei-runtime-provenance.md`. This does
+  not advance live acceptance.
 - [~] Phase-4 runtime readiness attempt (2026-08-02) — the no-secret `base`
   preflight passed every non-scanner repository, operator-boundary, Docker
   health, and loopback gate, then correctly stopped at `scanner-selector`.
