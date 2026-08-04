@@ -62,3 +62,25 @@ unadjudicated proposals are `not-measured`.
 Corpus outcomes are exactly `case-study-only`, `rejected`,
 `underpowered/descriptive`, `contamination-bound` or `corpus-only`. V1 never
 claims private-code capability. Every rendering carries the corpus outcome.
+
+## Candidate-corpus inventory
+
+`scripts/workbench-corpus-inventory.py` records candidate metadata only from a
+locally pinned OpenSSF CVE Benchmark checkout and an already-present local
+repository cache. It requires the exact benchmark revision, does not fetch,
+scan, seal or transmit source, and refuses to replace a prior record:
+
+```bash
+PYTHONPATH=. python3 scripts/workbench-corpus-inventory.py \
+  --benchmark /path/to/ossf-cve-benchmark \
+  --expected-revision <full-40-character-git-revision> \
+  --repository-cache /path/to/owner--repository-cache \
+  --output /path/to/new-candidate-inventory.json
+```
+
+An inventory stays `not-admitted` and blocks comparative work even when it
+finds local TypeScript at both referenced commits. Frozen truth, licence and
+authorship evidence, contamination screening, independent control audit,
+calibration and the 20 independent-repository requirement are separate gates.
+Malformed benchmark metadata is recorded as `metadata-invalid`; abbreviated
+commit IDs are never expanded or treated as pinned evidence.
