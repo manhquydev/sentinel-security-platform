@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel Workbench Truth Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "candidate_snapshot_digest", "negative_universe_unit_ids", "control_audit", "defects"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-truth-manifest/v1"},
+    "candidate_snapshot_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "negative_universe_unit_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "control_audit": {"type": "object", "required": ["auditor", "outcome_blind", "unplanted_control_ids"]},
+    "defects": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["vulnerability_id", "class", "precondition", "canonical_unit_id", "allowed_alternatives", "provenance", "license"]}}
+  }
+}

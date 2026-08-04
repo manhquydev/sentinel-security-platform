@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel Workbench Corpus Catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "comparative_status", "corpora"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-corpus-catalog/v1"},
+    "comparative_status": {"enum": ["blocked-no-eligible-typescript-corpus", "eligible-corpus-catalogued"]},
+    "corpora": {"type": "array", "minItems": 1}
+  }
+}

@@ -11,6 +11,13 @@ upstream-maintenance material only when the task explicitly needs it.
   thu của đồ án.
 - [Runbook nghiệm thu live](operations/sentinel-live-acceptance-runbook.md):
   điều kiện vận hành cho một lần chạy local mới, không chứa bí mật.
+- [Sentinel Security Research Workbench](product/sentinel-security-research-workbench.md):
+  product boundary and current evidence state for the separate local research
+  workbench.
+- [Workbench B3 preregistration](research/workbench-b3-preregistration.md):
+  frozen experimental contract for any future comparative run.
+- [Workbench scanner viability](operations/workbench-scanner-viability.md):
+  fixture-only B0 admission and current scanner-readiness facts.
 
 ## Installed Core
 

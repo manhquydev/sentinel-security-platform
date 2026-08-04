@@ -1,0 +1,44 @@
+# B3 is a separately deployed host-only gateway. It joins no Langfuse, shared
+# LiteLLM, browser, Docker-socket, or source-mount network.
+services:
+  b3-postgres:
+    image: postgres:18.4-alpine@sha256:1b1689b20d16a014a3d195653381cf2caa75a41a92d93b255a9d6ea29fd353aa
+    restart: unless-stopped
+    env_file: ./b3-gateway.env
+    environment:
+      POSTGRES_DB: b3_litellm
+      POSTGRES_USER: "${B3_DB_USER:?B3_DB_USER is required in b3-gateway.env}"
+      POSTGRES_PASSWORD: "${B3_DB_PASSWORD:?B3_DB_PASSWORD is required in b3-gateway.env}"
+    volumes:
+      - b3-litellm-db:/var/lib/postgresql
+    networks: [b3-control]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+
+  b3-litellm:
+    image: ghcr.io/berriai/litellm@sha256:467a55498422295f9d3534ad6154dc8075733a10cb41edc85e9ed60be41d3f2c
+    restart: unless-stopped
+    depends_on:
+      b3-postgres:
+        condition: service_started
+    command: ["--config", "/app/b3-litellm-config.yaml", "--port", "4013"]
+    env_file: ./b3-gateway.env
+    environment:
+      B3_DATABASE_URL: "postgresql://${B3_DB_USER}:${B3_DB_PASSWORD}@b3-postgres:5432/b3_litellm"
+    volumes:
+      - ./b3-litellm-config.yaml:/app/b3-litellm-config.yaml:ro
+    ports:
+      - "127.0.0.1:4013:4013"
+    networks: [b3-control, b3-provider]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+
+volumes:
+  b3-litellm-db:
+
+networks:
+  b3-control:
+    internal: true
+  b3-provider:

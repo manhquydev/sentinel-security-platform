@@ -10,10 +10,11 @@ files after actual product domains, such as `overview.md`, `billing.md`,
 
 ## Current Product Contract
 
-No consumer-specific product contract is shipped in this generic directory.
-The upstream `repository-harness` contract lives in the root README, current
-workflow and architecture documents, lasting decisions, optional orchestration
-contract, implementation, and executable tests.
+- [Sentinel Charter brief](sentinel-charter-brief.md): the existing six-week
+  Juice Shop capstone product boundary.
+- [Sentinel Security Research Workbench](sentinel-security-research-workbench.md):
+  separately named local research/advisory product; it does not inherit the
+  Charter target, capstone or efficacy claims.
 
 ## Update Rule
 

@@ -4,6 +4,10 @@ A one–two page product description of Project Sentinel as delivered against th
 six-week capstone charter (`docs/Project_Sentinel_6-week.md`). It is a
 research/education build for a lab environment, not a shipped product.
 
+The separate [Sentinel Security Research Workbench](sentinel-security-research-workbench.md)
+does not inherit this Charter's target, approval flow, capstone completion, or
+evidence claims. Its CMC inventory is not Charter evidence.
+
 ## Problem — Vấn đề cần giải quyết
 
 Web-application security testing produces high-volume, tool-specific output

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel Workbench Broker Command v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "command", "profile", "pair_digest", "config_digest"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-broker-command/v1"},
+    "command": {"const": "run-fixture-scan"},
+    "profile": {"type": "string", "minLength": 1},
+    "pair_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "config_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

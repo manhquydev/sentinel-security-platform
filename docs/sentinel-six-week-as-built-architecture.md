@@ -4,6 +4,9 @@ Tài liệu này là bản đồ các ranh giới hiện có để đối chiế
 [charter sáu tuần](Project_Sentinel_6-week.md). Nó không phải bằng chứng cho
 một lần nghiệm thu live hoàn chỉnh. Quy trình vận hành và điều kiện để thực hiện
 một lần chạy mới thuộc [live-acceptance runbook](operations/sentinel-live-acceptance-runbook.md).
+The separate [Sentinel Security Research Workbench](product/sentinel-security-research-workbench.md)
+has its own host-worker, source-egress and experimental-evidence boundary; it
+does not extend or complete the Charter topology shown below.
 
 ```mermaid
 flowchart LR

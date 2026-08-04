@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel Workbench Experiment Spec v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "primary_contrast", "metric", "b3_readings", "b3_consensus_min_readings", "review_packets_per_arm", "review_seconds_per_packet", "b3_context_cap_bytes", "b3_temperature", "b3_top_p", "b3_output_cap_tokens", "b3_transport", "b3_tools_enabled", "b3_post_dispatch_retry", "bootstrap_resamples", "bootstrap_seed", "minimum_paired_repositories", "minimum_power", "minimum_effect", "calibration_corpus_digest", "calibration_is_confirmatory"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-experiment/v1"},
+    "primary_contrast": {"const": "B3-B2"},
+    "metric": {"const": "recall_at_12"},
+    "b3_readings": {"const": 3},
+    "b3_consensus_min_readings": {"const": 2},
+    "review_packets_per_arm": {"const": 12},
+    "review_seconds_per_packet": {"const": 90},
+    "b3_context_cap_bytes": {"const": 8192},
+    "b3_temperature": {"const": 0},
+    "b3_top_p": {"const": 1},
+    "b3_output_cap_tokens": {"const": 2048},
+    "b3_transport": {"const": "chat-only"},
+    "b3_tools_enabled": {"const": false},
+    "b3_post_dispatch_retry": {"const": false},
+    "bootstrap_resamples": {"const": 10000},
+    "bootstrap_seed": {"const": 20260804},
+    "minimum_paired_repositories": {"const": 20},
+    "minimum_power": {"const": 0.8},
+    "minimum_effect": {"const": 0.02},
+    "calibration_corpus_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "calibration_is_confirmatory": {"const": false}
+  }
+}

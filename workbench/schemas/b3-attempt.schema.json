@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinel.local/schemas/b3-attempt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["attempt_id", "run_id", "arm", "replication", "selection_manifest_digest", "unit_id", "profile", "status"],
+  "properties": {
+    "attempt_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "arm": {"const": "B3"},
+    "replication": {"type": "integer", "minimum": 1},
+    "selection_manifest_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "unit_id": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^\\S+$"},
+    "profile": {"type": "string"},
+    "status": {"enum": ["reserved", "dispatched", "succeeded", "failed", "unknown"]}
+  }
+}

@@ -196,3 +196,7 @@ documents here as real choices are accepted, then index them in this file.
   `llm_generated_corpus: true`, so capability and memorisation are **inseparable** and transfer to client
   code is **unproven**. The headline is now two-part: deterministic wins in gate roles; the LLM supplies
   what deterministic tooling cannot in the generative role.
+- [0028 Sentinel Workbench advisory authority and B0 policy](0028-sentinel-workbench-advisory-authority-and-b0-policy.md)
+  — establishes a separately named research product, explicit selected-redacted-source
+  cloud consent, no-inheritance boundary from the Charter, and a frozen
+  fail-closed B0 scanner policy before any real source scan.

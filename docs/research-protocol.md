@@ -702,3 +702,18 @@ Fisher figure is reported as a descriptive companion and explicitly not as infer
 **Why the rule matters more than the result.** Writing it afterwards would let any outcome be read as
 success — which is precisely how E50's unfalsifiable saturation claim happened. The rule above admits an
 outcome that would damage the project's main line of work, and that is the point.
+
+## 24. A case study is not a comparative corpus (2026-08-04)
+
+The local CMC EDU source tree is valuable for containment and operator-workflow
+testing, but it has no frozen vulnerability truth, no independently admitted
+comparison population and no non-confirmatory B3 calibration lineage. Calling
+scanner inventory a miss rate, recall, precision or AI effect would manufacture
+a denominator after observing the data.
+
+The Workbench therefore records CMC as `case-study-only`, with an auditable
+revision pair but `truth_status: not-admitted`, and blocks comparative rendering
+until an independent TypeScript corpus passes the catalog contract. The exact
+future B3 protocol is committed in
+[`workbench-b3-preregistration.md`](research/workbench-b3-preregistration.md);
+the code contract fails closed on any attempt to substitute CMC for it.

@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/workbench/Dockerfile
+    user: "10001:10001"
+    environment:
+      WORKBENCH_BIND: "0.0.0.0"
+      WORKBENCH_BROKER_ORIGIN: "${WORKBENCH_BROKER_ORIGIN:-}"
+    ports:
+      - "127.0.0.1:4173:4173"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [workbench-web]
+networks:
+  workbench-web:
+    internal: true

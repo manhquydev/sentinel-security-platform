@@ -19,6 +19,11 @@ case "$TRIVY_IMAGE" in *@sha256:*) : ;; *) echo "run-trivy: TRIVY_IMAGE must be 
 TARGET_SRC="${TARGET_SRC:-}"
 IMAGE="${IMAGE:-}"
 CACHE="${TRIVY_CACHE_DIR:-$HOME/.cache/trivy}"
+WORKBENCH_SOURCE_MOUNT="${WORKBENCH_SOURCE_MOUNT:-0}"
+case "$WORKBENCH_SOURCE_MOUNT" in
+  0|1) ;;
+  *) echo "run-trivy: WORKBENCH_SOURCE_MOUNT must be 0 or 1" >&2; exit 2 ;;
+esac
 
 mkdir -p "$CACHE" "$(dirname "$out")"
 
@@ -47,11 +52,17 @@ if [ -n "$TARGET_SRC" ]; then
   fi
   CONTACT="true"   # the source tree had content to scan
   # Scan a source tree. Mount read-only; Trivy needs no write access to it.
-  docker run --rm \
+  workbench_network=()
+  [ "$WORKBENCH_SOURCE_MOUNT" = 1 ] && workbench_network=(--network none)
+  docker run --rm "${workbench_network[@]}" \
     -v "$TARGET_SRC":/src:ro \
     -v "$CACHE":/root/.cache/ \
     "$TRIVY_IMAGE" filesystem "${common[@]}" /src >"$out"
 elif [ -n "$IMAGE" ]; then
+  if [ "$WORKBENCH_SOURCE_MOUNT" = 1 ]; then
+    echo "run-trivy: Workbench source scans do not permit image/Docker-socket mode" >&2
+    exit 2
+  fi
   CONTACT="true"   # a named image to read is itself the contact
   # Scan a container image via the host docker socket.
   docker run --rm \

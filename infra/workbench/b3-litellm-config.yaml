@@ -1,0 +1,25 @@
+# Dedicated, no-trace route for the Sentinel Workbench B3 experiment only.
+# It is intentionally not interoperable with infra/litellm/config.yaml.
+model_list:
+  - model_name: sentinel-workbench-b3
+    litellm_params:
+      model: os.environ/B3_MODEL
+      api_base: os.environ/B3_PROVIDER_BASE
+      api_key: os.environ/B3_PROVIDER_KEY
+      stream: false
+
+general_settings:
+  # The gateway uses an administrator key only to validate pre-provisioned
+  # virtual keys. The host dispatcher uses B3_LITELLM_VIRTUAL_KEY, never this
+  # administrator credential.
+  master_key: os.environ/B3_LITELLM_MASTER_KEY
+  database_url: os.environ/B3_DATABASE_URL
+  fail_closed_budget_enforcement: true
+
+litellm_settings:
+  request_timeout: 120
+  turn_off_message_logging: true
+  success_callback: []
+  failure_callback: []
+  redact_user_api_key_info: true
+  drop_params: true

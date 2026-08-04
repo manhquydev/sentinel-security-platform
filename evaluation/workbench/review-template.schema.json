@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,"required":["reviewer","run_digest","report_digest","approved"],"properties":{"reviewer":{"type":"string"},"run_digest":{"type":"string","pattern":"^[0-9a-f]{64}$"},"report_digest":{"type":"string","pattern":"^[0-9a-f]{64}$"},"approved":{"const":true}}}

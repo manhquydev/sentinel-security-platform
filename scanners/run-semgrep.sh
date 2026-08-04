@@ -44,6 +44,17 @@ if [ -z "$SEMGREP_BIN" ]; then
   SEMGREP_IMAGE="${SEMGREP_IMAGE:?SEMGREP_IMAGE unset — populate scanners/image-pins.env with a @sha256 digest (or set SEMGREP_BIN for a local binary)}"
   case "$SEMGREP_IMAGE" in *@sha256:*) : ;; *) echo "run-semgrep: SEMGREP_IMAGE must be @sha256-pinned" >&2; exit 4;; esac
 fi
+WORKBENCH_SOURCE_MOUNT="${WORKBENCH_SOURCE_MOUNT:-0}"
+case "$WORKBENCH_SOURCE_MOUNT" in
+  0|1) ;;
+  *) echo "run-semgrep: WORKBENCH_SOURCE_MOUNT must be 0 or 1" >&2; exit 2 ;;
+esac
+if [ "$WORKBENCH_SOURCE_MOUNT" = 1 ] && [ -n "$SEMGREP_BIN" ]; then
+  echo "run-semgrep: Workbench source scans require the pinned Docker path, not SEMGREP_BIN" >&2
+  exit 4
+fi
+workbench_network=()
+[ "$WORKBENCH_SOURCE_MOUNT" = 1 ] && workbench_network=(--network none)
 
 TARGET_SRC="${TARGET_SRC:?TARGET_SRC required (source tree to scan)}"
 TARGET_SRC_ABS="$(cd "$TARGET_SRC" 2>/dev/null && pwd)" \
@@ -89,7 +100,7 @@ else
   # Docker mode: -w /rules makes the container's cwd equal the mounted
   # ruleset directory, the same geometry as the local branch above (Docker's
   # -w is a guaranteed override of the image's own WORKDIR).
-  docker run --rm \
+  docker run --rm "${workbench_network[@]}" \
     -v "$TARGET_SRC_ABS":/src:ro \
     -v "$RULESET_DIR":/rules:ro \
     -w /rules \

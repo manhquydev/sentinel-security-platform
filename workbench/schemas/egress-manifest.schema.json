@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinel.local/schemas/egress-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "route_id", "request_digest", "canonical_unit_bytes", "dependency_context_bytes", "redaction_summary", "stream"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-egress-record/v1"},
+    "route_id": {"type": "string"},
+    "request_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_unit_bytes": {"type": "integer", "minimum": 1},
+    "dependency_context_bytes": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "redaction_summary": {"type": "object"},
+    "stream": {"const": false}
+  }
+}

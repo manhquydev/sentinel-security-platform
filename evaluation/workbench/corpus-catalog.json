@@ -1,0 +1,26 @@
+{
+  "schema_version": "sentinel-workbench-corpus-catalog/v1",
+  "comparative_status": "blocked-no-eligible-typescript-corpus",
+  "corpora": [
+    {
+      "corpus_id": "cmc-edu",
+      "admission_outcome": "case-study-only",
+      "base_snapshot_digest": "f51b0997a7fed4339e3c7089b1ce33dc1bad791709151b268bb8f03b4a9ad1f5",
+      "candidate_snapshot_digest": "3419a6b655d4d4a76d9da3481cdb31a860952cae8bdd2be606a15c2261e47e13",
+      "pair_digest": "6629f2efc935f75dbdede4dd459d6b57a07f50900c13f085f4fdef34379ec56e",
+      "base_revision": "5e30b4087c2212ca2cd6553fa5e1572eb3b97225",
+      "candidate_revision": "5a80833b0999e1331ed05124182c3b7a0a6aa85d",
+      "snapshot_method": "sha256(git ls-tree -r -z <revision>)",
+      "truth_manifest_digest": null,
+      "truth_status": "not-admitted",
+      "license": "maintainer-authorized-local-case-study",
+      "authorship": "local-maintainer-authorized",
+      "model_cutoff_contamination": "not-applicable-no-efficacy-claim",
+      "language_counts": {"TypeScript": 337, "TSX": 157, "JavaScript": 1},
+      "class_counts": {"inventory-only": 1},
+      "repository_count": 1,
+      "repository_power": {"paired_repository_count": 1, "minimum_required": 20, "status": "not-applicable-case-study-only"},
+      "notes": "An auditable local revision pair was inventoried on 2026-08-04. It has no frozen truth or eligible independent corpus status. Inventory/workflow evidence only; no truth-reconciled comparative scoring or AI efficacy claim is permitted."
+    }
+  ]
+}

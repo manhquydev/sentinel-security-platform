@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinel.local/schemas/selection-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "experiment_spec_digest", "pair_digest", "candidate_snapshot_id", "redaction_admitted", "analysis_mask_digest", "candidate_truth_denominator_digest", "unit_ids", "b3_input_frame", "b3_input_frame_digest", "b3_requests", "resource_vector", "arms"],
+  "properties": {
+    "schema_version": {"const": "sentinel-workbench-selection-manifest/v1"},
+    "experiment_spec_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "pair_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_snapshot_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "redaction_admitted": {"const": true},
+    "analysis_mask_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate_truth_denominator_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "unit_ids": {"type": "array", "minItems": 12, "items": {"type": "string"}},
+    "b3_input_frame": {"type": "array", "minItems": 12, "items": {"type": "object"}},
+    "b3_input_frame_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "b3_requests": {"type": "integer", "minimum": 36},
+    "resource_vector": {"type": "object"},
+    "arms": {"type": "object"}
+  }
+}
