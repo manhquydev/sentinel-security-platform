@@ -200,6 +200,7 @@ class CharterContractsTest(unittest.TestCase):
         cases = {
             "pii-card": b"pan=4532015112830366",
             "pii-phone": b"phone=+84 912 345 678",
+            "pii-phone-unlabelled": b'{"contact":"0123456789"}',
             "pii-email": b"alice@example.test",
             "pii-jwt": b"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
             "pii-uuid": b"550e8400-e29b-41d4-a716-446655440000",
@@ -207,7 +208,7 @@ class CharterContractsTest(unittest.TestCase):
         for reason, raw in cases.items():
             guarded = guard_response_preview(raw, ("application/json; charset=utf-8",))
             self.assertEqual(guarded.status, "quarantined")
-            self.assertEqual(guarded.quarantine, {reason: 1})
+            self.assertEqual(guarded.quarantine, {reason.removesuffix("-unlabelled"): 1})
             self.assertIsNone(guarded.preview)
 
     def test_same_base_liveliness_404_is_fatal_and_chat_uses_one_v1_suffix(self):

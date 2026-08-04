@@ -6,9 +6,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON="$ROOT/rag/.venv/bin/python"
 RUNS="${SENTINEL_RUNS_DIR:-$ROOT/.sentinel-runs}"
 PLAN_DIR="$ROOT/plans/260730-1018-sentinel-fresh-bounded-live-acceptance-closure"
-EXPECTED_KEY_SHA256="93d82ca0c299d3df6adaec268b0a76356989a5798fa9f2d489cec477e2ac3098"
-EXPECTED_KEY_PATH="${HOME:-}/.sentinel/charter-approval-manhquy.ed25519.pub.pem"
-EXPECTED_ADAPTER_PATH="${HOME:-}/.sentinel/charter-executor-adapter.sh"
 blocked=0
 
 usage() {
@@ -47,7 +44,8 @@ check_environment() {
   [[ "${TARGET_URL:-}" == http://127.0.0.1:13000 ]] && pass target-origin || block target-origin
   [[ -n "${SENTINEL_LITELLM_ALIAS:-}" ]] && pass model-alias-present || block model-alias-present
   [[ -n "${LITELLM_MASTER_KEY:-}" ]] && pass model-credential-present || block model-credential-present
-  [[ -z "${SENTINEL_CHARTER_EXECUTOR_SECRET:-}" ]] && pass controller-secret-boundary || block controller-secret-boundary
+  [[ -z "${SENTINEL_CHARTER_EXECUTOR_SECRET:-}" && -z "${SENTINEL_CHARTER_EXECUTOR_API_KEY:-}" ]] \
+    && pass controller-secret-boundary || block controller-secret-boundary
   if [[ -n "${SENTINEL_LITELLM_ALIAS:-}" ]] \
       && grep -Eq "^[[:space:]]*(-[[:space:]]*)?model_name:[[:space:]]*${SENTINEL_LITELLM_ALIAS}[[:space:]]*(#.*)?$" \
         "$ROOT/infra/litellm/config.yaml"; then
@@ -76,14 +74,15 @@ check_scanner_selector() {
 }
 
 check_operator_boundary() {
-  [[ -n "${HOME:-}" ]] && pass operator-home || { block operator-home; return; }
-  [[ "${SENTINEL_CHARTER_PUBLIC_KEY:-}" == "$EXPECTED_KEY_PATH" ]] \
-    && regular_not_writable_by_others "$EXPECTED_KEY_PATH" && pass approval-public-key-path \
+  local public_key="${SENTINEL_CHARTER_PUBLIC_KEY:-}"
+  local public_key_sha256="${SENTINEL_CHARTER_PUBLIC_KEY_SHA256:-}"
+  local adapter="${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}"
+  [[ -n "$public_key" ]] && regular_not_writable_by_others "$public_key" && pass approval-public-key-path \
     || block approval-public-key-path
-  [[ "${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}" == "$EXPECTED_ADAPTER_PATH" ]] \
-    && private_regular "$EXPECTED_ADAPTER_PATH" 700 && pass executor-adapter-boundary \
+  [[ -n "$adapter" ]] && private_regular "$adapter" 700 && pass executor-adapter-boundary \
     || block executor-adapter-boundary
-  PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" - "$EXPECTED_KEY_PATH" "$EXPECTED_KEY_SHA256" <<'PY' >/dev/null 2>&1 \
+  [[ "$public_key_sha256" =~ ^[0-9a-f]{64}$ ]] \
+    && PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" - "$public_key" "$public_key_sha256" <<'PY' >/dev/null 2>&1 \
     && pass approval-public-key-fingerprint || block approval-public-key-fingerprint
 import hashlib
 import os
@@ -148,10 +147,10 @@ check_topology() {
 }
 
 check_dispatch_artifacts() {
-  local run_id=$1 approval="${SENTINEL_CHARTER_APPROVAL_FILE:-}"
+  local run_id=$1 approval="${SENTINEL_CHARTER_APPROVAL_FILE:-}" public_key="${SENTINEL_CHARTER_PUBLIC_KEY:-}"
   [[ -n "$approval" ]] && private_regular "$approval" 600 \
     || { block signed-approval; return; }
-  PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" - "$RUNS" "$run_id" "$approval" "$EXPECTED_KEY_PATH" <<'PY' >/dev/null 2>&1 \
+  PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" - "$RUNS" "$run_id" "$approval" "$public_key" <<'PY' >/dev/null 2>&1 \
     && pass fresh-approved-request || block fresh-approved-request
 import json
 import os

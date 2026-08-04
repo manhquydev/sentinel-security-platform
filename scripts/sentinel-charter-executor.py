@@ -52,14 +52,16 @@ def main(argv=None) -> int:
         print(json.dumps({"refused": "invalid persisted request spec"}), file=sys.stderr)
         return 2
     secret = os.environ.get("SENTINEL_CHARTER_EXECUTOR_SECRET")
-    if not secret: print(json.dumps({"refused": "executor-secret-required"}), file=sys.stderr); return 2
+    api_key = os.environ.get("SENTINEL_CHARTER_EXECUTOR_API_KEY")
+    if not secret or not api_key:
+        print(json.dumps({"refused": "executor-credential-required"}), file=sys.stderr); return 2
     store = None
     try:
         store = RequestStore(args.state)
         approval = json.loads(Path(args.approval).read_text(encoding="utf-8"))
         public = serialization.load_pem_public_key(Path(args.public_key).read_bytes())
         result = execute(spec, approval, public_key=public, store=store,
-                         transport=RequestsTransport(), executor_secret=secret)
+                         transport=RequestsTransport(), executor_secret=secret, executor_api_key=api_key)
         print(json.dumps(result, sort_keys=True)); return 0
     except CharterRequestError as exc:
         print(json.dumps({"refused": str(exc)}), file=sys.stderr); return 2

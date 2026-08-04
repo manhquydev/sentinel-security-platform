@@ -17,7 +17,6 @@ name: sentinel-rag-store
 services:
   rag-db:
     image: pgvector/pgvector@sha256:1d533553fefe4f12e5d80c7b80622ba0c382abb5758856f52983d8789179f0fb
-    container_name: sentinel-rag-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: rag
@@ -29,7 +28,7 @@ services:
       - ./schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
     ports:
       # Published on loopback so the host-side rag/ venv (ingest + query + eval) can connect.
-      - "127.0.0.1:55434:5432"
+      - "127.0.0.1:${RAG_DB_PORT:-55434}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d rag"]
       interval: 10s

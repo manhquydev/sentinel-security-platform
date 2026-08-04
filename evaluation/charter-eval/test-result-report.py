@@ -62,20 +62,21 @@ def create_run(directory: Path) -> Path:
     contract = manifest_writer()
     manifest["identity"]["output_sha256"] = contract.output_digest(manifest)
     contract.write(run / "manifest.json", manifest)
-    request_spec = make_spec(run_id="current-run", method="GET", path="/rest/products/search", query="q=apple")
+    request_spec = make_spec(run_id="current-run", method="GET",
+                             path="/sentinel-charter/rest/products/search", query="q=apple")
     spec_doc = asdict(request_spec)
     spec_doc["headers"] = [list(pair) for pair in request_spec.headers]
     (run / "request-spec.json").write_text(json.dumps(spec_doc), encoding="utf-8")
     normalized = [
-        {"schema_version": "1.0", "finding_id": "finding:charter-nuclei-header", "source_ids": ["nuclei:one"],
-         "tool": "nuclei", "scanner": "DAST", "title": "Missing content security policy", "severity": "Low",
-         "location": "http://127.0.0.1:13000/rest/products", "evidence": ["template-id=header"]},
+        {"schema_version": "1.0", "finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21", "source_ids": ["nuclei:one"],
+         "tool": "nuclei", "scanner": "DAST", "title": "Charter HTTP missing security headers", "severity": "Info",
+         "location": "http://127.0.0.1:13000/", "evidence": ["template-id=header"]},
         {"schema_version": "1.0", "finding_id": "finding:charter-trivy-secret", "source_ids": ["trivy:one"],
          "tool": "trivy", "scanner": "SAST", "title": "Generic API key", "severity": "High",
          "location": "file:package-lock.json", "evidence": ["rule-id=generic-api-key"]},
     ]
-    report = [{"schema_version": "1.0", "finding_id": "finding:charter-nuclei-header", "name": "Missing content security policy",
-               "severity": "Low", "location": "http://127.0.0.1:13000/rest/products", "scanner_evidence": ["template-id=header"],
+    report = [{"schema_version": "1.0", "finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21", "name": "Charter HTTP missing security headers",
+               "severity": "Info", "location": "http://127.0.0.1:13000/", "scanner_evidence": ["template-id=header"],
                "explanation": "Scanner observed a missing header.", "remediation": "Set the documented header.",
                "confidence": "high", "source_ids": ["nuclei:one"], "knowledge_provenance": ["owasp:headers"]}]
     for name, records in (("normalized.jsonl", normalized), ("report.jsonl", report)):
@@ -201,7 +202,7 @@ class ResultReportTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             output = run / "charter-evaluation.json"
             value = json.loads(output.read_text())
-            self.assertEqual(value["confusion"], {"tp": 4, "fp": 0, "fn": 0, "tn": 1})
+            self.assertEqual(value["confusion"], {"tp": 3, "fp": 0, "fn": 1, "tn": 1})
             self.assertEqual(set(value["run_metrics"]), {"version", "duration_ms", "request_count", "warning_count", "approve_count", "reject_count", "llm_error_count", "application_error_count"})
             self.assertEqual(len(value["case_analysis"]), 5)
             self.assertTrue(value["limitations"] and value["improvement_proposals"])
@@ -347,7 +348,7 @@ class ResultReportTest(unittest.TestCase):
             value = json.loads((run / "charter-evaluation.json").read_text())
             self.assertEqual(value["confusion"], {"tp": 3, "fp": 1, "fn": 1, "tn": 0})
             outcomes = {entry["case_id"]: entry["outcome"] for entry in value["case_analysis"]}
-            self.assertEqual(outcomes["CE-02"], "FN")
+            self.assertEqual(outcomes["CE-02"], "TP")
             self.assertEqual(outcomes["CE-04"], "FP")
 
     def test_vacuous_review_or_malformed_metrics_are_rejected(self):

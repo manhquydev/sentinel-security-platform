@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
-from .charter_requests import RequestSpec, make_spec
+from .charter_requests import RequestSpec, make_spec, safe_request_case
 from .charter_contracts import ReportFinding
 
 @dataclass(frozen=True)
@@ -14,11 +14,13 @@ class RequestProposal:
     path: str = ""
     query: str = ""
     body: str = ""
+    case_id: str = ""
     reason: str = ""
     def to_spec(self, run_id: str) -> RequestSpec:
         if not self.available: raise ValueError("proposal unavailable")
-        headers={"Content-Type":"application/json"} if self.method=="POST" else {}
-        return make_spec(run_id=run_id,method=self.method,path=self.path,query=self.query,body=self.body,headers=headers)
+        case = safe_request_case(self.case_id)
+        return make_spec(run_id=run_id, method=case.method, path=case.path, query=case.query,
+                         body=case.body, headers=dict(case.headers), case_id=case.case_id)
 
 def propose(findings: Iterable[object], *, request_kind: str="get") -> RequestProposal:
     rows=list(findings); ids=[]
@@ -30,13 +32,16 @@ def propose(findings: Iterable[object], *, request_kind: str="get") -> RequestPr
             return RequestProposal(False, (), reason="unsupported evidence")
         ids.append(row.finding_id)
     if not ids:return RequestProposal(False,(),reason="no grounded findings")
-    if request_kind=="get":
-        return RequestProposal(available=True, finding_ids=tuple(ids), method="GET",
-                               path="/rest/products/search", query="q=apple")
-    if request_kind=="post":
-        return RequestProposal(available=True, finding_ids=tuple(ids), method="POST",
-                               path="/rest/basket", body="{}")
-    return RequestProposal(False,tuple(ids),reason="unsupported fixed policy")
+    aliases = {"get": "get-baseline", "post": "post-empty-object"}
+    case_id = aliases.get(request_kind, request_kind)
+    try:
+        case = safe_request_case(case_id)
+    except Exception:
+        return RequestProposal(False, tuple(ids), reason="unsupported fixed policy")
+    return RequestProposal(
+        available=True, finding_ids=tuple(ids), case_id=case.case_id, method=case.method,
+        path=case.path, query=case.query, body=case.body,
+    )
 
 
 def propose_report_jsonl(path: str | Path, *, request_kind: str = "get") -> RequestProposal:

@@ -15,6 +15,14 @@ _ATTEMPTS = (
     ("out-of-scope-tool", re.compile(r"\b(?:run|call|invoke|execute)\b.{0,80}\b(?:shell|curl|wget|browser|tool|command)\b", re.I | re.S)),
 )
 
+# The terminal evaluator rejects any unlabelled phone-shaped sequence from a
+# persisted response projection. The executor must make the same conservative
+# decision before a preview is persisted; otherwise a target response can pass
+# the capture guard yet make final publication impossible. This detector is
+# intentionally confined to the response-preview boundary, not the shared PII
+# scrubber used for scanner evidence, where bare numeric identifiers are useful.
+_UNLABELLED_PHONE_SHAPE = re.compile(r"\b(?:\+?\d[ .()\-]?){8,15}\b")
+
 
 @dataclass(frozen=True)
 class ResponseGuardResult:
@@ -104,11 +112,14 @@ def guard_response_preview(body: bytes, content_types: tuple[str, ...]) -> Respo
         text = body.decode("utf-8", "strict")
     except UnicodeDecodeError:
         return ResponsePreview("quarantined", {"decode-invalid-utf8": 1})
-    _, pii_findings = redact(text)
+    scrubbed, pii_findings = redact(text)
     reasons: dict[str, int] = {}
     for finding in pii_findings:
         reason = f"pii-{finding.cls}"
         reasons[reason] = reasons.get(reason, 0) + finding.count
+    unlabelled_phone_count = len(_UNLABELLED_PHONE_SHAPE.findall(scrubbed or ""))
+    if unlabelled_phone_count:
+        reasons["pii-phone"] = reasons.get("pii-phone", 0) + unlabelled_phone_count
     for name, pattern in _ATTEMPTS:
         if pattern.search(text):
             reasons[name] = reasons.get(name, 0) + 1

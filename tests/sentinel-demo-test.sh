@@ -46,6 +46,7 @@ KONG_PROVISION_KEY=test-provision
 AGENT_RECON_SECRET=test-recon
 PROBE_ADMIN_SECRET=test-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=test-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=test-executor-api-key
 EOF
 export ENV_FILE="$tmp/kong.env"
 export SENTINEL_NUCLEI_IMAGE_DIGEST="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -69,7 +70,7 @@ from pathlib import Path
 from agent.charter_requests import make_spec
 
 run_dir = Path(sys.argv[1])
-spec = make_spec(run_id=run_dir.name, method="GET", path="/rest/products/search", query="q=apple")
+spec = make_spec(run_id=run_dir.name, method="GET", path="/sentinel-charter/rest/products/search", query="q=apple")
 payload = asdict(spec)
 payload["headers"] = [list(pair) for pair in spec.headers]
 destination = run_dir / "request-spec.json"
@@ -197,6 +198,8 @@ open(sys.argv[2], "wb").write(private.public_key().public_bytes(
     serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
 PY
 chmod 600 "$operator_private" "$operator_public"
+export SENTINEL_CHARTER_PUBLIC_KEY_SHA256
+SENTINEL_CHARTER_PUBLIC_KEY_SHA256="$(openssl pkey -pubin -in "$operator_public" -outform DER | sha256sum | awk '{print $1}')"
 
 executor_adapter="$tmp/executor-adapter"
 cat >"$executor_adapter" <<'EOF'
@@ -227,7 +230,7 @@ else:
                       "receipt_digest": "a" * 64, "preview":"ok", "preview_truncated":False}, separators=(",", ":")))
 PY
 EOF
-chmod +x "$executor_adapter"
+chmod 700 "$executor_adapter"
 
 expect_status(){
   local wanted=$1 actual; shift
@@ -311,7 +314,7 @@ from agent.charter_requests import make_spec
 
 run_dir, key_path, approval_path = map(Path, sys.argv[1:4])
 decision = sys.argv[4]
-spec = make_spec(run_id=run_dir.name, method="GET", path="/rest/products/search", query="q=apple")
+spec = make_spec(run_id=run_dir.name, method="GET", path="/sentinel-charter/rest/products/search", query="q=apple")
 document = asdict(spec)
 document["headers"] = [list(pair) for pair in spec.headers]
 (run_dir / "request-spec.json").write_text(json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
@@ -930,6 +933,7 @@ KONG_PROVISION_KEY=test-provision-mismatched
 AGENT_RECON_SECRET=test-recon
 PROBE_ADMIN_SECRET=test-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=test-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=test-executor-api-key
 EOF
 original_rendered="$tmp/kong-original-identity.yml"
 mismatched_rendered="$tmp/kong-mismatched-identity.yml"
@@ -1052,7 +1056,7 @@ finally:
 PY
 exit 1
 EOF
-chmod +x "$unknown_executor_adapter"
+chmod 700 "$unknown_executor_adapter"
 
 audit_fake_bin="$tmp/audit-fake-bin"; mkdir "$audit_fake_bin"; chmod 700 "$audit_fake_bin"
 cat >"$audit_fake_bin/docker" <<'EOF'

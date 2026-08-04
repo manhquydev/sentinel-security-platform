@@ -18,12 +18,71 @@ POLICY_DIGEST = hashlib.sha256(POLICY.encode()).hexdigest()
 TIMEOUT_SECONDS = 5
 RESPONSE_CAP = 64 * 1024
 EXECUTOR_CONSUMER = "sentinel-charter-executor"
+CHARTER_PREFIX = "/sentinel-charter"
+CHARTER_SEARCH_PATH = CHARTER_PREFIX + "/rest/products/search"
+CHARTER_BASKET_PATH = CHARTER_PREFIX + "/rest/basket"
 GET_PURPOSE = "Inspect the fixed public product-search response for q=apple; it does not modify target state."
 POST_PURPOSE = "Exercise the fixed unauthenticated empty-basket request; it is expected to return 4xx before a target-state change."
 
 
 class CharterRequestError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class SafeRequestCase:
+    """One reviewable charter request shape; callers cannot supply arbitrary input."""
+
+    case_id: str
+    method: str
+    path: str
+    query: str
+    body: str
+    headers: tuple[tuple[str, str], ...]
+    purpose: str
+
+
+SAFE_REQUEST_CASES = {
+    "get-baseline": SafeRequestCase(
+        "get-baseline", "GET", CHARTER_SEARCH_PATH, "q=apple", "", (),
+        GET_PURPOSE,
+    ),
+    "get-empty": SafeRequestCase(
+        "get-empty", "GET", CHARTER_SEARCH_PATH, "q=", "", (),
+        "Inspect the fixed public product-search response with an empty query value; it does not modify target state.",
+    ),
+    "get-special-characters": SafeRequestCase(
+        "get-special-characters", "GET", CHARTER_SEARCH_PATH,
+        "q=sentinel%20%21%40%23%24%25%5E%26%2A%28%29", "",
+        (("Accept", "application/json"),),
+        "Inspect the fixed public product-search response with a predeclared percent-encoded special-character query; it does not modify target state.",
+    ),
+    "get-long-string": SafeRequestCase(
+        "get-long-string", "GET", CHARTER_SEARCH_PATH, "q=" + "a" * 256, "", (),
+        "Inspect the fixed public product-search response with a predeclared 256-character query value; it does not modify target state.",
+    ),
+    "post-empty-object": SafeRequestCase(
+        "post-empty-object", "POST", CHARTER_BASKET_PATH, "", "{}",
+        (("Content-Type", "application/json"),),
+        POST_PURPOSE,
+    ),
+    "post-wrong-type": SafeRequestCase(
+        "post-wrong-type", "POST", CHARTER_BASKET_PATH, "", '{"quantity":"not-a-number"}',
+        (("Content-Type", "application/json"),),
+        "Exercise the fixed unauthenticated basket request with a predeclared wrong-type JSON value; it is expected to return 4xx before a target-state change.",
+    ),
+}
+
+
+def safe_request_case_ids() -> tuple[str, ...]:
+    return tuple(SAFE_REQUEST_CASES)
+
+
+def safe_request_case(case_id: str) -> SafeRequestCase:
+    try:
+        return SAFE_REQUEST_CASES[case_id]
+    except KeyError as exc:
+        raise CharterRequestError("request outside immutable charter policy") from exc
 
 
 @dataclass(frozen=True)
@@ -49,6 +108,7 @@ def assert_exact_origin(value: str | None = None) -> str:
 class RequestSpec:
     request_id: str
     run_id: str
+    case_id: str
     method: str
     path: str
     query: str
@@ -64,13 +124,13 @@ class RequestSpec:
 
 
 def _purpose_for(spec: RequestSpec) -> str | None:
-    if (spec.method == "GET" and spec.path == "/rest/products/search" and spec.query == "q=apple"
-            and spec.body == "" and spec.headers == ()):
-        return GET_PURPOSE
-    if (spec.method == "POST" and spec.path == "/rest/basket" and spec.query == "" and spec.body == "{}"
-            and spec.headers == (("Content-Type", "application/json"),)):
-        return POST_PURPOSE
-    return None
+    case = SAFE_REQUEST_CASES.get(spec.case_id)
+    if case is None:
+        return None
+    if (spec.method, spec.path, spec.query, spec.body, spec.headers) != (
+            case.method, case.path, case.query, case.body, case.headers):
+        return None
+    return case.purpose
 
 
 def validate_spec(spec: RequestSpec) -> None:
@@ -85,16 +145,23 @@ def validate_spec(spec: RequestSpec) -> None:
 
 
 def make_spec(*, run_id: str, method: str, path: str, query: str = "", body: str = "",
-              headers: dict[str, str] | None = None, ttl: int = 300) -> RequestSpec:
+              headers: dict[str, str] | None = None, ttl: int = 300,
+              case_id: str | None = None) -> RequestSpec:
     headers = headers or {}
-    provisional = RequestSpec(str(uuid.uuid4()), run_id, method.upper(), path, query, body,
-                              tuple(sorted(headers.items())), assert_exact_origin(), POLICY_DIGEST,
-                              time.time() + ttl, "")
+    normalized_headers = tuple(sorted(headers.items()))
+    if case_id is None:
+        case_id = next((
+            value.case_id for value in SAFE_REQUEST_CASES.values()
+            if (method.upper(), path, query, body, normalized_headers) == (
+                value.method, value.path, value.query, value.body, value.headers)
+        ), "")
+    provisional = RequestSpec(str(uuid.uuid4()), run_id, case_id, method.upper(), path, query, body,
+                              normalized_headers, assert_exact_origin(), POLICY_DIGEST, time.time() + ttl, "")
     purpose = _purpose_for(provisional)
     if not purpose:
         raise CharterRequestError("request outside immutable charter policy")
-    spec = RequestSpec(provisional.request_id, provisional.run_id, provisional.method, provisional.path,
-                       provisional.query, provisional.body, provisional.headers, provisional.origin,
+    spec = RequestSpec(provisional.request_id, provisional.run_id, provisional.case_id, provisional.method,
+                       provisional.path, provisional.query, provisional.body, provisional.headers, provisional.origin,
                        provisional.policy_digest, provisional.expires_at, purpose)
     validate_spec(spec)
     return spec
@@ -140,21 +207,63 @@ class RequestStore:
         # tiny reservation transaction safely across independently-started executors.
         self.db = sqlite3.connect(path, timeout=10, isolation_level=None)
         self.db.execute("PRAGMA busy_timeout=10000")
+        expected_tables = {
+            "requests": (
+                ("id", "TEXT", 0, 1), ("run", "TEXT", 1, 0), ("method", "TEXT", 1, 0),
+                ("path", "TEXT", 1, 0), ("query", "TEXT", 1, 0), ("state", "TEXT", 1, 0),
+                ("ts", "REAL", 1, 0), ("spec_digest", "TEXT", 1, 0), ("receipt_digest", "TEXT", 0, 0),
+            ),
+            "decisions": (
+                ("nonce", "TEXT", 0, 1), ("request_id", "TEXT", 1, 0),
+                ("decision", "TEXT", 1, 0), ("ts", "REAL", 1, 0),
+            ),
+            "revocations": (
+                ("request_id", "TEXT", 0, 1), ("nonce", "TEXT", 1, 0), ("ts", "REAL", 1, 0),
+            ),
+            "events": (("id", "TEXT", 1, 0), ("state", "TEXT", 1, 0), ("ts", "REAL", 1, 0)),
+        }
         for attempt in range(20):
             try:
-                self.db.executescript("""
-        CREATE TABLE IF NOT EXISTS requests(
-          id TEXT PRIMARY KEY, run TEXT NOT NULL, method TEXT NOT NULL, path TEXT NOT NULL,
-          state TEXT NOT NULL, ts REAL NOT NULL, spec_digest TEXT NOT NULL, receipt_digest TEXT);
-        CREATE TABLE IF NOT EXISTS decisions(nonce TEXT PRIMARY KEY, request_id TEXT NOT NULL,
-          decision TEXT NOT NULL, ts REAL NOT NULL);
-        CREATE TABLE IF NOT EXISTS revocations(request_id TEXT PRIMARY KEY, nonce TEXT NOT NULL, ts REAL NOT NULL);
-        CREATE TABLE IF NOT EXISTS events(id TEXT NOT NULL, state TEXT NOT NULL, ts REAL NOT NULL);
-        """)
-                # Recovery itself mutates state.  Keep it in the same retry envelope as
-                # schema creation; otherwise a concurrent opener can lose the lock here
-                # and be misclassified as a quota refusal before it reaches reservation.
                 self.db.execute("BEGIN IMMEDIATE")
+                existing_tables = {
+                    row[0] for row in self.db.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                    )
+                }
+                if existing_tables:
+                    if existing_tables != set(expected_tables):
+                        raise CharterRequestError(
+                            "executor state store schema is incompatible; use a new private state file"
+                    )
+                    for table, expected_columns in expected_tables.items():
+                        columns = tuple(
+                            (row[1], row[2], row[3], row[5])
+                            for row in self.db.execute(f"PRAGMA table_info({table})")
+                        )
+                        if columns != expected_columns:
+                            raise CharterRequestError(
+                                "executor state store schema is incompatible; use a new private state file"
+                            )
+                else:
+                    # Keep first initialization atomic. A concurrent opener waits for
+                    # this transaction and sees either no tables or the complete layout.
+                    self.db.execute("""
+                        CREATE TABLE requests(
+                          id TEXT PRIMARY KEY, run TEXT NOT NULL, method TEXT NOT NULL, path TEXT NOT NULL,
+                          query TEXT NOT NULL, state TEXT NOT NULL, ts REAL NOT NULL, spec_digest TEXT NOT NULL,
+                          receipt_digest TEXT)
+                    """)
+                    self.db.execute("""
+                        CREATE TABLE decisions(
+                          nonce TEXT PRIMARY KEY, request_id TEXT NOT NULL, decision TEXT NOT NULL, ts REAL NOT NULL)
+                    """)
+                    self.db.execute("""
+                        CREATE TABLE revocations(
+                          request_id TEXT PRIMARY KEY, nonce TEXT NOT NULL, ts REAL NOT NULL)
+                    """)
+                    self.db.execute("CREATE TABLE events(id TEXT NOT NULL, state TEXT NOT NULL, ts REAL NOT NULL)")
+                # Recovery itself mutates state. Keep it in the same transaction as
+                # schema inspection/creation, so every opener sees a complete state.
                 now = time.time()
                 prepared = self.db.execute("SELECT id FROM requests WHERE state='prepared'").fetchall()
                 dispatched = self.db.execute("SELECT id FROM requests WHERE state='dispatched'").fetchall()
@@ -165,12 +274,24 @@ class RequestStore:
                                     + [(row[0], "unknown", now) for row in dispatched])
                 self.db.execute("COMMIT")
                 break
+            except CharterRequestError:
+                if self.db.in_transaction:
+                    self.db.execute("ROLLBACK")
+                self.db.close()
+                raise
             except sqlite3.OperationalError as exc:
                 if self.db.in_transaction:
                     self.db.execute("ROLLBACK")
                 if "locked" not in str(exc).lower() or attempt == 19:
                     self.db.close(); raise CharterRequestError("executor state store unavailable") from exc
                 time.sleep(0.02 * (attempt + 1))
+            except sqlite3.DatabaseError as exc:
+                if self.db.in_transaction:
+                    self.db.execute("ROLLBACK")
+                self.db.close()
+                raise CharterRequestError(
+                    "executor state store schema is incompatible; use a new private state file"
+                ) from exc
 
     def _transition(self, request_id: str, state: str, receipt: str | None = None) -> None:
         allowed = {"prepared": {"dispatched", "terminal"}, "dispatched": {"unknown"}}
@@ -212,8 +333,9 @@ class RequestStore:
                     "SELECT 1 FROM requests WHERE run=? AND method='POST'", (spec.run_id,)).fetchone():
                 raise CharterRequestError("POST quota exhausted")
             digest = hashlib.sha256(spec.canonical()).hexdigest()
-            self.db.execute("INSERT INTO requests VALUES(?,?,?,?,?,?,?,NULL)",
-                            (spec.request_id, spec.run_id, spec.method, spec.path, "prepared", now, digest))
+            self.db.execute("INSERT INTO requests VALUES(?,?,?,?,?,?,?,?,NULL)",
+                            (spec.request_id, spec.run_id, spec.method, spec.path, spec.query,
+                             "prepared", now, digest))
             self.db.execute("INSERT INTO events VALUES(?,?,?)", (spec.request_id, "prepared", now))
             self.db.execute("COMMIT")
         except Exception:
@@ -295,10 +417,10 @@ class RequestStore:
                 or type(recovery_started_at_ms) is not int
                 or recovery_started_at_ms < created_at_ms):
             raise CharterRequestError("invalid audit recovery window")
-        row = self.db.execute("SELECT state,method,path FROM requests WHERE id=?", (request_id,)).fetchone()
+        row = self.db.execute("SELECT state,method,path,query FROM requests WHERE id=?", (request_id,)).fetchone()
         if not row or row[0] != "unknown": raise CharterRequestError("request is not reconcilable")
-        expected_query = "q=apple" if (row[1], row[2]) == ("GET", "/rest/products/search") else ""
-        if (row[1], row[2]) not in (("GET", "/rest/products/search"), ("POST", "/rest/basket")):
+        expected_query = row[3]
+        if (row[1], row[2]) not in (("GET", CHARTER_SEARCH_PATH), ("POST", CHARTER_BASKET_PATH)):
             raise CharterRequestError("request is not reconcilable")
         if not all(isinstance(record, dict) for record in audit_records):
             raise CharterRequestError("invalid audit evidence")
@@ -390,10 +512,12 @@ def _response_receipt(request_id: str, status: object, response: bytes) -> str:
 
 
 def execute(spec: RequestSpec, approval, *, public_key, store: RequestStore, transport: Transport,
-            executor_secret: str) -> dict:
+            executor_secret: str, executor_api_key: str) -> dict:
     assert_exact_origin(); validate_spec(spec)
     from .charter_approval import CharterApproval
     if isinstance(approval, dict): approval = CharterApproval(**approval)
+    if not isinstance(executor_api_key, str) or not executor_api_key:
+        raise CharterRequestError("executor API key required")
     # Historical observed rows represent the old non-atomic gap.  They may only be
     # resolved by an authorized recovery process, never by re-running the request.
     store.refuse_observed(spec.request_id)
@@ -410,6 +534,7 @@ def execute(spec: RequestSpec, approval, *, public_key, store: RequestStore, tra
     try:
         observation = transport.request(ORIGIN + spec.path + (("?" + spec.query) if spec.query else ""), spec.method,
                                         dict(spec.headers) | {"Authorization": "Bearer " + token,
+                                                              "X-Sentinel-API-Key": executor_api_key,
                                                               "X-Sentinel-Request-ID": spec.request_id},
                                         spec.body, TIMEOUT_SECONDS, RESPONSE_CAP)
     except Exception as exc:

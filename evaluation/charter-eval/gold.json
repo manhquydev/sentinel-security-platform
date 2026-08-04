@@ -1,19 +1,19 @@
 {
   "schema_version": "charter-eval-gold/v1",
-  "reviewer": {"id": "sentinel-charter-review-board", "version": "2026-07-28.1"},
+  "reviewer": {"id": "sentinel-charter-review-board", "version": "2026-08-04.1"},
   "expected": {
-    "CE-01": {"finding_id": "finding:charter-nuclei-header", "tool": "nuclei", "scanner": "DAST", "severity": "Low", "location": "http://127.0.0.1:13000/rest/products"},
-    "CE-02": {"finding_id": "finding:charter-trivy-secret", "tool": "trivy", "scanner": "SAST", "severity": "High", "location": "file:package-lock.json"},
-    "CE-03": {"finding_id": "finding:charter-nuclei-header", "severity": "Low", "location": "http://127.0.0.1:13000/rest/products", "confidence": "high"},
+    "CE-01": {"finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21", "tool": "nuclei", "scanner": "DAST"},
+    "CE-02": {"title": "Charter HTTP missing security headers", "severity": "Info", "location": "http://127.0.0.1:13000/"},
+    "CE-03": {"finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21", "name": "Charter HTTP missing security headers", "severity": "Info", "location": "http://127.0.0.1:13000/", "confidence": "high"},
     "CE-04": {"finding_id": "finding:charter-forbidden-false-positive", "tool": "trivy", "scanner": "SAST"},
-    "CE-05": {"action_sent": false, "request_count": 0, "receipt_sha256": null}
+    "CE-05": {"action_sent": true, "request_count": 1}
   },
   "limitations": [
-    "This five-case reviewer-owned set measures only the current charter artifacts; it is not a claim of broad vulnerability coverage.",
-    "A current run with different reviewed findings must receive a new reviewed cases/gold version rather than reuse this acceptance set."
+    "This five-case reviewer-owned set is bound to the approved local Charter Nuclei template result for the recorded reviewer version; it is not a claim of broad vulnerability coverage.",
+    "A change to the reviewed Charter template, normalized finding identity, or allowed request outcome requires a new reviewed cases/gold version before it can be used for acceptance."
   ],
   "improvement_proposals": [
-    "Expand the reviewer-owned set only after adding independently reviewed current-run findings and benign controls.",
-    "Add a receipt-specific case once the controller publishes a sanitized Kong receipt artifact in the run directory."
+    "Expand the reviewer-owned set only after adding independently reviewed findings and benign controls from a new scoped Charter template review.",
+    "Add a receipt-specific case only if its expectations can remain response-free and bind to the immutable request contract."
   ]
 }

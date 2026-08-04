@@ -91,6 +91,7 @@ KONG_PROVISION_KEY=dummy-provision
 AGENT_RECON_SECRET=dummy-recon
 PROBE_ADMIN_SECRET=dummy-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=dummy-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=dummy-executor-api-key
 EOF
 if ENV_FILE="$render_tmp/env" OUT="$render_tmp/kong.rendered.yml" bash "$RENDER" >/dev/null 2>"$render_tmp/render.err" \
   && ! grep -qE '\$\{[A-Z_]' "$render_tmp/kong.rendered.yml" \
@@ -98,7 +99,7 @@ if ENV_FILE="$render_tmp/env" OUT="$render_tmp/kong.rendered.yml" bash "$RENDER"
   && ! grep -q 'dummy-executor' "$render_tmp/render.err"; then
   ok "Kong renderer substitutes executor secret without unresolved placeholders or echo"
 else bad "Kong renderer did not safely substitute executor secret"; fi
-sed -i '/SENTINEL_CHARTER_EXECUTOR_SECRET/d' "$render_tmp/env"
+sed -i '/SENTINEL_CHARTER_EXECUTOR_API_KEY/d' "$render_tmp/env"
 if ! ENV_FILE="$render_tmp/env" OUT="$render_tmp/missing.yml" bash "$RENDER" >"$render_tmp/missing.out" 2>"$render_tmp/missing.err" \
   && grep -q 'required Kong configuration is invalid' "$render_tmp/missing.err" \
   && ! grep -q 'dummy-' "$render_tmp/missing.err"; then
@@ -111,6 +112,7 @@ KONG_PROVISION_KEY=\$(touch $render_marker)
 AGENT_RECON_SECRET=dummy-recon
 PROBE_ADMIN_SECRET=dummy-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=dummy-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=dummy-executor-api-key
 EOF
 if ENV_FILE="$render_tmp/env" OUT="$render_tmp/literal.yml" bash "$RENDER" >/dev/null 2>"$render_tmp/literal.err" \
   && [ ! -e "$render_marker" ]; then
@@ -124,6 +126,67 @@ if grep -E 'client_secret:|provision_key:' "$TMPL" | grep -vqE '\$\{[A-Z_]+\}'; 
 else
   ok "committed template holds only placeholder secrets"
 fi
+
+keyauth_report="$(python3 - "$TMPL" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+plugins = d.get("plugins") or []
+api_key_functions = {
+    p.get("route"): p.get("config", {}).get("access")
+    for p in plugins
+    if p.get("name") == "pre-function"
+}
+routes = {
+    route["name"]: route
+    for service in d.get("services") or []
+    for route in service.get("routes") or []
+}
+route_shapes = all(
+    routes.get(name, {}).get("paths") == [gateway_path] and routes[name].get("strip_path") is False
+    for name, gateway_path in {
+        "charter-search": "/sentinel-charter/rest/products/search",
+        "charter-basket-write": "/sentinel-charter/rest/basket",
+    }.items()
+)
+transformers = {
+    plugin.get("route"): plugin.get("config", {})
+    for plugin in plugins
+    if plugin.get("name") == "request-transformer"
+}
+expected_transformers = {
+    "charter-search": {
+        "remove": {"headers": ["X-Sentinel-API-Key"]},
+        "replace": {"uri": "/rest/products/search"},
+    },
+    "charter-basket-write": {
+        "remove": {"headers": ["X-Sentinel-API-Key"]},
+        "replace": {"uri": "/rest/basket"},
+    },
+}
+expected_api_key_function = (
+    'local key = kong.request.get_header("X-Sentinel-API-Key")\n'
+    'if type(key) ~= "string" or key ~= "${SENTINEL_CHARTER_EXECUTOR_API_KEY}" then\n'
+    '  return kong.response.exit(401)\n'
+    'end\n'
+    'ngx.req.clear_header("X-Sentinel-API-Key")\n'
+)
+print(
+    "ROUTES " + ",".join(sorted(route for route, access in api_key_functions.items()
+                                if access == [expected_api_key_function]))
+)
+print("PREFIX " + ("yes" if route_shapes else "no"))
+print("TRANSFORM " + ("yes" if transformers == expected_transformers else "no"))
+PY
+)"
+grep -Fxq 'ROUTES charter-basket-write,charter-search' <<<"$keyauth_report" \
+  && ok "charter routes require and pre-log redact the dedicated API-key credential" \
+  || bad "charter API-key route policy is missing or unsafe"
+grep -Fxq 'PREFIX yes' <<<"$keyauth_report" \
+  && ok "charter executor routes use a distinct exact gateway prefix" \
+  || bad "charter executor route prefix is missing or not exact"
+grep -Fxq 'TRANSFORM yes' <<<"$keyauth_report" \
+  && ok "charter routes redact the API key and restore exact upstream paths" \
+  || bad "charter route redaction or upstream path transform is missing"
 
 # hide_credentials strips the token before proxy and before the audit serializer.
 grep -q 'hide_credentials: true' "$TMPL" && ok "oauth2 hide_credentials is true" \
@@ -149,7 +212,7 @@ acl_report="$(python3 - "$TMPL" <<'PY'
 import sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 acl_routes = {p.get("route") for p in (d.get("plugins") or []) if p.get("name") == "acl"}
-resource = ["public-read", "charter-search", "authenticated-read", "admin-read", "basket-write"]
+resource = ["public-read", "charter-search", "authenticated-read", "admin-read", "basket-write", "charter-basket-write"]
 for r in resource:
     print(("GUARDED " if r in acl_routes else "UNGUARDED ") + r)
 print("TOKENACL " + ("yes" if "oauth-token" in acl_routes else "no"))
@@ -200,7 +263,8 @@ elif [ "$(reach)" = "000" ]; then
   msg="gateway not reachable at $BASE"
   if [ "$REQUIRE_KONG" = "1" ]; then bad "$msg (REQUIRE_KONG=1)"; else skip "$msg"; fi
 else
-  if [ -z "${AGENT_RECON_SECRET:-}" ] || [ -z "${PROBE_ADMIN_SECRET:-}" ] || [ -z "${KONG_PROVISION_KEY:-}" ]; then
+  if [ -z "${AGENT_RECON_SECRET:-}" ] || [ -z "${PROBE_ADMIN_SECRET:-}" ] || [ -z "${KONG_PROVISION_KEY:-}" ] \
+      || [ -z "${SENTINEL_CHARTER_EXECUTOR_SECRET:-}" ] || [ -z "${SENTINEL_CHARTER_EXECUTOR_API_KEY:-}" ]; then
     if [ "$REQUIRE_KONG" = "1" ]; then bad "injected live-test secrets are unavailable"; else skip "injected live-test secrets are unavailable"; fi
   else
     # Values must be injected by a secret manager or caller; never source the
@@ -212,9 +276,11 @@ else
 
     RT="$(mint agent-recon "${AGENT_RECON_SECRET:-}")"
     PT="$(mint probe-admin "${PROBE_ADMIN_SECRET:-}")"
+    ET="$(mint sentinel-charter-executor "${SENTINEL_CHARTER_EXECUTOR_SECRET:-}")"
 
     [ -n "$RT" ] && ok "agent-recon mints a client-credentials token" || bad "agent-recon could not mint a token"
     [ -n "$PT" ] && ok "probe-admin mints a client-credentials token" || bad "probe-admin could not mint a token"
+    [ -n "$ET" ] && ok "charter executor mints its dedicated client-credentials token" || bad "charter executor could not mint a token"
 
     # The core boundary: read-scoped agent reaches read, is refused admin and writes.
     c="$(code "$BASE/rest/products/search?q=apple" -H "Authorization: Bearer $RT")"
@@ -225,6 +291,13 @@ else
 
     c="$(code -X POST "$BASE/rest/basket" -H "Authorization: Bearer $RT")"
     [ "$c" = "403" ] && ok "agent-recon -> POST /rest/basket = 403" || bad "agent-recon state-change = $c (want 403)"
+
+    c="$(code "$BASE/sentinel-charter/rest/products/search?q=apple" -H "Authorization: Bearer $ET")"
+    [ "$c" = "401" ] && ok "charter executor without API key -> 401" || bad "charter executor OAuth-only request = $c (want 401)"
+    c="$(code "$BASE/sentinel-charter/rest/products/search?q=apple" -H "X-Sentinel-API-Key: ${SENTINEL_CHARTER_EXECUTOR_API_KEY:-}")"
+    [ "$c" = "401" ] && ok "charter executor API-key-only request -> 401" || bad "charter executor API-key-only request = $c (want 401)"
+    c="$(code "$BASE/sentinel-charter/rest/products/search?q=apple" -H "Authorization: Bearer $ET" -H "X-Sentinel-API-Key: ${SENTINEL_CHARTER_EXECUTOR_API_KEY:-}")"
+    [ "$c" = "200" ] && ok "charter executor OAuth plus API key -> GET search = 200" || bad "charter executor combined credentials = $c (want 200)"
 
     # Positive control: the admin route is NOT simply dead — probe-admin reaches it. This
     # is what makes agent-recon's 403 a genuine authorization decision, not a broken route.
@@ -262,6 +335,7 @@ else
       # serialize (it logs headers + metadata, not bodies), so it is not asserted here; the
       # absence of body logging is the control that keeps it out.
       if [ -n "${AGENT_RECON_SECRET:-}" ] && grep -qF "$AGENT_RECON_SECRET" <<<"$LOG"; then bad "a client secret appears in the audit stream"; else ok "no client secret in the audit stream"; fi
+      if [ -n "${SENTINEL_CHARTER_EXECUTOR_API_KEY:-}" ] && grep -qF "$SENTINEL_CHARTER_EXECUTOR_API_KEY" <<<"$LOG"; then bad "an API key appears in the audit stream"; else ok "no API key in the audit stream"; fi
     else
       skip "sentinel-kong container not found for audit-log inspection"
     fi

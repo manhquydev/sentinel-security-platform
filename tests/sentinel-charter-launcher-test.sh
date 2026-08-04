@@ -46,7 +46,7 @@ import os
 import sys
 
 content = sys.stdin.read()
-for name in ("KONG_PROVISION_KEY", "AGENT_RECON_SECRET", "PROBE_ADMIN_SECRET", "SENTINEL_CHARTER_EXECUTOR_SECRET"):
+for name in ("KONG_PROVISION_KEY", "AGENT_RECON_SECRET", "PROBE_ADMIN_SECRET", "SENTINEL_CHARTER_EXECUTOR_SECRET", "SENTINEL_CHARTER_EXECUTOR_API_KEY"):
     content = content.replace("${" + name + "}", os.environ[name])
 sys.stdout.write(content)
 PY
@@ -60,6 +60,7 @@ KONG_PROVISION_KEY=redacted-provision
 AGENT_RECON_SECRET=redacted-recon
 PROBE_ADMIN_SECRET=redacted-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=redacted-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=redacted-executor-api-key
 EOF
 }
 
@@ -90,6 +91,7 @@ KONG_PROVISION_KEY=redacted-provision
 AGENT_RECON_SECRET=redacted-recon
 PROBE_ADMIN_SECRET=redacted-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=redacted-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=redacted-executor-api-key
 EOF
 if run_launcher >"$tmp/out" 2>&1; then bad 'shell-looking ADC passed'; else
   [ ! -e "$marker" ] && [ ! -s "$log" ] && ok 'env content is not evaluated' || bad 'env content was evaluated or reached Docker'

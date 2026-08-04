@@ -42,9 +42,14 @@ report preserves scanner facts rather than inferring new ones.
 - Analysis: a provenance-bound agent (`agent/recon.py`) with a stored system
   prompt (`agent/prompts/charter-system-prompt.md`); the live structured-output
   report path runs on Vertex AI Gemini Flash Lite via the LiteLLM gateway.
-- Gateway: Kong fronts the app; each agent identity gets a short-TTL OAuth2 token
-  and a fail-closed ACL. The only permitted write proof is an approved fixed
-  `POST /rest/basket {}`; an expected 4xx is the non-mutating receipt.
+- Gateway: Kong fronts the app; identities use short-TTL OAuth2 plus fail-closed
+  ACL. The charter executor additionally presents a dedicated API key on two
+  exact `/sentinel-charter/...` routes; the key is removed before OAuth denial,
+  upstream proxying, and audit logging.
+  It accepts only six compiled safe cases: baseline, empty, special-character,
+  and 256-character product-search queries, plus empty-object and wrong-type
+  basket POST bodies. Every POST needs approval and must produce a 4xx
+  non-mutation receipt.
 - Guardrails: prompt-injection quarantine, human approve/reject, PII redaction,
   and gateway secret-redaction on all model egress.
 - Topology startup: from the repository root, `bash scripts/sentinel-charter-up.sh`
@@ -60,8 +65,8 @@ report preserves scanner facts rather than inferring new ones.
 
 ## Limitations — Hạn chế
 
-- No real exploitation and no data mutation; the executor proposes, and the one
-  live POST is a fixed safe body with an expected 4xx.
+- No real exploitation and no data mutation; the executor proposes only catalog
+  cases, and every live POST has an expected 4xx.
 - The live target response is persisted only as a digest, never raw, and is not
   fed back to the LLM.
 - Structured-output quality depends on the provider; aliases that return prose

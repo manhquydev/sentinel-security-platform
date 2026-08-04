@@ -85,7 +85,7 @@ threading.Event().wait()
 PY
 listener_pid=$!
 
-python3 - "$tmp/home/.sentinel/charter-approval-manhquy.ed25519.pub.pem" "$tmp/home/private.pem" <<'PY'
+python3 - "$tmp/home/.sentinel/operator-approval.pub.pem" "$tmp/home/private.pem" <<'PY'
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from pathlib import Path
@@ -95,7 +95,20 @@ key = Ed25519PrivateKey.generate()
 private.write_bytes(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
 public.write_bytes(key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
 PY
-chmod 600 "$tmp/home/private.pem" "$tmp/home/.sentinel/charter-approval-manhquy.ed25519.pub.pem"
+chmod 600 "$tmp/home/private.pem" "$tmp/home/.sentinel/operator-approval.pub.pem"
+
+python3 - "$tmp/home/.sentinel/different-operator-approval.pub.pem" <<'PY'
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from pathlib import Path
+
+Path(__import__("sys").argv[1]).write_bytes(
+    Ed25519PrivateKey.generate().public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+)
+PY
+chmod 600 "$tmp/home/.sentinel/different-operator-approval.pub.pem"
 
 cat >"$tmp/home/.sentinel/charter-executor-adapter.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -104,8 +117,7 @@ exit 99
 EOF
 chmod 700 "$tmp/home/.sentinel/charter-executor-adapter.sh"
 
-expected_key_sha="$(openssl pkey -pubin -in "$tmp/home/.sentinel/charter-approval-manhquy.ed25519.pub.pem" -outform DER | sha256sum | awk '{print $1}')"
-sed -i "s/EXPECTED_KEY_SHA256=\"[0-9a-f]*\"/EXPECTED_KEY_SHA256=\"$expected_key_sha\"/" "$fixture/scripts/sentinel-live-preflight.sh"
+expected_key_sha="$(openssl pkey -pubin -in "$tmp/home/.sentinel/operator-approval.pub.pem" -outform DER | sha256sum | awk '{print $1}')"
 
 create_approved_run() {
   local id=$1 spec_ttl=${2:-300} approval_ttl=${3:-300}
@@ -123,7 +135,7 @@ from agent.charter_requests import make_spec
 
 run, run_id, private_path, approval_path, spec_ttl, approval_ttl = sys.argv[1:]
 run, run_id, private_path, approval_path = map(Path, (run, run_id, private_path, approval_path))
-spec = make_spec(run_id=str(run_id), method="GET", path="/rest/products/search", query="q=apple", ttl=int(spec_ttl))
+spec = make_spec(run_id=str(run_id), method="GET", path="/sentinel-charter/rest/products/search", query="q=apple", ttl=int(spec_ttl))
 payload = asdict(spec)
 payload["headers"] = [list(pair) for pair in spec.headers]
 (run / "request-spec.json").write_text(json.dumps(payload), encoding="utf-8")
@@ -135,11 +147,14 @@ PY
 
 run_preflight() {
   local scanner_digest="${FIXTURE_SENTINEL_NUCLEI_IMAGE_DIGEST-$(printf 'a%.0s' {1..64})}"
+  local public_key_sha256="${FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY_SHA256-$expected_key_sha}"
+  local public_key="${FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY-$tmp/home/.sentinel/operator-approval.pub.pem}"
   HOME="$tmp/home" PATH="$tmp/bin:$PATH" DOCKER_LOG="$tmp/docker.log" ADAPTER_MARKER="$tmp/adapter-called" \
     SENTINEL_RUNS_DIR="$tmp/runs" TARGET_URL="http://127.0.0.1:13000" \
     SENTINEL_LITELLM_ALIAS="sast-charter-vertex-gemini-flash-lite" LITELLM_MASTER_KEY="redacted-master" \
     SENTINEL_NUCLEI_IMAGE_DIGEST="$scanner_digest" \
-    SENTINEL_CHARTER_PUBLIC_KEY="$tmp/home/.sentinel/charter-approval-manhquy.ed25519.pub.pem" \
+    SENTINEL_CHARTER_PUBLIC_KEY="$public_key" \
+    SENTINEL_CHARTER_PUBLIC_KEY_SHA256="$public_key_sha256" \
     SENTINEL_CHARTER_EXECUTOR_ADAPTER="$tmp/home/.sentinel/charter-executor-adapter.sh" \
     SENTINEL_CHARTER_APPROVAL_FILE="$tmp/approval.json" \
     PYTHONPATH="$ROOT" "$fixture/scripts/sentinel-live-preflight.sh" "$@"
@@ -228,6 +243,12 @@ if SENTINEL_CHARTER_EXECUTOR_SECRET=unexpected run_preflight base >"$tmp/out" 2>
 else
   grep -Fxq 'BLOCK controller-secret-boundary' "$tmp/out" && ok 'controller executor secret blocks readiness' || bad 'controller secret refusal missing'
 fi
+if SENTINEL_CHARTER_EXECUTOR_API_KEY=unexpected run_preflight base >"$tmp/out" 2>&1; then
+  bad 'controller accepted executor API key in its environment'
+else
+  grep -Fxq 'BLOCK controller-secret-boundary' "$tmp/out" && ok 'controller refuses executor API key in its environment' \
+    || bad 'controller API-key boundary refusal missing'
+fi
 
 chmod 755 "$tmp/home/.sentinel/charter-executor-adapter.sh"
 if run_preflight base >"$tmp/out" 2>&1; then
@@ -302,11 +323,70 @@ else
   grep -Fxq 'BLOCK fresh-approved-request' "$tmp/out" && ok 'expired signed approval blocks before dispatch' || bad 'expired approval refusal missing'
 fi
 
-sed -i 's/EXPECTED_KEY_SHA256="[0-9a-f]*"/EXPECTED_KEY_SHA256="0000000000000000000000000000000000000000000000000000000000000000"/' "$fixture/scripts/sentinel-live-preflight.sh"
-if run_preflight base >"$tmp/out" 2>&1; then
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY_SHA256="$(printf '0%.0s' {1..64})" run_preflight base >"$tmp/out" 2>&1; then
   bad 'wrong public-key fingerprint passed readiness'
 else
   grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'wrong public-key fingerprint blocks readiness' || bad 'public-key fingerprint refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'wrong public-key fingerprint invokes no adapter' || bad 'wrong public-key fingerprint invoked adapter'
+fi
+
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY_SHA256= run_preflight base >"$tmp/out" 2>&1; then
+  bad 'missing public-key fingerprint passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'missing public-key fingerprint blocks readiness' || bad 'missing public-key fingerprint refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'missing public-key fingerprint invokes no adapter' || bad 'missing public-key fingerprint invoked adapter'
+fi
+
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY_SHA256="${expected_key_sha^^}" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'uppercase public-key fingerprint passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'uppercase public-key fingerprint blocks readiness' || bad 'uppercase public-key fingerprint refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'uppercase public-key fingerprint invokes no adapter' || bad 'uppercase public-key fingerprint invoked adapter'
+fi
+
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY_SHA256=not-a-sha256-pin run_preflight base >"$tmp/out" 2>&1; then
+  bad 'malformed public-key fingerprint passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'malformed public-key fingerprint blocks readiness' || bad 'malformed public-key fingerprint refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'malformed public-key fingerprint invokes no adapter' || bad 'malformed public-key fingerprint invoked adapter'
+fi
+
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY="$tmp/home/.sentinel/different-operator-approval.pub.pem" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'substituted public key passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'substituted public key blocks readiness' || bad 'substituted public-key refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'substituted public key invokes no adapter' || bad 'substituted public key invoked adapter'
+fi
+
+chmod 660 "$tmp/home/.sentinel/operator-approval.pub.pem"
+if run_preflight base >"$tmp/out" 2>&1; then
+  bad 'group-or-other-writable public key passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-path' "$tmp/out" && ok 'group-or-other-writable public key blocks readiness' || bad 'public-key mode refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'group-or-other-writable public key invokes no adapter' || bad 'group-or-other-writable public key invoked adapter'
+fi
+chmod 600 "$tmp/home/.sentinel/operator-approval.pub.pem"
+
+cp "$tmp/home/.sentinel/operator-approval.pub.pem" "$tmp/home/.sentinel/operator-approval-real.pub.pem"
+rm "$tmp/home/.sentinel/operator-approval.pub.pem"
+ln -s "$tmp/home/.sentinel/operator-approval-real.pub.pem" "$tmp/home/.sentinel/operator-approval.pub.pem"
+if run_preflight base >"$tmp/out" 2>&1; then
+  bad 'public-key symlink passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-path' "$tmp/out" && ok 'public-key symlink blocks readiness' || bad 'public-key symlink refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'public-key symlink invokes no adapter' || bad 'public-key symlink invoked adapter'
+fi
+rm "$tmp/home/.sentinel/operator-approval.pub.pem"
+mv "$tmp/home/.sentinel/operator-approval-real.pub.pem" "$tmp/home/.sentinel/operator-approval.pub.pem"
+
+printf '%s\n' 'not a public key' >"$tmp/home/.sentinel/not-an-ed25519-key.pem"
+chmod 600 "$tmp/home/.sentinel/not-an-ed25519-key.pem"
+if FIXTURE_SENTINEL_CHARTER_PUBLIC_KEY="$tmp/home/.sentinel/not-an-ed25519-key.pem" run_preflight base >"$tmp/out" 2>&1; then
+  bad 'non-Ed25519 public material passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-fingerprint' "$tmp/out" && ok 'non-Ed25519 public material blocks readiness' || bad 'non-Ed25519 refusal missing'
+  ! grep -Fq 'not a public key' "$tmp/out" && ok 'non-Ed25519 material is not disclosed' || bad 'non-Ed25519 material leaked'
+  [ ! -e "$tmp/adapter-called" ] && ok 'non-Ed25519 material invokes no adapter' || bad 'non-Ed25519 material invoked adapter'
 fi
 
 printf '%s passed, %s failed\n' "$pass" "$fail"

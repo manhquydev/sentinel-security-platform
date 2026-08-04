@@ -34,7 +34,7 @@ adc_path=""
 value_from_env_file VERTEXAI_ADC_PATH adc_path || fail "private environment prerequisites are invalid"
 [ -f "$adc_path" ] && [ -r "$adc_path" ] || fail "private environment prerequisites are invalid"
 
-for required in KONG_PROVISION_KEY AGENT_RECON_SECRET PROBE_ADMIN_SECRET SENTINEL_CHARTER_EXECUTOR_SECRET; do
+for required in KONG_PROVISION_KEY AGENT_RECON_SECRET PROBE_ADMIN_SECRET SENTINEL_CHARTER_EXECUTOR_SECRET SENTINEL_CHARTER_EXECUTOR_API_KEY; do
   private_value=""
   value_from_env_file "$required" private_value || fail "private environment prerequisites are invalid"
 done

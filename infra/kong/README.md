@@ -16,6 +16,14 @@ frames the split).
 - **Authentication** — OAuth2 client-credentials. Each agent is a Kong Consumer with an
   `oauth2` credential (`client_id` + secret). It mints a 5-minute bearer token. No shared
   static token; the identity is per-agent and expiring.
+- **Charter testing-tool key** — the two dedicated Charter gateway paths require
+  `X-Sentinel-API-Key` as well as the executor's OAuth2 identity. A high-priority
+  route guard verifies and removes the header before OAuth, proxying, or audit
+  logging; this also covers requests that fail OAuth. The exact executor paths
+  are `/sentinel-charter/rest/products/search` and
+  `/sentinel-charter/rest/basket`; Kong rewrites them to Juice Shop's normal
+  `/rest/...` paths only after both credentials and ACLs pass. Other agent
+  identities cannot use this key.
 - **Authorization** — Kong **ACL groups per route**, fail-closed. A Consumer reaches a route
   only if it belongs to that route's `allow` group. This is the whole enforcement surface.
 - **The ACL group names are the scoping vocabulary**, mirroring the Week-1 attack-surface
@@ -39,7 +47,7 @@ deliberately privileged consumer used only as the test's positive control — it
 admin route is live, so `agent-recon`'s 403 is a real authorization decision, not a dead route.
 
 `sentinel-charter-executor` is a separate local operator consumer with `charter-read` and
-`write-basket`. Its `SENTINEL_CHARTER_EXECUTOR_SECRET` belongs only to
+`write-basket`. Its OAuth secret and `SENTINEL_CHARTER_EXECUTOR_API_KEY` belong only to
 `scripts/sentinel-charter-executor.py`, never an agent or supervisor. Kong authenticates that
 trusted executor and enforces routes; the executor's SQLite state plus an Ed25519 human-decision
 envelope enforce approval. Kong is not an approval-capability service.
@@ -48,8 +56,8 @@ envelope enforce approval. Kong is not an approval-capability service.
 
 Prerequisites: the Juice Shop harness up (it owns the `juice-net` bridge Kong joins), Docker
 Compose, and Kong secrets set in the git-ignored `infra/.env` (see `infra/.env.example`:
-`KONG_DB_USER/PASSWORD`, `KONG_PROVISION_KEY`, `AGENT_RECON_SECRET`, `PROBE_ADMIN_SECRET` —
-`openssl rand -hex 32` for each secret).
+`KONG_DB_USER/PASSWORD`, `KONG_PROVISION_KEY`, `AGENT_RECON_SECRET`, `PROBE_ADMIN_SECRET`,
+`SENTINEL_CHARTER_EXECUTOR_SECRET`, and `SENTINEL_CHARTER_EXECUTOR_API_KEY`).
 
 ```bash
 # 1. Juice Shop harness (publishes 127.0.0.1:13000, creates juice-net)

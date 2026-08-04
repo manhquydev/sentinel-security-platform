@@ -82,8 +82,9 @@ The local charter path requires the literal Juice Shop target, a reviewed pinned
 image (or the explicit documented local-binary override), `SENTINEL_LITELLM_ALIAS`, and a
 credentialed LiteLLM route. After it writes the fixed request spec, it exits `75` while
 waiting for a human-signed approval envelope. Resume with both
-`SENTINEL_CHARTER_APPROVAL_FILE` and `SENTINEL_CHARTER_PUBLIC_KEY`; the envelope must bind
-that exact run-local spec. The controller never reads the executor OAuth secret. An executable
+`SENTINEL_CHARTER_APPROVAL_FILE` and `SENTINEL_CHARTER_PUBLIC_KEY`; preflight additionally
+requires the explicit DER-SHA-256 pin in `SENTINEL_CHARTER_PUBLIC_KEY_SHA256`. The envelope must bind
+that exact run-local spec. The controller never reads the executor OAuth secret or API key. An executable
 `SENTINEL_CHARTER_EXECUTOR_ADAPTER` owns that secret in its separate context, invokes
 `sentinel-charter-executor.py`, and returns only its sanitized receipt result. Without the
 adapter the request stage fails closed.

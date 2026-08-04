@@ -59,6 +59,7 @@ services:
       # public, read-only  -> group read-public
       - name: public-read
         paths:
+          - /rest/products/search
           - /.well-known/security.txt
           - /api-docs/swagger.json
           - /metrics
@@ -67,11 +68,13 @@ services:
           - GET
         strip_path: false
 
-      # The charter search route is separated so the executor never receives the broad
-      # read-public group. Query equality is enforced by the immutable executor RequestSpec.
+      # The charter routes use a dedicated gateway-only prefix. Route-level request
+      # transformers restore the exact Juice Shop path before proxying, while
+      # agent-recon retains its independent public-read route. Query/body equality
+      # is enforced by the immutable executor RequestSpec.
       - name: charter-search
         paths:
-          - /rest/products/search
+          - /sentinel-charter/rest/products/search
         methods:
           - GET
         strip_path: false
@@ -96,6 +99,16 @@ services:
       - name: basket-write
         paths:
           - /rest/basket
+        methods:
+          - POST
+        strip_path: false
+
+      # Charter-only write path. The route is distinct from the agent-facing
+      # basket route, accepts the dedicated credential, and restores the exact
+      # app path with a transformer.
+      - name: charter-basket-write
+        paths:
+          - /sentinel-charter/rest/basket
         methods:
           - POST
         strip_path: false
@@ -127,6 +140,47 @@ services:
 # Per-route authorization. ACL is attached to the RESOURCE routes only, never to
 # the token route. allow-lists are fail-closed: a consumer not in the group gets 403.
 plugins:
+  # The charter executor uses an API key in addition to its OAuth2 client-credentials
+  # identity. OAuth2 executes before Kong's stock key-auth plugin; a failed OAuth request
+  # would therefore reach file-log before key-auth can hide its header. The high-priority
+  # pre-function verifies and immediately removes this route-only header first, so it is
+  # absent from every later denial, proxy, and audit stage.
+  - name: pre-function
+    route: charter-search
+    config:
+      access:
+        - |
+          local key = kong.request.get_header("X-Sentinel-API-Key")
+          if type(key) ~= "string" or key ~= "${SENTINEL_CHARTER_EXECUTOR_API_KEY}" then
+            return kong.response.exit(401)
+          end
+          ngx.req.clear_header("X-Sentinel-API-Key")
+  - name: request-transformer
+    route: charter-search
+    config:
+      remove:
+        headers:
+          - X-Sentinel-API-Key
+      replace:
+        uri: /rest/products/search
+  - name: pre-function
+    route: charter-basket-write
+    config:
+      access:
+        - |
+          local key = kong.request.get_header("X-Sentinel-API-Key")
+          if type(key) ~= "string" or key ~= "${SENTINEL_CHARTER_EXECUTOR_API_KEY}" then
+            return kong.response.exit(401)
+          end
+          ngx.req.clear_header("X-Sentinel-API-Key")
+  - name: request-transformer
+    route: charter-basket-write
+    config:
+      remove:
+        headers:
+          - X-Sentinel-API-Key
+      replace:
+        uri: /rest/basket
   - name: acl
     route: public-read
     config:
@@ -154,6 +208,12 @@ plugins:
       hide_groups_header: true
   - name: acl
     route: basket-write
+    config:
+      allow:
+        - write-basket
+      hide_groups_header: true
+  - name: acl
+    route: charter-basket-write
     config:
       allow:
         - write-basket

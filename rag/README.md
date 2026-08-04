@@ -59,6 +59,9 @@ command above before diagnosing an RAG regression.
 python3 -m venv rag/.venv && rag/.venv/bin/pip install -r rag/requirements.txt
 
 # 2. store (needs RAG_DB_USER / RAG_DB_PASSWORD in infra/.env — see infra/.env.example)
+# A fresh, empty rag-db volume is initialized from the tracked
+# infra/rag-store/schema.sql source; this is not a migration command.
+# RAG_DB_PORT defaults to 55434 and may be changed for an isolated local project.
 docker compose --env-file infra/.env -f infra/rag-store/docker-compose.yml up -d
 ```
 

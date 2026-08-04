@@ -35,6 +35,7 @@ KONG_PROVISION_KEY=test-provision
 AGENT_RECON_SECRET=test-recon
 PROBE_ADMIN_SECRET=test-probe
 SENTINEL_CHARTER_EXECUTOR_SECRET=test-executor
+SENTINEL_CHARTER_EXECUTOR_API_KEY=test-executor-api-key
 EOF
 chmod 600 "$fixture_env"
 
@@ -106,7 +107,7 @@ from pathlib import Path
 from agent.charter_requests import make_spec
 
 run_dir, mode = Path(sys.argv[1]), sys.argv[2]
-spec = make_spec(run_id=run_dir.name, method="GET", path="/rest/products/search", query="q=apple", ttl=-1 if mode == "expired" else 300)
+spec = make_spec(run_id=run_dir.name, method="GET", path="/sentinel-charter/rest/products/search", query="q=apple", ttl=-1 if mode == "expired" else 300)
 document = asdict(spec)
 document["headers"] = [list(pair) for pair in spec.headers]
 fd = os.open(run_dir / "request-spec.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

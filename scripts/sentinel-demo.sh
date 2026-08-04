@@ -248,6 +248,47 @@ raise SystemExit(0 if spec.expires_at > time.time() else 1)
 PY
 }
 
+operator_boundary_is_safe() {
+  local public_key="${SENTINEL_CHARTER_PUBLIC_KEY:-}"
+  local public_key_sha256="${SENTINEL_CHARTER_PUBLIC_KEY_SHA256:-}"
+  local adapter="${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}"
+  [[ "$public_key_sha256" =~ ^[0-9a-f]{64}$ ]] || return 1
+  "$CHARTER_PYTHON" - "$public_key" "$public_key_sha256" "$adapter" <<'PY'
+import hashlib
+import os
+import stat
+import sys
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+public_path, expected, adapter_path = sys.argv[1:]
+
+def safe_regular(path, *, exact_mode=None, forbidden_mode=0o022, read_content=False):
+    item = os.lstat(path)
+    if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode) or item.st_uid != os.geteuid():
+        raise SystemExit(1)
+    mode = stat.S_IMODE(item.st_mode)
+    if (exact_mode is not None and mode != exact_mode) or (exact_mode is None and mode & forbidden_mode):
+        raise SystemExit(1)
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        if not os.path.samestat(item, os.fstat(fd)):
+            raise SystemExit(1)
+        if read_content:
+            return b"".join(iter(lambda: os.read(fd, 65536), b""))
+    finally:
+        os.close(fd)
+
+data = safe_regular(public_path, read_content=True)
+safe_regular(adapter_path, exact_mode=0o700)
+key = serialization.load_pem_public_key(data)
+if not isinstance(key, Ed25519PublicKey):
+    raise SystemExit(1)
+der = key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+raise SystemExit(0 if hashlib.sha256(der).hexdigest() == expected else 1)
+PY
+}
+
 write_import_intent() { # phase1 run-id; exclusive, safe public facts only
   local phase=$1 run_id=$2
   python3 - "$phase/import-intent.json" "$phase/nuclei.sanitized.jsonl" "$run_id" <<'PY'
@@ -398,9 +439,10 @@ import json, os, sys
 from dataclasses import asdict
 from pathlib import Path
 from agent.charter_proposal import propose_report_jsonl
+from agent.charter_requests import safe_request_case_ids
 
 run_dir, request_kind = Path(sys.argv[1]), sys.argv[2]
-if request_kind not in {"get", "post"}:
+if request_kind not in {"get", "post", *safe_request_case_ids()}:
     raise SystemExit("unsupported charter request kind")
 try:
     proposal = propose_report_jsonl(run_dir / "report.jsonl", request_kind=request_kind)
@@ -462,7 +504,7 @@ PY
       # This shell is the agent/controller boundary.  It must not inherit, inspect,
       # or forward the OAuth secret; a separately provisioned executor adapter owns
       # that credential and invokes sentinel-charter-executor.py in its own context.
-      [[ -n "${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}" && -x "${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}" && -n "${SENTINEL_CHARTER_PUBLIC_KEY:-}" ]] || return 1
+      operator_boundary_is_safe || return 1
       [[ -f "$dir/request-spec.json" && -f "$dir/approval.json" && -f "$SENTINEL_CHARTER_PUBLIC_KEY" ]] || return 1
       "$CHARTER_PYTHON" - "$dir" <<'PY' || return 1
 import json, sys

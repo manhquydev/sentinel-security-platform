@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Human-facing signer; it displays the immutable request before signing any decision."""
-import argparse, json
+import argparse
+import json
+import os
 from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from agent.charter_requests import CharterRequestError, load_spec
@@ -19,4 +21,20 @@ print(f"Request {spec.request_id}\n  {spec.method} {spec.path}{'?' + spec.query 
       f"  immutable digest: {digest(spec)}")
 decision = args.decision or ("approve" if input("Approve this fixed request? [y/N] ").lower() in {"y", "yes"} else "reject")
 key = serialization.load_pem_private_key(Path(args.key_file).read_bytes(), password=None)
-Path(args.out).write_text(json.dumps(sign(spec, key, decision=decision).__dict__, sort_keys=True) + "\n")
+payload = (json.dumps(sign(spec, key, decision=decision).__dict__, sort_keys=True) + "\n").encode("utf-8")
+try:
+    fd = os.open(args.out, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+except OSError:
+    raise SystemExit(2) from None
+try:
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "wb") as output:
+        output.write(payload)
+        output.flush()
+        os.fsync(output.fileno())
+except OSError:
+    try:
+        os.close(fd)
+    except OSError:
+        pass
+    raise SystemExit(2) from None

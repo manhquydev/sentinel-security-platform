@@ -4,7 +4,7 @@ import pytest
 
 from agent.charter_proposal import propose, propose_report_jsonl
 from agent.charter_contracts import ReportFinding
-from agent.charter_requests import GET_PURPOSE, POST_PURPOSE
+from agent.charter_requests import CHARTER_BASKET_PATH, CHARTER_SEARCH_PATH, GET_PURPOSE, POST_PURPOSE
 
 
 def report(finding_id: str = "finding:header") -> ReportFinding:
@@ -28,9 +28,9 @@ def test_unavailable():
 
 
 def test_fixed():
- p=propose([report('finding:f1')]); s=p.to_spec('r'); assert (s.method,s.path,s.query,s.purpose)==('GET','/rest/products/search','q=apple',GET_PURPOSE)
+ p=propose([report('finding:f1')]); s=p.to_spec('r'); assert (s.method,s.path,s.query,s.purpose)==('GET',CHARTER_SEARCH_PATH,'q=apple',GET_PURPOSE)
  post = propose([report('finding:f2')], request_kind='post').to_spec('r')
- assert (post.method, post.path, post.body, post.purpose) == ('POST', '/rest/basket', '{}', POST_PURPOSE)
+ assert (post.method, post.path, post.body, post.purpose) == ('POST', CHARTER_BASKET_PATH, '{}', POST_PURPOSE)
 
 
 def test_no_arbitrary_or_pii():
@@ -42,7 +42,7 @@ def test_report_jsonl_is_validated_before_the_fixed_request_is_proposed(tmp_path
     path.write_text(report("finding:from-jsonl").model_dump_json() + "\n", encoding="utf-8")
     proposal = propose_report_jsonl(path)
     assert proposal.available
-    assert proposal.to_spec("run").path == "/rest/products/search"
+    assert proposal.to_spec("run").path == CHARTER_SEARCH_PATH
 
     path.write_text(json.dumps({**report().model_dump(), "grounded": True}) + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="invalid grounded report"):

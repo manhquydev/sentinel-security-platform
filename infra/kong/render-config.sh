@@ -37,7 +37,7 @@ env_value() {
   printf -v "$output" '%s' "$parsed_value"
 }
 
-for v in KONG_PROVISION_KEY AGENT_RECON_SECRET PROBE_ADMIN_SECRET SENTINEL_CHARTER_EXECUTOR_SECRET; do
+for v in KONG_PROVISION_KEY AGENT_RECON_SECRET PROBE_ADMIN_SECRET SENTINEL_CHARTER_EXECUTOR_SECRET SENTINEL_CHARTER_EXECUTOR_API_KEY; do
   value=""
   env_value "$v" value || { echo "FATAL: required Kong configuration is invalid" >&2; exit 2; }
   export "$v=$value"
@@ -49,7 +49,7 @@ done
 umask 077
 
 # Explicit allowlist: substitute exactly these names, nothing else.
-envsubst '${KONG_PROVISION_KEY} ${AGENT_RECON_SECRET} ${PROBE_ADMIN_SECRET} ${SENTINEL_CHARTER_EXECUTOR_SECRET}' \
+envsubst '${KONG_PROVISION_KEY} ${AGENT_RECON_SECRET} ${PROBE_ADMIN_SECRET} ${SENTINEL_CHARTER_EXECUTOR_SECRET} ${SENTINEL_CHARTER_EXECUTOR_API_KEY}' \
   < "$TMPL" > "$OUT"
 
 # A leftover ${UPPER_VAR} means a secret placeholder went unresolved — fail rather

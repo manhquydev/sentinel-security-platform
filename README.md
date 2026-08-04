@@ -20,19 +20,21 @@ autonomous exploitation tool or a product for external targets.
   detected PII and prompt-injection content are quarantined. The executable
   owners are [scanners](scanners/README.md),
   [Kong](infra/kong/README.md), and the [charter scripts](scripts/sentinel-demo.sh).
-- **Allowed active requests:** the executor's compiled policy permits exactly two
-  fixed requests through Kong — a read-only `GET /rest/products/search?q=apple` and
-  the single state-changing write proof `POST /rest/basket` with `{}`, whose
-  expected `4xx` is the non-mutating receipt. Real exploitation, successful data
-  mutation, and generic Internet-target support are out of scope.
+- **Allowed active requests:** the executor accepts only a compiled catalog of
+  six predeclared cases through Kong: baseline, empty, special-character, and
+  256-character product-search queries; plus empty-object and wrong-type basket
+  POST bodies. It never accepts arbitrary paths, headers, or payloads. The POST
+  cases are signed-HITL and must return `4xx`, proving a non-mutating boundary.
+  Real exploitation, successful data mutation, and generic Internet-target
+  support are out of scope.
 - **Not six-week requirements:** the historical Week 7–12 research and optional
   extensions (multi-agent work, GraphRAG, MCP/A2A, vLLM/GPU, and LLM-as-a-Judge)
   are not current completion requirements.
 
 ## Current maturity
 
-The active [charter delivery record](docs/plans/active/2026-07-28-sentinel-six-week-charter-delivery.md)
-is the evidence and gap ledger.
+The completed [charter closure record](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md)
+is the current evidence ledger.
 
 - Offline component, controller, recovery, evaluation, and no-secret CI-handoff
   contracts have been exercised; those are **not** live-service or full-charter
@@ -41,15 +43,13 @@ is the evidence and gap ledger.
   reached scan, no-close import, grounded analysis, and a fixed request proposal.
   That run stopped at approval. Its R5 request artifact is expired and invalid
   under the current v2 policy, so it is non-resumable and cannot be backfilled.
-- A fresh bounded v2 approved-request dispatch plus correlated authoritative Kong
-  audit proof for both compiled-in requests is recorded in
-  [the live-acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md).
-  That closes the narrow authority-to-dispatch sub-gate only; no completed
-  terminal full-controller live demonstration is claimed yet. Offline
-  audit-only recovery is available for a durable `unknown` outcome, but it
-  cannot establish live acceptance. The remaining closure gap is one terminal
-  production-command run with normal final-report and current-run evaluation
-  evidence.
+- A fresh bounded v2 run completed scan, normalization, grounded analysis,
+  signed approval, one catalog request through Kong, response quarantine,
+  final report, and current-run evaluation. Its private local artifacts and
+  correlated Kong audit record are summarized in the
+  [charter closure record](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md).
+  Offline audit-only recovery remains intentionally insufficient for live
+  acceptance.
 
 ## Start from the owning entry point
 
@@ -93,12 +93,11 @@ DefectDojo import and `verify-lake.sh` are **provisioned** operations: use the
 [DefectDojo guide](infra/defectdojo/README.md) and its service credentials. This does not reproduce the historical baseline from a fresh clone, because that baseline includes inputs the no-secret quick-start does not provision.
 
 The RAG store's [Compose definition](infra/rag-store/docker-compose.yml) mounts
-`infra/rag-store/schema.sql` into the PostgreSQL first-initialization hook. That
-file is currently local-only and ignored, so a clean source clone cannot
-initialize the RAG store; this is a known reproducibility gap, not a supported
-setup path. It applies only to an empty `rag-db` data volume and is not a schema
-migration mechanism. Use the [RAG guide](rag/README.md) for the separate
-hermetic corpus contract and live-store prerequisites.
+the tracked `infra/rag-store/schema.sql` source into PostgreSQL's
+first-initialization hook. A fresh clone can therefore initialize an empty
+`rag-db` volume from the committed schema. This applies only to an empty data
+volume and is not a schema-migration mechanism. Use the [RAG guide](rag/README.md)
+for the separate hermetic corpus contract and live-store prerequisites.
 
 ## Documentation and history
 
