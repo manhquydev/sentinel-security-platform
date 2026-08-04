@@ -342,6 +342,24 @@ resume_executor(){
   expect_status "$3" env -u SENTINEL_STAGE_ADAPTER -u SENTINEL_COMPONENT_RUNNER SENTINEL_RUNS_DIR="$tmp/runs" SENTINEL_CHARTER_PUBLIC_KEY="$operator_public" SENTINEL_CHARTER_EXECUTOR_ADAPTER="$executor_adapter" SENTINEL_CHARTER_PYTHON="$CHARTER_PYTHON" SENTINEL_EXECUTOR_MODE="$mode" "$DEMO" resume "$id"
 }
 
+unsafe_operator_dir="$tmp/unsafe-operator-parent"
+mkdir "$unsafe_operator_dir"; chmod 777 "$unsafe_operator_dir"
+unsafe_operator_public="$unsafe_operator_dir/operator-public.pem"
+unsafe_executor_adapter="$unsafe_operator_dir/executor-adapter"
+unsafe_executor_marker="$tmp/unsafe-executor-called"
+cp "$operator_public" "$unsafe_operator_public"; chmod 600 "$unsafe_operator_public"
+cat >"$unsafe_executor_adapter" <<'EOF'
+#!/usr/bin/env bash
+touch "$SENTINEL_UNSAFE_EXECUTOR_MARKER"
+exit 1
+EOF
+chmod 700 "$unsafe_executor_adapter"
+unsafe_operator_id=unsafe-operator-parent
+unsafe_operator_approval=$(prepare_pending_approval "$unsafe_operator_id")
+resume_approval "$unsafe_operator_id" "$unsafe_operator_approval"
+expect_status 1 env -u SENTINEL_STAGE_ADAPTER -u SENTINEL_COMPONENT_RUNNER SENTINEL_RUNS_DIR="$tmp/runs" SENTINEL_CHARTER_PUBLIC_KEY="$unsafe_operator_public" SENTINEL_CHARTER_PUBLIC_KEY_SHA256="$SENTINEL_CHARTER_PUBLIC_KEY_SHA256" SENTINEL_CHARTER_EXECUTOR_ADAPTER="$unsafe_executor_adapter" SENTINEL_UNSAFE_EXECUTOR_MARKER="$unsafe_executor_marker" SENTINEL_CHARTER_PYTHON="$CHARTER_PYTHON" "$DEMO" resume "$unsafe_operator_id"
+[ ! -e "$unsafe_executor_marker" ] && ok 'writable operator parent never invokes executor adapter' || bad 'writable operator parent invoked executor adapter'
+
 preflight_adapter="$tmp/preflight-adapter"
 cat >"$preflight_adapter" <<'EOF'
 #!/usr/bin/env bash

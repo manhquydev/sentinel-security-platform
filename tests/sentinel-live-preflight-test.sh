@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE="$ROOT/scripts/sentinel-live-preflight.sh"
-tmp="$(mktemp -d)"
+tmp="$(TMPDIR=/tmp mktemp -d)"
 trap 'kill "${listener_pid:-}" 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
 pass=0
@@ -27,7 +27,7 @@ ln -s "$ROOT/rag/.venv/bin/python" "$fixture/rag/.venv/bin/python"
 cp "$ROOT/infra/litellm/config.yaml" "$fixture/infra/litellm/config.yaml"
 touch "$fixture/infra/.env"
 chmod 600 "$fixture/infra/.env"
-chmod 700 "$tmp/runs"
+chmod 700 "$tmp/home" "$tmp/home/.sentinel" "$tmp/runs"
 
 cat >"$tmp/bin/docker" <<'EOF'
 #!/usr/bin/env bash
@@ -257,6 +257,28 @@ else
   grep -Fxq 'BLOCK executor-adapter-boundary' "$tmp/out" && ok 'unsafe adapter mode blocks readiness' || bad 'adapter mode refusal missing'
 fi
 chmod 700 "$tmp/home/.sentinel/charter-executor-adapter.sh"
+
+chmod 777 "$tmp/home/.sentinel"
+if run_preflight base >"$tmp/out" 2>&1; then
+  bad 'writable operator parent passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-path' "$tmp/out" && ok 'writable operator parent blocks public key' || bad 'writable operator parent public-key refusal missing'
+  grep -Fxq 'BLOCK executor-adapter-boundary' "$tmp/out" && ok 'writable operator parent blocks adapter' || bad 'writable operator parent adapter refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'writable operator parent invokes no adapter' || bad 'writable operator parent invoked adapter'
+fi
+chmod 755 "$tmp/home/.sentinel"
+
+mv "$tmp/home/.sentinel" "$tmp/home/.sentinel-real"
+ln -s "$tmp/home/.sentinel-real" "$tmp/home/.sentinel"
+if run_preflight base >"$tmp/out" 2>&1; then
+  bad 'symlinked operator parent passed readiness'
+else
+  grep -Fxq 'BLOCK approval-public-key-path' "$tmp/out" && ok 'symlinked operator parent blocks public key' || bad 'symlinked operator parent public-key refusal missing'
+  grep -Fxq 'BLOCK executor-adapter-boundary' "$tmp/out" && ok 'symlinked operator parent blocks adapter' || bad 'symlinked operator parent adapter refusal missing'
+  [ ! -e "$tmp/adapter-called" ] && ok 'symlinked operator parent invokes no adapter' || bad 'symlinked operator parent invoked adapter'
+fi
+rm "$tmp/home/.sentinel"
+mv "$tmp/home/.sentinel-real" "$tmp/home/.sentinel"
 
 mv "$tmp/home/.sentinel/charter-executor-adapter.sh" "$tmp/home/.sentinel/charter-executor-adapter-real.sh"
 ln -s "$tmp/home/.sentinel/charter-executor-adapter-real.sh" "$tmp/home/.sentinel/charter-executor-adapter.sh"

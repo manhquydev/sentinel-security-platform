@@ -32,6 +32,28 @@ regular_not_writable_by_others() {
   (( (8#$mode & 022) == 0 ))
 }
 
+safe_operator_parent_chain() {
+  local path=$1 parent owner mode
+  [[ "$path" == /* && "$path" != *'//' && "$path" != */./* && "$path" != */../* ]] || return 1
+  parent=${path%/*}
+  [[ -n "$parent" ]] || parent=/
+  while :; do
+    [[ -d "$parent" && ! -L "$parent" ]] || return 1
+    owner=$(stat -c '%u' "$parent") || return 1
+    mode=$(stat -c '%a' "$parent") || return 1
+    [[ "$owner" == "$(id -u)" || "$owner" == 0 ]] || return 1
+    if (( (8#$mode & 022) != 0 )); then
+      # A root-owned sticky directory such as /tmp cannot be used by another
+      # UID to replace an existing operator-owned entry. All other writable
+      # ancestors would allow a pathname replacement before adapter execution.
+      [[ "$owner" == 0 ]] && (( (8#$mode & 01000) != 0 )) || return 1
+    fi
+    [[ "$parent" == / ]] && return 0
+    parent=${parent%/*}
+    [[ -n "$parent" ]] || parent=/
+  done
+}
+
 check_repo_paths() {
   private_regular "$ROOT/infra/.env" 600 && pass private-environment || block private-environment
   [[ -x "$PYTHON" ]] && pass charter-python || block charter-python
@@ -77,9 +99,9 @@ check_operator_boundary() {
   local public_key="${SENTINEL_CHARTER_PUBLIC_KEY:-}"
   local public_key_sha256="${SENTINEL_CHARTER_PUBLIC_KEY_SHA256:-}"
   local adapter="${SENTINEL_CHARTER_EXECUTOR_ADAPTER:-}"
-  [[ -n "$public_key" ]] && regular_not_writable_by_others "$public_key" && pass approval-public-key-path \
+  [[ -n "$public_key" ]] && regular_not_writable_by_others "$public_key" && safe_operator_parent_chain "$public_key" && pass approval-public-key-path \
     || block approval-public-key-path
-  [[ -n "$adapter" ]] && private_regular "$adapter" 700 && pass executor-adapter-boundary \
+  [[ -n "$adapter" ]] && private_regular "$adapter" 700 && safe_operator_parent_chain "$adapter" && pass executor-adapter-boundary \
     || block executor-adapter-boundary
   [[ "$public_key_sha256" =~ ^[0-9a-f]{64}$ ]] \
     && PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}" "$PYTHON" - "$public_key" "$public_key_sha256" <<'PY' >/dev/null 2>&1 \
@@ -92,6 +114,25 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 path, expected = sys.argv[1:]
+
+def safe_parents(path):
+    if not os.path.isabs(path) or "//" in path or "/./" in path or "/../" in path:
+        raise SystemExit(1)
+    parent = os.path.dirname(path) or os.sep
+    while True:
+        item = os.lstat(parent)
+        if stat.S_ISLNK(item.st_mode) or not stat.S_ISDIR(item.st_mode):
+            raise SystemExit(1)
+        mode = stat.S_IMODE(item.st_mode)
+        if item.st_uid not in (os.geteuid(), 0):
+            raise SystemExit(1)
+        if mode & 0o022 and not (item.st_uid == 0 and mode & stat.S_ISVTX):
+            raise SystemExit(1)
+        if parent == os.sep:
+            return
+        parent = os.path.dirname(parent) or os.sep
+
+safe_parents(path)
 item = os.lstat(path)
 if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode) or item.st_uid != os.geteuid():
     raise SystemExit(1)

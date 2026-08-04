@@ -44,6 +44,9 @@ the private key and executor credentials remain outside the repository.
     verifies with `--public-key`.
   - public key file: an operator-owned regular file, supplied as
     `SENTINEL_CHARTER_PUBLIC_KEY`; it must not be group/other writable.
+    Every directory from the file through its trusted ancestor chain must be
+    non-symlink, owned by the operator or root, and non-group/other writable
+    (except a root-owned sticky directory such as `/tmp`).
     The corresponding private key stays offline, mode 600, and is never committed.
   - trusted fingerprint: set `SENTINEL_CHARTER_PUBLIC_KEY_SHA256` to the lowercase
     SHA-256 of that key's DER SubjectPublicKeyInfo. Recompute it with
@@ -57,7 +60,9 @@ the private key and executor credentials remain outside the repository.
   - principal_name: `sentinel-charter-executor` (Kong OAuth2 plus a route-local
     dedicated API-key guard; ACL groups `charter-read` + `write-basket`).
   - adapter_location_boundary: trusted local operator host, loopback lab only.
-    `$SENTINEL_CHARTER_EXECUTOR_ADAPTER` is an executable, non-symlink wrapper that
+    `$SENTINEL_CHARTER_EXECUTOR_ADAPTER` is an executable, non-symlink,
+    mode-700 wrapper with the same safe ancestor-directory requirement as the
+    public key.
     alone holds `SENTINEL_CHARTER_EXECUTOR_SECRET` and
     `SENTINEL_CHARTER_EXECUTOR_API_KEY` in its own context and invokes
     `scripts/sentinel-charter-executor.py`. Gateway `127.0.0.1:18443`; target
@@ -91,6 +96,7 @@ outside the local lab.
 
 Operator artifacts (outside the repo, never committed):
 
+- `~/.sentinel/` — operator-owned directory (700).
 - `~/.sentinel/charter-approval.ed25519.pem` — approval private key (600).
 - `~/.sentinel/charter-approval.ed25519.pub.pem` — public key (`SENTINEL_CHARTER_PUBLIC_KEY`).
 - `~/.sentinel/executor-secret.env` — executor OAuth secret and dedicated API key,

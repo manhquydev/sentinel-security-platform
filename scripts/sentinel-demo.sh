@@ -263,7 +263,25 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 public_path, expected, adapter_path = sys.argv[1:]
 
+def safe_parents(path):
+    if not os.path.isabs(path) or "//" in path or "/./" in path or "/../" in path:
+        raise SystemExit(1)
+    parent = os.path.dirname(path) or os.sep
+    while True:
+        item = os.lstat(parent)
+        if stat.S_ISLNK(item.st_mode) or not stat.S_ISDIR(item.st_mode):
+            raise SystemExit(1)
+        mode = stat.S_IMODE(item.st_mode)
+        if item.st_uid not in (os.geteuid(), 0):
+            raise SystemExit(1)
+        if mode & 0o022 and not (item.st_uid == 0 and mode & stat.S_ISVTX):
+            raise SystemExit(1)
+        if parent == os.sep:
+            return
+        parent = os.path.dirname(parent) or os.sep
+
 def safe_regular(path, *, exact_mode=None, forbidden_mode=0o022, read_content=False):
+    safe_parents(path)
     item = os.lstat(path)
     if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode) or item.st_uid != os.geteuid():
         raise SystemExit(1)
