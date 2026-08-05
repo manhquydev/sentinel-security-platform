@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 from pathlib import Path
 from typing import Mapping
 
@@ -19,6 +20,14 @@ from .sealed_store import SealedFixtureStore, SealedStoreViolation
 
 class RunnerViolation(ValueError):
     """Raised when a fixture scanner command cannot be safely constructed."""
+
+
+_TRIVY_DB_SNAPSHOT_SCHEMA = "sentinel-workbench-trivy-db-snapshot/v1"
+_MAX_PREPARED_METADATA_BYTES = 16 * 1024
+_CODEQL_CLUSTER_MEMBERS = (
+    ("javascript-typescript", "db-javascript"),
+    ("actions", "db-actions"),
+)
 
 
 class FixtureScannerRunner:
@@ -85,12 +94,17 @@ class FixtureScannerRunner:
             if item.engine == "codeql"
             else ("frozen.yml",)
             if item.engine == "semgrep"
-            else ("metadata.json",)
+            else ("metadata.json", "cache")
         )
         for name in required_prepared:
             candidate = dependency_root / name
             if candidate.is_symlink() or not candidate.exists():
                 raise RunnerViolation("prepared scanner dependency is incomplete")
+        if item.engine == "trivy":
+            self._verify_trivy_db_snapshot(
+                dependency_root,
+                item.acquisition["db_snapshot_digest"],
+            )
         if item.engine == "codeql":
             work_directory = self._raw_artifact_root / snapshot_id / "codeql" / item.acquisition_digest
             work_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -106,11 +120,16 @@ class FixtureScannerRunner:
                 item.image,
                 "-ceu",
                 (
-                    "codeql database create /work/database "
-                    "--language=javascript-typescript --source-root=/src --command true && "
-                    "codeql database analyze /work/database --format=sarif-latest "
-                    "--search-path=/prepared/query-pack /prepared/query-suite.qls "
-                    "--output /work/report.sarif"
+                    "codeql database create --db-cluster "
+                    "--language=javascript-typescript,actions --source-root=/src "
+                    "-- /work/database-cluster && "
+                    "codeql database analyze --format=sarif-latest "
+                    "--output=/work/javascript-typescript.sarif "
+                    "--search-path=/prepared/query-pack -- "
+                    "/work/database-cluster/javascript-typescript /prepared/query-suite.qls && "
+                    "codeql database analyze --format=sarif-latest --output=/work/actions.sarif "
+                    "--search-path=/prepared/query-pack -- "
+                    "/work/database-cluster/actions /prepared/query-suite.qls"
                 ),
             )
         if item.engine == "semgrep":
@@ -130,17 +149,147 @@ class FixtureScannerRunner:
             return (
                 *common,
                 "-v",
-                f"{dependency_root}:/root/.cache/trivy:ro",
+                f"{dependency_root / 'cache'}:/root/.cache/trivy:ro",
                 item.image,
                 "filesystem",
+                "--scanners",
+                "vuln,misconfig,secret",
                 "--offline-scan",
                 "--skip-db-update",
                 "--skip-java-db-update",
+                "--skip-check-update",
+                "--skip-version-check",
+                "--disable-telemetry",
                 "--format",
                 "json",
                 "/src",
             )
         raise RunnerViolation("scanner engine is not admitted")
+
+    @staticmethod
+    def _verify_trivy_db_snapshot(dependency_root: Path, expected_digest: str) -> None:
+        """Require a private canonical manifest for the prepared offline DB."""
+        metadata_path = dependency_root / "metadata.json"
+        try:
+            descriptor = os.open(
+                metadata_path,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+            )
+        except OSError as error:
+            raise RunnerViolation("prepared scanner dependency is incomplete") from error
+        try:
+            metadata_stat = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata_stat.st_mode) or metadata_stat.st_mode & 0o077:
+                raise RunnerViolation("prepared Trivy database metadata must be private and regular")
+            handle = os.fdopen(descriptor, "rb")
+            descriptor = -1
+            with handle:
+                raw = handle.read(_MAX_PREPARED_METADATA_BYTES + 1)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+        if len(raw) > _MAX_PREPARED_METADATA_BYTES:
+            raise RunnerViolation("prepared Trivy database metadata is too large")
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise RunnerViolation("prepared Trivy database metadata is not canonical") from error
+        if not isinstance(value, dict) or set(value) != {"schema_version", "db_snapshot_digest"}:
+            raise RunnerViolation("prepared Trivy database metadata is not canonical")
+        if value["schema_version"] != _TRIVY_DB_SNAPSHOT_SCHEMA or not isinstance(
+            value["db_snapshot_digest"], str
+        ):
+            raise RunnerViolation("prepared Trivy database metadata is not canonical")
+        canonical = (
+            json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+            + b"\n"
+        )
+        if raw != canonical:
+            raise RunnerViolation("prepared Trivy database metadata is not canonical")
+        if value["db_snapshot_digest"] != expected_digest:
+            raise RunnerViolation("prepared Trivy database metadata does not match the admitted DB snapshot")
+        if FixtureScannerRunner._private_tree_digest(
+            dependency_root / "cache", "prepared Trivy database cache"
+        ) != expected_digest:
+            raise RunnerViolation("prepared Trivy database cache does not match the admitted DB snapshot")
+
+    @staticmethod
+    def _private_tree_digest(root: Path, label: str) -> str:
+        """Hash a non-empty private regular-file tree without following links."""
+        flags = os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            root_descriptor = os.open(root, flags)
+        except OSError as error:
+            raise RunnerViolation(f"{label} is absent or unsafe") from error
+        files: list[dict[str, object]] = []
+
+        def hash_regular_file(directory_descriptor: int, name: str, relative: str) -> None:
+            try:
+                descriptor = os.open(
+                    name,
+                    os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                    dir_fd=directory_descriptor,
+                )
+            except OSError as error:
+                raise RunnerViolation(f"{label} contains an unsafe file") from error
+            try:
+                file_stat = os.fstat(descriptor)
+                if not stat.S_ISREG(file_stat.st_mode) or file_stat.st_mode & 0o077:
+                    raise RunnerViolation(f"{label} contains a non-private or non-regular file")
+                handle = os.fdopen(descriptor, "rb")
+                descriptor = -1
+                with handle:
+                    file_hash = hashlib.sha256()
+                    total_bytes = 0
+                    while chunk := handle.read(1024 * 1024):
+                        file_hash.update(chunk)
+                        total_bytes += len(chunk)
+                files.append({"path": relative, "sha256": file_hash.hexdigest(), "bytes": total_bytes})
+            finally:
+                if descriptor >= 0:
+                    os.close(descriptor)
+
+        def visit(directory_descriptor: int, relative_root: str) -> None:
+            directory_stat = os.fstat(directory_descriptor)
+            if not stat.S_ISDIR(directory_stat.st_mode) or directory_stat.st_mode & 0o077:
+                raise RunnerViolation(f"{label} contains a non-private or non-directory entry")
+            for name in sorted(os.listdir(directory_descriptor)):
+                relative = f"{relative_root}/{name}" if relative_root else name
+                try:
+                    entry_stat = os.stat(
+                        name, dir_fd=directory_descriptor, follow_symlinks=False
+                    )
+                except OSError as error:
+                    raise RunnerViolation(f"{label} contains an unreadable entry") from error
+                if stat.S_ISLNK(entry_stat.st_mode):
+                    raise RunnerViolation(f"{label} contains a symbolic link")
+                if stat.S_ISREG(entry_stat.st_mode):
+                    hash_regular_file(directory_descriptor, name, relative)
+                    continue
+                if not stat.S_ISDIR(entry_stat.st_mode):
+                    raise RunnerViolation(f"{label} contains a non-regular entry")
+                try:
+                    child_descriptor = os.open(
+                        name,
+                        flags,
+                        dir_fd=directory_descriptor,
+                    )
+                except OSError as error:
+                    raise RunnerViolation(f"{label} contains an unsafe directory") from error
+                try:
+                    visit(child_descriptor, relative)
+                finally:
+                    os.close(child_descriptor)
+
+        try:
+            visit(root_descriptor, "")
+        finally:
+            os.close(root_descriptor)
+        if not files:
+            raise RunnerViolation(f"{label} is empty")
+        return hashlib.sha256(
+            json.dumps(files, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
 
     def capture_raw_artifact(
         self, engine: str, snapshot_id: str, report: Mapping[str, object]
@@ -190,14 +339,26 @@ class FixtureScannerRunner:
             "state": "quarantined-and-reconciled",
         }
         if engine == "codeql":
-            database = self._raw_artifact_root / snapshot_id / "codeql" / self._capability.engine(engine).acquisition_digest / "database"
-            if (
-                not database.is_dir()
-                or database.is_symlink()
-                or not (database / "codeql-database.yml").is_file()
-                or not (database / "db-javascript").is_dir()
-            ):
-                raise RunnerViolation("CodeQL database completion evidence is absent")
+            database = (
+                self._raw_artifact_root
+                / snapshot_id
+                / "codeql"
+                / self._capability.engine(engine).acquisition_digest
+                / "database-cluster"
+            )
+            for language, database_directory in _CODEQL_CLUSTER_MEMBERS:
+                member = database / language
+                member_manifest = member / "codeql-database.yml"
+                member_database = member / database_directory
+                if (
+                    not member.is_dir()
+                    or member.is_symlink()
+                    or not member_manifest.is_file()
+                    or member_manifest.is_symlink()
+                    or not member_database.is_dir()
+                    or member_database.is_symlink()
+                ):
+                    raise RunnerViolation("CodeQL database completion evidence is absent")
             receipt["database_digest"] = self._tree_digest(database)
         return receipt
 
