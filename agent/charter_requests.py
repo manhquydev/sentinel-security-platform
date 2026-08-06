@@ -294,13 +294,22 @@ class RequestStore:
                 ) from exc
 
     def _transition(self, request_id: str, state: str, receipt: str | None = None) -> None:
-        allowed = {"prepared": {"dispatched", "terminal"}, "dispatched": {"unknown"}}
+        # dispatched → terminal is allowed only for pre-target failures (OAuth mint):
+        # no target I/O occurred, so the outcome is deterministically terminal, not unknown.
+        allowed = {
+            "prepared": {"dispatched", "terminal"},
+            "dispatched": {"unknown", "terminal"},
+        }
         row = self.db.execute("SELECT state FROM requests WHERE id=?", (request_id,)).fetchone()
         if not row or state not in allowed.get(row[0], set()):
             raise CharterRequestError("illegal request state transition")
         self.db.execute("UPDATE requests SET state=?, receipt_digest=COALESCE(?,receipt_digest) WHERE id=?",
                         (state, receipt, request_id))
         self.db.execute("INSERT INTO events VALUES(?,?,?)", (request_id, state, time.time()))
+
+    def terminalize_pre_target_failure(self, request_id: str) -> None:
+        """Record a durable terminal outcome when no target request was attempted."""
+        self._transition(request_id, "terminal")
 
     def authorize_prepare(self, spec: RequestSpec, approval, public_key) -> None:
         from .charter_approval import verify
@@ -529,7 +538,8 @@ def execute(spec: RequestSpec, approval, *, public_key, store: RequestStore, tra
     try:
         token = transport.mint(ORIGIN, executor_secret)
     except Exception as exc:
-        store._transition(spec.request_id, "terminal")
+        # Mint failure is pre-target: terminal (no indeterminate network outcome).
+        store.terminalize_pre_target_failure(spec.request_id)
         raise CharterRequestError("OAuth mint failed") from exc
     try:
         observation = transport.request(ORIGIN + spec.path + (("?" + spec.query) if spec.query else ""), spec.method,

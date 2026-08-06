@@ -47,7 +47,12 @@ class WorkbenchAPI:
             view["fixture_transport"] = {
                 "enabled": True,
                 "command": command_envelope(),
-                "detail": "This proves only the local broker/worker refusal path. It never scans source while scanner policy is not ready.",
+                "detail": (
+                    "This proves only the local broker/worker containment path. "
+                    "The fixture worker refuses before any source scan regardless of B0 "
+                    "policy-ready preflight; refusal is not a missing-pin diagnosis and "
+                    "not a baseline scan result."
+                ),
             }
         return view
 

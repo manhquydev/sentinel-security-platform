@@ -107,7 +107,7 @@
             return;
           }
           if (status.status === "failed") {
-            outcome.textContent = "Readiness check refused before any source scan because scanner policy is not ready.";
+            outcome.textContent = "Fixture worker refused before any source scan (containment demo). This is not a B0 policy-not-ready diagnosis and not a scan result.";
             return;
           }
           await new Promise((resolve) => setTimeout(resolve, 100));

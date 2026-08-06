@@ -35,6 +35,8 @@ def test_web_view_exposes_only_the_configured_loopback_broker_origin_not_a_worke
     view = api.view()
     assert view["broker"] == {"origin": "http://127.0.0.1:4174"}
     assert view["fixture_transport"]["enabled"] is True
+    assert "containment" in view["fixture_transport"]["detail"].lower()
+    assert "not ready" not in view["fixture_transport"]["detail"].lower()
     assert set(view["fixture_transport"]["command"]) == {
         "schema_version",
         "command",
@@ -51,7 +53,9 @@ def test_browser_view_makes_the_current_non_comparative_evidence_and_cmc_boundar
     ).view()
 
     assert view["research"]["operator_summary"].endswith("no effectiveness claim is rendered.")
-    assert view["research"]["controls"]["B0"]["state"] == "not-ready"
+    # B0 card follows preflight policy readiness (ready ≠ clean scan).
+    assert view["research"]["controls"]["B0"]["state"] in {"policy-ready", "not-ready"}
+    assert "engines" in view["research"]["controls"]["B0"]
     assert view["research"]["controls"]["B3"]["state"] == "disabled"
     assert view["research"]["b3_egress_notice"] == "selected redacted source is sent to the configured cloud model."
     assert view["cmc"]["classification"] == "case-study-only"

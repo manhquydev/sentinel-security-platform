@@ -1,0 +1,24 @@
+# Workbench UI build context is the repo root; keep secrets and bulk noise out of
+# the Docker daemon context (the image only COPY workbench/, but context still ships).
+.git
+**/.env
+**/.env.*
+!**/.env.example
+infra/.env
+infra/**/certs
+infra/kong/kong.rendered.yml
+infra/**/*.dump
+**/__pycache__
+**/*.pyc
+**/.venv
+**/node_modules
+benchmark
+runs
+.sentinel-runs
+plans
+docs/plans
+evaluation/sast-fp-discrimination
+evaluation/workbench
+*.tar.gz
+*.deb
+0

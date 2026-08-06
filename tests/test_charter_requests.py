@@ -12,9 +12,14 @@ from agent.charter_requests import *
 ROOT = Path(__file__).resolve().parents[1]
 
 class FakeTransport:
-    def __init__(self, status=404, body=b"ok", fail=False, content_types=("application/json; charset=utf-8",)):
+    def __init__(self, status=404, body=b"ok", fail=False, content_types=("application/json; charset=utf-8",), mint_fail=False):
         self.calls=[]; self.status=status; self.body=body; self.fail=fail; self.mints=[]; self.content_types=content_types
-    def mint(self, origin, secret): self.mints.append((origin, secret)); return "token"
+        self.mint_fail = mint_fail
+    def mint(self, origin, secret):
+        self.mints.append((origin, secret))
+        if self.mint_fail:
+            raise RuntimeError("mint unavailable")
+        return "token"
     def request(self, *args):
         self.calls.append(args)
         if self.fail: raise TimeoutError()
@@ -347,6 +352,29 @@ def test_reject_revoke_expiry_replay_and_quota_are_pre_network():
       try: run(spec(run="over"),transport=t,store=st)
       except CharterRequestError: pass
       else: assert False
+
+def test_oauth_mint_failure_is_terminal_without_target_io():
+    """Mint fails before any target request; outcome is terminal, not illegal/unknown."""
+    with tempfile.TemporaryDirectory() as d:
+        path = d + "/s.db"
+        key = Ed25519PrivateKey.generate()
+        s = spec()
+        st = RequestStore(path)
+        transport = FakeTransport(mint_fail=True)
+        with pytest.raises(CharterRequestError, match="OAuth mint failed"):
+            run(s, sign(s, key), transport, st, key)
+        assert st.state(s.request_id) == "terminal"
+        assert len(transport.mints) == 1
+        assert transport.calls == []
+        # Retry must not re-dispatch a terminal request or mint again.
+        retry = FakeTransport(status=200)
+        with pytest.raises(CharterRequestError):
+            run(s, sign(s, key), retry, st, key)
+        assert retry.mints == [] and retry.calls == []
+        st.close()
+        st = RequestStore(path)
+        assert st.state(s.request_id) == "terminal"
+
 
 def test_unknown_restart_audit_and_transport_contract():
     with tempfile.TemporaryDirectory() as d:
