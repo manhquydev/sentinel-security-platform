@@ -107,6 +107,8 @@ def test_trivy_workbench_filesystem_source_mount_is_network_isolated_and_invalid
 
 
 def test_preflight_reports_capability_states_only_and_never_fabricates_a_scan_outcome():
+    import json
+
     result = subprocess.run(
         [str(ROOT / "scripts" / "workbench-scanner-preflight.sh"), "--fixture-profile", "typescript"],
         check=True,
@@ -114,8 +116,13 @@ def test_preflight_reports_capability_states_only_and_never_fabricates_a_scan_ou
         text=True,
     )
 
-    assert '"state": "not-ready"' in result.stdout
+    payload = json.loads(result.stdout)
+    assert payload["kind"] == "capability-status-not-scan-result"
+    assert set(payload["engines"]) == {"codeql", "semgrep", "trivy"}
+    assert all(engine["state"] in {"ready", "not-ready"} for engine in payload["engines"].values())
     assert "clean" not in result.stdout.lower()
+    # Ready is policy readiness only — never a fabricated B0 scan verdict.
+    assert "findings" not in result.stdout.lower()
 
 
 def test_broker_launcher_is_honest_that_the_host_owns_an_available_loopback_listener():

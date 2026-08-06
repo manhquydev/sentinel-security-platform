@@ -1,0 +1,11 @@
+# Frozen Workbench B0 CodeQL query suite (JS/TS + Actions surface).
+# Digest of this file is the admitted query_suite_digest.
+- description: Sentinel Workbench B0 JavaScript/TypeScript security suite
+- queries: .
+  from: codeql/javascript-queries
+  include:
+    kind:
+    - problem
+    - path-problem
+  tags contain:
+  - security

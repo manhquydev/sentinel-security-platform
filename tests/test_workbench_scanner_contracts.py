@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 
 import pytest
 
@@ -130,6 +131,45 @@ def test_default_statuses_report_missing_pins_as_not_ready_instead_of_a_clean_ou
     assert statuses["semgrep"]["state"] == "not-ready"
     assert statuses["trivy"]["state"] == "not-ready"
     assert all(status["state"] != "clean" for status in statuses.values())
+
+
+def test_default_statuses_become_ready_when_image_pins_and_frozen_b0_policy_match():
+    pins = Path("scanners/image-pins.env")
+    policy = Path("scanners/workbench-b0")
+
+    statuses = default_engine_statuses(pins, policy_root=policy)
+
+    assert statuses["codeql"]["state"] == "ready"
+    assert statuses["semgrep"]["state"] == "ready"
+    assert statuses["trivy"]["state"] == "ready"
+    assert all(status["state"] != "clean" for status in statuses.values())
+    assert "sha256:" in statuses["semgrep"]["image"]
+
+
+def test_default_statuses_reject_tampered_frozen_ruleset_digest(tmp_path):
+    import hashlib
+    import json
+    import shutil
+
+    pins = tmp_path / "image-pins.env"
+    pins.write_text(Path("scanners/image-pins.env").read_text(encoding="utf-8"), encoding="utf-8")
+    policy_root = tmp_path / "workbench-b0"
+    shutil.copytree(Path("scanners/workbench-b0"), policy_root)
+    ruleset = policy_root / "semgrep" / "frozen.yml"
+    ruleset.write_text(ruleset.read_text(encoding="utf-8") + "\n# tamper\n", encoding="utf-8")
+
+    statuses = default_engine_statuses(pins, policy_root=policy_root)
+
+    assert statuses["semgrep"]["state"] == "not-ready"
+    assert statuses["semgrep"]["reason"] == "missing-frozen-typescript-yaml-ruleset"
+    # Untampered engines remain ready when their files still match.
+    assert statuses["codeql"]["state"] == "ready"
+    assert statuses["trivy"]["state"] == "ready"
+    # policy.json digest fields still point at the pre-tamper ruleset hash
+    policy = json.loads((policy_root / "policy.json").read_text(encoding="utf-8"))
+    assert policy["engines"]["semgrep"]["acquisition"]["ruleset_digest"] != hashlib.sha256(
+        ruleset.read_bytes()
+    ).hexdigest()
 
 
 @pytest.mark.parametrize(

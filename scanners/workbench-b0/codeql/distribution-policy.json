@@ -1,0 +1,10 @@
+{
+  "schema_version": "sentinel-workbench-codeql-distribution-policy/v1",
+  "image_pin_name": "CODEQL_IMAGE",
+  "distribution": "mcr.microsoft.com/cstsectools/codeql-container",
+  "language_packs": [
+    "javascript-typescript",
+    "actions"
+  ],
+  "notes": "Source-less acquisition only; pack bytes are prepared outside the source mount under network-none scans."
+}

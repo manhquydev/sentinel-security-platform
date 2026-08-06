@@ -288,12 +288,91 @@ def _read_pins(path: Path) -> dict[str, str]:
     return pins
 
 
-def default_engine_statuses(image_pins_path: Path | str) -> dict[str, dict[str, str]]:
-    """Truthful local viability states for the unconfigured repository policy.
+_B0_POLICY_SCHEMA = "sentinel-workbench-b0-policy/v1"
+_B0_POLICY_FILES = {
+    "codeql": (
+        ("distribution_policy", "distribution_digest"),
+        ("query_suite", "query_suite_digest"),
+        ("database_creation_policy", "database_creation_policy_digest"),
+    ),
+    "semgrep": (("ruleset", "ruleset_digest"),),
+    "trivy": (("db_snapshot_policy", "db_snapshot_digest"),),
+}
+_B0_NOT_READY_REASON = {
+    "codeql": "missing-frozen-query-pack-and-db-policy",
+    "semgrep": "missing-frozen-typescript-yaml-ruleset",
+    "trivy": "missing-frozen-db-snapshot-policy",
+}
+
+
+def _file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_b0_policy(policy_root: Path) -> Mapping[str, Any] | None:
+    """Load committed B0 policy when present and well-formed; else None."""
+    policy_path = policy_root / "policy.json"
+    if not policy_path.is_file() or policy_path.is_symlink():
+        return None
+    try:
+        document = json.loads(policy_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(document, Mapping):
+        return None
+    if document.get("schema_version") != _B0_POLICY_SCHEMA:
+        return None
+    engines = document.get("engines")
+    if not isinstance(engines, Mapping):
+        return None
+    return document
+
+
+def _engine_policy_ready(policy_root: Path, engine: str, engine_policy: Mapping[str, Any]) -> bool:
+    """Return True only when every frozen policy file matches its admitted digest."""
+    files = engine_policy.get("files")
+    acquisition = engine_policy.get("acquisition")
+    if not isinstance(files, Mapping) or not isinstance(acquisition, Mapping):
+        return False
+    expected_pairs = _B0_POLICY_FILES.get(engine)
+    if expected_pairs is None:
+        return False
+    if set(acquisition) != {digest_key for _, digest_key in expected_pairs}:
+        return False
+    for file_key, digest_key in expected_pairs:
+        relative = files.get(file_key)
+        expected = acquisition.get(digest_key)
+        if not isinstance(relative, str) or not relative or not isinstance(expected, str):
+            return False
+        if ".." in Path(relative).parts or Path(relative).is_absolute():
+            return False
+        path = policy_root / relative
+        if path.is_symlink() or not path.is_file():
+            return False
+        try:
+            if _file_sha256(path) != expected:
+                return False
+        except OSError:
+            return False
+    return True
+
+
+def default_engine_statuses(
+    image_pins_path: Path | str,
+    *,
+    policy_root: Path | str | None = None,
+) -> dict[str, dict[str, str]]:
+    """Truthful local viability states for the repository B0 policy.
 
     These are capability preflight facts, deliberately not results from a scan.
+    An engine becomes ``ready`` only when its image pin and frozen policy files
+    are present and digest-matched. Ready is not a clean B0 scan outcome.
     """
-    pins = _read_pins(Path(image_pins_path))
+    pins_path = Path(image_pins_path)
+    pins = _read_pins(pins_path)
+    root = Path(policy_root) if policy_root is not None else pins_path.parent / "workbench-b0"
+    policy = _load_b0_policy(root)
+    engines_policy = policy.get("engines") if isinstance(policy, Mapping) else None
     statuses: dict[str, dict[str, str]] = {}
     for engine, pin_name in (
         ("codeql", "CODEQL_IMAGE"),
@@ -303,10 +382,17 @@ def default_engine_statuses(image_pins_path: Path | str) -> dict[str, dict[str, 
         image = pins.get(pin_name, "")
         if not image or "@sha256:" not in image:
             statuses[engine] = {"state": "not-ready", "reason": "missing-digest-pinned-image"}
-        elif engine == "semgrep":
-            statuses[engine] = {"state": "not-ready", "reason": "missing-frozen-typescript-yaml-ruleset"}
-        elif engine == "codeql":
-            statuses[engine] = {"state": "not-ready", "reason": "missing-frozen-query-pack-and-db-policy"}
-        else:
-            statuses[engine] = {"state": "not-ready", "reason": "missing-frozen-db-snapshot-policy"}
+            continue
+        engine_policy = engines_policy.get(engine) if isinstance(engines_policy, Mapping) else None
+        if not isinstance(engine_policy, Mapping) or not _engine_policy_ready(root, engine, engine_policy):
+            statuses[engine] = {
+                "state": "not-ready",
+                "reason": _B0_NOT_READY_REASON[engine],
+            }
+            continue
+        statuses[engine] = {
+            "state": "ready",
+            "reason": "image-and-frozen-policy-present",
+            "image": image,
+        }
     return statuses

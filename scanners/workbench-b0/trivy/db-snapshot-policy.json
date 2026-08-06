@@ -1,0 +1,24 @@
+{
+  "schema_version": "sentinel-workbench-trivy-db-snapshot-policy/v1",
+  "mode": "offline-prepared-cache",
+  "image_pin_name": "TRIVY_IMAGE",
+  "scanners": [
+    "vuln",
+    "misconfig",
+    "secret"
+  ],
+  "runtime_flags": [
+    "--offline-scan",
+    "--skip-db-update",
+    "--skip-java-db-update",
+    "--skip-check-update",
+    "--skip-version-check",
+    "--disable-telemetry"
+  ],
+  "prepared_layout": {
+    "metadata": "metadata.json",
+    "cache_directory": "cache",
+    "metadata_schema": "sentinel-workbench-trivy-db-snapshot/v1"
+  },
+  "notes": "Operators prepare a private offline Trivy cache separately; its tree digest becomes the run-time db_snapshot_digest. This policy freezes the admission contract only."
+}

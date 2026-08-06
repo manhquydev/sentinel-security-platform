@@ -1,0 +1,28 @@
+# Frozen Workbench B0 Semgrep ruleset (TypeScript / TSX / YAML only).
+# Digest of this file is the admitted ruleset_digest. Do not edit without
+# updating scanners/workbench-b0/policy.json.
+rules:
+  - id: workbench.typescript.eval-like
+    message: "Workbench B0: dynamic code evaluation sink"
+    languages: [ts, typescript, tsx]
+    severity: ERROR
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: Function(...)
+      - pattern: new Function(...)
+
+  - id: workbench.typescript.child-process-exec
+    message: "Workbench B0: child_process exec sink"
+    languages: [ts, typescript, tsx]
+    severity: WARNING
+    pattern-either:
+      - pattern: child_process.exec(...)
+      - pattern: child_process.execSync(...)
+      - pattern: require("child_process").exec(...)
+      - pattern: require('child_process').exec(...)
+
+  - id: workbench.yaml.plain-http-url
+    message: "Workbench B0: plain HTTP URL in YAML"
+    languages: [yaml]
+    severity: WARNING
+    pattern-regex: "http://[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]+"
