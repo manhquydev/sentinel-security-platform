@@ -143,5 +143,11 @@ evaluation/absence-detection/defence-in-depth-map-*.json
 evaluation/absence-detection/exposure-gap-*.json
 .sentinel-runs/
 
-# Historical 12-week assignment brief — keep local only, never push
+# Personal / academic materials (VinUni × VinSOC internship) — local only, never push.
+# Full charters, weekly student reports, and presentation scripts stay on disk
+# but are not part of the public project contract. Use product/* and as-built
+# docs as the published authority.
 docs/Project_Sentinel_VinUni_x_VinSOC_12-week.md
+docs/Project_Sentinel_6-week.md
+docs/*_NguyenManhQuy_*.md
+docs/*-kich-ban-trinh-bay.md

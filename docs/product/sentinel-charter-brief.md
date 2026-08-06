@@ -1,8 +1,10 @@
 # Sentinel charter brief
 
-A one–two page product description of Project Sentinel as delivered against the
-six-week capstone charter (`docs/Project_Sentinel_6-week.md`). It is a
-research/education build for a lab environment, not a shipped product.
+A one–two page product description of Project Sentinel as delivered for the
+six-week research/education capstone. This brief is the **published** product
+contract; longer internship assignment texts and personal weekly reports are
+local-only and are not part of the public tree. It is a lab build, not a shipped
+product.
 
 The separate [Sentinel Security Research Workbench](sentinel-security-research-workbench.md)
 does not inherit this Charter's target, approval flow, capstone completion, or

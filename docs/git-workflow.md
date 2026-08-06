@@ -81,8 +81,11 @@ unrelated PR:
 
 ```
 git switch -c feat/benchmark-router-tiers
-git add benchmark/ infra/litellm/ docs/2026-07-24_*_Week1.md
-git commit -m "feat(benchmark): add router model tiers and Week-1 report"
+git add benchmark/ infra/litellm/
+git commit -m "feat(benchmark): add router model tiers"
 ```
+
+Do not stage personal weekly reports (`docs/*_NguyenManhQuy_*`, presentation
+scripts, or local-only charters); they are gitignored.
 
 (Left for the owner of that work to run — it is not this workflow doc's to commit.)

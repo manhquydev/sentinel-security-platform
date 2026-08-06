@@ -1,9 +1,10 @@
 # Project Sentinel
 
 Sentinel is a research/education capstone for **safe, evidence-bound web
-application security analysis in a local lab**. Its current product authority is
-the [six-week charter](docs/Project_Sentinel_6-week.md); the concise product
-description is the [charter brief](docs/product/sentinel-charter-brief.md).
+application security analysis in a local lab**. Its current published product
+authority is the [charter brief](docs/product/sentinel-charter-brief.md); the
+as-built map is
+[sentinel-six-week-as-built-architecture](docs/sentinel-six-week-as-built-architecture.md).
 
 The charter's flow is: scan a deliberately vulnerable local target, normalize
 and redact findings, retrieve security context, produce a grounded report, then
@@ -65,7 +66,7 @@ only until an admitted TypeScript corpus and B3 calibration exist. See the
 
 | Need | Entry point |
 |---|---|
-| Product contract | [Six-week charter](docs/Project_Sentinel_6-week.md), [charter brief](docs/product/sentinel-charter-brief.md) |
+| Product contract | [Charter brief](docs/product/sentinel-charter-brief.md), [as-built architecture](docs/sentinel-six-week-as-built-architecture.md) |
 | Operator live acceptance procedure | [Live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md) |
 | No-secret readiness (`base` / `dispatch RUN_ID`) | [`scripts/sentinel-live-preflight.sh`](scripts/sentinel-live-preflight.sh) |
 | Bring up existing local topology | [`scripts/sentinel-charter-up.sh`](scripts/sentinel-charter-up.sh) — Compose startup only, not a Charter run |

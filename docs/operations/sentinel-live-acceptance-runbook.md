@@ -112,8 +112,8 @@ approval, test key, or automation exception does not authorize a new run.
 
 The request policy remains bounded in
 `agent/charter_requests.py`; it does not replace this confirmation gate.
-`README.md` and `docs/Project_Sentinel_6-week.md` remain the product authority
-outside the local lab.
+`README.md` and `docs/product/sentinel-charter-brief.md` remain the published
+product authority outside the local lab.
 
 Operator artifacts (outside the repo, never committed):
 

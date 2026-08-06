@@ -12,7 +12,7 @@ operator entry-point tables.
 
 | Product | Authority | Live / local entrypoints |
 |---|---|---|
-| Charter | [Six-week charter](Project_Sentinel_6-week.md), [charter brief](product/sentinel-charter-brief.md) | `scripts/sentinel-live-preflight.sh` → `scripts/sentinel-charter-up.sh` → `scripts/sentinel-demo.sh`; procedure in [live acceptance runbook](operations/sentinel-live-acceptance-runbook.md) |
+| Charter | [Charter brief](product/sentinel-charter-brief.md), [as-built architecture](sentinel-six-week-as-built-architecture.md) | `scripts/sentinel-live-preflight.sh` → `scripts/sentinel-charter-up.sh` → `scripts/sentinel-demo.sh`; procedure in [live acceptance runbook](operations/sentinel-live-acceptance-runbook.md) |
 | Workbench | [Workbench brief](product/sentinel-security-research-workbench.md) | `scripts/workbench-up.sh`, `scripts/workbench-scanner-preflight.sh`, `scripts/workbench-corpus-acquire.py`, `scripts/workbench-corpus-inventory.py`; [demo](operations/sentinel-workbench-demo.md), [scanner viability](operations/workbench-scanner-viability.md) |
 
 Pinned scanner images: [`scanners/image-pins.env`](../scanners/image-pins.env).
@@ -21,8 +21,9 @@ Pinned scanner images: [`scanners/image-pins.env`](../scanners/image-pins.env).
 
 - [Kiến trúc Sentinel sáu tuần (as-built)](sentinel-six-week-as-built-architecture.md):
   luồng hiện có, ranh giới tin cậy và giới hạn bằng chứng live.
-- [Charter sáu tuần](Project_Sentinel_6-week.md): mục tiêu và tiêu chí nghiệm
-  thu của đồ án.
+- [Charter brief](product/sentinel-charter-brief.md): published product contract
+  (goals, scope, safety boundary). Full internship charters and weekly student
+  reports stay local-only and are not linked from the public map.
 - [Runbook nghiệm thu live](operations/sentinel-live-acceptance-runbook.md):
   điều kiện vận hành cho một lần chạy local mới, không chứa bí mật.
 - [Sentinel Security Research Workbench](product/sentinel-security-research-workbench.md):
