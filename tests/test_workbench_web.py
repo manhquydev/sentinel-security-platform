@@ -53,9 +53,14 @@ def test_browser_view_makes_the_current_non_comparative_evidence_and_cmc_boundar
     ).view()
 
     assert view["research"]["operator_summary"].endswith("no effectiveness claim is rendered.")
-    # B0 card follows preflight policy readiness (ready ≠ clean scan).
-    assert view["research"]["controls"]["B0"]["state"] in {"policy-ready", "not-ready"}
-    assert "engines" in view["research"]["controls"]["B0"]
+    # B0 dual card: policy freeze vs prepared deps (neither is a clean scan).
+    assert view["research"]["controls"]["B0"]["state"] in {
+        "not-ready",
+        "policy-ready",
+        "prepared-deps-ready",
+    }
+    assert "policy" in view["research"]["controls"]["B0"]
+    assert "prepared_deps" in view["research"]["controls"]["B0"]
     assert view["research"]["controls"]["B3"]["state"] == "disabled"
     assert view["research"]["b3_egress_notice"] == "selected redacted source is sent to the configured cloud model."
     assert view["cmc"]["classification"] == "case-study-only"

@@ -376,6 +376,28 @@ def test_oauth_mint_failure_is_terminal_without_target_io():
         assert st.state(s.request_id) == "terminal"
 
 
+def test_post_target_transport_failure_is_unknown_not_terminal():
+    """After mint succeeds, target I/O failure must stay audit-reconcilable unknown."""
+    with tempfile.TemporaryDirectory() as d:
+        path = d + "/s.db"
+        key = Ed25519PrivateKey.generate()
+        s = spec()
+        st = RequestStore(path)
+        transport = FakeTransport(fail=True)
+        with pytest.raises(CharterRequestError, match="request outcome unknown"):
+            run(s, sign(s, key), transport, st, key)
+        assert st.state(s.request_id) == "unknown"
+        assert len(transport.mints) == 1
+        assert len(transport.calls) == 1
+        # Contrast: mint-only failure is terminal (no target attempt).
+        s2 = spec(run="mint-only")
+        mint_only = FakeTransport(mint_fail=True)
+        with pytest.raises(CharterRequestError, match="OAuth mint failed"):
+            run(s2, sign(s2, key), mint_only, st, key)
+        assert st.state(s2.request_id) == "terminal"
+        assert mint_only.calls == []
+
+
 def test_unknown_restart_audit_and_transport_contract():
     with tempfile.TemporaryDirectory() as d:
       path=d+"/s.db"; key=Ed25519PrivateKey.generate(); s=spec(); st=RequestStore(path); t=FakeTransport(fail=True)

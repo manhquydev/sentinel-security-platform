@@ -59,6 +59,12 @@ def prepare_semgrep(policy_root: Path, prepared_root: Path, policy: dict) -> Pat
 
 
 def prepare_codeql(policy_root: Path, prepared_root: Path, policy: dict, image: str) -> Path:
+    """Copy javascript (+ shared) qlpacks from the pinned CodeQL image into query-pack/.
+
+    The runner mounts query-pack as CodeQL --search-path. Packs come from the
+    digest-pinned container (offline copy after image pull), not an unpinned
+    network fetch.
+    """
     suite = policy_root / policy["engines"]["codeql"]["files"]["query_suite"]
     digests = policy["engines"]["codeql"]["acquisition"]
     acquisition_digest = hashlib.sha256(
@@ -69,20 +75,37 @@ def prepare_codeql(policy_root: Path, prepared_root: Path, policy: dict, image: 
     shutil.copy2(suite, dest / "query-suite.qls")
     os.chmod(dest / "query-suite.qls", 0o600)
     pack = dest / "query-pack"
+    if pack.exists():
+        shutil.rmtree(pack)
     _private_dir(pack)
-    # Materialize a minimal pack placeholder directory structure. Full CodeQL
-    # pack download requires network and licensed distribution; record a marker
-    # that the runner will still require real pack contents for a successful DB.
-    marker = pack / "README.workbench-prepared"
-    marker.write_text(
-        "Place or extract the frozen CodeQL javascript-typescript + actions query "
-        "pack contents here before a source-mounted B0 run.\n",
-        encoding="utf-8",
-    )
-    os.chmod(marker, 0o600)
-    # Attempt optional pack pull into the pack dir when docker is available.
+    # Copy qlpacks out of the pinned image. Requires Docker and a pulled pin.
+    # POSIX /bin/sh (dash) — no bash pipefail in the pinned CodeQL image.
+    script = r"""
+set -eu
+ROOT=/usr/local/codeql-home
+test -d "$ROOT/codeql-repo/javascript/ql"
+test -d "$ROOT/codeql-repo/shared"
+# Layout so --search-path=/prepared/query-pack resolves codeql/javascript-* packs.
+mkdir -p /out
+# Clear previous partial materialization without deleting the mount point.
+find /out -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+cp -a "$ROOT/codeql-repo/javascript" /out/javascript
+cp -a "$ROOT/codeql-repo/shared" /out/shared
+if [ -f "$ROOT/codeql-repo/codeql-workspace.yml" ]; then
+  cp -a "$ROOT/codeql-repo/codeql-workspace.yml" /out/codeql-workspace.yml
+fi
+codeql version >/out/codeql-version.txt 2>&1 || true
+# Structural proof only: avoid resolve-qlpacks dual-root collisions with the
+# image's built-in search path. Runner uses --search-path=/prepared/query-pack.
+test -f /out/javascript/ql/src/qlpack.yml
+test -d /out/javascript/ql/lib
+test -d /out/shared
+count=$(find /out -type f | wc -l)
+test "$count" -gt 20
+printf 'files=%s\n' "$count" >/out/pack-manifest.txt
+"""
     try:
-        subprocess.run(
+        completed = subprocess.run(
             [
                 "docker",
                 "run",
@@ -95,15 +118,28 @@ def prepare_codeql(policy_root: Path, prepared_root: Path, policy: dict, image: 
                 "/bin/sh",
                 image,
                 "-ceu",
-                "command -v codeql >/dev/null && codeql --version >/out/codeql-version.txt || true",
+                script,
             ],
             check=False,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=600,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-        pass
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as error:
+        raise SystemExit(f"codeql pack materialization failed: {error}") from error
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout or "docker failed").strip()[-500:]
+        raise SystemExit(f"codeql pack materialization failed: {detail}")
+    # Harden permissions on the host copy.
+    for path in pack.rglob("*"):
+        if path.is_file():
+            os.chmod(path, 0o600)
+        elif path.is_dir():
+            os.chmod(path, 0o700)
+    os.chmod(pack, 0o700)
+    file_count = sum(1 for p in pack.rglob("*") if p.is_file())
+    if file_count < 20:
+        raise SystemExit(f"codeql query-pack too small after materialization ({file_count} files)")
     return dest
 
 
@@ -202,9 +238,9 @@ def main() -> int:
             )
         ),
         "notes": (
-            "Prepared layout only. CodeQL still needs a full query pack under "
-            "query-pack/ for a successful database analyze. Trivy needs a non-empty "
-            "offline cache for vuln scanning. This is not a B0 scan and not corpus admission."
+            "Prepared source-less dependency roots from frozen policy + pinned images. "
+            "CodeQL query-pack is copied from the digest-pinned container (javascript + shared). "
+            "Trivy offline DB is host-private. This is not a B0 scan and not corpus admission."
         ),
     }
     print(json.dumps(results, indent=2, sort_keys=True))

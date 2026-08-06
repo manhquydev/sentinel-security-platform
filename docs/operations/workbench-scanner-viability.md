@@ -112,3 +112,14 @@ pipeline; they are not B0 Workbench engines. See [`scanners/README.md`](../../sc
 Before the freeze, engines were intentionally `not-ready` (missing CodeQL pin,
 missing Semgrep TS/YAML ruleset, missing Trivy DB policy). CMC
 `codeql-agent-results/` remains invalid B0 evidence.
+
+
+## Dual B0 readiness (policy vs prepared deps)
+
+| Overall state | Meaning |
+|---------------|---------|
+| `not-ready` | Missing image pin or frozen policy digest match |
+| `policy-ready` | Pins + policy OK; prepared roots incomplete |
+| `prepared-deps-ready` | Host-private query-pack / ruleset / offline DB layout present |
+
+Neither overall state is a clean B0 scan result or corpus admission. The browser B0 card reports the same dual layers via `workbench.prepared_deps.b0_readiness`.
