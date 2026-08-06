@@ -56,6 +56,17 @@ source-less dependency material privately; source-mounted scans use Docker
 `--network none` and a registered sealed fixture snapshot. Incomplete
 preparation is never a clean B0 result.
 
+Prepare host-private dependency layout (not a scan, not corpus admission):
+
+```bash
+python3 scripts/workbench-prepare-scanner-deps.py \
+  --prepared-root ~/.cache/sentinel-workbench/prepared-deps
+```
+
+Semgrep copies `frozen.yml`; Trivy may download an offline DB when Docker can
+reach the registry; CodeQL still needs a full query pack under `query-pack/`
+before a successful `database analyze`.
+
 ## OpenSSF corpus cache (host-local, no admission)
 
 Acquire public git evidence into a private cache. Never seals, scans, or admits
