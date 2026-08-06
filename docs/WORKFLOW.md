@@ -8,13 +8,20 @@ and process overhead.
 ## Repository Map
 
 - `AGENTS.md`: small entry map and authority boundary.
-- `README.md` and `docs/product/`: current product behavior.
-- `docs/ARCHITECTURE.md` and `docs/decisions/`: structural constraints and
-  lasting decisions.
+- `README.md` and `docs/product/`: current product behavior. Root `README.md`
+  is the operator entry map for **Charter** and **Workbench** (separate
+  products; do not mix evidence).
+- `docs/README.md`: documentation index, including the two-product entry table.
+- `docs/decisions/`: lasting product and architecture choices.
 - `docs/plans/active/`: complex work currently in progress.
 - `docs/plans/completed/`: completed execution history worth retaining.
 - Project code, tests, CI, and runtime signals: executable and observable truth.
-- `scripts/README.md`: upstream Harness development and compatibility commands.
+- `scripts/`: executable operators. Charter live path:
+  `sentinel-live-preflight.sh`, `sentinel-charter-up.sh`, `sentinel-demo.sh`.
+  Workbench: `workbench-up.sh`, `workbench-scanner-preflight.sh`,
+  `workbench-corpus-acquire.py`, `workbench-corpus-inventory.py`. See
+  `scripts/README.md` for lake/scan orchestration detail.
+- `scanners/image-pins.env`: committed `@sha256` image pins (no secrets).
 
 Use `docs/README.md` for the map; prefer targeted search.
 

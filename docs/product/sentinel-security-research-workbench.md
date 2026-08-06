@@ -26,15 +26,41 @@ gaps, an AI win, or a private-code capability result.
 
 ## Current evidence state
 
-The committed corpus catalog is currently
+### B0 policy freeze (ready ≠ experiment complete)
+
+The committed B0 freeze surface lives under `scanners/workbench-b0/`
+(`policy.json` plus CodeQL/Semgrep/Trivy frozen files). Fixture preflight reports
+engine `ready` only when the digest-pinned image in `scanners/image-pins.env`
+and every bound policy file match. Ready is a capability fact, not a clean scan
+outcome and not a comparative B0–B3 result: runners still need privately prepared
+source-less dependency roots and a sealed snapshot before any source-mounted
+scan. Incomplete policy, missing pins, or unavailable private dependencies remain
+`not-ready` / incomplete measurement failures—never silent clean findings. No B0
+finding may be removed, downgraded, or replaced by B3.
+
+### Corpus catalog and acquisition (cache ≠ admission)
+
+The committed corpus catalog remains
 `blocked-no-eligible-typescript-corpus`. CMC remains `case-study-only`, and its
 committed `cmc_value_gate` is `not-run` because no timed decision census exists
-yet. Until that census passes, an independent TypeScript corpus is admitted and
-a non-confirmatory B3 calibration record exists, the workbench may expose
-fixture/safety work only; it cannot render a comparative efficacy result or a
-CMC active-demo action.
+yet.
+
+Operators may materialize a host-local OpenSSF CVE Benchmark / public repository
+cache with `scripts/workbench-corpus-acquire.py` and inventory candidates with
+`scripts/workbench-corpus-inventory.py`. Acquisition receipts always record
+`admission_decision: not-admitted`; they never seal source, run scanners, admit
+a comparative catalog row, or authorize efficacy language. Inventory stays
+`not-admitted` even when local TypeScript is present at both referenced commits.
+Remaining gates—frozen truth, licence/authorship, contamination screening,
+independent control audit, non-confirmatory B3 calibration, and ≥20 paired
+repositories—are separate and still open.
+
+Until an independent TypeScript corpus is admitted, a non-confirmatory B3
+calibration record exists, and (for CMC active demo only) the value gate passes,
+the workbench may expose fixture/safety and containment workflow only. It cannot
+render a comparative efficacy result or a CMC active-demo action.
 
 The local browser can demonstrate a broker-mediated, metadata-only readiness
-workflow. The host broker and private worker deliberately refuse before a
-source scan when B0 policy preflight is `not-ready`; this is containment
-evidence, not an analysis result.
+workflow. A `not-ready` B0 preflight or missing sealed snapshot deliberately
+refuses before a source scan; that is containment evidence, not an analysis
+result.

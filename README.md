@@ -11,6 +11,21 @@ propose a tightly bounded test request. A human approval and the Kong gateway
 are required before the only permitted write proof. Sentinel is not an
 autonomous exploitation tool or a product for external targets.
 
+## Two products (do not mix evidence)
+
+| Surface | What it is | What it is not |
+|---|---|---|
+| **Charter** | Six-week Juice Shop loopback lab: scan → redact → grounded report → signed HITL → one catalog request through Kong | Not the Workbench, not an external-target product |
+| **Workbench** | Separate local research UI/broker for fixture readiness and future comparative corpus work | Not Charter completion, not Charter approval/audit evidence |
+
+- Charter product: [charter brief](docs/product/sentinel-charter-brief.md)
+- Workbench product: [workbench brief](docs/product/sentinel-security-research-workbench.md)
+- Live Charter operator procedure: [live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md)
+- Workbench demo surface: [workbench demo](docs/operations/sentinel-workbench-demo.md)
+
+Pinned scanner/harness image digests live in committed
+[`scanners/image-pins.env`](scanners/image-pins.env) (public tags only; no secrets).
+
 ## Charter boundary
 
 - **Target:** the literal local Juice Shop sandbox at `http://127.0.0.1:13000`;
@@ -34,30 +49,44 @@ autonomous exploitation tool or a product for external targets.
 ## Current maturity
 
 The completed [charter closure record](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md)
-is the current evidence ledger.
+is the evidence ledger. Charter minimum is met by offline contracts **and** a
+fresh bounded local live run (`charter-live-260804-local-003`: scan → report →
+signed approval → one catalog GET through Kong → evaluation, with correlated
+Kong audit). Historical R5 remains non-resumable under v2 policy. Offline
+audit-only recovery is intentionally not live acceptance.
 
-- Offline component, controller, recovery, evaluation, and no-secret CI-handoff
-  contracts have been exercised; those are **not** live-service or full-charter
-  proof.
-- A credentialed structured-output path and a historical literal-origin run have
-  reached scan, no-close import, grounded analysis, and a fixed request proposal.
-  That run stopped at approval. Its R5 request artifact is expired and invalid
-  under the current v2 policy, so it is non-resumable and cannot be backfilled.
-- A fresh bounded v2 run completed scan, normalization, grounded analysis,
-  signed approval, one catalog request through Kong, response quarantine,
-  final report, and current-run evaluation. Its private local artifacts and
-  correlated Kong audit record are summarized in the
-  [charter closure record](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md).
-  Offline audit-only recovery remains intentionally insufficient for live
-  acceptance.
+Workbench is a **separate** product: fixture/safety and host-local corpus prep
+only until an admitted TypeScript corpus and B3 calibration exist. See the
+[workbench brief](docs/product/sentinel-security-research-workbench.md).
 
 ## Start from the owning entry point
 
+### Charter (live path)
+
 | Need | Entry point |
 |---|---|
-| Product contract and six-week deliverables | [Six-week charter](docs/Project_Sentinel_6-week.md) and [charter brief](docs/product/sentinel-charter-brief.md) |
-| Bring up the existing local topology | [`scripts/sentinel-charter-up.sh`](scripts/sentinel-charter-up.sh) — prerequisite/startup contract only, not a Charter run |
-| Run, resume, or verify a Charter profile | [`scripts/sentinel-demo.sh`](scripts/sentinel-demo.sh) — `run`/`resume` validate private credential and approval prerequisites; `verify` checks an existing passed terminal run |
+| Product contract | [Six-week charter](docs/Project_Sentinel_6-week.md), [charter brief](docs/product/sentinel-charter-brief.md) |
+| Operator live acceptance procedure | [Live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md) |
+| No-secret readiness (`base` / `dispatch RUN_ID`) | [`scripts/sentinel-live-preflight.sh`](scripts/sentinel-live-preflight.sh) |
+| Bring up existing local topology | [`scripts/sentinel-charter-up.sh`](scripts/sentinel-charter-up.sh) — Compose startup only, not a Charter run |
+| Run, resume, recover-audit, or verify | [`scripts/sentinel-demo.sh`](scripts/sentinel-demo.sh) — `run`/`resume` need private credentials and approval material; `verify` checks a passed terminal run |
+
+### Workbench (separate surface)
+
+| Need | Entry point |
+|---|---|
+| Product boundary and evidence state | [Workbench brief](docs/product/sentinel-security-research-workbench.md) |
+| Loopback browser + host broker | [`scripts/workbench-up.sh`](scripts/workbench-up.sh) — prints a one-time fragment capability |
+| Fixture-only scanner capability status | [`scripts/workbench-scanner-preflight.sh`](scripts/workbench-scanner-preflight.sh) `--fixture-profile typescript` |
+| Host-local OpenSSF corpus cache (no admission) | [`scripts/workbench-corpus-acquire.py`](scripts/workbench-corpus-acquire.py) |
+| Candidate inventory from that cache | [`scripts/workbench-corpus-inventory.py`](scripts/workbench-corpus-inventory.py) |
+| Demo / acceptance notes | [Workbench demo](docs/operations/sentinel-workbench-demo.md), [scanner viability](docs/operations/workbench-scanner-viability.md) |
+
+### Shared lab surfaces
+
+| Need | Entry point |
+|---|---|
+| Image digest pins (reviewable, no secrets) | [`scanners/image-pins.env`](scanners/image-pins.env) |
 | Scanner, redaction, and lake import | [Scanner guide](scanners/README.md) and [DefectDojo guide](infra/defectdojo/README.md) |
 | RAG corpus/retrieval contract or live store | [RAG guide](rag/README.md), [`tests/run-charter-rag-contract.sh`](tests/run-charter-rag-contract.sh), and [`tests/rag-retrieval-test.sh`](tests/rag-retrieval-test.sh) |
 | Project documentation and active work | [Documentation map](docs/README.md) and [active plans](docs/plans/active/) |

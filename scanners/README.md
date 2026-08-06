@@ -218,10 +218,29 @@ engagement.
 
 ## Supply-chain pinning
 
-`image-pins.env` holds every scanner image `@sha256` digest; each wrapper fails
-closed if its image var is unset or not digest-pinned. Semgrep rulesets and Nuclei
-templates are executable analysis logic and must be mirrored + checksummed +
-version-recorded, not pulled unpinned from a registry at scan time.
+`image-pins.env` holds every scanner image `@sha256` digest (resolved 2026-07-23).
+Each wrapper fails closed if its image var is unset or not digest-pinned.
+
+| Variable | Used by |
+|----------|---------|
+| `SEMGREP_IMAGE` | `run-semgrep.sh`; Workbench B0 |
+| `TRIVY_IMAGE` | `run-trivy.sh`; Workbench B0 |
+| `NUCLEI_IMAGE` | `run-nuclei.sh` |
+| `ZAP_IMAGE` | `run-zap.sh` |
+| `JUICE_SHOP_IMAGE` | harness compose + offline Trivy image proof below |
+| `CODEQL_IMAGE` | Workbench B0 only (not the DefectDojo import loop) |
+
+Load pins before a manual run:
+
+```bash
+source scanners/image-pins.env
+# then export TARGET_SRC / TARGET_URL / IMAGE as required by the wrapper
+```
+
+Semgrep rulesets and Nuclei templates are executable analysis logic and must be
+mirrored + checksummed + version-recorded, not pulled unpinned at scan time.
+Workbench B0 freeze (policy digests, fixture preflight): see
+[`docs/operations/workbench-scanner-viability.md`](../docs/operations/workbench-scanner-viability.md).
 
 ## Tests (TDD)
 

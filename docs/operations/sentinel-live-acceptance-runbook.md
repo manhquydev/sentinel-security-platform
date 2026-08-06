@@ -6,6 +6,27 @@ it names files, environment-variable names, permissions, and evidence classes,
 but never prints values, private keys, bearer tokens, raw audit payloads, or raw
 response bodies.
 
+This is the **Charter** live path only. It is not the Workbench
+(`scripts/workbench-up.sh` and related corpus scripts). Do not treat Workbench
+fixture or corpus receipts as Charter acceptance evidence.
+
+## Command spine
+
+From the repository root, in order:
+
+| Step | Command | Role |
+|---|---|---|
+| Topology | `bash scripts/sentinel-charter-up.sh` | Starts existing Charter Compose owners only; not a run |
+| Base readiness | `scripts/sentinel-live-preflight.sh base` | No-secret prerequisite check before a proposal |
+| Controller | `bash scripts/sentinel-demo.sh run --profile charter --run-id RUN_ID` | Private run; exits waiting for human approval when a v2 request is ready |
+| Dispatch readiness | `scripts/sentinel-live-preflight.sh dispatch RUN_ID` | After a fresh signed approval artifact exists |
+| Resume | `bash scripts/sentinel-demo.sh resume RUN_ID` | Continues only with valid approval + public-key material |
+| Verify | `bash scripts/sentinel-demo.sh verify RUN_ID` | Checks an existing passed terminal run |
+
+Image pins used by scanner admission live in `scanners/image-pins.env`. For
+live Nuclei admission set `SENTINEL_NUCLEI_IMAGE_DIGEST` to match the committed
+`NUCLEI_IMAGE` pin (see Preflight checklist).
+
 ## Scope
 
 - Target is the loopback Juice Shop lab only: `http://127.0.0.1:13000`.
@@ -206,10 +227,12 @@ terminal acceptance evidence.
 
 ## Fresh v2 proposal flow
 
-1. Start from a new run ID.
+1. Start from a new run ID. If Charter Compose owners are not already up, run
+   `bash scripts/sentinel-charter-up.sh` first (startup only; not a run).
 2. Run `scripts/sentinel-live-preflight.sh base`; stop unless it reports
    `READY_FOR_FRESH_PROPOSAL`.
-3. Run the controller only far enough to produce a fresh v2 `request-spec.json`.
+3. Run the controller only far enough to produce a fresh v2 `request-spec.json`:
+   `bash scripts/sentinel-demo.sh run --profile charter --run-id RUN_ID`.
 4. Verify that the request is current and unexpired.
 5. Hand the exact run-local spec to the recorded approval authority.
 6. Store only the fresh run-local approval artifact selected by that authority.
@@ -245,7 +268,11 @@ gate passes.
 3. Confirm the selected scanner runtime is explicitly admitted for this run.
 4. Confirm `scripts/sentinel-live-preflight.sh dispatch RUN_ID` just reported
    `READY_FOR_APPROVED_DISPATCH`.
-5. Resume the controller with the fresh approval artifact.
+5. Resume the controller with the fresh approval artifact:
+   `bash scripts/sentinel-demo.sh resume RUN_ID` (requires
+   `SENTINEL_CHARTER_APPROVAL_FILE` and `SENTINEL_CHARTER_PUBLIC_KEY` in the
+   operator environment; preflight also requires
+   `SENTINEL_CHARTER_PUBLIC_KEY_SHA256`).
 6. Capture only sanitized evidence:
    - manifest path
    - run ID

@@ -46,6 +46,12 @@ report preserves scanner facts rather than inferring new ones.
 - Analysis: a provenance-bound agent (`agent/recon.py`) with a stored system
   prompt (`agent/prompts/charter-system-prompt.md`); the live structured-output
   report path runs on Vertex AI Gemini Flash Lite via the LiteLLM gateway.
+  Week-3 aggregate analysis (`agent/week3_analysis.py`, schema
+  `week3-analysis/v1`) is accepted by `propose_report_jsonl` after
+  validate-then-project into grounded `ReportFinding` rows. Proposals still
+  come only from the fixed SAFE_REQUEST catalog; finding locations never become
+  path, query, or body. This closes the week3→proposal schema split only—it is
+  not free-form request invention and is not Workbench or CMC evidence.
 - Gateway: Kong fronts the app; identities use short-TTL OAuth2 plus fail-closed
   ACL. The charter executor additionally presents a dedicated API key on two
   exact `/sentinel-charter/...` routes; the key is removed before OAuth denial,

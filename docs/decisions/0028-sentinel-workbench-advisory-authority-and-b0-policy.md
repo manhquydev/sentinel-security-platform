@@ -58,3 +58,16 @@ Tradeoffs:
 
 - Phase 2 implements the fixture-only B0 runner contract.
 - Phase 3 establishes sealed real-source intake and the B3 egress boundary.
+
+## Implemented as of 2026-08-06
+
+- Frozen B0 policy surface is committed under `scanners/workbench-b0/`;
+  `default_engine_statuses` reports `ready` only when image pins and bound
+  file digests match. Ready is not a clean scan and not a comparative experiment.
+- Public OpenSSF cache acquisition exists
+  (`scripts/workbench-corpus-acquire.py` / `workbench/corpus_acquisition.py`);
+  receipts remain `admission_decision: not-admitted`. Acquisition cache is not
+  corpus admission.
+- Committed corpus catalog is still `blocked-no-eligible-typescript-corpus`;
+  CMC remains `case-study-only` with `cmc_value_gate` `not-run`. Comparative
+  admission, B3 calibration, and CMC value gate stay open.

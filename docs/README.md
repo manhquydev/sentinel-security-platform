@@ -3,6 +3,20 @@
 Start with the smallest current map. Retrieve compatibility, historical, or
 upstream-maintenance material only when the task explicitly needs it.
 
+## Two products
+
+**Charter** and **Workbench** are separate products. Do not use Workbench
+artifacts as Charter acceptance evidence, or Charter Juice Shop runs as
+Workbench comparative results. Root [`README.md`](../README.md) owns the
+operator entry-point tables.
+
+| Product | Authority | Live / local entrypoints |
+|---|---|---|
+| Charter | [Six-week charter](Project_Sentinel_6-week.md), [charter brief](product/sentinel-charter-brief.md) | `scripts/sentinel-live-preflight.sh` → `scripts/sentinel-charter-up.sh` → `scripts/sentinel-demo.sh`; procedure in [live acceptance runbook](operations/sentinel-live-acceptance-runbook.md) |
+| Workbench | [Workbench brief](product/sentinel-security-research-workbench.md) | `scripts/workbench-up.sh`, `scripts/workbench-scanner-preflight.sh`, `scripts/workbench-corpus-acquire.py`, `scripts/workbench-corpus-inventory.py`; [demo](operations/sentinel-workbench-demo.md), [scanner viability](operations/workbench-scanner-viability.md) |
+
+Pinned scanner images: [`scanners/image-pins.env`](../scanners/image-pins.env).
+
 ## Sentinel
 
 - [Kiến trúc Sentinel sáu tuần (as-built)](sentinel-six-week-as-built-architecture.md):
