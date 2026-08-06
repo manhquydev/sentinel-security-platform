@@ -151,3 +151,8 @@ docs/Project_Sentinel_VinUni_x_VinSOC_12-week.md
 docs/Project_Sentinel_6-week.md
 docs/*_NguyenManhQuy_*.md
 docs/*-kich-ban-trinh-bay.md
+
+# Starlight docs site build + deps
+website/dist/
+website/node_modules/
+website/.astro/

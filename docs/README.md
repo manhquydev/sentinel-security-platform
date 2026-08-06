@@ -22,8 +22,10 @@ Pinned scanner images: [`scanners/image-pins.env`](../scanners/image-pins.env).
 - [Kiến trúc Sentinel sáu tuần (as-built)](sentinel-six-week-as-built-architecture.md):
   luồng hiện có, ranh giới tin cậy và giới hạn bằng chứng live.
 - [Charter brief](product/sentinel-charter-brief.md): published product contract
-  (goals, scope, safety boundary). Full internship charters and weekly student
-  reports stay local-only and are not linked from the public map.
+  (goals, scope, safety boundary). Full internship assignment texts stay
+  local-only and are not linked from the public map.
+- [Báo cáo tuần](reports/index.md): mentor-facing Week 1–3 reports in-repo
+  (rendered by `website/` Starlight on Cloudflare).
 - [Runbook nghiệm thu live](operations/sentinel-live-acceptance-runbook.md):
   điều kiện vận hành cho một lần chạy local mới, không chứa bí mật.
 - [Sentinel Security Research Workbench](product/sentinel-security-research-workbench.md):

@@ -23,6 +23,7 @@ autonomous exploitation tool or a product for external targets.
 - Workbench product: [workbench brief](docs/product/sentinel-security-research-workbench.md)
 - Live Charter operator procedure: [live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md)
 - Workbench demo surface: [workbench demo](docs/operations/sentinel-workbench-demo.md)
+- Weekly mentor reports: [docs/reports](docs/reports/index.md) (Starlight site in [`website/`](website/README.md))
 
 Pinned scanner/harness image digests live in committed
 [`scanners/image-pins.env`](scanners/image-pins.env) (public tags only; no secrets).

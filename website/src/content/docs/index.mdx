@@ -1,0 +1,35 @@
+---
+title: Project Sentinel
+description: Mentor-facing docs and weekly reports for the Sentinel security lab.
+template: splash
+hero:
+  title: Project Sentinel
+  tagline: Weekly reports and product docs for the VinUni × VinSOC security lab — evidence-bound, loopback-only.
+  actions:
+    - text: Báo cáo tuần
+      link: /reports/
+      icon: right-arrow
+      variant: primary
+    - text: Repo monorepo
+      link: https://github.com/manhquydev/sentinel-security-platform
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Start here
+
+<CardGrid>
+  <Card title="Tuần 1" icon="seti:json">
+    Baseline scanners, redaction, Juice Shop loopback — [week-01](/reports/week-01/).
+  </Card>
+  <Card title="Tuần 2" icon="seti:db">
+    Normalize 36 findings + offline knowledge — [week-02](/reports/week-02/).
+  </Card>
+  <Card title="Tuần 3" icon="seti:notebook">
+    Evidence-bound analysis agent (JSONL) — [week-03](/reports/week-03/).
+  </Card>
+</CardGrid>
+
+Personal internship assignment texts and presentation scripts are **not** published here.
