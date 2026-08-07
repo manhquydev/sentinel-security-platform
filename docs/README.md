@@ -2,7 +2,7 @@
 
 Bắt đầu từ map nhỏ nhất. Chỉ mở material lịch sử / tương thích khi task thật sự cần.
 
-Root [`README.md`](../README.md) là **cửa vào tiếng Việt** mô tả dự án và bảng điểm vào operator. File này là **mục lục docs** (WHERE), không lặp lại toàn bộ contract.
+Root [`README.md`](../README.md) là **cửa vào dự án** (vấn đề, luồng, cách chạy). File này là **mục lục docs** (WHERE), không lặp lại README.
 
 ---
 
