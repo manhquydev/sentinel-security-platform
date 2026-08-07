@@ -24,7 +24,7 @@ Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
 
 ### Hiểu dự án (WHY / ranh giới)
 
-- [README gốc](../README.md) — mô tả đầy đủ bằng tiếng Việt  
+- [README gốc](../README.md) — giới thiệu, luồng, quick start  
 - [Charter brief](product/sentinel-charter-brief.md) — hợp đồng sản phẩm công bố  
 - [Kiến trúc as-built sáu tuần](sentinel-six-week-as-built-architecture.md) — luồng, tin cậy, giới hạn bằng chứng  
 - [decisions/](decisions/) — quyết định bền  
