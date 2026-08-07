@@ -37,10 +37,20 @@ def _codeql_acquisition_digest(policy: Mapping[str, Any]) -> str:
     ).hexdigest()
 
 
+def _acquisition_digest(acquisition: Mapping[str, str]) -> str:
+    return hashlib.sha256(
+        json.dumps(dict(acquisition), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def _semgrep_ready(prepared_root: Path, policy: Mapping[str, Any]) -> tuple[bool, str]:
-    digest = policy["engines"]["semgrep"]["acquisition"]["ruleset_digest"]
-    path = prepared_root / "semgrep" / digest / "frozen.yml"
+    acquisition = dict(policy["engines"]["semgrep"]["acquisition"])
+    path = prepared_root / "semgrep" / _acquisition_digest(acquisition) / "frozen.yml"
     if not _private_file(path):
+        # Accept legacy raw ruleset_digest directory from earlier prepares.
+        legacy = prepared_root / "semgrep" / acquisition["ruleset_digest"] / "frozen.yml"
+        if _private_file(legacy) and legacy.stat().st_size >= 32:
+            return True, "prepared-semgrep-ruleset-present-legacy-path"
         return False, "missing-prepared-semgrep-ruleset"
     if path.stat().st_size < 32:
         return False, "empty-prepared-semgrep-ruleset"
@@ -65,6 +75,11 @@ def _codeql_ready(prepared_root: Path, policy: Mapping[str, Any]) -> tuple[bool,
         "javascript-queries" in p.as_posix() or p.name == "qlpack.yml" for p in pack.rglob("qlpack.yml")
     ):
         return False, "codeql-query-pack-missing-javascript-queries"
+    # javascript-queries depends on suite-helpers (materialized under misc/).
+    if not (pack / "misc" / "suite-helpers" / "qlpack.yml").is_file() and not any(
+        p.is_file() and "suite-helpers" in p.as_posix() for p in pack.rglob("qlpack.yml")
+    ):
+        return False, "codeql-query-pack-missing-suite-helpers"
     return True, "prepared-codeql-query-pack-present"
 
 

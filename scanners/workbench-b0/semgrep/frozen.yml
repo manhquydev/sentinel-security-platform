@@ -4,7 +4,7 @@
 rules:
   - id: workbench.typescript.eval-like
     message: "Workbench B0: dynamic code evaluation sink"
-    languages: [ts, typescript, tsx]
+    languages: [typescript]
     severity: ERROR
     pattern-either:
       - pattern: eval(...)
@@ -13,7 +13,7 @@ rules:
 
   - id: workbench.typescript.child-process-exec
     message: "Workbench B0: child_process exec sink"
-    languages: [ts, typescript, tsx]
+    languages: [typescript]
     severity: WARNING
     pattern-either:
       - pattern: child_process.exec(...)

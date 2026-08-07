@@ -216,20 +216,23 @@ def test_runner_never_attempts_to_analyze_the_read_only_source_mount_as_a_codeql
     command = runner.command_for("codeql", snapshot_id)
 
     script = command[-1]
+    # CodeQL 2.15 MCR pin: single-language create + analyze against prepared JS packs.
     assert "codeql database analyze /src" not in script
-    assert "codeql database create --db-cluster" in script
-    assert "-- /work/database-cluster" in script
-    assert "--db-cluster" in script
-    assert "--source-root=/src" in script
+    assert "codeql database create --db-cluster" not in script
+    assert "--db-cluster" not in script
+    assert "database-cluster" not in script
+    assert "codeql database create --language=javascript --source-root=/src -- /work/database" in script
     assert "--command" not in script
     assert "command true" not in script
-    assert "-- /work/database-cluster/javascript-typescript /prepared/query-suite.qls" in script
-    assert "-- /work/database-cluster/actions /prepared/query-suite.qls" in script
-    assert "--output=/work/javascript-typescript.sarif" in script
-    assert "--output=/work/actions.sarif" in script
+    assert (
+        "codeql database analyze --format=sarif-latest --output=/work/javascript.sarif "
+        "--search-path=/prepared/query-pack -- /work/database /prepared/query-suite.qls"
+    ) in script
     assert "/prepared/query-suite.qls" in script
     assert "--search-path=/prepared/query-pack" in script
-    assert "--language=javascript-typescript,actions" in script
+    assert "--language=javascript" in script
+    assert "javascript-typescript" not in script
+    assert "actions" not in script
 
 
 def test_trivy_fixture_command_freezes_all_scanners_offline_controls_and_a_read_only_cache(tmp_path):
@@ -336,27 +339,31 @@ def test_trivy_runner_refuses_an_empty_prepared_cache(tmp_path):
         runner.command_for("trivy", snapshot_id)
 
 
-@pytest.mark.parametrize(("missing_member", "member_database"), [
-    ("javascript-typescript", "db-javascript"),
-    ("actions", "db-actions"),
-])
-def test_codeql_raw_admission_requires_each_database_cluster_member(
-    tmp_path, missing_member, member_database
-):
+@pytest.mark.parametrize(
+    "setup",
+    [
+        "missing-database-root",
+        "missing-manifest",
+        "missing-db-javascript",
+        "empty-db-javascript",
+    ],
+)
+def test_codeql_raw_admission_requires_single_language_database_completion(tmp_path, setup):
     store, snapshot_id = copied_fixture(tmp_path)
     capability = contract(snapshot_id)
     raw_root = tmp_path / "raw-artifacts"
     runner = FixtureScannerRunner(store, capability, prepared_dependencies(tmp_path, capability), raw_root)
-    cluster = raw_root / snapshot_id / "codeql" / capability.engine("codeql").acquisition_digest / "database-cluster"
-    for language, database_name in (
-        ("javascript-typescript", "db-javascript"),
-        ("actions", "db-actions"),
-    ):
-        database = cluster / language
+    database = raw_root / snapshot_id / "codeql" / capability.engine("codeql").acquisition_digest / "database"
+    if setup != "missing-database-root":
         database.mkdir(parents=True)
-        (database / "codeql-database.yml").write_text("fixture database\n", encoding="utf-8")
-        (database / database_name).mkdir()
-    (cluster / missing_member / member_database).rmdir()
+        if setup != "missing-manifest":
+            (database / "codeql-database.yml").write_text("fixture database\n", encoding="utf-8")
+        if setup == "empty-db-javascript":
+            (database / "db-javascript").mkdir()
+        elif setup != "missing-db-javascript":
+            member = database / "db-javascript"
+            member.mkdir()
+            (member / "marker").write_text("ok\n", encoding="utf-8")
 
     with pytest.raises(RunnerViolation, match="completion evidence"):
         runner.capture_raw_artifact(
@@ -364,3 +371,24 @@ def test_codeql_raw_admission_requires_each_database_cluster_member(
             snapshot_id,
             {"runs": [{"invocations": [{"executionSuccessful": True}], "results": []}]},
         )
+
+
+def test_codeql_raw_admission_accepts_javascript_database_completion_evidence(tmp_path):
+    store, snapshot_id = copied_fixture(tmp_path)
+    capability = contract(snapshot_id)
+    raw_root = tmp_path / "raw-artifacts"
+    runner = FixtureScannerRunner(store, capability, prepared_dependencies(tmp_path, capability), raw_root)
+    database = raw_root / snapshot_id / "codeql" / capability.engine("codeql").acquisition_digest / "database"
+    database.mkdir(parents=True)
+    (database / "codeql-database.yml").write_text("fixture database\n", encoding="utf-8")
+    (database / "db-javascript").mkdir()
+    (database / "db-javascript" / "marker").write_text("ok\n", encoding="utf-8")
+
+    receipt = runner.capture_raw_artifact(
+        "codeql",
+        snapshot_id,
+        {"runs": [{"invocations": [{"executionSuccessful": True}], "results": []}]},
+    )
+    assert receipt["state"] == "quarantined-and-reconciled"
+    assert isinstance(receipt.get("database_digest"), str)
+    assert len(receipt["database_digest"]) == 64

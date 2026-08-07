@@ -1,11 +1,10 @@
-# Frozen Workbench B0 CodeQL query suite (JS/TS + Actions surface).
+# Frozen Workbench B0 CodeQL query suite (JavaScript/TypeScript security).
 # Digest of this file is the admitted query_suite_digest.
+# Resolves against prepared query-pack (--search-path) containing:
+#   codeql/javascript-queries (javascript/ql/src) and codeql/suite-helpers (misc/).
+# Matches CodeQL 2.15 MCR image pack layout; no actions packs.
 - description: Sentinel Workbench B0 JavaScript/TypeScript security suite
 - queries: .
   from: codeql/javascript-queries
-  include:
-    kind:
-    - problem
-    - path-problem
-  tags contain:
-  - security
+- apply: code-scanning-selectors.yml
+  from: codeql/suite-helpers

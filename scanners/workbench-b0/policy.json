@@ -2,9 +2,9 @@
   "engines": {
     "codeql": {
       "acquisition": {
-        "database_creation_policy_digest": "1d8bb1b43131d36598d30369f328b9ab61c4098cbdbf968c6857eb61ddf8099c",
-        "distribution_digest": "bfc0218b86358f5bf9df0928ce7d8f4981a0cb4cc30fd59fb4c17248cc0d6be2",
-        "query_suite_digest": "8e12fefdb6303c668e6d1e6d901fcc6eb22e53140e5f38652e7708aaba220aec"
+        "database_creation_policy_digest": "8c0ba7899edabf4a77947f351b17eac7e71aaa8c00af3d093daf6651a4495021",
+        "distribution_digest": "14d1eda0a8dcd768b40e8dc327c21e982bfbc8489d8bbd019ee90d2b57a4082c",
+        "query_suite_digest": "23113a8f411c7dc1500ab72314405762632363c26fb111f93724adaef828e2fe"
       },
       "files": {
         "database_creation_policy": "codeql/database-creation-policy.json",
@@ -15,7 +15,7 @@
     },
     "semgrep": {
       "acquisition": {
-        "ruleset_digest": "a8e95fee820f7efacaa7bfee7a290bb8f1f39f64bca4b8759f51a924aab516ee"
+        "ruleset_digest": "e8c8d89d83c8690b08a1b0c78cb9a1d7e8e4d5ef5dc46668fcb99999374f530a"
       },
       "files": {
         "ruleset": "semgrep/frozen.yml"
