@@ -24,10 +24,6 @@ class RunnerViolation(ValueError):
 
 _TRIVY_DB_SNAPSHOT_SCHEMA = "sentinel-workbench-trivy-db-snapshot/v1"
 _MAX_PREPARED_METADATA_BYTES = 16 * 1024
-_CODEQL_CLUSTER_MEMBERS = (
-    ("javascript-typescript", "db-javascript"),
-    ("actions", "db-actions"),
-)
 
 
 class FixtureScannerRunner:
@@ -120,16 +116,15 @@ class FixtureScannerRunner:
                 item.image,
                 "-ceu",
                 (
-                    "codeql database create --db-cluster "
-                    "--language=javascript-typescript,actions --source-root=/src "
-                    "-- /work/database-cluster && "
+                    # Pinned MCR image is CodeQL 2.15.x: language id is `javascript`
+                    # (covers JS/TS). Actions packs are not prepared from that image.
+                    "codeql database create "
+                    "--language=javascript --source-root=/src "
+                    "-- /work/database && "
                     "codeql database analyze --format=sarif-latest "
-                    "--output=/work/javascript-typescript.sarif "
+                    "--output=/work/javascript.sarif "
                     "--search-path=/prepared/query-pack -- "
-                    "/work/database-cluster/javascript-typescript /prepared/query-suite.qls && "
-                    "codeql database analyze --format=sarif-latest --output=/work/actions.sarif "
-                    "--search-path=/prepared/query-pack -- "
-                    "/work/database-cluster/actions /prepared/query-suite.qls"
+                    "/work/database /prepared/query-suite.qls"
                 ),
             )
         if item.engine == "semgrep":
@@ -344,21 +339,30 @@ class FixtureScannerRunner:
                 / snapshot_id
                 / "codeql"
                 / self._capability.engine(engine).acquisition_digest
-                / "database-cluster"
+                / "database"
             )
-            for language, database_directory in _CODEQL_CLUSTER_MEMBERS:
-                member = database / language
-                member_manifest = member / "codeql-database.yml"
-                member_database = member / database_directory
-                if (
-                    not member.is_dir()
-                    or member.is_symlink()
-                    or not member_manifest.is_file()
-                    or member_manifest.is_symlink()
-                    or not member_database.is_dir()
-                    or member_database.is_symlink()
-                ):
-                    raise RunnerViolation("CodeQL database completion evidence is absent")
+            # CodeQL 2.15 single-language DB: manifest + non-empty db-javascript extract.
+            member_manifest = database / "codeql-database.yml"
+            member_database = database / "db-javascript"
+            extract_files = (
+                [
+                    path
+                    for path in member_database.rglob("*")
+                    if path.is_file() and not path.is_symlink()
+                ]
+                if member_database.is_dir() and not member_database.is_symlink()
+                else []
+            )
+            if (
+                not database.is_dir()
+                or database.is_symlink()
+                or not member_manifest.is_file()
+                or member_manifest.is_symlink()
+                or not member_database.is_dir()
+                or member_database.is_symlink()
+                or not extract_files
+            ):
+                raise RunnerViolation("CodeQL database completion evidence is absent")
             receipt["database_digest"] = self._tree_digest(database)
         return receipt
 

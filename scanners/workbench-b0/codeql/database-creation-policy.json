@@ -1,15 +1,14 @@
 {
-  "schema_version": "sentinel-workbench-codeql-database-creation-policy/v1",
   "command": [
     "codeql",
     "database",
     "create",
-    "--db-cluster",
-    "--language=javascript-typescript,actions",
+    "--language=javascript",
     "--source-root=/src",
     "--",
-    "/work/database-cluster"
+    "/work/database"
   ],
+  "incomplete_is_never_clean": true,
   "network_policy": "source-mounted-network-none",
-  "incomplete_is_never_clean": true
+  "schema_version": "sentinel-workbench-codeql-database-creation-policy/v1"
 }

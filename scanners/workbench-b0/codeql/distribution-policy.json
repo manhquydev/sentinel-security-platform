@@ -1,10 +1,9 @@
 {
-  "schema_version": "sentinel-workbench-codeql-distribution-policy/v1",
-  "image_pin_name": "CODEQL_IMAGE",
   "distribution": "mcr.microsoft.com/cstsectools/codeql-container",
+  "image_pin_name": "CODEQL_IMAGE",
   "language_packs": [
-    "javascript-typescript",
-    "actions"
+    "javascript"
   ],
-  "notes": "Source-less acquisition only; pack bytes are prepared outside the source mount under network-none scans."
+  "notes": "JS/TS via javascript extractor (CodeQL 2.15.x pin). Actions packs not prepared from MCR image.",
+  "schema_version": "sentinel-workbench-codeql-distribution-policy/v1"
 }

@@ -20,20 +20,32 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from workbench.scanner_contracts import default_engine_statuses
+from workbench.scanner_runner import FixtureScannerRunner, RunnerViolation
 
 
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _harden_private_tree(root: Path) -> None:
+    """Make a prepared tree privately mode-matched for runner verification."""
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise SystemExit(f"prepared tree contains a symbolic link: {path}")
+        if path.is_file():
+            os.chmod(path, 0o600)
+        elif path.is_dir():
+            os.chmod(path, 0o700)
+    os.chmod(root, 0o700)
+
+
 def _sha256_tree(root: Path) -> str:
-    files: list[tuple[str, str]] = []
-    for path in sorted(root.rglob("*")):
-        if path.is_file() and not path.is_symlink():
-            rel = path.relative_to(root).as_posix()
-            files.append((rel, _sha256_file(path)))
-    payload = json.dumps(files, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+    """Match FixtureScannerRunner._private_tree_digest exactly (path/sha256/bytes)."""
+    _harden_private_tree(root)
+    try:
+        return FixtureScannerRunner._private_tree_digest(root, "prepared Trivy database cache")
+    except RunnerViolation as error:
+        raise SystemExit(str(error)) from error
 
 
 def _private_dir(path: Path) -> None:
@@ -45,12 +57,20 @@ def _load_policy(policy_root: Path) -> dict:
     return json.loads((policy_root / "policy.json").read_text(encoding="utf-8"))
 
 
+def _acquisition_digest(acquisition: dict) -> str:
+    """Match ScannerEngineCapability.acquisition_digest (canonical map digest)."""
+    return hashlib.sha256(
+        json.dumps(acquisition, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
 def prepare_semgrep(policy_root: Path, prepared_root: Path, policy: dict) -> Path:
     ruleset = policy_root / policy["engines"]["semgrep"]["files"]["ruleset"]
-    digest = policy["engines"]["semgrep"]["acquisition"]["ruleset_digest"]
-    if _sha256_file(ruleset) != digest:
+    ruleset_digest = policy["engines"]["semgrep"]["acquisition"]["ruleset_digest"]
+    if _sha256_file(ruleset) != ruleset_digest:
         raise SystemExit("semgrep frozen ruleset digest mismatch")
-    dest = prepared_root / "semgrep" / digest
+    acquisition = {"ruleset_digest": ruleset_digest}
+    dest = prepared_root / "semgrep" / _acquisition_digest(acquisition)
     _private_dir(dest)
     target = dest / "frozen.yml"
     shutil.copy2(ruleset, target)
@@ -66,11 +86,8 @@ def prepare_codeql(policy_root: Path, prepared_root: Path, policy: dict, image: 
     network fetch.
     """
     suite = policy_root / policy["engines"]["codeql"]["files"]["query_suite"]
-    digests = policy["engines"]["codeql"]["acquisition"]
-    acquisition_digest = hashlib.sha256(
-        json.dumps(digests, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    dest = prepared_root / "codeql" / acquisition_digest
+    digests = dict(policy["engines"]["codeql"]["acquisition"])
+    dest = prepared_root / "codeql" / _acquisition_digest(digests)
     _private_dir(dest)
     shutil.copy2(suite, dest / "query-suite.qls")
     os.chmod(dest / "query-suite.qls", 0o600)
@@ -85,12 +102,16 @@ set -eu
 ROOT=/usr/local/codeql-home
 test -d "$ROOT/codeql-repo/javascript/ql"
 test -d "$ROOT/codeql-repo/shared"
+test -d "$ROOT/codeql-repo/misc/suite-helpers"
 # Layout so --search-path=/prepared/query-pack resolves codeql/javascript-* packs.
+# javascript-queries depends on suite-helpers (misc/), util/typos (shared/).
 mkdir -p /out
 # Clear previous partial materialization without deleting the mount point.
 find /out -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 cp -a "$ROOT/codeql-repo/javascript" /out/javascript
 cp -a "$ROOT/codeql-repo/shared" /out/shared
+mkdir -p /out/misc
+cp -a "$ROOT/codeql-repo/misc/suite-helpers" /out/misc/suite-helpers
 if [ -f "$ROOT/codeql-repo/codeql-workspace.yml" ]; then
   cp -a "$ROOT/codeql-repo/codeql-workspace.yml" /out/codeql-workspace.yml
 fi
@@ -100,6 +121,7 @@ codeql version >/out/codeql-version.txt 2>&1 || true
 test -f /out/javascript/ql/src/qlpack.yml
 test -d /out/javascript/ql/lib
 test -d /out/shared
+test -f /out/misc/suite-helpers/qlpack.yml
 count=$(find /out -type f | wc -l)
 test "$count" -gt 20
 printf 'files=%s\n' "$count" >/out/pack-manifest.txt
@@ -144,15 +166,14 @@ printf 'files=%s\n' "$count" >/out/pack-manifest.txt
 
 
 def prepare_trivy(policy_root: Path, prepared_root: Path, policy: dict, image: str) -> Path:
-    digests = policy["engines"]["trivy"]["acquisition"]
-    # Runtime admission digests the offline cache tree; start with a private empty
-    # cache + policy-bound metadata so layout exists. Operators then populate cache.
-    policy_digest = digests["db_snapshot_digest"]
-    dest = prepared_root / "trivy" / policy_digest
-    cache = dest / "cache"
-    _private_dir(dest)
+    """Prepare offline Trivy cache under runner acquisition_digest directory name."""
+    # Stage under a temp name, then rehome to acquisition_digest({db_snapshot_digest: tree}).
+    staging = prepared_root / "trivy" / ".staging"
+    if staging.exists():
+        shutil.rmtree(staging)
+    cache = staging / "cache"
+    _private_dir(staging)
     _private_dir(cache)
-    # Try to download DB inside a networked container into the cache (optional).
     try:
         subprocess.run(
             [
@@ -171,23 +192,46 @@ def prepare_trivy(policy_root: Path, prepared_root: Path, policy: dict, image: s
             text=True,
             timeout=600,
         )
+        # Docker often leaves root-owned DB files; re-own for host-private mode + hashing.
+        if any(cache.rglob("*")):
+            uid, gid = os.getuid(), os.getgid()
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "-v",
+                    f"{cache}:/cache",
+                    "alpine:3.20",
+                    "sh",
+                    "-ceu",
+                    f"find /cache -type d -exec chmod 700 {{}} +; "
+                    f"find /cache -type f -exec chmod 600 {{}} +; "
+                    f"chown -R {uid}:{gid} /cache",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         pass
-    tree_digest = _sha256_tree(cache) if any(cache.iterdir()) else policy_digest
+    if not any(cache.rglob("*")):
+        # Keep a private empty layout so operators can populate later; use policy file
+        # digest as placeholder tree identity (will not match a real scan until filled).
+        tree_digest = policy["engines"]["trivy"]["acquisition"]["db_snapshot_digest"]
+    else:
+        tree_digest = _sha256_tree(cache)
+    acquisition = {"db_snapshot_digest": tree_digest}
+    dest = prepared_root / "trivy" / _acquisition_digest(acquisition)
+    if dest.exists():
+        shutil.rmtree(dest)
+    staging.rename(dest)
+    cache = dest / "cache"
     metadata = {
         "schema_version": "sentinel-workbench-trivy-db-snapshot/v1",
-        "db_snapshot_digest": tree_digest if any(cache.iterdir()) else policy_digest,
+        "db_snapshot_digest": tree_digest,
     }
-    # If we populated a real cache, re-home under the tree digest directory.
-    if any(cache.iterdir()) and tree_digest != policy_digest:
-        final = prepared_root / "trivy" / tree_digest
-        if final.resolve() != dest.resolve():
-            if final.exists():
-                shutil.rmtree(final)
-            dest.rename(final)
-            dest = final
-            cache = dest / "cache"
-        metadata["db_snapshot_digest"] = tree_digest
     meta_path = dest / "metadata.json"
     raw = (json.dumps(metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n").encode()
     meta_path.write_bytes(raw)
@@ -239,7 +283,7 @@ def main() -> int:
         ),
         "notes": (
             "Prepared source-less dependency roots from frozen policy + pinned images. "
-            "CodeQL query-pack is copied from the digest-pinned container (javascript + shared). "
+            "CodeQL query-pack is copied from the digest-pinned container (javascript + shared + suite-helpers). "
             "Trivy offline DB is host-private. This is not a B0 scan and not corpus admission."
         ),
     }
