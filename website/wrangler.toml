@@ -1,8 +1,5 @@
-# Cloudflare Workers static assets for the Sentinel docs site.
-# Build:  cd website && npm ci && npm run build
-# Deploy: cd website && npx wrangler deploy
-#
-# Set the Worker name / account in the Cloudflare dashboard or via CF_ACCOUNT_ID.
+# Cloudflare Workers static assets — Sentinel docs site
+# Production: https://vinsoc.manhquy.id.vn  (zone manhquy.id.vn)
 name = "sentinel-docs"
 compatibility_date = "2026-04-11"
 workers_dev = true
@@ -10,3 +7,7 @@ workers_dev = true
 [assets]
 directory = "./dist"
 not_found_handling = "404-page"
+
+[[routes]]
+pattern = "vinsoc.manhquy.id.vn"
+custom_domain = true

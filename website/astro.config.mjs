@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://sentinel-docs.example.workers.dev',
+	site: 'https://vinsoc.manhquy.id.vn',
 	integrations: [
 		starlight({
 			title: 'Sentinel Docs',

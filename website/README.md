@@ -32,9 +32,21 @@ npm run build
 npx wrangler deploy
 ```
 
-Requires a Cloudflare account login (`npx wrangler login`) and permission to
-create the `sentinel-docs` Worker. Preview URL is typically
-`https://sentinel-docs.<subdomain>.workers.dev`.
+Requires Cloudflare login (`npx wrangler login`) on the account that owns zone
+`manhquy.id.vn`.
+
+| URL | Role |
+|-----|------|
+| https://vinsoc.manhquy.id.vn | **Production** custom domain |
+| https://sentinel-docs.manhquydev.workers.dev | workers.dev fallback |
+
+`wrangler.toml` binds `vinsoc.manhquy.id.vn` as a Workers custom domain on the
+same zone. Redeploy after content changes:
+
+```bash
+bash scripts/website-sync-docs.sh
+cd website && npm run build && npx wrangler deploy
+```
 
 ## Security rails
 
