@@ -1,102 +1,125 @@
 # Project Sentinel
 
-Sentinel is a research/education capstone for **safe, evidence-bound web
-application security analysis in a local lab**. Its current published product
-authority is the [charter brief](docs/product/sentinel-charter-brief.md); the
-as-built map is
-[sentinel-six-week-as-built-architecture](docs/sentinel-six-week-as-built-architecture.md).
+**Sentinel** là đồ án / lab nghiên cứu–giáo dục (capstone) về **phân tích bảo mật ứng dụng web có AI**, chạy **chỉ trên lab local** (loopback). Mục tiêu không phải “AI tự khai thác Internet”, mà là:
 
-The charter's flow is: scan a deliberately vulnerable local target, normalize
-and redact findings, retrieve security context, produce a grounded report, then
-propose a tightly bounded test request. A human approval and the Kong gateway
-are required before the only permitted write proof. Sentinel is not an
-autonomous exploitation tool or a product for external targets.
+1. **Đưa kết quả quét (SAST/DAST/SCA) về một dạng thống nhất, đã che secret.**
+2. **Để AI hỗ trợ phân tích trên bằng chứng máy quét** — không bịa endpoint hay lỗ hổng.
+3. **Bọc an toàn quanh AI**: prompt injection fail-closed, PII/redaction, phê duyệt người (HITL), request chỉ qua API Gateway và catalog cho phép.
 
-## Two products (do not mix evidence)
+**Bối cảnh:** VinUni × VinSOC · TTS Nguyễn Mạnh Quý.  
+**Site báo cáo tuần (mentor):** [https://vinsoc.manhquy.id.vn](https://vinsoc.manhquy.id.vn) · [`/llms.txt`](https://vinsoc.manhquy.id.vn/llms.txt)
 
-| Surface | What it is | What it is not |
+---
+
+## Đây là (và không phải) gì?
+
+| Là | Không phải |
+|---|---|
+| Lab an toàn, có bằng chứng, có ranh giới tin cậy | Sản phẩm SaaS / pentest agent tự do trên Internet |
+| Hệ thống hỗ trợ AppSec / thực tập sinh trên target cố ý lỗ | Công cụ “AI tìm bug nhiều hơn con người” không kiểm chứng |
+| Hai product riêng: **Charter** và **Workbench** | Một product duy nhất; trộn bằng chứng hai bên là sai |
+
+**Hợp đồng sản phẩm công bố (Charter):**  
+[docs/product/sentinel-charter-brief.md](docs/product/sentinel-charter-brief.md)  
+**Bản đồ as-built:**  
+[docs/sentinel-six-week-as-built-architecture.md](docs/sentinel-six-week-as-built-architecture.md)
+
+---
+
+## Hai product — không trộn bằng chứng
+
+| Product | Là gì | Không phải |
 |---|---|---|
-| **Charter** | Six-week Juice Shop loopback lab: scan → redact → grounded report → signed HITL → one catalog request through Kong | Not the Workbench, not an external-target product |
-| **Workbench** | Separate local research UI/broker for fixture readiness and future comparative corpus work | Not Charter completion, not Charter approval/audit evidence |
+| **Charter** | Luồng 6 tuần lab Juice Shop local: quét → che secret → báo cáo bám bằng chứng → HITL ký → một request catalog qua Kong | Workbench; corpus so sánh; “nghiệm thu” bằng UI research |
+| **Workbench** | UI/broker research local: fixture scanner, chuẩn bị corpus host-local, gate readiness | Hoàn thành Charter; bằng chứng approve/audit Charter |
 
-- Charter product: [charter brief](docs/product/sentinel-charter-brief.md)
-- Workbench product: [workbench brief](docs/product/sentinel-security-research-workbench.md)
-- Live Charter operator procedure: [live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md)
-- Workbench demo surface: [workbench demo](docs/operations/sentinel-workbench-demo.md)
-- Weekly mentor reports: [docs/reports](docs/reports/index.md) (Starlight site in [`website/`](website/README.md))
+- Charter: [charter brief](docs/product/sentinel-charter-brief.md)
+- Workbench: [workbench brief](docs/product/sentinel-security-research-workbench.md)
+- Runbook live Charter: [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md)
+- Demo Workbench: [workbench demo](docs/operations/sentinel-workbench-demo.md)
+- **Báo cáo tuần (mentor):** [docs/reports/](docs/reports/index.md) · site [website/](website/README.md)
 
-Pinned scanner/harness image digests live in committed
-[`scanners/image-pins.env`](scanners/image-pins.env) (public tags only; no secrets).
+Image pin (không secret): [`scanners/image-pins.env`](scanners/image-pins.env).
 
-## Charter boundary
+---
 
-- **Target:** the literal local Juice Shop sandbox at `http://127.0.0.1:13000`;
-  redirects and external targets are refused.
-- **Safety:** scanner output is redacted before storage; target-derived content
-  is treated as untrusted; request approval and gateway controls fail closed;
-  detected PII and prompt-injection content are quarantined. The executable
-  owners are [scanners](scanners/README.md),
-  [Kong](infra/kong/README.md), and the [charter scripts](scripts/sentinel-demo.sh).
-- **Allowed active requests:** the executor accepts only a compiled catalog of
-  six predeclared cases through Kong: baseline, empty, special-character, and
-  256-character product-search queries; plus empty-object and wrong-type basket
-  POST bodies. It never accepts arbitrary paths, headers, or payloads. The POST
-  cases are signed-HITL and must return `4xx`, proving a non-mutating boundary.
-  Real exploitation, successful data mutation, and generic Internet-target
-  support are out of scope.
-- **Not six-week requirements:** the historical Week 7–12 research and optional
-  extensions (multi-agent work, GraphRAG, MCP/A2A, vLLM/GPU, and LLM-as-a-Judge)
-  are not current completion requirements.
+## Ý tưởng cốt lõi (WHY)
 
-## Current maturity
+Quét bảo mật sinh ra rất nhiều cảnh báo theo từng tool; team muốn LLM “đọc giúp”. LLM ngây thơ sẽ:
 
-The completed [charter closure record](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md)
-is the evidence ledger. Charter minimum is met by offline contracts **and** a
-fresh bounded local live run (`charter-live-260804-local-003`: scan → report →
-signed approval → one catalog GET through Kong → evaluation, with correlated
-Kong audit). Historical R5 remains non-resumable under v2 policy. Offline
-audit-only recovery is intentionally not live acceptance.
+- **bịa** finding / endpoint,
+- **làm theo** chỉ dẫn độc trong response (prompt injection),
+- **rò** secret/PII vào prompt và log.
 
-Workbench is a **separate** product: fixture/safety and host-local corpus prep
-only until an admitted TypeScript corpus and B3 calibration exist. See the
-[workbench brief](docs/product/sentinel-security-research-workbench.md).
+Sentinel tách rõ:
 
-## Start from the owning entry point
-
-### Charter (live path)
-
-| Need | Entry point |
+| Vai trò | Ai làm |
 |---|---|
-| Product contract | [Charter brief](docs/product/sentinel-charter-brief.md), [as-built architecture](docs/sentinel-six-week-as-built-architecture.md) |
-| Operator live acceptance procedure | [Live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md) |
-| No-secret readiness (`base` / `dispatch RUN_ID`) | [`scripts/sentinel-live-preflight.sh`](scripts/sentinel-live-preflight.sh) |
-| Bring up existing local topology | [`scripts/sentinel-charter-up.sh`](scripts/sentinel-charter-up.sh) — Compose startup only, not a Charter run |
-| Run, resume, recover-audit, or verify | [`scripts/sentinel-demo.sh`](scripts/sentinel-demo.sh) — `run`/`resume` need private credentials and approval material; `verify` checks a passed terminal run |
+| Tìm / quan sát | Máy quét deterministic (Semgrep, Trivy, Nuclei, …) |
+| Chuẩn hóa + che secret | Pipeline scanners / adapter |
+| Giải thích / đề xuất (bám field đã typed) | Agent + renderer — model **không** được invent fact |
+| Hành động state-changing | Chỉ sau HITL + Gateway + allowlist/catalog |
 
-### Workbench (separate surface)
+Chi tiết hợp đồng và ranh giới: charter brief + as-built + [docs/decisions/](docs/decisions/).
 
-| Need | Entry point |
+---
+
+## Ranh giới an toàn (Charter)
+
+- **Target:** Juice Shop lab tại `http://127.0.0.1:13000` — không target ngoài, redirect ra ngoài bị từ chối.
+- **An toàn dữ liệu:** report thô che trước khi lưu; nội dung từ target coi là **không tin cậy**; PII / injection fail-closed.
+- **Request chủ động:** chỉ catalog cố định qua Kong (GET/POST predeclared); POST cần HITL ký; không payload tùy ý.
+- **Ngoài phạm vi 6 tuần tối thiểu:** multi-agent phức tạp, GraphRAG, MCP/A2A đầy đủ, vLLM/GPU, LLM-as-a-Judge phức tạp (có thể có code lịch sử — không phải tiêu chí hoàn thành hiện tại).
+
+Owner thực thi: [scanners/](scanners/README.md), [infra/kong/](infra/kong/README.md), [`scripts/sentinel-demo.sh`](scripts/sentinel-demo.sh).
+
+---
+
+## Mức độ chín (tóm tắt)
+
+- **Charter:** ledger [charter closure](docs/plans/completed/2026-08-04-sentinel-charter-literal-closure.md); offline contract + live lab theo runbook.
+- **Tuần 1–3 (mentor reports):** [docs/reports/](docs/reports/index.md) — quét nền, chuẩn hóa + tri thức offline, agent phân tích JSONL (prose tiếng Việt bám bằng chứng). Sample: [docs/reports/artifacts/](docs/reports/artifacts/README.md).
+- **Workbench:** product riêng; fixture/B0 readiness — xem workbench brief, **không** dùng làm bằng chứng Charter.
+
+---
+
+## Bắt đầu từ đúng cửa
+
+### Charter (live)
+
+| Nhu cầu | Điểm vào |
 |---|---|
-| Product boundary and evidence state | [Workbench brief](docs/product/sentinel-security-research-workbench.md) |
-| Loopback browser + host broker | [`scripts/workbench-up.sh`](scripts/workbench-up.sh) — prints a one-time fragment capability |
-| Fixture-only scanner capability status | [`scripts/workbench-scanner-preflight.sh`](scripts/workbench-scanner-preflight.sh) `--fixture-profile typescript` |
-| Host-local OpenSSF corpus cache (no admission) | [`scripts/workbench-corpus-acquire.py`](scripts/workbench-corpus-acquire.py) |
-| Candidate inventory from that cache | [`scripts/workbench-corpus-inventory.py`](scripts/workbench-corpus-inventory.py) |
-| Demo / acceptance notes | [Workbench demo](docs/operations/sentinel-workbench-demo.md), [scanner viability](docs/operations/workbench-scanner-viability.md) |
+| Hợp đồng sản phẩm | [Charter brief](docs/product/sentinel-charter-brief.md), [as-built](docs/sentinel-six-week-as-built-architecture.md) |
+| Thủ tục nghiệm thu live | [Live acceptance runbook](docs/operations/sentinel-live-acceptance-runbook.md) |
+| Preflight không secret | [`scripts/sentinel-live-preflight.sh`](scripts/sentinel-live-preflight.sh) |
+| Bật topology Compose | [`scripts/sentinel-charter-up.sh`](scripts/sentinel-charter-up.sh) (chỉ up, không phải một lần chạy Charter) |
+| Chạy / resume / verify | [`scripts/sentinel-demo.sh`](scripts/sentinel-demo.sh) — `run`/`resume` cần credential + approval riêng máy operator |
 
-### Shared lab surfaces
+### Workbench (riêng)
 
-| Need | Entry point |
+| Nhu cầu | Điểm vào |
 |---|---|
-| Image digest pins (reviewable, no secrets) | [`scanners/image-pins.env`](scanners/image-pins.env) |
-| Scanner, redaction, and lake import | [Scanner guide](scanners/README.md) and [DefectDojo guide](infra/defectdojo/README.md) |
-| RAG corpus/retrieval contract or live store | [RAG guide](rag/README.md), [`tests/run-charter-rag-contract.sh`](tests/run-charter-rag-contract.sh), and [`tests/rag-retrieval-test.sh`](tests/rag-retrieval-test.sh) |
-| Project documentation and active work | [Documentation map](docs/README.md) and [active plans](docs/plans/active/) |
+| Ranh giới product | [Workbench brief](docs/product/sentinel-security-research-workbench.md) |
+| UI + broker local | [`scripts/workbench-up.sh`](scripts/workbench-up.sh) |
+| Preflight scanner fixture | [`scripts/workbench-scanner-preflight.sh`](scripts/workbench-scanner-preflight.sh) |
+| Corpus host-local | [`scripts/workbench-corpus-acquire.py`](scripts/workbench-corpus-acquire.py), [`scripts/workbench-corpus-inventory.py`](scripts/workbench-corpus-inventory.py) |
+| Demo / viability | [demo](docs/operations/sentinel-workbench-demo.md), [scanner viability](docs/operations/workbench-scanner-viability.md) |
 
-## Fresh-clone scan-to-redaction (no secrets)
+### Lab dùng chung
 
-Run this from the repository root. This narrow local proof needs Docker daemon and
-socket access, `jq`, and public pinned images available to Docker. It needs no DefectDojo credentials, instance, or target-app service. It scans the digest-pinned Juice Shop image and produces a sanitized local report; it does not import findings or verify the lake.
+| Nhu cầu | Điểm vào |
+|---|---|
+| Pin image | [`scanners/image-pins.env`](scanners/image-pins.env) |
+| Scanner / redaction / lake | [scanners/README.md](scanners/README.md), [DefectDojo](infra/defectdojo/README.md) |
+| RAG | [rag/README.md](rag/README.md) |
+| Tài liệu & plan | [docs/README.md](docs/README.md), [plans/active](docs/plans/active/) |
+| Site docs mentor | [website/README.md](website/README.md), smoke [`scripts/website-smoke-check.sh`](scripts/website-smoke-check.sh) |
+
+---
+
+## Proof nhanh: quét → che secret (không cần DefectDojo)
+
+Cần Docker, `jq`, image pin public. **Không** cần credential lake.
 
 ```bash
 (
@@ -115,23 +138,46 @@ socket access, `jq`, and public pinned images available to Docker. It needs no D
 )
 ```
 
-`TRIVY_SCANNERS=secret,misconfig` avoids the vulnerability-database download.
-The private raw workspace is removed immediately after redaction and on failure.
+`TRIVY_SCANNERS=secret,misconfig` tránh tải DB CVE. File raw chỉ nằm workspace tạm.
 
-## Provisioned DefectDojo import and verification
+Import DefectDojo / `verify-lake.sh` là thao tác **có provision** — xem [infra/defectdojo/README.md](infra/defectdojo/README.md).
 
-DefectDojo import and `verify-lake.sh` are **provisioned** operations: use the
-[DefectDojo guide](infra/defectdojo/README.md) and its service credentials. This does not reproduce the historical baseline from a fresh clone, because that baseline includes inputs the no-secret quick-start does not provision.
+RAG store: schema tracked trong `infra/rag-store/`; volume rỗng khởi tạo từ schema — xem [rag/README.md](rag/README.md).
 
-The RAG store's [Compose definition](infra/rag-store/docker-compose.yml) mounts
-the tracked `infra/rag-store/schema.sql` source into PostgreSQL's
-first-initialization hook. A fresh clone can therefore initialize an empty
-`rag-db` volume from the committed schema. This applies only to an empty data
-volume and is not a schema-migration mechanism. Use the [RAG guide](rag/README.md)
-for the separate hermetic corpus contract and live-store prerequisites.
+---
 
-## Documentation and history
+## Báo cáo tuần & agent
 
-Use [docs/README.md](docs/README.md) to navigate current product, decisions, and
-plans. Historical research and the former twelve-week programme are context, not
-the current six-week product contract; do not use them to infer completion.
+| Tuần | Báo cáo | Ý chính |
+|---|---|---|
+| 1 | [week-01](docs/reports/week-01.md) | App lab, quét đa tool, che secret, endpoint |
+| 2 | [week-02](docs/reports/week-02.md) | Chuẩn hóa findings + tri thức offline |
+| 3 | [week-03](docs/reports/week-03.md) | Agent JSONL; prose tiếng Việt từ field typed + knowledge |
+| Sample | [artifacts](docs/reports/artifacts/README.md) | Aggregate + report mẫu (không secret) |
+
+Site: https://vinsoc.manhquy.id.vn — HTML / Markdown / raw / [`llms.txt`](https://vinsoc.manhquy.id.vn/llms.txt).
+
+Agent phân tích: `agent/week3_analysis.py` · prompt `agent/prompts/charter-system-prompt.md`.
+
+---
+
+## Tài liệu & lịch sử
+
+Bản đồ đầy đủ: **[docs/README.md](docs/README.md)**.
+
+- `docs/decisions/` — quyết định bền  
+- `docs/plans/` — plan active/completed  
+- `docs/journal/` — nhật ký kỹ thuật (không thay authority)  
+- Chương trình 12 tuần / research cũ: **ngữ cảnh**, không phải contract hoàn thành 6 tuần hiện tại  
+
+Quy trình agent trong repo: [docs/WORKFLOW.md](docs/WORKFLOW.md), [AGENTS.md](AGENTS.md).
+
+---
+
+## Đóng góp / agent
+
+1. Đọc map product (README này + docs/README).  
+2. Không trộn bằng chứng Charter ↔ Workbench.  
+3. Không commit secret, raw scan, `infra/.env`.  
+4. Thay đổi hợp đồng / an toàn → cập nhật brief + decision/tests tương ứng.  
+5. Site docs: sửa `docs/reports/*` rồi `bash scripts/website-sync-docs.sh` (xem `website/README.md`).

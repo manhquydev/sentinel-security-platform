@@ -1,14 +1,16 @@
 # Sentinel charter brief
 
-A one–two page product description of Project Sentinel as delivered for the
-six-week research/education capstone. This brief is the **published** product
-contract; longer internship assignment texts and personal weekly reports are
-local-only and are not part of the public tree. It is a lab build, not a shipped
-product.
+**Hợp đồng sản phẩm công bố** của Project Sentinel — đồ án / lab 6 tuần
+(nghiên cứu–giáo dục, VinUni × VinSOC). Đây là bản 1–2 trang mô tả sản phẩm
+Charter đã giao; không phải product SaaS. Văn bản assignment đầy đủ và tài liệu
+cá nhân chỉ giữ local, không thuộc cây public.
 
 The separate [Sentinel Security Research Workbench](sentinel-security-research-workbench.md)
 does not inherit this Charter's target, approval flow, capstone completion, or
 evidence claims. Its CMC inventory is not Charter evidence.
+
+Đọc thêm (tiếng Việt, cửa vào monorepo): root [`README.md`](../../README.md),
+bản đồ [`docs/README.md`](../README.md), báo cáo tuần [`docs/reports/`](../reports/index.md).
 
 ## Problem — Vấn đề cần giải quyết
 
