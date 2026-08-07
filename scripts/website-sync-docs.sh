@@ -44,34 +44,34 @@ rm -rf "${DEST}/reports" "${DEST}/product" "${DEST}/architecture" "${DEST}/guide
 mkdir -p "${DEST}/reports"
 
 write_page "${REPORTS_SRC}/index.md" "${DEST}/reports/index.md" \
-  "Báo cáo tuần" "Index of Project Sentinel weekly mentor reports"
+  "Báo cáo tuần" "Mục lục báo cáo tuần Project Sentinel (VINSOC × VINUNI)"
 write_page "${REPORTS_SRC}/week-01.md" "${DEST}/reports/week-01.md" \
-  "Tuần 1 — Baseline scan" "Week 1 mentor report: SAST/DAST baseline and redaction"
+  "Tuần 1 — Quét bảo mật nền" "Báo cáo Tuần 1: quét SAST/DAST nền và che secret"
 write_page "${REPORTS_SRC}/week-02.md" "${DEST}/reports/week-02.md" \
-  "Tuần 2 — Normalize + knowledge" "Week 2 mentor report: aggregate findings and offline knowledge"
+  "Tuần 2 — Chuẩn hóa và kho tri thức" "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"
 write_page "${REPORTS_SRC}/week-03.md" "${DEST}/reports/week-03.md" \
-  "Tuần 3 — Analysis agent" "Week 3 mentor report: evidence-bound security analysis agent"
+  "Tuần 3 — Agent phân tích bảo mật" "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"
 
 # Ensure allowlist files exist (guards against silent drift of ALLOWLIST_REPORTS).
 for name in "${ALLOWLIST_REPORTS[@]}"; do
   [[ -f "${REPORTS_SRC}/${name}" ]] || die "allowlist missing ${name}"
 done
 
-# Landing page
+# Landing page (tiếng Việt, giọng mentor-facing tự nhiên)
 cat >"${DEST}/index.mdx" <<'EOF'
 ---
 title: Project Sentinel
-description: Mentor-facing docs and weekly reports for the Sentinel security lab.
+description: Báo cáo tuần đồ án Project Sentinel — TTS Nguyễn Mạnh Quý (VINSOC × VINUNI).
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Weekly reports and product docs for the VinUni × VinSOC security lab — evidence-bound, loopback-only.
+  tagline: Báo cáo tuần 1–3 / 6 của đồ án bảo mật AI (VINSOC × VINUNI) — bám bằng chứng, lab nội bộ (loopback).
   actions:
-    - text: Báo cáo tuần
+    - text: Xem báo cáo tuần
       link: /reports/
       icon: right-arrow
       variant: primary
-    - text: Repo monorepo
+    - text: Mã nguồn monorepo
       link: https://github.com/manhquydev/sentinel-security-platform
       icon: external
       variant: minimal
@@ -79,21 +79,25 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Start here
+## Bắt đầu từ đây
 
 <CardGrid>
   <Card title="Tuần 1" icon="seti:json">
-    Baseline scanners, redaction, Juice Shop loopback — [week-01](/reports/week-01/).
+    Quét bảo mật nền, che secret, Juice Shop loopback — [tuần 1](/reports/week-01/).
   </Card>
   <Card title="Tuần 2" icon="seti:db">
-    Normalize 36 findings + offline knowledge — [week-02](/reports/week-02/).
+    Chuẩn hóa 36 cảnh báo + kho tri thức offline — [tuần 2](/reports/week-02/).
   </Card>
   <Card title="Tuần 3" icon="seti:notebook">
-    Evidence-bound analysis agent (JSONL) — [week-03](/reports/week-03/).
+    Agent phân tích bảo mật, báo cáo JSONL bám bằng chứng — [tuần 3](/reports/week-03/).
   </Card>
 </CardGrid>
 
-Personal internship assignment texts and presentation scripts are **not** published here.
+## Ai thực hiện
+
+**TTS (Thực tập sinh) Nguyễn Mạnh Quý** · **VINSOC** × **VINUNI**
+
+Văn bản assignment đầy đủ và kịch bản trình bày cá nhân **không** đăng trên site này.
 EOF
 
 echo "website-sync-docs: ok"

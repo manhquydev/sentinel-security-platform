@@ -1,8 +1,8 @@
 # Project Sentinel — Báo cáo Tuần 1
 
-Monorepo Sentinel (VinUni × VinSOC). Đây là phần nền tảng của đồ án 6 tuần: dựng
-ứng dụng web thử nghiệm, chạy công cụ quét bảo mật, và lưu kết quả dưới dạng JSON
-đã che secret, có thể đọc lại được.
+Monorepo Sentinel (VinUni × VinSOC). Đây là **nền** của đồ án 6 tuần: dựng ứng
+dụng web thử nghiệm, chạy công cụ quét bảo mật, và lưu kết quả dạng JSON **đã che
+secret**, đọc lại được.
 
 > Nguồn narrative gốc: gói nộp Tuần 1 (2026-07-29, đã gộp vào monorepo).
 > Số liệu và digest dưới đây đối chiếu với `scanners/out/*.san.*` **trong repo này**.

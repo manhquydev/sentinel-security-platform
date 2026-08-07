@@ -1,12 +1,12 @@
 ---
-title: "Tuần 2 — Normalize + knowledge"
-description: "Week 2 mentor report: aggregate findings and offline knowledge"
+title: "Tuần 2 — Chuẩn hóa và kho tri thức"
+description: "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"
 ---
 
 
-Monorepo Sentinel. Bước tiếp theo sau Tuần 1: lấy artifact đã che secret, chuẩn hóa
-về một cấu trúc chung có provenance kiểm chứng, và dựng kho tri thức OWASP/tool
-tra cứu **offline** (không gọi mạng, không gọi LLM).
+Monorepo Sentinel. Bước tiếp sau Tuần 1: lấy file quét đã che secret, **chuẩn hóa**
+về một cấu trúc chung có nguồn gốc (provenance) kiểm chứng được, và dựng **kho tri
+thức** OWASP/công cụ để tra cứu **offline** (không gọi mạng, không gọi LLM).
 
 > Nguồn narrative gốc: gói nộp Tuần 2 (2026-07-31).
 > Adapter monorepo: `agent/normalize_week1_artifacts.py`.

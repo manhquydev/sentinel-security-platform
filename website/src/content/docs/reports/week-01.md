@@ -1,12 +1,12 @@
 ---
-title: "Tuần 1 — Baseline scan"
-description: "Week 1 mentor report: SAST/DAST baseline and redaction"
+title: "Tuần 1 — Quét bảo mật nền"
+description: "Báo cáo Tuần 1: quét SAST/DAST nền và che secret"
 ---
 
 
-Monorepo Sentinel (VinUni × VinSOC). Đây là phần nền tảng của đồ án 6 tuần: dựng
-ứng dụng web thử nghiệm, chạy công cụ quét bảo mật, và lưu kết quả dưới dạng JSON
-đã che secret, có thể đọc lại được.
+Monorepo Sentinel (VinUni × VinSOC). Đây là **nền** của đồ án 6 tuần: dựng ứng
+dụng web thử nghiệm, chạy công cụ quét bảo mật, và lưu kết quả dạng JSON **đã che
+secret**, đọc lại được.
 
 > Nguồn narrative gốc: gói nộp Tuần 1 (2026-07-29, đã gộp vào monorepo).
 > Số liệu và digest dưới đây đối chiếu với `scanners/out/*.san.*` **trong repo này**.
