@@ -1,9 +1,14 @@
 ---
-title: "Báo cáo tuần"
-description: "Mục lục báo cáo tuần Project Sentinel (VINSOC × VINUNI)"
+title: "Báo cáo tuần — nguồn Markdown"
+description: "Nguồn Markdown đầy đủ — đọc / sao chép"
 ---
 
-> **Nguồn cho agent / tải file:** [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt) · [Markdown mục lục](/reports/index/markdown/) · [Raw mục lục](/raw/reports/index.md)
+Trang HTML: [Báo cáo tuần](/reports/) · [Tải raw](/raw/reports/index.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+
+Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/reports/index.md`), không qua bước render HTML.
+
+````markdown
+# Báo cáo tuần — Project Sentinel
 
 Đây là bộ **báo cáo theo tuần** của đồ án 6 tuần Project Sentinel (VinUni × VinSOC),
 lưu trong monorepo và hiển thị trên site mentor.
@@ -26,3 +31,4 @@ guardrails, demo cuối) chưa thuộc phạm vi bộ báo cáo này.
 **Cách đọc bằng chứng:** chỉ tin đường dẫn file và mã băm (digest) được ghi trong
 từng báo cáo. File quét thô (`.raw.*`) không được đưa lên site. Văn bản assignment
 đầy đủ và kịch bản trình bày cá nhân chỉ giữ local, không đăng public.
+````

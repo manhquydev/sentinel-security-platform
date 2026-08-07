@@ -1,9 +1,14 @@
 ---
-title: "Tuần 2 — Chuẩn hóa và kho tri thức"
-description: "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"
+title: "Tuần 2 — Chuẩn hóa và kho tri thức — nguồn Markdown"
+description: "Nguồn Markdown đầy đủ — đọc / sao chép"
 ---
 
-> **Xem nguồn:** [Markdown](/reports/week-02/markdown/) · [Raw `.md`](/raw/reports/week-02.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+Trang HTML: [Tuần 2 — Chuẩn hóa và kho tri thức](/reports/week-02/) · [Tải raw](/raw/reports/week-02.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+
+Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/reports/week-02.md`), không qua bước render HTML.
+
+````markdown
+# Project Sentinel — Báo cáo Tuần 2
 
 Monorepo Sentinel. Bước tiếp sau Tuần 1: lấy file quét đã che secret, **chuẩn hóa**
 về một cấu trúc chung có nguồn gốc (provenance) kiểm chứng được, và dựng **kho tri
@@ -104,3 +109,4 @@ Gói **không** chứa secret, raw scan, cấu hình LLM, hay claim “RAG live�
 - Giữ baseline 36 — không trộn scan mới (trôi theo thời điểm).
 
 Đây là bằng chứng phạm vi **Tuần 2**, không phải xong chương trình sáu tuần.
+````

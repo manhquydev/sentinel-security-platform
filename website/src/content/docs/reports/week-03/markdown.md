@@ -1,9 +1,14 @@
 ---
-title: "Tuần 3 — Agent phân tích bảo mật"
-description: "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"
+title: "Tuần 3 — Agent phân tích bảo mật — nguồn Markdown"
+description: "Nguồn Markdown đầy đủ — đọc / sao chép"
 ---
 
-> **Xem nguồn:** [Markdown](/reports/week-03/markdown/) · [Raw `.md`](/raw/reports/week-03.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+Trang HTML: [Tuần 3 — Agent phân tích bảo mật](/reports/week-03/) · [Tải raw](/raw/reports/week-03.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+
+Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/reports/week-03.md`), không qua bước render HTML.
+
+````markdown
+# Project Sentinel — Báo cáo Tuần 3
 
 Monorepo Sentinel. Tuần 3 xây **Agent phân tích bảo mật** (Security Analysis Agent):
 đọc gói kết quả đã chuẩn hóa từ Tuần 1–2, rồi xuất **báo cáo JSONL bám bằng chứng**
@@ -124,3 +129,4 @@ Trong `tests/test_week3_aggregate_analysis.py` (và cầu nối proposal):
 - LLM live là tùy chọn; đường offline/mock chứng minh schema + fail-closed.
 
 Đây là bằng chứng phạm vi **Tuần 3**, không phải hoàn tất cả sáu tuần.
+````

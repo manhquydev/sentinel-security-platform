@@ -1,9 +1,4 @@
----
-title: "Tuần 2 — Chuẩn hóa và kho tri thức"
-description: "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"
----
-
-> **Xem nguồn:** [Markdown](/reports/week-02/markdown/) · [Raw `.md`](/raw/reports/week-02.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+# Project Sentinel — Báo cáo Tuần 2
 
 Monorepo Sentinel. Bước tiếp sau Tuần 1: lấy file quét đã che secret, **chuẩn hóa**
 về một cấu trúc chung có nguồn gốc (provenance) kiểm chứng được, và dựng **kho tri

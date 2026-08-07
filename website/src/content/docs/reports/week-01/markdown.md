@@ -1,9 +1,14 @@
 ---
-title: "Tuần 1 — Quét bảo mật nền"
-description: "Báo cáo Tuần 1: quét SAST/DAST nền và che secret"
+title: "Tuần 1 — Quét bảo mật nền — nguồn Markdown"
+description: "Nguồn Markdown đầy đủ — đọc / sao chép"
 ---
 
-> **Xem nguồn:** [Markdown](/reports/week-01/markdown/) · [Raw `.md`](/raw/reports/week-01.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+Trang HTML: [Tuần 1 — Quét bảo mật nền](/reports/week-01/) · [Tải raw](/raw/reports/week-01.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+
+Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/reports/week-01.md`), không qua bước render HTML.
+
+````markdown
+# Project Sentinel — Báo cáo Tuần 1
 
 Monorepo Sentinel (VinUni × VinSOC). Đây là **nền** của đồ án 6 tuần: dựng ứng
 dụng web thử nghiệm, chạy công cụ quét bảo mật, và lưu kết quả dạng JSON **đã che
@@ -106,3 +111,4 @@ Những phần sau là lựa chọn phạm vi, không phải thiếu:
   điểm tool, không che giấu.
 
 Đây là bằng chứng phạm vi **Tuần 1**, không phải hoàn tất cả 6 tuần.
+````

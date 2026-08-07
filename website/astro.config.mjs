@@ -37,6 +37,16 @@ export default defineConfig({
 						{ label: 'Tuần 3 — Agent phân tích bảo mật', slug: 'reports/week-03' },
 					],
 				},
+				{
+					label: 'Nguồn Markdown',
+					items: [
+						{ label: 'llms.txt', link: '/llms.txt' },
+						{ label: 'Mục lục (Markdown)', slug: 'reports/index/markdown' },
+						{ label: 'Tuần 1 (Markdown)', slug: 'reports/week-01/markdown' },
+						{ label: 'Tuần 2 (Markdown)', slug: 'reports/week-02/markdown' },
+						{ label: 'Tuần 3 (Markdown)', slug: 'reports/week-03/markdown' },
+					],
+				},
 			],
 		}),
 	],
