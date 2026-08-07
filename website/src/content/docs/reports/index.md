@@ -24,5 +24,4 @@ guardrails, demo cuối) chưa thuộc phạm vi bộ báo cáo này.
 **Agent / máy đọc:** dùng [`/llms.txt`](/llms.txt) để lấy mục lục HTML + Markdown + raw.
 
 **Cách đọc bằng chứng:** chỉ tin đường dẫn file và mã băm (digest) được ghi trong
-từng báo cáo. File quét thô (`.raw.*`) không được đưa lên site. Văn bản assignment
-đầy đủ và kịch bản trình bày cá nhân chỉ giữ local, không đăng public.
+từng báo cáo. File quét thô (`.raw.*`) không được đưa lên site.

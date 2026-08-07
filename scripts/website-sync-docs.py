@@ -136,60 +136,42 @@ def write_raw_copies() -> None:
 
 
 def write_llms_txt() -> None:
-    lines = [
+    """Write UTF-8 llms.txt. Worker enforces Content-Type charset=utf-8."""
+    lines: list[str] = [
         "# Project Sentinel — Báo cáo tuần",
         "",
         "> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. "
-        "Báo cáo bám bằng chứng, lab loopback. Tiến độ hiện tại: tuần 1–3 / 6.",
+        "Tiến độ hiện tại: tuần 1–3 / 6.",
         "",
         f"Site: {SITE_URL}",
         f"Repo: https://github.com/manhquydev/sentinel-security-platform",
+        f"llms.txt: {SITE_URL}/llms.txt",
         "",
         "## Trang HTML (đọc trên web)",
         "",
     ]
     for slug, title, desc in REPORTS:
-        if slug == "index":
-            url = f"{SITE_URL}/reports/"
-        else:
-            url = f"{SITE_URL}/reports/{slug}/"
+        url = f"{SITE_URL}/reports/" if slug == "index" else f"{SITE_URL}/reports/{slug}/"
         lines.append(f"- [{title}]({url}): {desc}")
-
-    lines.extend(
-        [
-            "",
-            "## Nguồn Markdown (xem trên site)",
-            "",
-        ]
-    )
+    lines.extend(["", "## Nguồn Markdown (xem trên site)", ""])
     for slug, title, _desc in REPORTS:
-        url = f"{SITE_URL}/reports/{slug}/markdown/"
-        lines.append(f"- [{title} — Markdown]({url})")
-
-    lines.extend(
-        [
-            "",
-            "## Raw Markdown (tải / fetch trực tiếp)",
-            "",
-        ]
-    )
+        lines.append(f"- [{title} — Markdown]({SITE_URL}/reports/{slug}/markdown/)")
+    lines.extend(["", "## Raw Markdown (tải / fetch)", ""])
     for slug, title, _desc in REPORTS:
-        url = f"{SITE_URL}/raw/reports/{slug}.md"
-        lines.append(f"- [{title} (raw)]({url})")
-
+        lines.append(f"- [{title} (raw)]({SITE_URL}/raw/reports/{slug}.md)")
     lines.extend(
         [
             "",
             "## Ghi chú",
             "",
-            "- Chỉ publish báo cáo tuần trong allowlist; charter cá nhân / kịch bản trình bày không public.",
-            "- Artifact quét thô (`.raw.*`) và secret không có trên site.",
+            "- Chỉ publish báo cáo tuần trong allowlist.",
+            "- Không có artifact quét thô (`.raw.*`) hay secret trên site.",
+            "- File text được phục vụ với `charset=utf-8`.",
             "",
         ]
     )
-
     dest = PUBLIC / "llms.txt"
-    dest.write_text("\n".join(lines), encoding="utf-8")
+    dest.write_text("\n".join(lines), encoding="utf-8", newline="\n")
     print(f"wrote {dest.relative_to(ROOT)}")
 
 
@@ -202,7 +184,7 @@ description: Báo cáo tuần đồ án Project Sentinel — TTS Nguyễn Mạnh
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Báo cáo tuần 1–3 / 6 của đồ án bảo mật AI (VINSOC × VINUNI) — bám bằng chứng, lab nội bộ (loopback).
+  tagline: Báo cáo tuần 1–3 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
   actions:
     - text: Xem báo cáo tuần
       link: /reports/
@@ -220,7 +202,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid>
   <Card title="Tuần 1" icon="seti:json">
-    Quét bảo mật nền, che secret, Juice Shop loopback — [tuần 1](/reports/week-01/).
+    Quét bảo mật nền, che secret, Juice Shop — [tuần 1](/reports/week-01/).
   </Card>
   <Card title="Tuần 2" icon="seti:db">
     Chuẩn hóa 36 cảnh báo + kho tri thức offline — [tuần 2](/reports/week-02/).
@@ -238,9 +220,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 ## Ai thực hiện
 
-**TTS (Thực tập sinh) Nguyễn Mạnh Quý** · **VINSOC** × **VINUNI**
-
-Văn bản assignment đầy đủ và kịch bản trình bày cá nhân **không** đăng trên site này.
+**TTS Nguyễn Mạnh Quý** · **VINSOC** × **VINUNI**
 """,
         encoding="utf-8",
     )

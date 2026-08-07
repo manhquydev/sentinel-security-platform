@@ -1,11 +1,16 @@
 # Cloudflare Workers static assets — Sentinel docs site
 # Production: https://vinsoc.manhquy.id.vn  (zone manhquy.id.vn)
 name = "sentinel-docs"
+main = "src/worker.js"
 compatibility_date = "2026-04-11"
 workers_dev = true
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+# Must run Worker first so charset=utf-8 can be applied to .txt/.md
+# (otherwise matching assets bypass the Worker entirely).
+run_worker_first = true
 not_found_handling = "404-page"
 
 [[routes]]
