@@ -442,7 +442,7 @@ def _render_explanation(record: GroupedFinding) -> str:
         f"tại {record.location}. Mức độ: {severity}."
     )
     if evidence:
-        base += f" Bằng chứng máy quét (đã che secret nếu có): {evidence}."
+        base += f" Bằng chứng máy quét (đã qua cổng an toàn): {evidence}."
     base += (
         " Đây là quan sát từ máy quét trên dữ liệu Tuần 1–2 đã chuẩn hóa; "
         "không suy ra endpoint hay lỗ hổng ngoài các trường đã typed."
@@ -578,6 +578,8 @@ def analyze(
                     or len(guarded.persisted_text) > _MAX_KNOWLEDGE_ITEM
                     or len(provenance) > _MAX_KNOWLEDGE_ITEM
                     or not _RETRIEVAL_PROVENANCE.fullmatch(provenance)
+                    # Same secret/locator fixed-point as scanner free-text.
+                    or not is_safe_week1_projection(guarded.persisted_text)
                 ):
                     return AnalysisResult([], "knowledge-unavailable")
                 safe_items.append(KnowledgeItem(guarded.persisted_text, provenance))

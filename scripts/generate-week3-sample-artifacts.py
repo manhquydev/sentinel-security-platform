@@ -133,16 +133,27 @@ def main() -> None:
     man_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     def retrieval(query: str) -> Retrieval:
+        q = query.lower()
+        if "trivy" in q or "dependency" in q:
+            content = (
+                "SCA: cap nhat goi phu thuoc, kiem tra advisory CVE va go bo ban de ton."
+            )
+            ref = "OWASP | https://owasp.org/www-community/vulnerabilities/ | sha256:" + "e" * 64
+        elif "semgrep" in q or "query" in q:
+            content = (
+                "SAST: dung parameterized query/ORM, khong noi chuoi SQL/user input."
+            )
+            ref = "OWASP | https://owasp.org/www-community/attacks/SQL_Injection | sha256:" + "e" * 64
+        else:
+            content = (
+                "DAST: them header bao mat phu hop (CSP, X-Content-Type-Options) "
+                "va ra soat cau hinh HTTP."
+            )
+            ref = "OWASP | https://owasp.org/www-project-secure-headers/ | sha256:" + "e" * 64
         return Retrieval(
             "d" * 64,
             hashlib.sha256(query.encode()).hexdigest(),
-            (
-                KnowledgeItem(
-                    "OWASP: them header bao mat phu hop (CSP, X-Content-Type-Options) "
-                    "va ra soat cau hinh HTTP.",
-                    "OWASP | https://owasp.org/www-project-secure-headers/ | sha256:" + "e" * 64,
-                ),
-            ),
+            (KnowledgeItem(content, ref),),
         )
 
     def model(facts: list[dict], _knowledge: list[dict]) -> str:
