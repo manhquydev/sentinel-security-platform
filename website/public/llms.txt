@@ -1,0 +1,34 @@
+# Project Sentinel — Báo cáo tuần
+
+> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. Tiến độ hiện tại: tuần 1–3 / 6.
+
+Site: https://vinsoc.manhquy.id.vn
+Repo: https://github.com/manhquydev/sentinel-security-platform
+llms.txt: https://vinsoc.manhquy.id.vn/llms.txt
+
+## Trang HTML (đọc trên web)
+
+- [Báo cáo tuần](https://vinsoc.manhquy.id.vn/reports/): Mục lục báo cáo tuần Project Sentinel (VINSOC × VINUNI)
+- [Tuần 1 — Quét bảo mật nền](https://vinsoc.manhquy.id.vn/reports/week-01/): Báo cáo Tuần 1: quét SAST/DAST nền và che secret
+- [Tuần 2 — Chuẩn hóa và kho tri thức](https://vinsoc.manhquy.id.vn/reports/week-02/): Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline
+- [Tuần 3 — Agent phân tích bảo mật](https://vinsoc.manhquy.id.vn/reports/week-03/): Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)
+
+## Nguồn Markdown (xem trên site)
+
+- [Báo cáo tuần — Markdown](https://vinsoc.manhquy.id.vn/reports/index/markdown/)
+- [Tuần 1 — Quét bảo mật nền — Markdown](https://vinsoc.manhquy.id.vn/reports/week-01/markdown/)
+- [Tuần 2 — Chuẩn hóa và kho tri thức — Markdown](https://vinsoc.manhquy.id.vn/reports/week-02/markdown/)
+- [Tuần 3 — Agent phân tích bảo mật — Markdown](https://vinsoc.manhquy.id.vn/reports/week-03/markdown/)
+
+## Raw Markdown (tải / fetch)
+
+- [Báo cáo tuần (raw)](https://vinsoc.manhquy.id.vn/raw/reports/index.md)
+- [Tuần 1 — Quét bảo mật nền (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-01.md)
+- [Tuần 2 — Chuẩn hóa và kho tri thức (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-02.md)
+- [Tuần 3 — Agent phân tích bảo mật (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-03.md)
+
+## Ghi chú
+
+- Chỉ publish báo cáo tuần trong allowlist.
+- Không có artifact quét thô (`.raw.*`) hay secret trên site.
+- File text được phục vụ với `charset=utf-8`.

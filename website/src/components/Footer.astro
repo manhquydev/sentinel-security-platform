@@ -1,0 +1,43 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default {...Astro.props}>
+	<slot />
+</Default>
+
+<div class="sentinel-footer">
+	<p class="sentinel-footer__credit">
+		<strong>TTS Nguyễn Mạnh Quý</strong>
+		<span class="sentinel-footer__sep" aria-hidden="true">·</span>
+		<span><strong>VINSOC</strong> × <strong>VINUNI</strong></span>
+	</p>
+	<p class="sentinel-footer__project">
+		Project Sentinel — báo cáo tuần (đồ án 6 tuần)
+	</p>
+</div>
+
+<style>
+	.sentinel-footer {
+		margin-top: 2.5rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid var(--sl-color-gray-5);
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+		text-align: center;
+		line-height: 1.55;
+	}
+	.sentinel-footer__credit {
+		margin: 0;
+		color: var(--sl-color-white);
+	}
+	.sentinel-footer__sep {
+		margin: 0 0.4rem;
+		color: var(--sl-color-gray-3);
+	}
+	.sentinel-footer__project {
+		margin: 0.4rem 0 0;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+</style>
