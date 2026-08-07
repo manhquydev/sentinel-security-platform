@@ -11,7 +11,6 @@ from unittest import mock
 
 from agent.report import KnowledgeItem
 from agent.week3_analysis import AnalysisResult, Retrieval, _canonical_finding_id, analyze, main
-from rag.retrieve import retrieve_charter
 
 
 def source(tool: str, digest: str, item: int) -> str:
@@ -150,6 +149,13 @@ class Week3AggregateAnalysisTests(unittest.TestCase):
             self.assertEqual(payload["schema_version"], "week3-analysis/v1")
             self.assertIn("corpus_digest", payload)
             self.assertIn("retrieval_digest", payload)
+            # Grounded VI prose (charter: simple explanation + remediation using knowledge)
+            self.assertIn("Công cụ", payload["explanation"])
+            self.assertIn(payload["name"], payload["explanation"])
+            self.assertNotIn("The scanner reported", payload["explanation"])
+            self.assertIn("Tham khảo đoạn tri thức", payload["remediation"])
+            self.assertIn("Guidance for", payload["remediation"])  # from mock retrieval content
+            self.assertNotIn("Review the scanner evidence and retrieved guidance", payload["remediation"])
 
     def test_default_model_call_requests_strict_enrichments_with_labelled_messages(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -450,6 +456,10 @@ class Week3AggregateAnalysisTests(unittest.TestCase):
                 self.assertFalse((root / "report.jsonl").exists())
 
     def test_committed_corpus_returns_bounded_lineage_for_all_three_tools(self) -> None:
+        try:
+            from rag.retrieve import retrieve_charter
+        except ImportError as exc:  # optional heavy deps (psycopg, embeddings)
+            self.skipTest(f"rag.retrieve unavailable: {exc}")
         corpus_digests: set[str] = set()
         retrieval_digests: set[str] = set()
         for query in (

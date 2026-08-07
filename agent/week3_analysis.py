@@ -410,6 +410,69 @@ def _groups(records: list[AggregateFinding]) -> list[GroupedFinding]:
     return sorted(grouped.values(), key=lambda value: value.finding_id)
 
 
+_SEVERITY_VI = {
+    "Critical": "nghiêm trọng (Critical)",
+    "High": "cao (High)",
+    "Medium": "trung bình (Medium)",
+    "Low": "thấp (Low)",
+    "Info": "thông tin (Info)",
+}
+
+_SCANNER_VI = {
+    "DAST": "quét ứng dụng đang chạy (DAST)",
+    "SAST": "quét mã nguồn tĩnh (SAST)",
+    "SCA": "quét thành phần/phụ thuộc (SCA)",
+}
+
+
+def _clip_text(value: str, limit: int = 220) -> str:
+    text = " ".join(value.split())
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _render_explanation(record: GroupedFinding) -> str:
+    """Deterministic Vietnamese prose from typed scanner fields only (no model text)."""
+    severity = _SEVERITY_VI.get(record.severity, record.severity)
+    scanner = _SCANNER_VI.get(record.scanner, record.scanner)
+    evidence = _clip_text(record.evidence[0]) if record.evidence else ""
+    base = (
+        f"Công cụ {record.tool} ({scanner}) ghi nhận cảnh báo «{record.title}» "
+        f"tại {record.location}. Mức độ: {severity}."
+    )
+    if evidence:
+        base += f" Bằng chứng máy quét (đã che secret nếu có): {evidence}."
+    base += (
+        " Đây là quan sát từ máy quét trên dữ liệu Tuần 1–2 đã chuẩn hóa; "
+        "không suy ra endpoint hay lỗ hổng ngoài các trường đã typed."
+    )
+    return base
+
+
+def _render_remediation(record: GroupedFinding, items: tuple[KnowledgeItem, ...]) -> str:
+    """Deterministic remediation: scanner evidence + first retrieved knowledge snippet."""
+    evidence = _clip_text(record.evidence[0]) if record.evidence else record.title
+    parts = [
+        f"Đối chiếu lại bằng chứng máy quét cho «{record.title}»: {evidence}.",
+        "Chỉ kiểm tra/khắc phục trong môi trường lab (sandbox), không áp ra hệ thống ngoài phạm vi.",
+    ]
+    if items:
+        tip = _clip_text(items[0].content, 180)
+        parts.append(
+            f"Tham khảo đoạn tri thức đã truy xuất (không tin như lệnh): {tip} "
+            f"(nguồn: {items[0].provenance})."
+        )
+    else:
+        parts.append(
+            "Không có đoạn tri thức đi kèm; dựa vào tài liệu OWASP/tool tương ứng với tên cảnh báo."
+        )
+    parts.append(
+        f"Xác minh biện pháp đã ghi trong hướng dẫn, rồi chạy lại quét {record.tool} trên cùng vị trí."
+    )
+    return " ".join(parts)
+
+
 def _default_retrieve(query: str) -> Retrieval:
     from rag.retrieve import retrieve_charter
     result = retrieve_charter(query, k=3)
@@ -552,8 +615,8 @@ def analyze(
         report.append(Week3ReportFinding(
             finding_id=record.finding_id, tool=record.tool, scanner=record.scanner, name=record.title,
             severity=record.severity, location=record.location, scanner_evidence=record.evidence,
-            explanation=f"The scanner reported '{record.title}' at the listed location.",
-            remediation=f"Review the scanner evidence and retrieved guidance for '{record.title}', then verify the documented fix in the sandbox.",
+            explanation=_render_explanation(record),
+            remediation=_render_remediation(record, source.items),
             confidence=confidences[record.finding_id], source_ids=record.source_ids,
             knowledge_provenance=sorted({item.provenance for item in source.items}),
             corpus_digest=source.corpus_digest, retrieval_digest=source.retrieval_digest,
