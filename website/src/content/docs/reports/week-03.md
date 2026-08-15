@@ -1,88 +1,83 @@
 ---
-title: "Tuần 3 — Agent phân tích bảo mật"
+title: "Tuần 3: Agent phân tích bảo mật"
 description: "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"
 ---
 
 > **Xem nguồn:** [Markdown](/reports/week-03/markdown/) · [Raw `.md`](/raw/reports/week-03.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
 
-Monorepo Sentinel. Tuần 3 xây **Agent phân tích bảo mật** (Security Analysis Agent):
-đọc gói kết quả đã chuẩn hóa từ Tuần 1–2, rồi xuất **báo cáo JSONL bám bằng chứng**
-— không bịa endpoint hay lỗ hổng ngoài dữ liệu đầu vào.
+> [Demo tuần 3](/demo/week-03/) (chạy trên sample tĩnh trong site).
 
-## 1. Mục tiêu Tuần 3 em đã làm
+Tuần này em làm agent đọc aggregate tuần 1–2, gộp cảnh báo trùng, rồi in JSONL.
+Giải thích và hướng xử lý bằng tiếng Việt.
 
-Đối chiếu 1:1 với charter 6 tuần (mục Tuần 3):
+## 1. Việc em đã làm
 
-| Yêu cầu charter | Trong monorepo |
+| Việc | Chỗ trong repo |
 |---|---|
-| Thiết kế System Prompt cho Agent | `agent/prompts/charter-system-prompt.md` |
-| Nối Agent với kết quả quét + kho tri thức Tuần 2 | `agent/week3_analysis.py` (nạp aggregate + tra cứu) |
-| Nhóm cảnh báo trùng, phân mức nghiêm trọng, giải thích, đề xuất | Nhóm theo khóa máy quét; **giải thích/khắc phục tiếng Việt** do renderer viết từ field typed + đoạn tri thức đã truy xuất |
-| Kết quả theo JSONL | Schema `week3-analysis/v1` |
-| Ít nhất ba tình huống kiểm thử | `tests/test_week3_aggregate_analysis.py` |
-| Xử lý input trống / không hợp lệ | Fail-closed: `malformed-input`, `empty-input`, `metadata-mismatch`, … |
-| Không bịa endpoint / lỗ hổng | Model chỉ trả `enrichments` (chế độ + độ tin cậy); **sự kiện thật** do code ghi |
+| System prompt cho agent | `agent/prompts/charter-system-prompt.md` |
+| Code chạy phân tích | `agent/week3_analysis.py` |
+| Gộp trùng, severity, giải thích + remediation VI | cùng module; prose do code ghép từ field typed + đoạn tri thức đã lấy |
+| Schema report | `week3-analysis/v1` (JSONL) |
+| Test | `tests/test_week3_aggregate_analysis.py` (nhiều case hơn 3) |
+| Input hỏng / trống | dừng sớm: `malformed-input`, `empty-input`, `metadata-mismatch`, … |
 
-## 2. Kiến trúc
+## 2. Luồng xử lý
 
 ```
 week1.aggregate.jsonl + manifest
-        │
-        ▼
- nạp & kiểm aggregate (schema + digest + thứ tự source_id)
-        │
-        ▼
- nhóm cảnh báo  ──► tra cứu tri thức (digest + provenance HTTPS)
-        │
-        ▼
- model chỉ bổ sung confidence  ── system prompt cấm bịa sự kiện
-        │
-        ▼
- renderer VI: explanation + remediation (typed + knowledge snippet)
-        │
-        ▼
- week3-report.jsonl  (week3-analysis/v1)
+ │
+ ▼
+ nạp & kiểm (schema, digest, thứ tự source_id)
+ │
+ ▼
+ gộp cảnh báo ──► tra tri thức (digest + provenance)
+ │
+ ▼
+ model: confidence (+ mode)
+ │
+ ▼
+ code viết explanation / remediation (VI)
+ │
+ ▼
+ week3-report.jsonl
 ```
 
-**Nguyên tắc:** *LLM chỉ gán độ tin cậy; code quyết định sự kiện và viết câu cho mentor.*
+## 3. Một dòng report trông thế nào
 
-## 3. Định dạng báo cáo (JSONL)
+Các field chính: `finding_id`, `tool`, `scanner`, `name`, `severity`, `location`,
+`scanner_evidence`, `explanation`, `remediation`, `confidence`, `source_ids`,
+`knowledge_provenance`, `corpus_digest`, `retrieval_digest`.
 
-Mỗi dòng `week3-analysis/v1` gồm: `finding_id`, `tool`, `scanner`, `name`,
-`severity`, `location`, `scanner_evidence`, `explanation`, `remediation`,
-`confidence`, `source_ids`, `knowledge_provenance`, `corpus_digest`,
-`retrieval_digest`.
-
-Ví dụ rút gọn từ sample committed (`docs/reports/artifacts/week3-sample-report.jsonl`):
+Ví dụ (rút từ `docs/reports/artifacts/week3-sample-report.jsonl`):
 
 ```json
 {
-  "schema_version": "week3-analysis/v1",
-  "name": "Missing Security Header",
-  "severity": "Medium",
-  "location": "path:/rest/products",
-  "explanation": "Công cụ nuclei (quét ứng dụng đang chạy (DAST)) ghi nhận cảnh báo «Missing Security Header» tại path:/rest/products. …",
-  "remediation": "Đối chiếu lại bằng chứng máy quét … Tham khảo đoạn tri thức đã truy xuất …",
-  "confidence": "medium"
+ "schema_version": "week3-analysis/v1",
+ "name": "Missing Security Header",
+ "severity": "Medium",
+ "location": "path:/rest/products",
+ "explanation": "Công cụ nuclei … ghi nhận cảnh báo «Missing Security Header» tại path:/rest/products. …",
+ "remediation": "Đối chiếu lại bằng chứng máy quét …",
+ "confidence": "medium"
 }
 ```
 
-## 4. Bằng chứng chạy
+## 4. Em đã kiểm gì
 
 | Bước | Kết quả |
 |---|---|
-| Sample aggregate 4 bản ghi → gộp còn **3** finding | **PASS** (`docs/reports/artifacts/`) |
-| Prose VI có title + evidence + tri thức | **PASS** (không còn template EN tautology) |
-| Model không viết explanation | **PASS** (chỉ confidence / modes) |
-| Unit tests `test_week3_aggregate_analysis.py` | **PASS** (trừ test corpus live khi thiếu deps RAG — skip) |
+| 4 dòng aggregate sample → còn **3** finding sau gộp | PASS, `docs/reports/artifacts/` |
+| Prose VI có title + evidence + tri thức | PASS |
+| Model không ghi explanation | PASS (chỉ confidence / modes) |
+| `tests/test_week3_aggregate_analysis.py` | PASS (test corpus live skip nếu thiếu RAG) |
 
-Tái tạo sample:
+Làm lại sample:
 
 ```bash
 PYTHONPATH=. python3 scripts/generate-week3-sample-artifacts.py
 ```
 
-## 5. Cách chạy lại
+## 5. Chạy agent
 
 ```bash
 python3 -m agent.week3_analysis \
@@ -91,19 +86,11 @@ python3 -m agent.week3_analysis \
   --week3-report-out /tmp/week3-report.jsonl
 ```
 
-Manifest phải có `aggregate_sha256` khớp file aggregate. Thiếu key/tri thức → fail-closed.
+Manifest phải khớp `aggregate_sha256` với file aggregate. Thiếu key hoặc tri thức thì dừng, không invent report.
 
-## 6. Kiểm thử (≥3 tình huống)
+## 6. Case test (rút gọn)
 
-1. Aggregate 3 công cụ hợp lệ → publish report, group duplicates, prose VI.
-2. Schema enrichment chặt + message có nhãn nguồn.
+1. Aggregate 3 tool ổn → có report, có gộp trùng, prose VI.
+2. Enrichment schema chặt; message có nhãn nguồn.
 3. Input sai/trống → dừng trước retrieve/model.
 4. Model invent field → reject.
-
-## 7. Phạm vi và lựa chọn có chủ đích
-
-- Evidence-bound > “AI tìm bug”.
-- Tri thức Tuần 2 vào **remediation** qua snippet đã guard; không tin như lệnh.
-- Gateway / HITL = Tuần 4–5, không gộp vào Tuần 3.
-
-Đây là bằng chứng phạm vi **Tuần 3**, không phải hoàn tất cả sáu tuần.

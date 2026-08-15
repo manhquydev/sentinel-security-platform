@@ -1,21 +1,21 @@
 # Site tài liệu mentor (Astro Starlight)
 
-Chrome kiểu docs (Starlight) cho **báo cáo tuần** Project Sentinel.  
+Chrome kiểu docs (Starlight) cho **báo cáo tuần** Project Sentinel. 
 Nội dung soạn trong monorepo tại `docs/reports/`, rồi sync vào Starlight.
 
-**Production:** https://vinsoc.manhquy.id.vn  
-**Allowlist sync:** `docs/reports/{index,week-01,week-02,week-03}.md`  
-(Product/as-built **không** publish lên site — tránh link monorepo 404.)
+**Production:** https://vinsoc.manhquy.id.vn 
+**Allowlist sync:** `docs/reports/{index,week-01,week-02,week-03,week-04}.md` 
+(Product/as-built **không** publish lên site, tránh link monorepo 404.)
 
 ## Lệnh
 
 ```bash
-# Từ root repo — bắt buộc trước build
+# Từ root repo: bắt buộc trước build
 bash scripts/website-sync-docs.sh
 
 cd website
 npm install
-npm run dev      # http://localhost:4321
+npm run dev # http://localhost:4321
 npm run build
 npm run preview
 ```
@@ -57,8 +57,30 @@ Smoke: `bash scripts/website-smoke-check.sh`
 
 Sinh bởi `scripts/website-sync-docs.py`.
 
+## Demo tương tác (static)
+
+| URL | Nội dung |
+|-----|----------|
+| `/demo/` | Hub demo mentor |
+| `/demo/week-03/` | Interactive Week 3 pipeline (sample JSONL) |
+| `/demo/week-03/*.jsonl` | Fixtures (không wipe bởi sync) |
+
+**Production:** https://vinsoc.manhquy.id.vn/demo/week-03/
+
+Demo Tuần 3 gồm: map **4→3** (aggregate → findings), badge code/prose/model, digests thu gọn, fail-closed CLI shape, honesty banner, pin `meta.sha256`.
+
+**UI structure:** demo pages use `<StarlightPage>`, cùng sidebar / header / theme / footer với báo cáo tuần. CSS demo map token `--sl-*` (không tách dark theme riêng).
+
+Fixtures: `public/demo/`, xem `public/demo/README.md`. 
+Sync docs **không** xóa `public/demo/` hay `src/pages/demo/`. 
+Landing + `llms.txt` demo links được generate trong `scripts/website-sync-docs.py`.
+
+Smoke local: `bash scripts/website-smoke-check.sh http://127.0.0.1:4321` 
+Smoke + Worker charset (production): `WORKER=1 bash scripts/website-smoke-check.sh https://vinsoc.manhquy.id.vn`
+
 ## An toàn
 
-- Chỉ allowlist báo cáo tuần.  
-- Không sync charter cá nhân / kịch bản riêng.  
-- Không nhúng raw scanner secret hay `infra/.env`.  
+- Chỉ allowlist báo cáo tuần + demo sample fixtures. 
+- Không sync charter cá nhân / kịch bản riêng. 
+- Không nhúng raw scanner secret hay `infra/.env`. 
+
