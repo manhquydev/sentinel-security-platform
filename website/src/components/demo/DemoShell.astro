@@ -1,0 +1,72 @@
+---
+/**
+ * Demo shell = Starlight chrome (sidebar, header, theme, footer).
+ * Interactive content slots into the same docs structure (no separate dark app).
+ */
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Aside } from '@astrojs/starlight/components';
+import '../../styles/demo.css';
+
+interface Props {
+	title: string;
+	description?: string;
+	/** Kept for API compat; sidebar now owns site nav */
+	active?: 'hub' | 'week-03';
+	honesty?: string;
+	reportHref?: string;
+	reportLabel?: string;
+}
+const {
+	title,
+	description = 'Demo tương tác Project Sentinel: sample tĩnh trên site báo cáo tuần.',
+	honesty = 'Đây là demo tương tác trên sample đã sanitize, không phải lab/LLM live. Agent/CLI chạy local; không public Juice Shop hay khóa API.',
+	reportHref,
+	reportLabel = 'Báo cáo Tuần 3',
+} = Astro.props;
+---
+
+<StarlightPage
+	frontmatter={{
+		title,
+		description,
+		tableOfContents: false,
+	}}
+>
+	<a class="demo-skip" href="#demo-main">Bỏ qua tới nội dung demo</a>
+
+	{
+		reportHref ? (
+			<p class="demo-crumb">
+				<a href={reportHref}>{reportLabel}</a>
+				<span class="demo-crumb__sep" aria-hidden="true">
+					·
+				</span>
+				<a href="/demo/">Hub demo</a>
+				<span class="demo-crumb__sep" aria-hidden="true">
+					·
+				</span>
+				<a href="/reports/">Báo cáo tuần</a>
+			</p>
+		) : (
+			<p class="demo-crumb">
+				<a href="/demo/">Hub demo</a>
+				<span class="demo-crumb__sep" aria-hidden="true">
+					·
+				</span>
+				<a href="/reports/">Báo cáo tuần</a>
+				<span class="demo-crumb__sep" aria-hidden="true">
+					·
+				</span>
+				<a href="/">Trang chủ</a>
+			</p>
+		)
+	}
+
+	<Aside type="caution" title="Lưu ý">
+		{honesty}
+	</Aside>
+
+	<div class="demo-surface" id="demo-main">
+		<slot />
+	</div>
+</StarlightPage>

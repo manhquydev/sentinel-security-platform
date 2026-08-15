@@ -1,0 +1,19 @@
+---
+import DemoShell from '../../components/demo/DemoShell.astro';
+import Week3Demo from '../../components/demo/Week3Demo.astro';
+---
+
+<DemoShell
+	title="Demo Tuần 3: Agent phân tích"
+	description="Pipeline sample: aggregate → nhóm → confidence (model) → báo cáo VI (code)."
+	active="week-03"
+	reportHref="/reports/week-03/"
+	reportLabel="← Báo cáo Tuần 3"
+>
+	<p class="demo-lead">
+		Nạp aggregate + manifest → nhóm cảnh báo → confidence (model) → báo cáo VI (code). Không bịa
+		endpoint/lỗ hổng ngoài dữ liệu. Màu và layout theo token Starlight (đồng bộ theme docs).
+	</p>
+
+	<Week3Demo />
+</DemoShell>

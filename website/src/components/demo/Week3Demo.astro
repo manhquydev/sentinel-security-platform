@@ -1,0 +1,53 @@
+---
+// Interactive Week 3 demo: fixtures under /demo/week-03/
+---
+
+<section class="w3" id="week3-demo" data-week3-demo aria-label="Demo Tuần 3">
+	<div class="w3-toolbar">
+		<div class="w3-counter" data-w3-counter>…</div>
+		<div class="w3-toggle" role="group" aria-label="Chế độ demo">
+			<button type="button" data-w3-mode="happy" aria-pressed="true">Chạy thành công</button>
+			<button type="button" data-w3-mode="fail" aria-pressed="false">Fail-closed</button>
+		</div>
+	</div>
+
+	<p data-w3-status class="w3-status" role="status" aria-live="polite">Đang khởi tạo…</p>
+
+	<ol class="w3-stepper" data-w3-stepper aria-label="Pipeline Tuần 3"></ol>
+
+	<section class="w3-panel w3-group" data-w3-group aria-label="Nhóm cảnh báo 4 → 3">
+		<h2>Nhóm cảnh báo (4 → 3)</h2>
+		<p class="w3-muted">Đang tải map gộp…</p>
+	</section>
+
+	<div class="w3-layout">
+		<div class="w3-panel">
+			<h2>Findings</h2>
+			<ul class="w3-list" data-w3-list aria-label="Danh sách finding"></ul>
+		</div>
+		<div class="w3-panel" data-w3-detail>
+			<h2>Chi tiết</h2>
+			<p class="w3-field__value">Chọn một finding.</p>
+		</div>
+	</div>
+
+	<noscript>
+		<div class="w3-noscript">
+			<p>
+				Bật JavaScript để xem demo tương tác. Fixtures tĩnh:
+				<a href="/demo/week-03/report.jsonl">report.jsonl</a>,
+				<a href="/demo/week-03/aggregate.jsonl">aggregate.jsonl</a>,
+				<a href="/demo/week-03/meta.json">meta.json</a>.
+			</p>
+		</div>
+	</noscript>
+</section>
+
+<script>
+	import { mountWeek3Demo } from './week3-demo.js';
+
+	const root = document.querySelector('[data-week3-demo]');
+	if (root instanceof HTMLElement) {
+		mountWeek3Demo(root);
+	}
+</script>

@@ -1,0 +1,38 @@
+---
+import DemoShell from '../../components/demo/DemoShell.astro';
+import { Card, CardGrid } from '@astrojs/starlight/components';
+---
+
+<DemoShell
+	title="Hub demo"
+	description="Mục lục demo tương tác Project Sentinel trên cùng site báo cáo tuần."
+	active="hub"
+>
+	<p class="demo-lead">
+		Demo nằm <strong>trong chrome Starlight</strong> (sidebar, theme sáng/tối, footer), cùng hệ
+		với báo cáo tuần. Sample JSONL đã sanitize; không lab public.
+	</p>
+
+	<CardGrid>
+		<Card title="Demo Tuần 3" icon="rocket">
+			Interactive: aggregate → group 4→3 → JSONL. <a href="/demo/week-03/">Mở demo</a>.
+		</Card>
+		<Card title="Báo cáo Tuần 3" icon="document">
+			Narrative + CTA. <a href="/reports/week-03/">Đọc báo cáo</a>.
+		</Card>
+		<Card title="Tuần 1" icon="seti:json">
+			Quét nền. <a href="/reports/week-01/">Báo cáo</a> (chưa có interactive).
+		</Card>
+		<Card title="Tuần 2" icon="seti:db">
+			Chuẩn hóa + tri thức. <a href="/reports/week-02/">Báo cáo</a> (chưa có interactive).
+		</Card>
+		<Card title="Tuần 4" icon="seti:lock">
+			Gateway + tool. <a href="/reports/week-04/">Báo cáo</a> (chưa có interactive).
+		</Card>
+	</CardGrid>
+
+	<p class="w3-muted" style="margin-top: 1.25rem">
+		Tuần 5–6: chưa có báo cáo / demo trên site. Điều hướng chính: <strong>sidebar</strong>
+		(Demo · Báo cáo tuần · Nguồn Markdown).
+	</p>
+</DemoShell>

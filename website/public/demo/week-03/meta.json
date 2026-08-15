@@ -1,0 +1,42 @@
+{
+ "schema_version": "demo-week3/v1",
+ "title_vi": "Demo Tuần 3: Agent phân tích bám bằng chứng",
+ "honesty_vi": "Đây là demo tương tác trên sample đã sanitize: không phải lab/LLM live. Agent/CLI chạy local; không public Juice Shop hay khóa API.",
+ "aggregate_count": 4,
+ "finding_count": 3,
+ "max_fixture_bytes": 65536,
+ "stepper": [
+ "Nạp aggregate + manifest",
+ "Nhóm cảnh báo (4 → 3)",
+ "Confidence (model only)",
+ "Báo cáo VI (code renderer)"
+ ],
+ "field_ownership": {
+ "code": [
+ "name",
+ "severity",
+ "location",
+ "scanner_evidence",
+ "explanation",
+ "remediation",
+ "source_ids",
+ "corpus_digest",
+ "retrieval_digest",
+ "knowledge_provenance"
+ ],
+ "model": [
+ "confidence"
+ ]
+ },
+ "fail_closed_ui_vi": "Agent fail-closed: không ghi report. Mã lỗi CLI:",
+ "sha256": {
+ "aggregate.jsonl": "333b5ae5d697d5300e91c5ccfaa0ccbfa8e431ea60542e8ecd942688a3500f0a",
+ "manifest.json": "743c79100b371c47577eb6e2c3ec748d05a789918088c740118fc11eb42dd98c",
+ "report.jsonl": "007fc8454c639f5ce03d29abc7761c98d731f8f32882aba2d8a584ddd57e0ada"
+ },
+ "source_artifacts": {
+ "aggregate": "docs/reports/artifacts/week3-sample.aggregate.jsonl",
+ "manifest": "docs/reports/artifacts/week3-sample.aggregate.manifest.json",
+ "report": "docs/reports/artifacts/week3-sample-report.jsonl"
+ }
+}
