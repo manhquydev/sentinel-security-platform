@@ -156,3 +156,8 @@ docs/*-kich-ban-trinh-bay.md
 website/dist/
 website/node_modules/
 website/.astro/
+
+# local tooling / generated artifacts
+.playwright-mcp/
+outputs/
+website/.vscode/

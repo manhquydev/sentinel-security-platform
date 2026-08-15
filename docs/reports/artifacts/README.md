@@ -1,6 +1,6 @@
-# Sample artifacts — Week 3 analysis
+# Sample artifacts: Week 3 analysis
 
-Synthetic, secret-free sample for the Security Analysis Agent.
+Sample synthetic, không secret, dùng cho demo/report tuần 3.
 
 | File | Role |
 |------|------|
@@ -14,4 +14,4 @@ Regenerate:
 python3 scripts/generate-week3-sample-artifacts.py
 ```
 
-Lab samples only — not live Juice Shop output.
+Lab samples only, not live Juice Shop output.
