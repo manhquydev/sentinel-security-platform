@@ -12,8 +12,8 @@ from agent.charter_requests import *
 ROOT = Path(__file__).resolve().parents[1]
 
 class FakeTransport:
-    def __init__(self, status=404, body=b"ok", fail=False, content_types=("application/json; charset=utf-8",), mint_fail=False):
-        self.calls=[]; self.status=status; self.body=body; self.fail=fail; self.mints=[]; self.content_types=content_types
+    def __init__(self, status=404, body=b"ok", fail=False, fail_exc=None, content_types=("application/json; charset=utf-8",), mint_fail=False):
+        self.calls=[]; self.status=status; self.body=body; self.fail=fail; self.fail_exc=fail_exc; self.mints=[]; self.content_types=content_types
         self.mint_fail = mint_fail
     def mint(self, origin, secret):
         self.mints.append((origin, secret))
@@ -22,6 +22,8 @@ class FakeTransport:
         return "token"
     def request(self, *args):
         self.calls.append(args)
+        if self.fail_exc is not None:
+            raise self.fail_exc
         if self.fail: raise TimeoutError()
         return ResponseObservation(self.status, self.body, self.content_types)
 
@@ -396,6 +398,26 @@ def test_post_target_transport_failure_is_unknown_not_terminal():
             run(s2, sign(s2, key), mint_only, st, key)
         assert st.state(s2.request_id) == "terminal"
         assert mint_only.calls == []
+
+
+def test_post_target_connection_error_is_unknown_not_terminal():
+    """Connection refusal after mint must stay unknown, same as timeout."""
+    with tempfile.TemporaryDirectory() as d:
+        path = d + "/s.db"
+        key = Ed25519PrivateKey.generate()
+        s = spec()
+        st = RequestStore(path)
+        transport = FakeTransport(fail_exc=ConnectionError("connection refused"))
+        with pytest.raises(CharterRequestError, match="request outcome unknown"):
+            run(s, sign(s, key), transport, st, key)
+        assert st.state(s.request_id) == "unknown"
+        assert len(transport.mints) == 1
+        assert len(transport.calls) == 1
+        retry = FakeTransport(status=200)
+        with pytest.raises(CharterRequestError):
+            run(s, sign(s, key), retry, st, key)
+        assert retry.mints == [] and retry.calls == []
+        st.close()
 
 
 def test_unknown_restart_audit_and_transport_contract():
