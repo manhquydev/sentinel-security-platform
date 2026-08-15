@@ -36,21 +36,130 @@ check_http() {
   pass "$path ($code; $ct)"
 }
 
-echo "Base: $BASE"
+# WORKER=1: assert Content-Type charset from CF Worker (production).
+# astro preview does not run worker.js — path/body checks still apply.
+WORKER_CT=""
+if [[ "${WORKER:-0}" == "1" ]]; then
+  WORKER_CT="charset=utf-8"
+fi
+
+echo "Base: $BASE (WORKER=${WORKER:-0})"
 check_http "/" "text/html"
 check_http "/reports/" "text/html"
 check_http "/reports/week-01/" "text/html"
 check_http "/reports/week-02/" "text/html"
 check_http "/reports/week-03/" "text/html"
+check_http "/reports/week-04/" "text/html"
 check_http "/reports/week-01/markdown/" "text/html"
 check_http "/reports/week-02/markdown/" "text/html"
 check_http "/reports/week-03/markdown/" "text/html"
+check_http "/reports/week-04/markdown/" "text/html"
 check_http "/reports/index/markdown/" "text/html"
-check_http "/llms.txt" "charset=utf-8"
-check_http "/raw/reports/index.md" "charset=utf-8"
-check_http "/raw/reports/week-01.md" "charset=utf-8"
-check_http "/raw/reports/week-02.md" "charset=utf-8"
-check_http "/raw/reports/week-03.md" "charset=utf-8"
+check_http "/llms.txt" "$WORKER_CT"
+check_http "/raw/reports/index.md" "$WORKER_CT"
+
+# Interactive demo (static fixtures) — path/body checks work on any BASE
+check_http "/demo/" "text/html"
+check_http "/demo/week-03/" "text/html"
+check_http "/demo/week-03/meta.json" "application/json"
+check_http "/demo/week-03/report.jsonl" ""
+check_http "/demo/week-03/aggregate.jsonl" ""
+check_http "/demo/week-03/fail-closed.json" "application/json"
+
+# Honesty banner + fail-closed CLI shape + llms discovery
+if curl -sS "$BASE/demo/week-03/" | grep -q 'sample đã sanitize\|sample đã sanitize\|không phải lab'; then
+  pass "/demo/week-03/ honesty banner"
+else
+  # also accept ASCII-normalized or entity forms via broader keywords
+  if curl -sS "$BASE/demo/week-03/" | grep -qiE 'sanitize|không phải lab|khong phai lab|LLM live|Juice Shop'; then
+    pass "/demo/week-03/ honesty banner (keyword)"
+  else
+    fail "/demo/week-03/ missing honesty banner text"
+  fi
+fi
+
+if curl -sS "$BASE/demo/week-03/fail-closed.json" | grep -q '"failure"'; then
+  pass "fail-closed.json has failure code"
+else
+  fail "fail-closed.json missing failure field"
+fi
+
+if curl -sS "$BASE/llms.txt" | grep -q '/demo/week-03'; then
+  pass "llms.txt lists demo"
+else
+  fail "llms.txt missing demo path"
+fi
+
+# Fixture secret-shape guard (public samples must stay synthetic)
+FIXTURE_BODY=$(curl -sS "$BASE/demo/week-03/aggregate.jsonl"; echo; curl -sS "$BASE/demo/week-03/report.jsonl"; echo; curl -sS "$BASE/demo/week-03/meta.json")
+if printf '%s' "$FIXTURE_BODY" | grep -qE 'eyJ[A-Za-z0-9_-]{10,}\.|Bearer [A-Za-z0-9._-]{8,}|BEGIN (RSA |EC )?PRIVATE KEY|api_key\s*='; then
+  fail "demo fixtures look like they contain secrets"
+else
+  pass "demo fixtures secret-shape clean"
+fi
+
+# Fail-closed contract shape
+if curl -sS "$BASE/demo/week-03/fail-closed.json" | grep -q '"status"[[:space:]]*:[[:space:]]*"failed"'; then
+  pass "fail-closed status=failed"
+else
+  fail "fail-closed missing status=failed"
+fi
+
+# manifest present
+check_http "/demo/week-03/manifest.json" "application/json"
+
+# Verify meta.sha256 pins via curl (urllib often gets CF 403 bot block)
+if command -v python3 >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+  META_TMP="$TMPDIR/meta.json"
+  if curl -sS -A 'SentinelWebsiteSmoke/1.0' -o "$META_TMP" "$BASE/demo/week-03/meta.json" \
+    && python3 - "$META_TMP" "$BASE" "$TMPDIR" <<'PY'
+import hashlib, json, subprocess, sys
+meta_path, base, tmp = sys.argv[1], sys.argv[2].rstrip("/"), sys.argv[3]
+meta = json.load(open(meta_path, encoding="utf-8"))
+pins = meta.get("sha256") or {}
+ok = True
+for name, expected in pins.items():
+    dest = f"{tmp}/{name.replace('/', '_')}"
+    r = subprocess.run(
+        ["curl", "-sS", "-A", "SentinelWebsiteSmoke/1.0", "-o", dest, f"{base}/demo/week-03/{name}"],
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        print(f"FETCH_FAIL {name}: {r.stderr}")
+        ok = False
+        continue
+    got = hashlib.sha256(open(dest, "rb").read()).hexdigest()
+    if got != expected:
+        print(f"PIN_FAIL {name} got={got} want={expected}")
+        ok = False
+if not ok:
+    raise SystemExit(1)
+print("PIN_OK")
+PY
+  then
+    pass "demo fixture sha256 pins match meta"
+  else
+    fail "demo fixture sha256 pins mismatch"
+  fi
+fi
+
+# Group story copy present in HTML shell
+if curl -sS "$BASE/demo/week-03/" | grep -q 'Nhóm cảnh báo'; then
+  pass "/demo/week-03/ group map heading"
+else
+  fail "/demo/week-03/ missing group map heading"
+fi
+
+# Worker charset for JSONL demo fixtures (production only)
+if [[ "${WORKER:-0}" == "1" ]]; then
+  check_http "/demo/week-03/report.jsonl" "charset=utf-8"
+  check_http "/demo/week-03/aggregate.jsonl" "charset=utf-8"
+fi
+check_http "/raw/reports/week-01.md" "$WORKER_CT"
+check_http "/raw/reports/week-02.md" "$WORKER_CT"
+check_http "/raw/reports/week-03.md" "$WORKER_CT"
+check_http "/raw/reports/week-04.md" "$WORKER_CT"
 check_http "/favicon.svg" ""
 check_http "/sitemap-index.xml" ""
 
@@ -63,6 +172,11 @@ if curl -sS "$BASE/llms.txt" | grep -q 'week-03'; then
   pass "llms.txt lists week-03"
 else
   fail "llms.txt missing week-03"
+fi
+if curl -sS "$BASE/llms.txt" | grep -q 'week-04'; then
+  pass "llms.txt lists week-04"
+else
+  fail "llms.txt missing week-04"
 fi
 if curl -sS "$BASE/" -o "$TMPDIR/home.html" && grep -q 'TTS Nguyễn Mạnh Quý' "$TMPDIR/home.html"; then
   pass "home footer/credit TTS"

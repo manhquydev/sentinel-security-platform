@@ -19,9 +19,10 @@ SITE_URL = "https://vinsoc.manhquy.id.vn"
 # slug without .md, human title, short description (VI)
 REPORTS = [
     ("index", "Báo cáo tuần", "Mục lục báo cáo tuần Project Sentinel (VINSOC × VINUNI)"),
-    ("week-01", "Tuần 1 — Quét bảo mật nền", "Báo cáo Tuần 1: quét SAST/DAST nền và che secret"),
-    ("week-02", "Tuần 2 — Chuẩn hóa và kho tri thức", "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"),
-    ("week-03", "Tuần 3 — Agent phân tích bảo mật", "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"),
+    ("week-01", "Tuần 1: Quét bảo mật nền", "Báo cáo Tuần 1: quét SAST/DAST nền và che secret"),
+    ("week-02", "Tuần 2: Chuẩn hóa và kho tri thức", "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"),
+    ("week-03", "Tuần 3: Agent phân tích bảo mật", "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"),
+    ("week-04", "Tuần 4: API Gateway và request an toàn", "Báo cáo Tuần 4: Kong, Python tool, allowlist, live 2026-08-14"),
 ]
 
 WEEKLY = [r for r in REPORTS if r[0] != "index"]
@@ -92,7 +93,7 @@ def write_markdown_view(slug: str, title: str, source: Path) -> None:
 
     dest = DOCS_DEST / "reports" / slug / "markdown.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    page_title = f"{title} — nguồn Markdown"
+    page_title = f"{title}, nguồn Markdown"
     html_link = "/reports/" if slug == "index" else f"/reports/{slug}/"
     raw_link = f"/raw/reports/{slug}.md"
 
@@ -101,7 +102,7 @@ def write_markdown_view(slug: str, title: str, source: Path) -> None:
             [
                 "---",
                 f"title: {yaml_quote(page_title)}",
-                f"description: {yaml_quote('Nguồn Markdown đầy đủ — đọc / sao chép')}",
+                f"description: {yaml_quote('Nguồn Markdown đầy đủ, đọc / sao chép')}",
                 "---",
                 "",
                 f"Trang HTML: [{title}]({html_link}) · "
@@ -138,10 +139,10 @@ def write_raw_copies() -> None:
 def write_llms_txt() -> None:
     """Write UTF-8 llms.txt. Worker enforces Content-Type charset=utf-8."""
     lines: list[str] = [
-        "# Project Sentinel — Báo cáo tuần",
+        "# Project Sentinel: Báo cáo tuần",
         "",
         "> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. "
-        "Tiến độ hiện tại: tuần 1–3 / 6.",
+        "Tiến độ hiện tại: tuần 1–4 / 6.",
         "",
         f"Site: {SITE_URL}",
         f"Repo: https://github.com/manhquydev/sentinel-security-platform",
@@ -155,7 +156,7 @@ def write_llms_txt() -> None:
         lines.append(f"- [{title}]({url}): {desc}")
     lines.extend(["", "## Nguồn Markdown (xem trên site)", ""])
     for slug, title, _desc in REPORTS:
-        lines.append(f"- [{title} — Markdown]({SITE_URL}/reports/{slug}/markdown/)")
+        lines.append(f"- [{title}, Markdown]({SITE_URL}/reports/{slug}/markdown/)")
     lines.extend(["", "## Raw Markdown (tải / fetch)", ""])
     for slug, title, _desc in REPORTS:
         lines.append(f"- [{title} (raw)]({SITE_URL}/raw/reports/{slug}.md)")
@@ -167,6 +168,11 @@ def write_llms_txt() -> None:
             "- Chỉ publish báo cáo tuần trong allowlist.",
             "- Không có artifact quét thô (`.raw.*`) hay secret trên site.",
             "- File text được phục vụ với `charset=utf-8`.",
+            "",
+            "## Demo",
+            "",
+            f"- [Hub demo]({SITE_URL}/demo/)",
+            f"- [Demo tuần 3]({SITE_URL}/demo/week-03/)",
             "",
         ]
     )
@@ -180,11 +186,11 @@ def write_landing() -> None:
     dest.write_text(
         """---
 title: Project Sentinel
-description: Báo cáo tuần đồ án Project Sentinel — TTS Nguyễn Mạnh Quý (VINSOC × VINUNI).
+description: Báo cáo tuần đồ án Project Sentinel (TTS Nguyễn Mạnh Quý (VINSOC × VINUNI).
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Báo cáo tuần 1–3 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
+  tagline: Báo cáo tuần 1–4 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
   actions:
     - text: Xem báo cáo tuần
       link: /reports/
@@ -202,19 +208,22 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid>
   <Card title="Tuần 1" icon="seti:json">
-    Quét bảo mật nền, che secret, Juice Shop — [tuần 1](/reports/week-01/).
+    Quét bảo mật nền, che secret, Juice Shop. [tuần 1](/reports/week-01/).
   </Card>
   <Card title="Tuần 2" icon="seti:db">
-    Chuẩn hóa 36 cảnh báo + kho tri thức offline — [tuần 2](/reports/week-02/).
+    Chuẩn hóa 36 cảnh báo + kho tri thức offline. [tuần 2](/reports/week-02/).
   </Card>
   <Card title="Tuần 3" icon="seti:notebook">
-    Agent phân tích bảo mật, báo cáo JSONL bám bằng chứng — [tuần 3](/reports/week-03/).
+    Agent phân tích bảo mật, báo cáo JSONL bám bằng chứng. [tuần 3](/reports/week-03/).
+  </Card>
+  <Card title="Tuần 4" icon="seti:lock">
+    API Gateway, Python tool, allowlist, request an toàn. [tuần 4](/reports/week-04/).
   </Card>
 </CardGrid>
 
 ## Nguồn cho agent & tải file
 
-- [`/llms.txt`](/llms.txt) — mục lục chuẩn llms.txt (HTML + Markdown + raw)
+- [`/llms.txt`](/llms.txt), mục lục chuẩn llms.txt (HTML + Markdown + raw)
 - [Xem Markdown](/reports/week-01/markdown/) · [Raw](/raw/reports/week-01.md) (mỗi tuần có cặp tương tự)
 - [Mã nguồn monorepo](https://github.com/manhquydev/sentinel-security-platform)
 
