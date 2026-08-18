@@ -105,7 +105,7 @@ _PEM_BLOCK = re.compile(
 # credential: consuming to the next space swallowed `&csrf=...` and destroyed adjacent
 # evidence, which is the corruption this module is built to avoid.
 _ASSIGNMENT = re.compile(
-    r"(?P<head>\b(?P<key>token|secret|password|passwd|api[_-]?key|client[_-]secret"
+    r"(?P<head>\b(?P<key>token|secret|password|db[_-]?password|passwd|api[_-]?key|client[_-]secret"
     r"|access[_-]token|refresh[_-]token|private[_-]key|access[_-]key|authorization|cookie)"
     r"[\"']?\s*[:=]\s*)"
     r"(?:\"(?P<dq>[^\"]+)\"|'(?P<sq>[^']+)'"
@@ -123,6 +123,7 @@ _ASSIGNMENT_CLASS = {
     "token": "token",
     "secret": "secret",
     "password": "password",
+    "db_password": "db-password",
     "api_key": "api-key",
     "authorization": "authorization",
     "cookie": "cookie",
@@ -133,6 +134,10 @@ _ASSIGNMENT_CLASS = {
 _CREDENTIAL_PREFIX = re.compile(
     r"\b(?:"
     r"(?P<openai>sk-[A-Za-z0-9_-]{10,})"
+    r"|(?P<stripe_live>sk_live_[A-Za-z0-9]{24,})"
+    r"|(?P<stripe_test>sk_test_[A-Za-z0-9]{24,})"
+    r"|(?P<google_api>AIzaSy[A-Za-z0-9_-]{33})"
+    r"|(?P<gitlab_pat>glpat-[A-Za-z0-9_-]{20,})"
     r"|(?P<gh_pat>github_pat_[A-Za-z0-9_]{20,})"
     r"|(?P<gh_token>ghp_[A-Za-z0-9]{20,})"
     r"|(?P<aws_key>AKIA[0-9A-Z]{16})"
@@ -142,6 +147,10 @@ _CREDENTIAL_PREFIX = re.compile(
 
 _PREFIX_CLASS = {
     "openai": "openai-key",
+    "stripe_live": "stripe-live-key",
+    "stripe_test": "stripe-test-key",
+    "google_api": "google-api-key",
+    "gitlab_pat": "gitlab-pat",
     "gh_pat": "github-pat",
     "gh_token": "github-token",
     "aws_key": "aws-access-key",

@@ -15,6 +15,7 @@
     {"policy": "redact", "cls": "card", "text": "\"cardNumber\":4111111111111111"},
     {"policy": "redact", "cls": "jwt", "text": "auth eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoxfQ.c2ln-_stub tail"},
     {"policy": "redact", "cls": "uuid", "text": "session 7d3f2a1b-4c5d-6e7f-8a9b-0c1d2e3f4a5b end"},
+    {"policy": "redact", "cls": "phone", "text": "user_phone=+12025550143"},
 
     {"policy": "gap", "cls": "card-bare", "text": "positional row: 4 4532015112830366 alice"},
     {"policy": "gap", "cls": "phone", "text": "phone +1-202-555-0143 on file"},

@@ -90,7 +90,7 @@ _CARD_LABELED = re.compile(
 # A phone-shaped value is sensitive only when it is labelled as a telephone number. This avoids
 # corrupting scanner ports, payload lengths, and numeric security evidence.
 _PHONE_LABELED = re.compile(
-    r"(?P<key>\b(?:phone|telephone|tel|mobile|msisdn)\b[\"']?\s*[:=]\s*[\"']?)"
+    r"(?P<key>\b(?:user[_-]?phone|phone|telephone|tel|mobile|msisdn)\b[\"']?\s*[:=]\s*[\"']?)"
     r"(?P<num>\+?\d(?:[ .()\-]?\d){7,14})",
     re.IGNORECASE,
 )

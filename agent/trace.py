@@ -51,11 +51,15 @@ _SECRET_PATTERNS = re.compile(
     r"|\bgithub_pat_[A-Za-z0-9_]{20,}"
     r"|\bAKIA[0-9A-Z]{16}"
     r"|\bxox[baprs]-[A-Za-z0-9-]{10,}"
+    r"|\bsk_live_[A-Za-z0-9]{24,}"
+    r"|\bsk_test_[A-Za-z0-9]{24,}"
+    r"|\bAIzaSy[A-Za-z0-9_-]{33}"
+    r"|\bglpat-[A-Za-z0-9_-]{20,}"
     # The value after the keyword runs to end-of-line, not just the first whitespace-delimited
     # token — `\S+` alone left `Authorization: Bearer <JWT>` with only "Bearer" redacted and the
     # token itself in clear text (MF1). `[^\r\n]+` stops at the line break instead of DOTALL's
     # "the rest of the whole blob", so a multi-line narrative field still only loses one line.
-    r"|\b(?:token|secret|password|passwd|api[_-]?key|client[_-]secret|access[_-]token"
+    r"|\b(?:token|secret|password|db[_-]?password|passwd|api[_-]?key|client[_-]secret|access[_-]token"
     r"|refresh[_-]token|private[_-]key|authorization|cookie)[\"']?\s*[:=]\s*[^\r\n]+",
     re.IGNORECASE,
 )
