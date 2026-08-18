@@ -125,6 +125,9 @@ scanners/out/
 # policy are generated locally and must never be committed. The template is tracked.
 infra/kong/kong.rendered.yml
 
+# Charter-slim grader venv
+/.venv/
+
 # Week-3 RAG: local venv and any downloaded model cache are not committed
 rag/.venv/
 rag/.cache/

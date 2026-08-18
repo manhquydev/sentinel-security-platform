@@ -1,0 +1,6 @@
+# Charter-slim grader install. Not a replacement for rag/.venv.
+# Operator/RAG: python3 -m venv rag/.venv && rag/.venv/bin/pip install -r rag/requirements.txt
+# Pins reused from existing files. Do not add onnx/fastembed/langgraph/otel/pydantic.
+pytest>=8.0
+cryptography==49.0.0
+requests==2.34.2
