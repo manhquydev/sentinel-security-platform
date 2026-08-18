@@ -4,7 +4,7 @@ Chrome kiểu docs (Starlight) cho **báo cáo tuần** Project Sentinel.
 Nội dung soạn trong monorepo tại `docs/reports/`, rồi sync vào Starlight.
 
 **Production:** https://vinsoc.manhquy.id.vn 
-**Allowlist sync:** `docs/reports/{index,week-01,week-02,week-03,week-04}.md` 
+**Allowlist sync:** `docs/reports/{index,week-01,week-02,week-03,week-04,week-05,week-06}.md`
 (Product/as-built **không** publish lên site, tránh link monorepo 404.)
 
 ## Lệnh
@@ -83,4 +83,3 @@ Smoke + Worker charset (production): `WORKER=1 bash scripts/website-smoke-check.
 - Chỉ allowlist báo cáo tuần + demo sample fixtures. 
 - Không sync charter cá nhân / kịch bản riêng. 
 - Không nhúng raw scanner secret hay `infra/.env`. 
-

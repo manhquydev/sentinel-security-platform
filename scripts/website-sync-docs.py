@@ -23,6 +23,8 @@ REPORTS = [
     ("week-02", "Tuần 2: Chuẩn hóa và kho tri thức", "Báo cáo Tuần 2: gộp cảnh báo và tra cứu offline"),
     ("week-03", "Tuần 3: Agent phân tích bảo mật", "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"),
     ("week-04", "Tuần 4: API Gateway và request an toàn", "Báo cáo Tuần 4: Kong, Python tool, allowlist, live 2026-08-14"),
+    ("week-05", "Tuần 5: IPI, HITL và che dữ liệu", "Báo cáo Tuần 5: guard dữ liệu không tin cậy, duyệt request, PII"),
+    ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: luồng Charter, CE-01..05 và kịch bản 12 phút"),
 ]
 
 WEEKLY = [r for r in REPORTS if r[0] != "index"]
@@ -142,7 +144,7 @@ def write_llms_txt() -> None:
         "# Project Sentinel: Báo cáo tuần",
         "",
         "> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. "
-        "Tiến độ hiện tại: tuần 1–4 / 6.",
+        "Tiến độ hiện tại: tuần 1–6 / 6.",
         "",
         f"Site: {SITE_URL}",
         f"Repo: https://github.com/manhquydev/sentinel-security-platform",
@@ -190,7 +192,7 @@ description: Báo cáo tuần đồ án Project Sentinel (TTS Nguyễn Mạnh Qu
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Báo cáo tuần 1–4 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
+  tagline: Báo cáo tuần 1–6 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
   actions:
     - text: Xem báo cáo tuần
       link: /reports/
@@ -218,6 +220,12 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
   </Card>
   <Card title="Tuần 4" icon="seti:lock">
     API Gateway, Python tool, allowlist, request an toàn. [tuần 4](/reports/week-04/).
+  </Card>
+  <Card title="Tuần 5" icon="seti:shield">
+    IPI, HITL và che dữ liệu có nhãn. [tuần 5](/reports/week-05/).
+  </Card>
+  <Card title="Tuần 6" icon="seti:play">
+    Tích hợp, CE-01..05 và kịch bản demo. [tuần 6](/reports/week-06/).
   </Card>
 </CardGrid>
 

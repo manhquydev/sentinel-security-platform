@@ -50,10 +50,14 @@ check_http "/reports/week-01/" "text/html"
 check_http "/reports/week-02/" "text/html"
 check_http "/reports/week-03/" "text/html"
 check_http "/reports/week-04/" "text/html"
+check_http "/reports/week-05/" "text/html"
+check_http "/reports/week-06/" "text/html"
 check_http "/reports/week-01/markdown/" "text/html"
 check_http "/reports/week-02/markdown/" "text/html"
 check_http "/reports/week-03/markdown/" "text/html"
 check_http "/reports/week-04/markdown/" "text/html"
+check_http "/reports/week-05/markdown/" "text/html"
+check_http "/reports/week-06/markdown/" "text/html"
 check_http "/reports/index/markdown/" "text/html"
 check_http "/llms.txt" "$WORKER_CT"
 check_http "/raw/reports/index.md" "$WORKER_CT"
@@ -160,6 +164,8 @@ check_http "/raw/reports/week-01.md" "$WORKER_CT"
 check_http "/raw/reports/week-02.md" "$WORKER_CT"
 check_http "/raw/reports/week-03.md" "$WORKER_CT"
 check_http "/raw/reports/week-04.md" "$WORKER_CT"
+check_http "/raw/reports/week-05.md" "$WORKER_CT"
+check_http "/raw/reports/week-06.md" "$WORKER_CT"
 check_http "/favicon.svg" ""
 check_http "/sitemap-index.xml" ""
 
@@ -177,6 +183,21 @@ if curl -sS "$BASE/llms.txt" | grep -q 'week-04'; then
   pass "llms.txt lists week-04"
 else
   fail "llms.txt missing week-04"
+fi
+if curl -sS "$BASE/llms.txt" | grep -q 'week-05'; then
+  pass "llms.txt lists week-05"
+else
+  fail "llms.txt missing week-05"
+fi
+if curl -sS "$BASE/llms.txt" | grep -q 'week-06'; then
+  pass "llms.txt lists week-06"
+else
+  fail "llms.txt missing week-06"
+fi
+if curl -sS "$BASE/llms.txt" | grep -q '1–6 / 6' && ! curl -sS "$BASE/llms.txt" | grep -q '1–4 / 6'; then
+  pass "llms.txt records 1–6 / 6 only"
+else
+  fail "llms.txt progress is not 1–6 / 6"
 fi
 if curl -sS "$BASE/" -o "$TMPDIR/home.html" && grep -q 'TTS Nguyễn Mạnh Quý' "$TMPDIR/home.html"; then
   pass "home footer/credit TTS"
