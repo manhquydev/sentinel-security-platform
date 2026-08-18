@@ -32,8 +32,8 @@ Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
 
 ### Báo cáo tuần (mentor)
 
-- [Mục lục báo cáo](reports/index.md) — Tuần 1–4  
-- [Tuần 1](reports/week-01.md) · [Tuần 2](reports/week-02.md) · [Tuần 3](reports/week-03.md) · [Tuần 4](reports/week-04.md)  
+- [Mục lục báo cáo](reports/index.md) — Tuần 1–6
+- [Tuần 1](reports/week-01.md) · [Tuần 2](reports/week-02.md) · [Tuần 3](reports/week-03.md) · [Tuần 4](reports/week-04.md) · [Tuần 5](reports/week-05.md) · [Tuần 6](reports/week-06.md)
 - [Sample artifacts Tuần 3](reports/artifacts/README.md)  
 - Site Starlight: [website/](../website/README.md) · https://vinsoc.manhquy.id.vn · [`/llms.txt`](https://vinsoc.manhquy.id.vn/llms.txt)  
 
