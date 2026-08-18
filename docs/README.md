@@ -89,6 +89,7 @@ Material tương thích / lịch sử Harness nằm ngoài cài đặt mặc đ�
 
 ## Cập nhật docs
 
+- Grader install là `requirements.txt` ở root qua `.venv`; báo cáo tuần sync site qua `scripts/website-sync-docs.sh`.
 - Sửa **authority** nhỏ nhất bị ảnh hưởng.  
 - Không copy inventory/command list từ script vào nhiều file — link owner.  
 - Báo cáo tuần: sửa `docs/reports/*` rồi sync site (`scripts/website-sync-docs.sh`).  

@@ -78,6 +78,17 @@ Repo có **hai product**; không trộn bằng chứng.
 
 ## Chạy nhanh
 
+### Mentor / grader (chạy lại test & eval Tuần 5–6)
+
+Cần `python3` (nếu thiếu `.venv/bin/pip`, cài `python3-venv` / `ensurepip` rồi dừng). Không `source infra/.env`. Không `pip install -r rag/requirements.txt`. Không chạy `python3 -m pip` / `python3 -m pytest` trên host. Bare `pytest` không phải bài chấm. Chạy từ thư mục gốc repo:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py -q
+.venv/bin/python evaluation/pii-redaction/measure.py
+```
+
 ### Proof: quét → che secret (không cần lake / LLM)
 
 Cần Docker, `jq`, image pin public.

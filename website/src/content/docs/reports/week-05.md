@@ -88,7 +88,7 @@ egress.
 | `evaluation/pii-redaction/measure.py` | recall **10/10**, FP **0/10** |
 | Phone không nhãn `phone +1-202-555-0143 on file` | vẫn **gap** (cố ý) |
 
-Các số này là test/eval trên máy, không phải live gateway tháng 08.
+Các số này là test/eval trên máy, không phải live gateway tháng 08 (dòng 61 test gateway guardrails là lịch sử máy, lệnh Chạy lại slim ở Mục 6 không bao gồm file đó).
 
 ## 5. Demo
 
@@ -102,23 +102,22 @@ Em demo không cần trang `/demo/week-05/` mới:
 Hub site chỉ link báo cáo này và demo tương tác Tuần 3.
 
 ```bash
-PYTHONPATH=. python3 -c "from agent.pii import redact; print(redact('user_phone=+12025550143')[0])"
-python3 -m pytest tests/test_week5_labeled_redaction.py -q
+PYTHONPATH=. .venv/bin/python -c "from agent.pii import redact; print(redact('user_phone=+12025550143')[0])"
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py -q
 ```
 
 ## 6. Chạy lại
 
-Cần `python3`. Không cần Docker cho các lệnh dưới.
+Chạy từ thư mục gốc repo. Cần `python3` (nếu thiếu `.venv/bin/pip`, cài `python3-venv` / `ensurepip` rồi dừng). Không `source infra/.env`. Không `pip install -r rag/requirements.txt`. Không chạy `python3 -m pip` / `python3 -m pytest` trên host. Bare `pytest` không phải bài chấm. Không cần Docker cho các lệnh dưới:
 
 ```bash
-python3 -m pytest tests/test_week5_labeled_redaction.py \
-  tests/test_charter_requests.py -q
-
-python3 evaluation/pii-redaction/measure.py
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py -q
+.venv/bin/python evaluation/pii-redaction/measure.py
 ```
 
-`tests/week7-ipi-guard-test.sh` và `tests/charter-hitl-request-test.sh` cần
-`rag/.venv`. Thiếu venv thì hai script đó thoát mã 2; dùng pytest ở trên.
+Chỉ `tests/week7-ipi-guard-test.sh` cần `rag/.venv` và thoát mã 2 nếu thiếu. `tests/charter-hitl-request-test.sh` bản chất là `pytest` — hãy dùng khối 4 dòng trên với `.venv/bin/python`.
 
 Không in `infra/.env`, API key, hay payload người thật.
 

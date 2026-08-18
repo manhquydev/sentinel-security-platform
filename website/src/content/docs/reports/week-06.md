@@ -84,13 +84,24 @@ phải nội dung chính của Tuần 6 mentor.
 
 ## 6. Chạy lại
 
+### Chạy lại test & eval (Mentor / grader)
+
+Chạy từ thư mục gốc repo. Cần `python3` (nếu thiếu `.venv/bin/pip`, cài `python3-venv` / `ensurepip` rồi dừng). Không `source infra/.env`. Không `pip install -r rag/requirements.txt`. Không chạy `python3 -m pip` / `python3 -m pytest` trên host. Bare `pytest` không phải bài chấm:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py -q
+.venv/bin/python evaluation/pii-redaction/measure.py
+```
+
+### Vận hành demo & site mentor (Operator)
+
+Chạy từ thư mục gốc repo:
+
 ```bash
 # Demo spine (cần prerequisite trong runbook)
 bash scripts/sentinel-demo.sh --help
-
-# Eval corpus committed
-python3 -m pytest tests/test_charter_requests.py -q
-python3 evaluation/pii-redaction/measure.py
 
 # Site mentor local
 bash scripts/website-sync-docs.sh
