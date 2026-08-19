@@ -143,7 +143,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py tests/test_week5_demo_facade.py -q
 .venv/bin/python evaluation/pii-redaction/measure.py
-bash tests/week5-demo-facade-test.sh
+PYTHON=.venv/bin/python bash tests/week5-demo-facade-test.sh
 ```
 
 Không in `infra/.env`, API key, hay payload người thật.
