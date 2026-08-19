@@ -3,7 +3,13 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE="$ROOT/infra/week5-demo/docker-compose.yml"
-PY="${PYTHON:-python3}"
+if [ -n "${PYTHON:-}" ]; then
+  PY="$PYTHON"
+elif [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+else
+  PY="python3"
+fi
 ok() { printf 'ok  %s\n' "$1"; }
 bad() { printf 'BAD %s\n' "$1" >&2; exit 1; }
 
