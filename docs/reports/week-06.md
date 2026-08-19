@@ -74,6 +74,7 @@ che PII) chạy bằng `scripts/sentinel-demo.sh` và
 | Eval 5–10 | CE-01..05 + `gold.json` |
 | README + kiến trúc | README + `docs/sentinel-six-week-as-built-architecture.md` |
 | Demo | `sentinel-demo.sh` + runbook + `/demo/week-03/` |
+| Module Tuần 5 (Postman loopback) | Một facade tại `infra/week5-demo/`; Postman trên laptop này gọi `127.0.0.1:18055`, không gửi Kong. LAN từ máy khác nằm ngoài chính sách. |
 | Test/eval nộp lại | bốn lệnh `.venv` ở mục 6 |
 
 Khi chạy eval, `evaluation/charter-eval/result-report.py` so với gold. Báo cáo

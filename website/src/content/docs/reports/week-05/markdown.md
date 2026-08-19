@@ -33,6 +33,7 @@ và ít nhất hai ca mỗi loại (IPI, PII, phê duyệt) với Pass/Fail rõ.
 | Che PII có nhãn | `agent/pii.py`, `evaluation/pii-redaction/` |
 | Che secret trên persist / egress | `agent/trace.py`, `infra/litellm/guardrails/egress_redaction.py` |
 | Test bổ sung tuần này | `tests/test_week5_labeled_redaction.py` |
+| Demo module (HTTP loopback) | `scripts/sentinel-week5-demo.py`, `infra/week5-demo/` |
 
 ## 2. Luồng
 
@@ -92,22 +93,44 @@ egress.
 | `evaluation/pii-redaction/measure.py` | recall **10/10**, FP **0/10** |
 | Phone không nhãn `phone +1-202-555-0143 on file` | **gap** đã ghi trong corpus |
 
-Các số đo trên máy ngày 2026-08-18. Khối lệnh Mục 6 chạy hai file pytest và
-`measure.py`; không gồm `tests/test_gateway_guardrails.py`.
+Các số đo trên máy ngày 2026-08-18. Khối lệnh Mục 6 chạy pytest đã liệt kê,
+`measure.py` và kiểm facade; không gồm `tests/test_gateway_guardrails.py`.
 
 ## 5. Demo
 
-Ba bước trên CLI, cùng demo tương tác Tuần 3 trên site:
+HITL thật của Charter vẫn là CLI (`scripts/sentinel-charter-approve.py`). Em thêm
+một module facade duy nhất cho ba cảnh demo; Postman trên chính laptop này gọi
+module qua `http://127.0.0.1:18055`. Facade chỉ minh họa luồng, không gửi
+request qua Kong; ngay cả khi chọn Approve, demo vẫn ghi nhận request chưa
+được gửi.
 
-1. Đưa fixture IPI vào guard → thấy quarantine.
-2. Tạo request từ catalog, chọn Reject → không gửi.
-3. In chuỗi `user_phone=` / `db_password=` qua `pii.redact` và
-   `trace.redact_persisted` → còn placeholder.
+Ba cảnh:
+
+1. IPI: `POST /demo/ipi` với fixture `goal` → `quarantined`.
+2. HITL: `POST /demo/hitl/preview` rồi `POST /demo/hitl/decide` `reject` →
+   không gửi.
+3. PII: `POST /demo/pii` với `user_phone=+12025550143` → placeholder.
+
+```bash
+docker compose -f infra/week5-demo/docker-compose.yml up --build -d --wait
+bash scripts/week5-demo-curl.sh
+```
+
+Postman trên máy này: import `evaluation/week5-demo/week5-demo.postman.json`
+(base `http://127.0.0.1:18055`). Không chạy `python3 scripts/sentinel-week5-demo.py`
+cùng lúc với Docker — trùng cổng 18055.
+
+Không Docker thì một lệnh: `PYTHONPATH=. python3 scripts/sentinel-week5-demo.py`
+
+CLI (sau khối venv Mục 6):
 
 ```bash
 PYTHONPATH=. .venv/bin/python -c "from agent.pii import redact; print(redact('user_phone=+12025550143')[0])"
-.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py -q
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_week5_demo_facade.py -q
 ```
+
+Postman từ máy khác trong LAN nằm ngoài chính sách của demo; mentor vui lòng
+xem trên laptop chạy demo hoặc qua chia sẻ màn hình.
 
 ## 6. Chạy lại
 
@@ -118,8 +141,9 @@ Chạy từ thư mục gốc repo. Cần `python3` (nếu thiếu `.venv/bin/pip
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py -q
+.venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py tests/test_week5_demo_facade.py -q
 .venv/bin/python evaluation/pii-redaction/measure.py
+bash tests/week5-demo-facade-test.sh
 ```
 
 Không in `infra/.env`, API key, hay payload người thật.
