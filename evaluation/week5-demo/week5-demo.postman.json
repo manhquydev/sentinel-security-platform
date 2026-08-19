@@ -1,0 +1,85 @@
+{
+  "info": {
+    "name": "Sentinel Week-5 demo facade",
+    "description": "Postman on this laptop → http://127.0.0.1:18055. Teaching sidecar; does not send to Kong. No secrets.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://127.0.0.1:18055" }
+  ],
+  "item": [
+    {
+      "name": "health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base}}/health",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "18055",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "IPI fixture goal",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"fixture\":\"goal\"}" },
+        "url": {
+          "raw": "{{base}}/demo/ipi",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "18055",
+          "path": ["demo", "ipi"]
+        }
+      }
+    },
+    {
+      "name": "PII user_phone",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"text\":\"user_phone=+12025550143\"}" },
+        "url": {
+          "raw": "{{base}}/demo/pii",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "18055",
+          "path": ["demo", "pii"]
+        }
+      }
+    },
+    {
+      "name": "HITL preview post-empty-object",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"case_id\":\"post-empty-object\"}" },
+        "url": {
+          "raw": "{{base}}/demo/hitl/preview",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "18055",
+          "path": ["demo", "hitl", "preview"]
+        }
+      }
+    },
+    {
+      "name": "HITL reject (not sent)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"case_id\":\"post-empty-object\",\"decision\":\"reject\"}" },
+        "url": {
+          "raw": "{{base}}/demo/hitl/decide",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "18055",
+          "path": ["demo", "hitl", "decide"]
+        }
+      }
+    }
+  ]
+}

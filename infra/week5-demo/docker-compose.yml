@@ -1,0 +1,30 @@
+# Week-5 teaching facade. Host publish is loopback-only.
+# Inside the container the process listens on 0.0.0.0 so Docker can proxy;
+# the host mapping 127.0.0.1:18055 is the LAN lock (same pattern as Kong).
+name: week5-demo
+
+services:
+  week5-demo:
+    build:
+      context: ../..
+      dockerfile: infra/week5-demo/Dockerfile
+    container_name: sentinel-week5-demo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18055:18055"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:18055/health')",
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 3s

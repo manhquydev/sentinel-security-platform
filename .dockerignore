@@ -11,6 +11,7 @@ infra/**/*.dump
 **/__pycache__
 **/*.pyc
 **/.venv
+agent/out
 **/node_modules
 benchmark
 runs
