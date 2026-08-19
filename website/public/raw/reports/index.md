@@ -1,9 +1,9 @@
 # Báo cáo tuần: Project Sentinel
 
 Báo cáo theo tuần của đồ án Project Sentinel (VinUni × VinSOC). File gốc nằm
-trong monorepo; site mentor chỉ sync các file tuần.
+trong monorepo; site chỉ sync các file tuần.
 
-Nên đọc theo thứ tự. Mỗi tuần ghi: việc đã làm, sơ đồ, số liệu, lệnh chạy lại.
+Nên đọc theo thứ tự. Mỗi tuần ghi việc đã làm, sơ đồ, số liệu, và lệnh chạy lại.
 
 | Tuần | HTML | Markdown | Raw |
 |---|---|---|---|
@@ -14,8 +14,8 @@ Nên đọc theo thứ tự. Mỗi tuần ghi: việc đã làm, sơ đồ, số
 | 5 | [IPI, HITL và che dữ liệu](/reports/week-05/) | [xem MD](/reports/week-05/markdown/) | [raw](/raw/reports/week-05.md) |
 | 6 | [Tích hợp, đánh giá và demo](/reports/week-06/) | [xem MD](/reports/week-06/markdown/) | [raw](/raw/reports/week-06.md) |
 
-Hiện có **6 / 6** tuần trên mục lục repo. Con số này nghĩa là đủ sáu báo cáo
-mentor, không có nghĩa mọi residual kỹ thuật của Tuần 5.3 đã được đóng.
+Hiện có đủ sáu báo cáo tuần. Giới hạn còn lại ghi ở cuối từng tuần (mục việc
+em chưa làm), không gom thành một trang riêng.
 
 Máy đọc mục lục: [`/llms.txt`](/llms.txt).
 

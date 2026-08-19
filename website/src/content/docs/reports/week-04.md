@@ -112,7 +112,7 @@ python3 scripts/sentinel-charter-executor.py spec.json approval.json \
 ```
 
 Luồng đủ bước: `bash scripts/sentinel-demo.sh run --profile charter --run-id RUN`.
-Chưa có trang `/demo/week-04/` trên site như tuần 3.
+Trang demo tương tác trên site vẫn là `/demo/week-03/`.
 
 ## 6. Chạy lại
 

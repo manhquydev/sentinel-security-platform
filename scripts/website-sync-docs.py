@@ -24,7 +24,7 @@ REPORTS = [
     ("week-03", "Tuần 3: Agent phân tích bảo mật", "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"),
     ("week-04", "Tuần 4: API Gateway và request an toàn", "Báo cáo Tuần 4: Kong, Python tool, allowlist, live 2026-08-14"),
     ("week-05", "Tuần 5: IPI, HITL và che dữ liệu", "Báo cáo Tuần 5: guard dữ liệu không tin cậy, duyệt request, PII"),
-    ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: luồng Charter, CE-01..05 và kịch bản 12 phút"),
+    ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: luồng Charter, CE-01..05 và đóng gói Compose"),
 ]
 
 WEEKLY = [r for r in REPORTS if r[0] != "index"]
@@ -225,7 +225,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
     IPI, HITL và che dữ liệu có nhãn. [tuần 5](/reports/week-05/).
   </Card>
   <Card title="Tuần 6" icon="seti:play">
-    Tích hợp, CE-01..05 và kịch bản demo. [tuần 6](/reports/week-06/).
+    Tích hợp, CE-01..05 và đóng gói Compose. [tuần 6](/reports/week-06/).
   </Card>
 </CardGrid>
 
