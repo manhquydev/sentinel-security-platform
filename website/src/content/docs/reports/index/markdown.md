@@ -24,8 +24,7 @@ Nên đọc theo thứ tự. Mỗi tuần ghi việc đã làm, sơ đồ, số 
 | 5 | [IPI, HITL và che dữ liệu](/reports/week-05/) | [xem MD](/reports/week-05/markdown/) | [raw](/raw/reports/week-05.md) |
 | 6 | [Tích hợp, đánh giá và demo](/reports/week-06/) | [xem MD](/reports/week-06/markdown/) | [raw](/raw/reports/week-06.md) |
 
-Hiện có đủ sáu báo cáo tuần. Giới hạn còn lại ghi ở cuối từng tuần (mục việc
-em chưa làm), không gom thành một trang riêng.
+Hiện có đủ sáu báo cáo tuần.
 
 Máy đọc mục lục: [`/llms.txt`](/llms.txt).
 

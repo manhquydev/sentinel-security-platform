@@ -137,16 +137,3 @@ bash tests/week5-demo-facade-test.sh
 ```
 
 Không in `infra/.env`, API key, hay payload người thật.
-
-## 7. Việc em chưa làm tuần này
-
-Đề bài đã có filter, HITL, che dữ liệu, và đủ ca Pass/Fail. Em chưa:
-
-- Che SĐT viết `phone +1-…` không có dấu `=`
-- Che `customer_phone=` / `admin_password=` (khóa có tiền tố `customer_` /
-  `admin_` chưa nằm trong bộ khóa hiện tại)
-- Che secret trong preview GET khi body đã được chấp nhận (preview giữ nguyên
-  đoạn đầu)
-- Gộp các bộ che secret ở importer Tuần 1, Trivy và RAG thành một chỗ
-- Đưa số điện thoại sang đường egress LiteLLM (phone được che khi lưu log;
-  đường gọi model chỉ che secret)
