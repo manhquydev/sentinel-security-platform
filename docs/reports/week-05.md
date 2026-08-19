@@ -4,9 +4,8 @@ Tuần 5 em thêm các chốt an toàn quanh agent: coi nội dung lấy từ ap
 không tin cậy, không làm theo chỉ dẫn trong HTTP response, duyệt tay trước khi
 gửi POST, và che email / SĐT / token / API key / password trước khi lưu.
 
-Số liệu dưới đây đo ngày **2026-08-18** trên mã nguồn trong repo này (pytest +
-`evaluation/pii-redaction/measure.py`). Không phải lần chạy live Kong/Juice Shop
-mới.
+Số liệu dưới đây đo ngày **2026-08-18** trên mã trong repo (pytest +
+`evaluation/pii-redaction/measure.py`). Không phải lần chạy live Kong mới.
 
 ## 1. Việc em đã làm
 
@@ -60,8 +59,8 @@ Hai ca IPI (đúng tối thiểu đề bài):
 | `charter-response-ipi-goal.json` | response bảo đổi mục tiêu |
 | `charter-response-ipi-secrets.json` | response đòi lộ secret |
 
-Guard coi đó là dữ liệu và quarantine. Đây không phải lời hứa chặn mọi câu
-tiếng Việt / câu bị động.
+Guard coi đó là dữ liệu và quarantine. Em không cam bộ lọc bắt mọi câu
+tiếng Việt hay câu bị động.
 
 Hai ca HITL: test reject và revoke không mint token, không gọi HTTP
 (`tests/test_charter_requests.py`). CLI in method, path, body, mục đích,
@@ -76,25 +75,24 @@ egress.
 
 | Kiểm | Kết quả |
 |---|---|
-| `tests/test_charter_requests.py` | **67** passed (bằng chứng Tuần 4; có case `ConnectionError`) |
+| `tests/test_charter_requests.py` | **67** passed (cùng bộ Tuần 4; có case `ConnectionError`) |
 | `tests/test_week5_labeled_redaction.py` | **16** passed |
 | `tests/test_gateway_guardrails.py` | **61** passed |
 | Preview PII không nhãn `{"contact":"0123456789"}` | quarantine (1 test hẹp) |
 | `evaluation/pii-redaction/measure.py` | recall **10/10**, FP **0/10** |
-| Phone không nhãn `phone +1-202-555-0143 on file` | vẫn **gap** (cố ý) |
+| Phone không nhãn `phone +1-202-555-0143 on file` | **gap** đã ghi trong corpus |
 
-Các số này là test/eval trên máy, không phải live gateway tháng 08 (dòng 61 test gateway guardrails là lịch sử máy, lệnh Chạy lại slim ở Mục 6 không bao gồm file đó).
+Các số đo trên máy ngày 2026-08-18. Khối lệnh Mục 6 chạy hai file pytest và
+`measure.py`; không gồm `tests/test_gateway_guardrails.py`.
 
 ## 5. Demo
 
-Em demo không cần trang `/demo/week-05/` mới:
+Ba bước trên CLI, cùng demo tương tác Tuần 3 trên site:
 
 1. Đưa fixture IPI vào guard → thấy quarantine.
 2. Tạo request từ catalog, chọn Reject → không gửi.
 3. In chuỗi `user_phone=` / `db_password=` qua `pii.redact` và
    `trace.redact_persisted` → còn placeholder.
-
-Hub site chỉ link báo cáo này và demo tương tác Tuần 3.
 
 ```bash
 PYTHONPATH=. .venv/bin/python -c "from agent.pii import redact; print(redact('user_phone=+12025550143')[0])"
@@ -103,7 +101,9 @@ PYTHONPATH=. .venv/bin/python -c "from agent.pii import redact; print(redact('us
 
 ## 6. Chạy lại
 
-Chạy từ thư mục gốc repo. Cần `python3` (nếu thiếu `.venv/bin/pip`, cài `python3-venv` / `ensurepip` rồi dừng). Không `source infra/.env`. Không `pip install -r rag/requirements.txt`. Không chạy `python3 -m pip` / `python3 -m pytest` trên host. Bare `pytest` không phải bài chấm. Không cần Docker cho các lệnh dưới:
+Chạy từ thư mục gốc repo. Cần `python3` (nếu thiếu `.venv/bin/pip`, cài
+`python3-venv` rồi tạo lại venv). Không `source infra/.env`. Không
+`pip install -r rag/requirements.txt`.
 
 ```bash
 python3 -m venv .venv
@@ -112,18 +112,17 @@ python3 -m venv .venv
 .venv/bin/python evaluation/pii-redaction/measure.py
 ```
 
-Chỉ `tests/week7-ipi-guard-test.sh` cần `rag/.venv` và thoát mã 2 nếu thiếu. `tests/charter-hitl-request-test.sh` bản chất là `pytest` — hãy dùng khối 4 dòng trên với `.venv/bin/python`.
-
 Không in `infra/.env`, API key, hay payload người thật.
 
-## 7. Việc em chưa đóng
+## 7. Việc em chưa làm tuần này
 
-Đề bài Tuần 5 đã có filter, HITL, che dữ liệu, và đủ ca Pass/Fail. Em **chưa**:
+Đề bài đã có filter, HITL, che dữ liệu, và đủ ca Pass/Fail. Em chưa:
 
-- Che SĐT viết `phone +1-…` không có `=` (gap đã ghi trong corpus)
-- Che `customer_phone=` / `admin_password=` (chỉ khóa `user_phone` và `db_password`)
-- Che secret nằm trong preview GET (guard giữ nguyên body đã chấp nhận)
-- Gom bản copy secret ở importer Tuần 1 / Trivy / RAG vào cùng một chỗ
-- Đưa phone sang đường egress LiteLLM (cố ý: phone là PII, không phải secret)
-
-Những dòng trên vẫn còn trong mã. Báo cáo này không gọi là “Tuần 5 xong 100% mọi residual”.
+- Che SĐT viết `phone +1-…` không có dấu `=`
+- Che `customer_phone=` / `admin_password=` (khóa có tiền tố `customer_` /
+  `admin_` chưa nằm trong bộ khóa hiện tại)
+- Che secret trong preview GET khi body đã được chấp nhận (preview giữ nguyên
+  đoạn đầu)
+- Gộp các bộ che secret ở importer Tuần 1, Trivy và RAG thành một chỗ
+- Đưa số điện thoại sang đường egress LiteLLM (phone được che khi lưu log;
+  đường gọi model chỉ che secret)
