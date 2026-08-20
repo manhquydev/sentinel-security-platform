@@ -1,0 +1,6 @@
+-r requirements.txt
+pydantic          # unlocks test_charter_contracts, test_charter_proposal, test_charter_trivy, test_week1_artifact_normalizer, test_week3_aggregate_analysis
+jsonschema        # unlocks test_attack_surface_baseline
+pyyaml            # unlocks test_gateway_guardrails
+psycopg[binary]   # unlocks test_charter_rag (rag.store)
+pgvector          # unlocks test_charter_rag (rag.store)
