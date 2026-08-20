@@ -4,7 +4,17 @@
 
 Máy quét (SAST / DAST / SCA) tìm và quan sát. Pipeline chuẩn hóa + che secret. AI chỉ giải thích và đề xuất trên **bằng chứng đã typed** — không bịa endpoint hay lỗ hổng. Mọi request state-changing đi qua **HITL → API Gateway → catalog cố định**.
 
-Site mentor: [vinsoc.manhquy.id.vn](https://vinsoc.manhquy.id.vn) · [`/llms.txt`](https://vinsoc.manhquy.id.vn/llms.txt)
+Site mentor: [vinsoc.manhquy.io.vn](https://vinsoc.manhquy.io.vn) · [vinsoc.manhquy.id.vn](https://vinsoc.manhquy.id.vn) · [`/llms.txt`](https://vinsoc.manhquy.io.vn/llms.txt)
+
+### Bản deploy live (3 địa chỉ — đừng nhầm vai trò)
+
+| URL | Là gì | Đăng nhập |
+|---|---|---|
+| `vinsoc.manhquy.io.vn` (+ `.id.vn`) | **Site tài liệu** — báo cáo tuần, kiến trúc, demo. Đọc công khai. | Không |
+| `app.vinsoc.manhquy.io.vn` | **DefectDojo** — nền tảng quản lý lỗ hổng mã nguồn mở (OWASP), hiển thị các finding mà scanner đã quét từ Juice Shop. **Đây là công cụ có sẵn Sentinel đổ finding vào, KHÔNG phải web UI riêng của Sentinel.** | Cloudflare Access (OTP email) → login DefectDojo (`admin`) |
+| repo trên máy | **Nơi "test dự án" đúng nghĩa** — luồng quét → agent → HITL → gateway → guardrail (CLI/scripts + JSONL), không phải web. | Chạy local |
+
+"Sản phẩm Sentinel" là **pipeline** (scanner → chuẩn hóa → agent bám bằng chứng → HITL → Kong → guardrail), chạy bằng script + báo cáo JSONL — **không có web UI bespoke**. `app.vinsoc` chỉ là bề mặt xem finding (DefectDojo). Hướng dẫn dùng đầy đủ: [`docs/operations/live-deployment-guide.md`](docs/operations/live-deployment-guide.md).
 
 ---
 

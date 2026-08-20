@@ -12,6 +12,17 @@ Có **3 địa chỉ**, mỗi cái một vai trò khác nhau — đừng nhầm:
 
 > Điểm hay nhầm: **`app.vinsoc` không phải "toàn bộ dự án để test"** — nó là *một* bề mặt (dashboard finding DefectDojo). Luồng end-to-end được chấm nằm ở repo (mục 3–4 bên dưới).
 
+### `app.vinsoc.manhquy.io.vn` thực sự là gì?
+
+Nó là **DefectDojo** — một nền tảng **quản lý lỗ hổng mã nguồn mở của OWASP** (có sẵn, không phải Sentinel viết ra). Vai trò trong hệ thống:
+
+- Scanner của Sentinel (Trivy/Nuclei/Semgrep) quét Juice Shop → kết quả được **che secret (redact)** → **import vào DefectDojo**. DefectDojo là nơi **lưu và xem/triage** các finding đó.
+- Chạy trên VM GCP (bind loopback), đưa ra ngoài qua **Cloudflare Tunnel**, chặn trước bằng **Cloudflare Access**.
+
+Nó **KHÔNG phải**: web UI riêng của Sentinel, không phải giao diện AI agent, không phải màn HITL duyệt request, cũng không phải Juice Shop. "Sản phẩm Sentinel" là **pipeline chạy bằng script** (scanner → chuẩn hóa → agent bám bằng chứng → HITL → Kong gateway → guardrail) xuất **báo cáo JSONL** — không có web UI bespoke. `app.vinsoc` chỉ là bề mặt xem finding.
+
+Vì sao dùng DefectDojo thay vì tự viết UI: đúng phạm vi đồ án (spec cho phép lưu finding vào DB/tool có sẵn), tránh tự dựng frontend, và cho một dashboard finding thật để trình diễn.
+
 ---
 
 ## 1. Vào `app.vinsoc.manhquy.io.vn` (bạn đang kẹt ở đây)
@@ -21,7 +32,7 @@ Có **2 lớp đăng nhập nối tiếp**:
 ### Lớp 1 — Cloudflare Access (cổng)
 1. Mở `https://app.vinsoc.manhquy.io.vn`.
 2. Cloudflare hiện màn hình đăng nhập, nhập **email được cấp phép**:
-   - `manhquydev@gmail.com` hoặc `manhq.id@gmail.com`
+   - `manhquydev@gmail.com`, `manhq.id@gmail.com`, hoặc `vinsoc@manhquy.id.vn`
 3. Chọn **"Send me a code"** → Cloudflare gửi **mã một lần (OTP)** vào email đó.
 4. Mở email, copy mã, dán vào → Access cho qua.
    - Muốn thêm email khác được vào? Cloudflare **Zero Trust → Access → Applications → "Sentinel App" → Policies** → thêm email.
@@ -29,11 +40,21 @@ Có **2 lớp đăng nhập nối tiếp**:
 ### Lớp 2 — Đăng nhập DefectDojo (ứng dụng)
 Sau Access, bạn thấy trang login DefectDojo:
 - **Username:** `admin`
-- **Password:** giá trị `DD_ADMIN_PASSWORD` trong `infra/.env`. Lấy ra bằng (trên máy có repo):
+- **Password:** KHÔNG phải mã OTP của Access. Nó là giá trị đặt sẵn trong file bí mật
+  `infra/.env` (khóa `DD_ADMIN_PASSWORD`). Mật khẩu không được in ra chat/docs; **bạn
+  tự xem trên máy của mình** bằng cách chạy trong terminal (thư mục gốc repo):
   ```bash
   grep '^DD_ADMIN_PASSWORD=' infra/.env
   ```
-  (Không in mật khẩu ra nơi công khai.)
+  Dòng in ra dạng `DD_ADMIN_PASSWORD=<đây-là-mật-khẩu>` — phần sau dấu `=` chính là mật khẩu, dán vào ô Password.
+
+- **Nếu muốn đổi sang mật khẩu bạn tự chọn** (đăng nhập cho dễ nhớ), đổi trực tiếp trên VM:
+  ```bash
+  export PATH="/home/manhquy/project/VinSoc/.tools/google-cloud-sdk/bin:$PATH"
+  gcloud --project project-25e7d128-f340-4d0b-b32 compute ssh sentinel-charter --zone asia-southeast1-b --tunnel-through-iap \
+    --command "docker exec -i dd-uwsgi python manage.py changepassword admin"
+  ```
+  (Nhập mật khẩu mới 2 lần; đây là mật khẩu Django của DefectDojo, độc lập với `infra/.env`.)
 
 ### Bạn sẽ thấy gì / bấm gì
 - Vào **Products → `juice-shop-harness` → Engagement `week1-baseline`**.
