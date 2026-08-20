@@ -1,0 +1,18 @@
+---
+import DemoShell from '../../components/demo/DemoShell.astro';
+import CharterWalkthrough from '../../components/demo/CharterWalkthrough.astro';
+---
+
+<DemoShell
+	title="Demo end-to-end: Charter (7 cảnh)"
+	description="Quét → agent → đề xuất → HITL → gateway → guard IPI → che PII, trên bằng chứng thật đã sanitize."
+	reportHref="/reports/week-06/"
+	reportLabel="← Báo cáo Tuần 6"
+>
+	<p class="demo-lead">
+		Bảy cảnh trên bằng chứng đã sanitize: quét → agent JSONL → đề xuất catalog → HITL → Kong
+		gateway → guard IPI → che PII. Không lab/LLM live.
+	</p>
+
+	<CharterWalkthrough />
+</DemoShell>

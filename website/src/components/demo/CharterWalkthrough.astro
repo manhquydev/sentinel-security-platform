@@ -1,0 +1,45 @@
+---
+// Interactive Charter end-to-end demo: 7 scenes, embedded sanitized evidence.
+---
+
+<section class="w3" id="charter-demo" data-charter-demo aria-label="Demo Charter">
+	<div class="w3-toolbar">
+		<div class="w3-counter" data-charter-counter>…</div>
+		<div class="w3-toggle" role="group" aria-label="Điều hướng cảnh">
+			<button type="button" data-charter-prev>Trước</button>
+			<button type="button" data-charter-next>Sau</button>
+		</div>
+	</div>
+
+	<p data-charter-status class="w3-status" role="status" aria-live="polite">Đang khởi tạo…</p>
+
+	<ol class="w3-stepper" data-charter-stepper aria-label="7 cảnh Charter"></ol>
+
+	<section class="w3-panel" data-charter-scene aria-label="Cảnh hiện tại">
+		<p class="w3-muted">Đang tải cảnh…</p>
+	</section>
+
+	<noscript>
+		<div class="w3-noscript">
+			<p>Bật JavaScript để xem demo tương tác. Bảy cảnh (bằng chứng đã sanitize):</p>
+			<ol>
+				<li>Quét (Scanner) — Nuclei/Trivy quét Juice Shop (loopback); secret được redact trước khi lưu.</li>
+				<li>Agent phân tích (JSONL) — Agent đọc aggregate + tri thức, xuất report JSONL bám bằng chứng.</li>
+				<li>Đề xuất request (catalog cố định) — Agent map finding → 1 case an toàn predeclared.</li>
+				<li>HITL — phê duyệt — Approve: mint token → gửi; Reject: CharterRequestError trước network.</li>
+				<li>Qua Kong gateway — Request đi qua Kong TLS 127.0.0.1:18443.</li>
+				<li>Response guard — chặn IPI — Raw vs Guarded (quarantined: objective-change).</li>
+				<li>Che dữ liệu nhạy cảm (PII) — Raw vs Masked (email/card redacted trước LLM/log).</li>
+			</ol>
+		</div>
+	</noscript>
+</section>
+
+<script>
+	import { mountCharterWalkthrough } from './charter-walkthrough.js';
+
+	const root = document.querySelector('[data-charter-demo]');
+	if (root instanceof HTMLElement) {
+		mountCharterWalkthrough(root);
+	}
+</script>
