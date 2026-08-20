@@ -132,6 +132,35 @@ Demo: [workbench demo](docs/operations/sentinel-workbench-demo.md)
 
 ---
 
+## Fresh-clone scan-to-redaction (no secrets)
+
+Run this from the repository root. This local proof needs Docker daemon and socket access, `jq`, and public pinned images available to Docker. It needs no DefectDojo credentials, instance, or target-app service. It scans a digest-pinned image and writes only the sanitized
+report outside the private workspace; it does not import findings or verify a lake.
+
+```bash
+(
+  set -euo pipefail
+  command -v jq >/dev/null || { echo "jq is required for redaction" >&2; exit 1; }
+  workspace="$(mktemp -d)"
+  trap 'rm -rf "$workspace"' EXIT
+  source scanners/image-pins.env
+  export IMAGE="$JUICE_SHOP_IMAGE" TRIVY_SCANNERS="secret,misconfig"
+  sanitized_report="$(mktemp -t trivy.sanitized.XXXXXX.json)"
+  ./scanners/run-trivy.sh "$workspace/trivy.raw.json"
+  ./scanners/redact-report.sh trivy "$workspace/trivy.raw.json" "$sanitized_report"
+  rm -rf "$workspace"
+  trap - EXIT
+  printf 'sanitized report: %s\n' "$sanitized_report"
+)
+```
+
+`TRIVY_SCANNERS=secret,misconfig` avoids the vulnerability database download. The
+private raw report and status sidecar are removed immediately after redaction; the
+exit trap also cleans them after any failure.
+
+Provisioned import and verification of the DefectDojo lake are separate operations.
+A fresh clone of the committed repository does not reproduce the historical baseline.
+
 ## Cấu trúc repo (điểm vào)
 
 | Path | Vai trò |
