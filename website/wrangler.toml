@@ -16,3 +16,10 @@ not_found_handling = "404-page"
 [[routes]]
 pattern = "vinsoc.manhquy.id.vn"
 custom_domain = true
+
+# New project domain (zone manhquy.io.vn must be active on this Cloudflare account).
+# `wrangler deploy` binds this as a Worker Custom Domain and Cloudflare provisions
+# the proxied DNS record + SSL automatically.
+[[routes]]
+pattern = "vinsoc.manhquy.io.vn"
+custom_domain = true
