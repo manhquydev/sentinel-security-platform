@@ -24,10 +24,12 @@ surface through an **IAP/SSH tunnel** to your own localhost. The vulnerable
 target therefore has no route from the internet — consistent with Sentinel's
 loopback/allowlist charter.
 
-For an impressive but safe public demo, expose **only** the Sentinel product
-surface (report/HITL viewer) behind an authenticated reverse proxy or IAP-secured
-load balancer — and keep Juice Shop / Kong-internal / DefectDojo private. That is
-a deliberate follow-up, not part of this v1 kit.
+For an impressive but safe public demo, expose **only** a safe product surface
+behind auth. This is now **implemented**: `app.vinsoc.manhquy.io.vn` →
+Cloudflare Tunnel → **DefectDojo** (`:8080`, the OWASP findings dashboard),
+gated by **Cloudflare Access** (email OTP). Juice Shop, Kong-internal, and the
+databases stay private (loopback-only, not on the tunnel). See
+[`../../docs/operations/live-deployment-guide.md`](../../docs/operations/live-deployment-guide.md).
 
 ### Metadata / service-account hardening
 
