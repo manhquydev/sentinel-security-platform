@@ -27,7 +27,13 @@ REPORTS = [
     ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: luồng Charter, CE-01..05 và đóng gói Compose"),
 ]
 
+# Temporarily omit from https://vinsoc.manhquy.id.vn until the week-6 due date.
+# Keep the slug in REPORTS (repo file still exists). Empty this set to publish.
+SITE_UNPUBLISHED = frozenset({"week-06"})
+
 WEEKLY = [r for r in REPORTS if r[0] != "index"]
+PUBLISHED = [r for r in REPORTS if r[0] not in SITE_UNPUBLISHED]
+PUBLISHED_WEEKLY = [r for r in PUBLISHED if r[0] != "index"]
 
 
 def die(msg: str) -> None:
@@ -39,6 +45,32 @@ def yaml_quote(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def filter_unpublished_index(text: str) -> str:
+    """Drop unpublished week rows from the copied reports index."""
+    lines: list[str] = []
+    for line in text.splitlines():
+        if any(
+            f"/reports/{slug}/" in line or f"/raw/reports/{slug}.md" in line
+            for slug in SITE_UNPUBLISHED
+        ):
+            continue
+        lines.append(line)
+    filtered = "\n".join(lines)
+    if SITE_UNPUBLISHED:
+        filtered = filtered.replace(
+            "Hiện có đủ sáu báo cáo tuần.",
+            "Hiện publish tuần 1–5. Tuần 6 chưa tới hạn nộp nên chưa đưa lên site.",
+        )
+    return filtered
+
+
+def source_text(slug: str, source: Path) -> str:
+    text = source.read_text(encoding="utf-8")
+    if slug == "index":
+        return filter_unpublished_index(text)
+    return text
+
+
 def body_without_h1(text: str) -> str:
     lines = text.splitlines()
     if lines and re.match(r"^#\s+", lines[0]):
@@ -47,7 +79,7 @@ def body_without_h1(text: str) -> str:
 
 
 def write_report_page(slug: str, title: str, description: str, source: Path) -> None:
-    raw_body = source.read_text(encoding="utf-8")
+    raw_body = source_text(slug, source)
     body = body_without_h1(raw_body)
     dest = DOCS_DEST / "reports" / f"{slug}.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -87,7 +119,7 @@ def write_report_page(slug: str, title: str, description: str, source: Path) -> 
 
 def write_markdown_view(slug: str, title: str, source: Path) -> None:
     """Starlight page that displays the full Markdown source for reading/copy."""
-    raw = source.read_text(encoding="utf-8")
+    raw = source_text(slug, source)
     # Use a long fence so embedded triple-backticks do not break the page.
     fence = "````"
     while fence in raw:
@@ -129,12 +161,12 @@ def write_raw_copies() -> None:
     if RAW_DEST.exists():
         shutil.rmtree(RAW_DEST)
     RAW_DEST.mkdir(parents=True, exist_ok=True)
-    for slug, _title, _desc in REPORTS:
+    for slug, _title, _desc in PUBLISHED:
         src = REPORTS_SRC / f"{slug}.md"
         if not src.is_file():
             die(f"missing {src}")
         dest = RAW_DEST / f"{slug}.md"
-        shutil.copyfile(src, dest)
+        dest.write_text(source_text(slug, src), encoding="utf-8")
         print(f"wrote {dest.relative_to(ROOT)}")
 
 
@@ -144,7 +176,7 @@ def write_llms_txt() -> None:
         "# Project Sentinel: Báo cáo tuần",
         "",
         "> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. "
-        "Tiến độ hiện tại: tuần 1–6 / 6.",
+        "Tiến độ hiện tại: tuần 1–5 / 6. Tuần 6 chưa tới hạn nộp.",
         "",
         f"Site: {SITE_URL}",
         f"Repo: https://github.com/manhquydev/sentinel-security-platform",
@@ -153,14 +185,14 @@ def write_llms_txt() -> None:
         "## Trang HTML (đọc trên web)",
         "",
     ]
-    for slug, title, desc in REPORTS:
+    for slug, title, desc in PUBLISHED:
         url = f"{SITE_URL}/reports/" if slug == "index" else f"{SITE_URL}/reports/{slug}/"
         lines.append(f"- [{title}]({url}): {desc}")
     lines.extend(["", "## Nguồn Markdown (xem trên site)", ""])
-    for slug, title, _desc in REPORTS:
+    for slug, title, _desc in PUBLISHED:
         lines.append(f"- [{title}, Markdown]({SITE_URL}/reports/{slug}/markdown/)")
     lines.extend(["", "## Raw Markdown (tải / fetch)", ""])
-    for slug, title, _desc in REPORTS:
+    for slug, title, _desc in PUBLISHED:
         lines.append(f"- [{title} (raw)]({SITE_URL}/raw/reports/{slug}.md)")
     lines.extend(
         [
@@ -192,7 +224,7 @@ description: Báo cáo tuần đồ án Project Sentinel (TTS Nguyễn Mạnh Qu
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Báo cáo tuần 1–6 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
+  tagline: Báo cáo tuần 1–5 / 6 của đồ án bảo mật AI (VINSOC × VINUNI). Tuần 6 chưa tới hạn nộp.
   actions:
     - text: Xem báo cáo tuần
       link: /reports/
@@ -223,9 +255,6 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
   </Card>
   <Card title="Tuần 5" icon="seti:shield">
     IPI, HITL và che dữ liệu có nhãn. [tuần 5](/reports/week-05/).
-  </Card>
-  <Card title="Tuần 6" icon="seti:play">
-    Tích hợp, CE-01..05 và đóng gói Compose. [tuần 6](/reports/week-06/).
   </Card>
 </CardGrid>
 
@@ -262,6 +291,8 @@ def main() -> None:
         src = REPORTS_SRC / f"{slug}.md"
         if not src.is_file():
             die(f"missing {src}")
+    for slug, title, description in PUBLISHED:
+        src = REPORTS_SRC / f"{slug}.md"
         write_report_page(slug, title, description, src)
         write_markdown_view(slug, title, src)
 

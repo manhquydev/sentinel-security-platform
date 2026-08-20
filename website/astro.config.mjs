@@ -37,7 +37,6 @@ export default defineConfig({
 						{ label: 'Tuần 3: Agent phân tích bảo mật', slug: 'reports/week-03' },
 						{ label: 'Tuần 4: API Gateway và request an toàn', slug: 'reports/week-04' },
 						{ label: 'Tuần 5: IPI, HITL và che dữ liệu', slug: 'reports/week-05' },
-						{ label: 'Tuần 6: Tích hợp, đánh giá và demo', slug: 'reports/week-06' },
 					],
 				},
 				{
@@ -57,7 +56,6 @@ export default defineConfig({
 						{ label: 'Tuần 3 (Markdown)', slug: 'reports/week-03/markdown' },
 						{ label: 'Tuần 4 (Markdown)', slug: 'reports/week-04/markdown' },
 						{ label: 'Tuần 5 (Markdown)', slug: 'reports/week-05/markdown' },
-						{ label: 'Tuần 6 (Markdown)', slug: 'reports/week-06/markdown' },
 					],
 				},
 			],

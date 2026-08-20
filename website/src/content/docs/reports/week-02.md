@@ -76,10 +76,11 @@ và test.
 
 ```bash
 python3 -m agent.normalize_week1_artifacts --help
-
-# khi env đủ deps
-python3 -m pytest tests/test_week3_aggregate_analysis.py -q
 ```
+
+`tests/test_week3_aggregate_analysis.py` không nằm trong bài chấm Tuần 5–6
+(README, pytest.ini `--ignore`). Mentor dùng khối `.venv` ở README; không
+`python3 -m pytest` trên host.
 
 `run-week2-checks.sh` / `search-knowledge.py` trong gói cũ chỉ để đối chiếu số
 liệu, không phải entrypoint monorepo hiện tại.

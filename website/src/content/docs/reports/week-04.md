@@ -116,7 +116,15 @@ Trang demo tương tác trên site vẫn là `/demo/week-03/`.
 
 ## 6. Chạy lại
 
-Cần Docker Compose, `infra/.env` (xem `infra/.env.example`), `python3`.
+Test không live (venv trong repo, không dùng `python3 -m pytest` trên host):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest tests/test_charter_requests.py -q
+```
+
+Kong live cần Docker Compose và `infra/.env` (mẫu `infra/.env.example`):
 
 ```bash
 docker compose -f infra/harness/juice-shop.compose.yml up -d
@@ -124,8 +132,6 @@ bash infra/kong/render-config.sh
 docker compose --env-file infra/.env -f infra/kong/docker-compose.yml up -d
 
 # nếu import Kong báo UNIQUE client_id: down -v rồi up lại (README infra/kong)
-
-python3 -m pytest tests/test_charter_requests.py -q
 
 set -a && . infra/.env && set +a
 REQUIRE_KONG=1 bash tests/gateway-authz-test.sh

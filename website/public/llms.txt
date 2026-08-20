@@ -1,6 +1,6 @@
 # Project Sentinel: Báo cáo tuần
 
-> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. Tiến độ hiện tại: tuần 1–6 / 6.
+> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. Tiến độ hiện tại: tuần 1–5 / 6. Tuần 6 chưa tới hạn nộp.
 
 Site: https://vinsoc.manhquy.id.vn
 Repo: https://github.com/manhquydev/sentinel-security-platform
@@ -14,7 +14,6 @@ llms.txt: https://vinsoc.manhquy.id.vn/llms.txt
 - [Tuần 3: Agent phân tích bảo mật](https://vinsoc.manhquy.id.vn/reports/week-03/): Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)
 - [Tuần 4: API Gateway và request an toàn](https://vinsoc.manhquy.id.vn/reports/week-04/): Báo cáo Tuần 4: Kong, Python tool, allowlist, live 2026-08-14
 - [Tuần 5: IPI, HITL và che dữ liệu](https://vinsoc.manhquy.id.vn/reports/week-05/): Báo cáo Tuần 5: guard dữ liệu không tin cậy, duyệt request, PII
-- [Tuần 6: Tích hợp, đánh giá và demo](https://vinsoc.manhquy.id.vn/reports/week-06/): Báo cáo Tuần 6: luồng Charter, CE-01..05 và đóng gói Compose
 
 ## Nguồn Markdown (xem trên site)
 
@@ -24,7 +23,6 @@ llms.txt: https://vinsoc.manhquy.id.vn/llms.txt
 - [Tuần 3: Agent phân tích bảo mật, Markdown](https://vinsoc.manhquy.id.vn/reports/week-03/markdown/)
 - [Tuần 4: API Gateway và request an toàn, Markdown](https://vinsoc.manhquy.id.vn/reports/week-04/markdown/)
 - [Tuần 5: IPI, HITL và che dữ liệu, Markdown](https://vinsoc.manhquy.id.vn/reports/week-05/markdown/)
-- [Tuần 6: Tích hợp, đánh giá và demo, Markdown](https://vinsoc.manhquy.id.vn/reports/week-06/markdown/)
 
 ## Raw Markdown (tải / fetch)
 
@@ -34,7 +32,6 @@ llms.txt: https://vinsoc.manhquy.id.vn/llms.txt
 - [Tuần 3: Agent phân tích bảo mật (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-03.md)
 - [Tuần 4: API Gateway và request an toàn (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-04.md)
 - [Tuần 5: IPI, HITL và che dữ liệu (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-05.md)
-- [Tuần 6: Tích hợp, đánh giá và demo (raw)](https://vinsoc.manhquy.id.vn/raw/reports/week-06.md)
 
 ## Ghi chú
 
