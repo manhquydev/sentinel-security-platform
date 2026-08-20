@@ -44,6 +44,10 @@ pnpm-lock.yaml
 .env*
 !.env.example
 
+# GCP deploy config: coordinates only, but environment-specific — keep the
+# template committed and the filled-in copy local.
+infra/gcp/config.env
+
 # vercel
 .vercel
 
