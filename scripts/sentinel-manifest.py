@@ -15,10 +15,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
-METRICS = (
+REQUIRED_METRICS = (
     "duration_ms", "request_count", "warning_count", "approve_count",
     "reject_count", "llm_error_count", "application_error_count",
 )
+METRICS = REQUIRED_METRICS + ("finding_count",)
 SENSITIVE_KEY = re.compile(r"(?:token|secret|password|credential|authorization|body)", re.I)
 SENSITIVE_VALUE = re.compile(
     r"(?:\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b|"
@@ -532,9 +533,12 @@ def valid(doc: dict) -> None:
     if len({resource["id"] for resource in resources}) != len(resources):
         fail("duplicate controller resource")
     metrics = doc.get("metrics")
+    metric_keys = set(metrics) if isinstance(metrics, dict) else set()
     if (not isinstance(metrics, dict) or metrics.get("version") != "RunMetrics/v1"
-            or set(metrics) != {"version", *METRICS}
-            or any(not isinstance(metrics[key], int) or metrics[key] < 0 for key in METRICS)):
+            or not {"version", *REQUIRED_METRICS} <= metric_keys
+            or not metric_keys <= {"version", *METRICS}
+            or any(not isinstance(metrics[key], int) or metrics[key] < 0
+                   for key in metric_keys - {"version"})):
         fail("invalid RunMetrics/v1")
     result = doc.get("result")
     if (not isinstance(result, dict) or set(result) != {"status", "action_sent"}
@@ -813,7 +817,7 @@ def init_v2(path: Path, run_id: str, source: str, input_type: str, input_version
         "resume_identity": identity, "artifact_ledger": [], "effect_ledger": [],
         "stage_order": order, "stages": {}, "required_skips": [], "resources": [],
         "recovery_hint": "resume only with exact immutable identity",
-        "metrics": {"version": "RunMetrics/v1", **{key: 0 for key in METRICS}},
+        "metrics": {"version": "RunMetrics/v1", **{key: 0 for key in REQUIRED_METRICS}},
         "result": {"status": "pending", "action_sent": False}, "created_at_ms": int(time.time() * 1000),
     }
     write(path, doc)
@@ -842,7 +846,8 @@ def stage_v2(path: Path, name: str, status: str, increments: dict, checkpoint: o
     else:
         if checkpoint is not None: fail("only passed stages may checkpoint")
         doc["stages"][name] = {"status": status, "at_ms": int(time.time() * 1000), "index": len(doc["stages"])}
-    for key, value in increments.items(): doc["metrics"][key] += value
+    for key, value in increments.items():
+        doc["metrics"][key] = doc["metrics"].get(key, 0) + value
     if status == "skipped": doc["required_skips"].append(name)
     elif status == "failed":
         doc["result"]["status"] = "failed"; doc["metrics"]["application_error_count"] += 1
@@ -1002,7 +1007,7 @@ def main(args: list[str]) -> None:
                          "policy_sha256": policy, "output_sha256": ""},
             "stage_order": order, "stages": {}, "required_skips": [], "resources": [],
             "recovery_hint": "resume only with exact immutable identity",
-            "metrics": {"version": "RunMetrics/v1", **{key: 0 for key in METRICS}},
+            "metrics": {"version": "RunMetrics/v1", **{key: 0 for key in REQUIRED_METRICS}},
             "result": {"status": "pending", "action_sent": False},
             "created_at_ms": int(time.time() * 1000),
         })
@@ -1057,7 +1062,7 @@ def main(args: list[str]) -> None:
             "status": status, "at_ms": int(time.time() * 1000), "index": len(doc["stages"]),
         }
         for key, value in increments.items():
-            doc["metrics"][key] += value
+            doc["metrics"][key] = doc["metrics"].get(key, 0) + value
         if status == "skipped":
             doc["required_skips"].append(name)
         elif status == "failed":

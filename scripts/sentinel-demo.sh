@@ -363,10 +363,25 @@ invoke_stage() {
   case "$STAGE_OUTCOME" in passed|rejected|failed|skipped) ;; *) return 70;; esac
   python3 - "$STAGE_METRICS" <<'PY'
 import json, sys
-allowed = {"duration_ms", "request_count", "warning_count", "approve_count", "reject_count", "llm_error_count", "application_error_count"}
+allowed = {"duration_ms", "request_count", "warning_count", "approve_count", "reject_count", "llm_error_count", "application_error_count", "finding_count"}
 try: value = json.loads(sys.argv[1])
 except json.JSONDecodeError: raise SystemExit(1)
 raise SystemExit(0 if isinstance(value, dict) and all(k in allowed and type(v) is int and v >= 0 for k, v in value.items()) else 1)
+PY
+}
+
+report_finding_increment() {
+  python3 - "$1" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+count = 0
+for line in path.read_text(encoding="utf-8").splitlines():
+    if not line.strip():
+        continue
+    json.loads(line)
+    count += 1
+print(json.dumps({"finding_count": count}, separators=(",", ":")))
 PY
 }
 
@@ -441,7 +456,7 @@ PY
         printf 'failed\n{"llm_error_count":1}\n'
         return 0
       fi
-      printf 'passed\n'
+      printf 'passed\n%s\n' "$(report_finding_increment "$dir/report.jsonl")"
       ;;
     topology-ready)
       [[ -n "$(docker ps -q --filter 'name=^/sentinel-litellm$' 2>/dev/null)" ]] \

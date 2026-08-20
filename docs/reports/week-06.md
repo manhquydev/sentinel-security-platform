@@ -14,8 +14,10 @@ approval, rồi guardrail giữ dữ liệu an toàn hơn khi đi qua ranh giớ
 |---|---|
 | Luồng kiến trúc 9 bước | `docs/sentinel-six-week-as-built-architecture.md` |
 | Lệnh demo Charter | `scripts/sentinel-demo.sh` |
-| Runbook nghiệm thu | `docs/operations/sentinel-live-acceptance-runbook.md` |
+| Runbook nghiệm thu live | `docs/operations/sentinel-live-acceptance-runbook.md` |
 | Bộ eval Charter | `evaluation/charter-eval/cases.json`, `evaluation/charter-eval/gold.json` |
+| Scorecard mẫu (dry-run) | `evaluation/charter-eval/charter-evaluation.json` |
+| Demo 10–15 phút | `docs/operations/sentinel-charter-demo-runbook.md` |
 | Demo site hiện có | `/demo/week-03/` |
 | Mô tả sản phẩm 1–2 trang | `docs/product/sentinel-charter-brief.md` |
 
@@ -40,11 +42,39 @@ Sơ đồ là kiến trúc đã dựng. Số liệu live gateway gần nhất v�
 ## 3. Đánh giá
 
 `evaluation/charter-eval/cases.json` có **năm** case CE-01..05 (đề bài yêu cầu
-5–10). `gold.json` là đáp án để so sánh với kết quả agent.
+5–10). `gold.json` là đáp án reviewer-owned. Bộ đánh giá **không** phải lần
+nghiệm thu live: `result-report.py evaluate --run-dir` cần thư mục run 0600
+(manifest, JSONL schema 1.0, request outcome, artifact-bindings). Artifact
+tuần 3 đã commit là `week3-analysis/v1` / `week1-submission/v1`, không có
+request hay manifest, nên evaluator chính thức **không chạy được** trên sample.
+
+Scorecard đã commit là **sample / dry-run**, sinh bằng
+`.venv/bin/python evaluation/charter-eval/score-sample.py` (cùng luật
+`_matches` / TP-FP-FN-TN của `result-report.py`). File:
+`evaluation/charter-eval/charter-evaluation.json`.
+`live_run` = false. Lần chấm live vẫn cần operator chạy
+`scripts/sentinel-demo.sh` rồi `result-report.py evaluate`.
+
+| | Gold positive | Gold negative |
+|---|---|---|
+| Sample khớp | TP **0** | FP **0** |
+| Sample không khớp | FN **4** | TN **1** |
+
+| Case | Artifact | Truth | Outcome | Vì sao |
+|---|---|---|---|---|
+| CE-01 | normalized | positive | **FN** | Gold đòi `finding:54f7ccdc…` / nuclei / DAST. Sample tuần 3 dùng `week1-finding:57ffa7d8…`. |
+| CE-02 | normalized | positive | **FN** | Gold đòi title `Charter HTTP missing security headers`, Info, `http://127.0.0.1:13000/`. Sample: `Missing Security Header`, Medium, `path:/rest/products`. |
+| CE-03 | report | positive | **FN** | Cùng lệch identity / tên / vị trí / `confidence` (`medium` vs `high`). |
+| CE-04 | normalized | negative | **TN** | Sample **không** chứa `finding:charter-forbidden-false-positive` — đúng vì đây là control âm. |
+| CE-05 | request | positive | **FN** | Sample không có request outcome; gold đòi `action_sent: true`, `request_count: 1`. |
+
+FN ở đây là **lệch thế hệ artifact** (mẫu tuần 3 vs gold Nuclei Charter), không
+phải bảng điểm live của agent trên Juice Shop. FP = 0: sample không bịa
+finding cấm. Không có số live TP/FN mới trong tháng 08/2026.
 
 | Nhóm | Mục tiêu |
 |---|---|
-| CE-01..05 | Kiểm tra workflow Charter theo case đã ghi |
+| CE-01..05 | So sample đã commit với gold đã ghi |
 | Gateway/HITL | proposal có catalog, reject không gửi, approve mới đủ điều kiện |
 | Guardrail | IPI và PII có nhánh quarantine/redaction |
 
@@ -55,16 +85,19 @@ Bằng chứng live gần nhất của gateway nằm ở báo cáo Tuần 4, ng�
 `REQUIRE_KONG=1 tests/gateway-authz-test.sh` **43** passed. Tuần 6 không chạy
 lại bộ live đó.
 
-Eval dừng ở CE-01..05. Demo tương tác trên site là `/demo/week-03/`.
-Syndicate/Phoenix thuộc chương trình 12 tuần, không nằm trong sáu tuần này.
+Eval dừng ở CE-01..05. Demo talk track 10–15 phút:
+`docs/operations/sentinel-charter-demo-runbook.md`. Demo tương tác trên site
+vẫn là `/demo/week-03/`. Syndicate/Phoenix thuộc chương trình 12 tuần, không
+nằm trong sáu tuần này.
 
 ## 5. Mô tả sản phẩm và đóng gói
 
 Bản mô tả sản phẩm (vấn đề, người dùng, giá trị, phạm vi, hạn chế, hướng tiếp)
 nằm trong repo tại `docs/product/sentinel-charter-brief.md`.
 
-Demo đủ cảnh đề bài (quét, báo cáo, đề xuất, approve/reject, gateway, IPI,
-che PII) chạy bằng `scripts/sentinel-demo.sh` và
+Bảy cảnh đề bài (quét, báo cáo, đề xuất, approve/reject, gateway, IPI, che PII)
+có talk track tại `docs/operations/sentinel-charter-demo-runbook.md`. Luồng
+live đầy đủ vẫn cần
 `docs/operations/sentinel-live-acceptance-runbook.md`.
 
 | Hạng mục tuần 6 | Trong repo |
@@ -72,13 +105,20 @@ che PII) chạy bằng `scripts/sentinel-demo.sh` và
 | Docker Compose | Sáu file, bật bằng `scripts/sentinel-charter-up.sh` |
 | Metrics | `RunMetrics/v1` trong `scripts/sentinel-manifest.py` |
 | Eval 5–10 | CE-01..05 + `gold.json` |
+| Scorecard FP/FN | `evaluation/charter-eval/charter-evaluation.json` (dry-run) |
 | README + kiến trúc | README + `docs/sentinel-six-week-as-built-architecture.md` |
-| Demo | `sentinel-demo.sh` + runbook + `/demo/week-03/` |
+| Demo 10–15 phút | `docs/operations/sentinel-charter-demo-runbook.md` |
 | Module Tuần 5 (Postman loopback) | Một facade tại `infra/week5-demo/`; Postman trên laptop này gọi `127.0.0.1:18055`, không gửi Kong. LAN từ máy khác nằm ngoài chính sách. |
-| Test/eval nộp lại | bốn lệnh `.venv` ở mục 6 |
+| Test/eval nộp lại | năm lệnh `.venv` ở mục 6 |
 
-Khi chạy eval, `evaluation/charter-eval/result-report.py` so với gold. Báo cáo
-tuần này không in thêm bảng điểm live.
+Tái tạo scorecard (không cần live run):
+
+```bash
+.venv/bin/python evaluation/charter-eval/score-sample.py
+```
+
+Evaluator chính thức (`result-report.py evaluate --run-dir RUN`) chỉ chạy sau
+một lần Charter local đã xong.
 
 ## 6. Chạy lại
 
@@ -94,17 +134,19 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests/test_week5_labeled_redaction.py tests/test_charter_requests.py tests/test_week5_demo_facade.py -q
 .venv/bin/python evaluation/pii-redaction/measure.py
 PYTHON=.venv/bin/python bash tests/week5-demo-facade-test.sh
+.venv/bin/python evaluation/charter-eval/score-sample.py
 ```
 
 ### Demo và site
 
 ```bash
-bash scripts/sentinel-demo.sh --help
+bash scripts/sentinel-demo.sh
 
 bash scripts/website-sync-docs.sh
 cd website && npm run build
 ```
 
-Demo đầy đủ cần điều kiện trong
+Talk track 10–15 phút: `docs/operations/sentinel-charter-demo-runbook.md`.
+Demo đầy đủ (approve rồi gửi Kong) cần điều kiện trong
 `docs/operations/sentinel-live-acceptance-runbook.md` và chỉ chạy trên lab
 loopback. Các lệnh trên không thay cho số liệu live Tuần 4.

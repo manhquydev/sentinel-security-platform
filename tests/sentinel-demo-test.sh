@@ -702,6 +702,7 @@ d=json.load(open(sys.argv[1]))
 assert d['identity']['output_sha256']
 assert d['result']['action_sent'] == bool(d['metrics']['request_count'])
 assert all(key in d['metrics'] for key in ('duration_ms','warning_count','reject_count','llm_error_count','application_error_count'))
+assert d['metrics'].get('finding_count', 0) >= 0
 assert all(
     set(value) == {'status','at_ms','index','checkpoint_sha256'}
     if value['status'] == 'passed' else set(value) == {'status','at_ms','index'}
@@ -1444,6 +1445,45 @@ assert [event["state"] for event in manifest["effect_ledger"][-2:]] == ["prepare
 assert sqlite3.connect(sys.argv[2]).execute("SELECT state FROM requests").fetchone()[0] == "terminal"
 PY
 ok 'prepared manifest plus SQLite-unknown crash pair recovers once without dispatch'
+
+
+finding_probe="$tmp/finding-count-probe"
+mkdir -m 700 "$finding_probe"
+probe_digest=$(printf finding-count-probe | sha256sum | awk '{print $1}')
+"$ROOT/.venv/bin/python" "$MANIFEST" init "$finding_probe/old.json" old-metrics local local-charter-input 1 "$probe_digest" "$probe_digest" "$probe_digest" "$probe_digest" '["preflight","analysis-report"]'
+"$ROOT/.venv/bin/python" "$MANIFEST" init "$finding_probe/new.json" new-metrics local local-charter-input 1 "$probe_digest" "$probe_digest" "$probe_digest" "$probe_digest" '["preflight","analysis-report"]'
+"$ROOT/.venv/bin/python" - "$MANIFEST" "$finding_probe/old.json" "$finding_probe/new.json" <<'PY'
+import importlib.util, json, sys
+from pathlib import Path
+
+tool, old_path, new_path = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("sentinel_manifest", tool)
+module = importlib.util.module_from_spec(spec)
+assert spec is not None and spec.loader is not None
+spec.loader.exec_module(module)
+assert "finding_count" in module.METRICS
+assert "finding_count" not in module.REQUIRED_METRICS
+
+old = json.loads(Path(old_path).read_text(encoding="utf-8"))
+assert "finding_count" not in old["metrics"]
+module.valid(old)
+
+new = json.loads(Path(new_path).read_text(encoding="utf-8"))
+new["metrics"]["finding_count"] = 0
+module.valid(new)
+Path(new_path).write_text(json.dumps(new, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+PY
+"$ROOT/.venv/bin/python" "$MANIFEST" stage "$finding_probe/new.json" preflight passed '{}'
+"$ROOT/.venv/bin/python" "$MANIFEST" stage "$finding_probe/new.json" analysis-report passed '{"finding_count":2}'
+"$ROOT/.venv/bin/python" - "$finding_probe/old.json" "$finding_probe/new.json" <<'PY'
+import json, sys
+from pathlib import Path
+old = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+new = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+assert "finding_count" not in old["metrics"]
+assert new["metrics"]["finding_count"] == 2
+PY
+ok 'RunMetrics/v1 loads without finding_count and records analysis finding_count'
 
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

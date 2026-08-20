@@ -1,0 +1,106 @@
+{
+  "case_analysis": [
+    {
+      "analysis": "reviewer expectation did not match the committed sample",
+      "artifact": "normalized",
+      "case_id": "CE-01",
+      "correct": false,
+      "expected": {
+        "finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21",
+        "scanner": "DAST",
+        "tool": "nuclei"
+      },
+      "outcome": "FN",
+      "truth": "positive"
+    },
+    {
+      "analysis": "reviewer expectation did not match the committed sample",
+      "artifact": "normalized",
+      "case_id": "CE-02",
+      "correct": false,
+      "expected": {
+        "location": "http://127.0.0.1:13000/",
+        "severity": "Info",
+        "title": "Charter HTTP missing security headers"
+      },
+      "outcome": "FN",
+      "truth": "positive"
+    },
+    {
+      "analysis": "reviewer expectation did not match the committed sample",
+      "artifact": "report",
+      "case_id": "CE-03",
+      "correct": false,
+      "expected": {
+        "confidence": "high",
+        "finding_id": "finding:54f7ccdc0641c2fa090d1e7a541bc195ba01e5026b05484d6ff34fcfa07dde21",
+        "location": "http://127.0.0.1:13000/",
+        "name": "Charter HTTP missing security headers",
+        "severity": "Info"
+      },
+      "outcome": "FN",
+      "truth": "positive"
+    },
+    {
+      "analysis": "reviewer expectation did not match the committed sample",
+      "artifact": "normalized",
+      "case_id": "CE-04",
+      "correct": true,
+      "expected": {
+        "finding_id": "finding:charter-forbidden-false-positive",
+        "scanner": "SAST",
+        "tool": "trivy"
+      },
+      "outcome": "TN",
+      "truth": "negative"
+    },
+    {
+      "analysis": "reviewer expectation did not match the committed sample",
+      "artifact": "request",
+      "case_id": "CE-05",
+      "correct": false,
+      "expected": {
+        "action_sent": true,
+        "request_count": 1
+      },
+      "outcome": "FN",
+      "truth": "positive"
+    }
+  ],
+  "confusion": {
+    "fn": 4,
+    "fp": 0,
+    "tn": 1,
+    "tp": 0
+  },
+  "improvement_proposals": [
+    "Expand the reviewer-owned set only after adding independently reviewed findings and benign controls from a new scoped Charter template review.",
+    "Add a receipt-specific case only if its expectations can remain response-free and bind to the immutable request contract."
+  ],
+  "inputs": {
+    "cases_sha256": "5bf6f8362369f3bd23764b88a8cd938dc8556727dcd29f98056989a2ead6d6c0",
+    "gold_sha256": "67cc7601e8c39e69c17345f85aec721b7f4f4c7355df34b8b884a53efbbe156a",
+    "normalized": "docs/reports/artifacts/week3-sample.aggregate.jsonl",
+    "normalized_sha256": "333b5ae5d697d5300e91c5ccfaa0ccbfa8e431ea60542e8ecd942688a3500f0a",
+    "report": "docs/reports/artifacts/week3-sample-report.jsonl",
+    "report_sha256": "007fc8454c639f5ce03d29abc7761c98d731f8f32882aba2d8a584ddd57e0ada",
+    "request": null
+  },
+  "limitations": [
+    "This five-case reviewer-owned set is bound to the approved local Charter Nuclei template result for the recorded reviewer version; it is not a claim of broad vulnerability coverage.",
+    "A change to the reviewed Charter template, normalized finding identity, or allowed request outcome requires a new reviewed cases/gold version before it can be used for acceptance.",
+    "This file is a sample / dry-run scorecard, not a live Charter acceptance result.",
+    "A live scored run is operator-gated: complete scripts/sentinel-demo.sh then evaluation/charter-eval/result-report.py evaluate --run-dir RUN."
+  ],
+  "live_run": false,
+  "mode": "sample-dry-run",
+  "official_evaluator": "evaluation/charter-eval/result-report.py",
+  "official_evaluator_status": "not-run-operator-gated",
+  "reason_official_evaluator_not_used": "result-report.py evaluate requires a private 0600 current-run directory with a completed charter manifest, typed 1.0 normalized/report JSONL, request outcome, and artifact-bindings. The committed Week-3 sample is week3-analysis/v1 and has no request or manifest.",
+  "reproduce": ".venv/bin/python evaluation/charter-eval/score-sample.py",
+  "reviewer": {
+    "id": "sentinel-charter-review-board",
+    "version": "2026-08-04.1"
+  },
+  "schema_version": "charter-eval-sample-dry-run/v1"
+}
