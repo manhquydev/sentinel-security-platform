@@ -29,6 +29,19 @@ surface (report/HITL viewer) behind an authenticated reverse proxy or IAP-secure
 load balancer — and keep Juice Shop / Kong-internal / DefectDojo private. That is
 a deliberate follow-up, not part of this v1 kit.
 
+### Metadata / service-account hardening
+
+Vertex AI is reached via the mounted ADC file (`VERTEXAI_ADC_PATH`), not the VM's
+attached service account — so the kit attaches **no service account** by default
+(`config.env` leaves `SERVICE_ACCOUNT_*` blank → `--no-service-account
+--no-scopes`). This stops the deliberately-vulnerable Juice Shop container from
+minting a project-wide token via the GCP metadata server (SSRF blast radius). As
+defense in depth, `remote-bootstrap.sh` installs a `sentinel-metadata-guard`
+systemd unit that inserts a `DOCKER-USER` iptables DROP for container egress to
+`169.254.169.254` (persisted across reboots). If a VM-side agent ever needs a
+token, attach a **dedicated least-privilege** SA — never the default compute SA
+with `cloud-platform`.
+
 ## Prerequisites (one-time)
 
 `gcloud` must be installed and authenticated. On this machine it is **not yet

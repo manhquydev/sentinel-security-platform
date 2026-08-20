@@ -38,6 +38,28 @@ if ! id -nG "$(id -un)" | tr ' ' '\n' | grep -qx docker; then
   sudo usermod -aG docker "$(id -un)"
 fi
 
+# Defense in depth: block containers (esp. the deliberately-vulnerable Juice
+# Shop) from reaching the GCP metadata server. Even with no VM service account,
+# this closes the SSRF -> metadata path for any future SA. Persisted via systemd
+# so it survives reboots (docker recreates DOCKER-USER on start).
+if [ ! -f /etc/systemd/system/sentinel-metadata-guard.service ]; then
+  log "installing sentinel-metadata-guard (block container egress to 169.254.169.254)"
+  sudo tee /etc/systemd/system/sentinel-metadata-guard.service >/dev/null <<'UNIT'
+[Unit]
+Description=Sentinel: block container egress to GCP metadata (169.254.169.254)
+After=docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "/sbin/iptables -C DOCKER-USER -d 169.254.169.254 -j DROP 2>/dev/null || /sbin/iptables -I DOCKER-USER 1 -d 169.254.169.254 -j DROP"
+[Install]
+WantedBy=multi-user.target
+UNIT
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now sentinel-metadata-guard.service || true
+fi
+
 # Charter launcher precondition: an external dd-net bridge network.
 if ! sudo docker network inspect dd-net >/dev/null 2>&1; then
   log "creating dd-net docker network"

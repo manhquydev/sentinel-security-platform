@@ -78,6 +78,12 @@ cmd_preflight() {
     ok "access model IAP (no public app ingress)"
   fi
 
+  if [ -z "${SERVICE_ACCOUNT_EMAIL:-}" ] && [ -z "${SERVICE_ACCOUNT_SCOPES:-}" ]; then
+    ok "no VM service account (safest; Vertex uses the ADC file, container cannot mint a token)"
+  elif printf '%s' "${SERVICE_ACCOUNT_SCOPES:-}" | grep -q 'cloud-platform'; then
+    warn "SERVICE_ACCOUNT_SCOPES grants cloud-platform — the vulnerable Juice Shop container could mint a project-wide token via metadata; prefer no SA or a dedicated minimal SA"
+  fi
+
   # Local secret material that sentinel-charter-up.sh will require on the VM.
   [ -f "$REPO_ROOT/infra/.env" ] && ok "local infra/.env present (will be synced)" || warn "local infra/.env missing — create it before 'up' (see infra/.env.example)"
   { [ -f "$REPO_ROOT/infra/defectdojo-db/certs/ca.crt" ] && [ -f "$REPO_ROOT/infra/defectdojo-db/certs/server.crt" ]; } \
@@ -126,11 +132,15 @@ cmd_provision() {
     return 0
   fi
 
+  # Safe default: NO service account (Vertex uses the ADC file, not the VM SA),
+  # so a vulnerable container cannot mint a token from the metadata server.
   local sa_args=()
   if [ -n "${SERVICE_ACCOUNT_EMAIL:-}" ]; then
     sa_args=(--service-account="$SERVICE_ACCOUNT_EMAIL" --scopes="${SERVICE_ACCOUNT_SCOPES:-https://www.googleapis.com/auth/cloud-platform}")
+  elif [ -n "${SERVICE_ACCOUNT_SCOPES:-}" ]; then
+    sa_args=(--scopes="$SERVICE_ACCOUNT_SCOPES")
   else
-    sa_args=(--scopes="${SERVICE_ACCOUNT_SCOPES:-https://www.googleapis.com/auth/cloud-platform}")
+    sa_args=(--no-service-account --no-scopes)
   fi
 
   log "creating VM $VM_NAME ($MACHINE_TYPE, $BOOT_DISK_SIZE)"
