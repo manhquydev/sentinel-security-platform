@@ -92,14 +92,26 @@ cmd_provision() {
   local net_tag="$NETWORK_TAG"
 
   if [ "$ACCESS_MODEL" = "iap" ]; then
+    # Allow IAP SSH at higher precedence (lower number) than the world-SSH deny.
     if ! "${GC[@]}" compute firewall-rules describe "sentinel-allow-iap-ssh" >/dev/null 2>&1; then
-      log "creating firewall rule sentinel-allow-iap-ssh (tcp:22 from IAP range only)"
+      log "creating firewall rule sentinel-allow-iap-ssh (tcp:22 from IAP range only, priority 800)"
       "${GC[@]}" compute firewall-rules create sentinel-allow-iap-ssh \
-        --direction=INGRESS --action=ALLOW --rules=tcp:22 \
+        --direction=INGRESS --action=ALLOW --rules=tcp:22 --priority=800 \
         --source-ranges=35.235.240.0/20 --target-tags="$net_tag"
     else ok "firewall sentinel-allow-iap-ssh exists"; fi
+    # The default VPC ships default-allow-ssh (tcp:22 from 0.0.0.0/0, all instances).
+    # Do NOT delete that shared rule; instead deny world SSH for THIS tag only, so a
+    # tagged VM is reachable via IAP but not the public internet. Deny at priority
+    # 900 sits below the IAP allow (800) so IAP still wins.
+    if ! "${GC[@]}" compute firewall-rules describe "sentinel-deny-public-ssh" >/dev/null 2>&1; then
+      log "creating firewall rule sentinel-deny-public-ssh (deny tcp:22 from 0.0.0.0/0, tag-scoped, priority 900)"
+      "${GC[@]}" compute firewall-rules create sentinel-deny-public-ssh \
+        --direction=INGRESS --action=DENY --rules=tcp:22 --priority=900 \
+        --source-ranges=0.0.0.0/0 --target-tags="$net_tag"
+    else ok "firewall sentinel-deny-public-ssh exists"; fi
   else
     [ -n "${OPERATOR_SSH_CIDR:-}" ] || die "operator-cidr access requires OPERATOR_SSH_CIDR"
+    [ "$OPERATOR_SSH_CIDR" != "0.0.0.0/0" ] || die "OPERATOR_SSH_CIDR must not be 0.0.0.0/0 (that opens SSH to the world)"
     if ! "${GC[@]}" compute firewall-rules describe "sentinel-allow-operator-ssh" >/dev/null 2>&1; then
       log "creating firewall rule sentinel-allow-operator-ssh (tcp:22 from $OPERATOR_SSH_CIDR)"
       "${GC[@]}" compute firewall-rules create sentinel-allow-operator-ssh \
@@ -145,7 +157,7 @@ cmd_sync() {
   # shellcheck disable=SC2086
   ssh_vm $ssh_flag --command "sudo mkdir -p '$REMOTE_REPO_DIR' && sudo chown \"\$(id -un)\":\"\$(id -gn)\" '$REMOTE_REPO_DIR'"
 
-  log "rsyncing working tree (excludes .git/.venv/local state; INCLUDES infra/.env + certs)"
+  log "copying working tree via scp (INCLUDES infra/.env + certs; out-of-band, not git)"
   # shellcheck disable=SC2086
   "${GC[@]}" compute scp --recurse --zone "$ZONE" $ssh_flag \
     --compress \
@@ -211,13 +223,23 @@ cmd_tunnel() {
 # --------------------------------------------------------------------------
 cmd_teardown() {
   need_gcloud; load_config
+  # Guard against deleting the wrong instance from a stale config.env. Require an
+  # explicit confirmation matching the VM name (env var or interactive prompt).
+  if [ "${SENTINEL_GCP_CONFIRM:-}" != "$VM_NAME" ]; then
+    if [ -t 0 ]; then
+      printf 'Type the VM name to confirm deletion of "%s": ' "$VM_NAME"; read -r reply
+      [ "$reply" = "$VM_NAME" ] || die "confirmation mismatch; aborting teardown"
+    else
+      die "refusing to teardown non-interactively without SENTINEL_GCP_CONFIRM=$VM_NAME"
+    fi
+  fi
   if vm_exists; then
     log "deleting VM $VM_NAME"
     "${GC[@]}" compute instances delete "$VM_NAME" --zone "$ZONE" --quiet
     ok "VM deleted"
   else warn "VM $VM_NAME already absent"; fi
   if [ "${1:-}" = "--all" ]; then
-    for r in sentinel-allow-iap-ssh sentinel-allow-operator-ssh; do
+    for r in sentinel-allow-iap-ssh sentinel-deny-public-ssh sentinel-allow-operator-ssh; do
       if "${GC[@]}" compute firewall-rules describe "$r" >/dev/null 2>&1; then
         "${GC[@]}" compute firewall-rules delete "$r" --quiet && ok "firewall $r deleted"
       fi

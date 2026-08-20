@@ -23,6 +23,14 @@ fi
 
 sudo systemctl enable --now docker
 
+# python3-venv lets an operator reproduce the slim grader ritual on the VM
+# (python3 -m venv .venv; pytest ...). Ubuntu server images ship python3 without
+# ensurepip/venv by default.
+if ! python3 -c 'import ensurepip' >/dev/null 2>&1; then
+  log "installing python3-venv (ensurepip) for grader reproducibility"
+  sudo apt-get update -y && sudo apt-get install -y python3-venv
+fi
+
 # Let the login user talk to docker without sudo. Group membership takes effect
 # on the next login/SSH session, so deploy.sh up re-connects fresh.
 if ! id -nG "$(id -un)" | tr ' ' '\n' | grep -qx docker; then
