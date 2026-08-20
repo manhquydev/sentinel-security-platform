@@ -1,35 +1,46 @@
 ---
-// Interactive Charter end-to-end demo: 7 scenes, embedded sanitized evidence.
+// Interactive Charter end-to-end demo: 7 scenes, "security ops console" UI.
+// Guided walkthrough over real sanitized evidence (not a live system).
+import '../../styles/charter-demo.css';
 ---
 
-<section class="w3" id="charter-demo" data-charter-demo aria-label="Demo Charter">
-	<div class="w3-toolbar">
-		<div class="w3-counter" data-charter-counter>…</div>
-		<div class="w3-toggle" role="group" aria-label="Điều hướng cảnh">
-			<button type="button" data-charter-prev>Trước</button>
-			<button type="button" data-charter-next>Sau</button>
-		</div>
+<section class="cwt" data-charter-demo aria-label="Demo Charter end-to-end">
+	<p class="cwt-honesty">
+		<span aria-hidden="true">🔒</span>
+		Hướng dẫn tương tác trên bằng chứng thật đã sanitize — không phải hệ thống live.
+	</p>
+
+	<div class="cwt-progress" aria-hidden="true">
+		<div class="cwt-progress__fill" data-charter-progress></div>
 	</div>
 
-	<p data-charter-status class="w3-status" role="status" aria-live="polite">Đang khởi tạo…</p>
+	<div class="cwt-rail" data-charter-rail aria-label="7 cảnh pipeline Charter"></div>
 
-	<ol class="w3-stepper" data-charter-stepper aria-label="7 cảnh Charter"></ol>
+	<div data-charter-scene aria-live="off">
+		<p class="cwt-note">Đang tải cảnh…</p>
+	</div>
 
-	<section class="w3-panel" data-charter-scene aria-label="Cảnh hiện tại">
-		<p class="w3-muted">Đang tải cảnh…</p>
-	</section>
+	<div class="cwt-controls">
+		<button type="button" class="cwt-btn" data-charter-prev>← Trước</button>
+		<button type="button" class="cwt-btn cwt-btn--primary" data-charter-next>Sau →</button>
+		<button type="button" class="cwt-btn" data-charter-play>▶ Chạy tự động</button>
+		<span class="cwt-spacer"></span>
+		<span class="cwt-status" data-charter-status></span>
+	</div>
+
+	<div class="cwt-sr" data-charter-live aria-live="polite"></div>
 
 	<noscript>
 		<div class="w3-noscript">
 			<p>Bật JavaScript để xem demo tương tác. Bảy cảnh (bằng chứng đã sanitize):</p>
 			<ol>
-				<li>Quét (Scanner) — Nuclei/Trivy quét Juice Shop (loopback); secret được redact trước khi lưu.</li>
-				<li>Agent phân tích (JSONL) — Agent đọc aggregate + tri thức, xuất report JSONL bám bằng chứng.</li>
-				<li>Đề xuất request (catalog cố định) — Agent map finding → 1 case an toàn predeclared.</li>
-				<li>HITL — phê duyệt — Approve: mint token → gửi; Reject: CharterRequestError trước network.</li>
-				<li>Qua Kong gateway — Request đi qua Kong TLS 127.0.0.1:18443.</li>
-				<li>Response guard — chặn IPI — Raw vs Guarded (quarantined: objective-change).</li>
-				<li>Che dữ liệu nhạy cảm (PII) — Raw vs Masked (email/card redacted trước LLM/log).</li>
+				<li>Quét (Scanner) — Nuclei/Trivy quét Juice Shop (loopback); secret redact trước khi lưu.</li>
+				<li>Agent phân tích (JSONL) — report bám bằng chứng; model chỉ thêm confidence.</li>
+				<li>Đề xuất request — 1 case an toàn từ catalog cố định.</li>
+				<li>HITL — Approve gửi; Reject fail-closed (action_sent=false, không gửi).</li>
+				<li>Qua Kong gateway — chỉ digest, không raw body vào LLM.</li>
+				<li>Response guard — IPI bị quarantine (objective-change).</li>
+				<li>Che PII — email/thẻ → [redacted:pii:…] trước LLM/log.</li>
 			</ol>
 		</div>
 	</noscript>

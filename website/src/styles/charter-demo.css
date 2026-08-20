@@ -1,0 +1,354 @@
+/**
+ * Charter end-to-end demo — "security operations console" look.
+ * Theme-aware: uses Starlight semantic tokens (light/dark safe). No hardcoded
+ * light/dark palette. Every colored state also carries an icon + text (never
+ * color-alone). Animations only transform/opacity, gated by prefers-reduced-motion.
+ */
+
+.cwt {
+	--cwt-panel: var(--sl-color-gray-6);
+	--cwt-border: var(--sl-color-hairline, var(--sl-color-gray-5));
+	--cwt-radius: 12px;
+	--cwt-accent: var(--sl-color-text-accent);
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+/* Persistent honesty label — this is a guided walkthrough, not a live system. */
+.cwt-honesty {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--sl-text-xs, 0.8rem);
+	color: var(--sl-color-gray-2);
+	border: 1px dashed var(--cwt-border);
+	border-radius: 999px;
+	padding: 0.3rem 0.8rem;
+	align-self: flex-start;
+}
+
+/* ---- Progress bar ---- */
+.cwt-progress {
+	height: 4px;
+	border-radius: 999px;
+	background: var(--sl-color-gray-5);
+	overflow: hidden;
+}
+.cwt-progress__fill {
+	height: 100%;
+	transform-origin: left center;
+	transform: scaleX(0);
+	background: var(--cwt-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.cwt-progress__fill {
+		transition: transform 0.4s ease;
+	}
+}
+
+/* ---- Flow rail ---- */
+.cwt-rail {
+	display: flex;
+	align-items: stretch;
+	gap: 0;
+	overflow-x: auto;
+	padding: 0.25rem 0 0.5rem;
+	scrollbar-width: thin;
+}
+.cwt-node {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 76px;
+	padding: 0.35rem 0.25rem;
+	cursor: pointer;
+	color: var(--sl-color-gray-2);
+	font: inherit;
+	position: relative;
+}
+.cwt-node__dot {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 1.1rem;
+	border: 2px solid var(--sl-color-gray-5);
+	background: var(--cwt-panel);
+	color: var(--sl-color-gray-1);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.cwt-node__dot {
+		transition:
+			transform 0.25s ease,
+			border-color 0.25s ease,
+			background 0.25s ease;
+	}
+}
+.cwt-node__label {
+	font-size: 0.68rem;
+	line-height: 1.1;
+	text-align: center;
+	max-width: 82px;
+}
+.cwt-node[aria-current='step'] .cwt-node__dot {
+	border-color: var(--stage, var(--cwt-accent));
+	background: color-mix(in srgb, var(--stage, var(--cwt-accent)) 22%, var(--cwt-panel));
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--stage, var(--cwt-accent)) 22%, transparent);
+	transform: translateY(-2px) scale(1.06);
+	color: var(--sl-color-white);
+}
+.cwt-node[data-done='true'] .cwt-node__dot {
+	border-color: var(--sl-color-green-high);
+	color: var(--sl-color-green-high);
+}
+.cwt-node[aria-current='step'] .cwt-node__label {
+	color: var(--sl-color-white);
+	font-weight: 600;
+}
+.cwt-node:focus-visible {
+	outline: 2px solid var(--cwt-accent);
+	outline-offset: 2px;
+	border-radius: 8px;
+}
+/* connector line between nodes */
+.cwt-node + .cwt-node::before {
+	content: '';
+	position: absolute;
+	left: -50%;
+	top: 20px;
+	width: 100%;
+	height: 2px;
+	background: var(--sl-color-gray-5);
+	z-index: -1;
+}
+.cwt-node[data-reached='true']::before {
+	background: var(--sl-color-green-high);
+}
+
+/* ---- Scene card ---- */
+.cwt-card {
+	border: 1px solid var(--cwt-border);
+	border-radius: var(--cwt-radius);
+	background: var(--cwt-panel);
+	overflow: hidden;
+	box-shadow: var(--sl-shadow-sm);
+}
+.cwt-card__head {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.7rem 1rem;
+	border-left: 4px solid var(--stage, var(--cwt-accent));
+	background: color-mix(in srgb, var(--stage, var(--cwt-accent)) 12%, var(--cwt-panel));
+}
+.cwt-card__icon {
+	font-size: 1.3rem;
+	line-height: 1;
+}
+.cwt-card__title {
+	margin: 0;
+	font-size: var(--sl-text-base, 1rem);
+	color: var(--sl-color-white);
+}
+.cwt-card__step {
+	margin-left: auto;
+	font-size: var(--sl-text-xs, 0.75rem);
+	color: var(--sl-color-gray-3);
+	font-variant-numeric: tabular-nums;
+}
+.cwt-card__body {
+	padding: 0.9rem 1rem 1.1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.cwt-summary {
+	margin: 0;
+	color: var(--sl-color-gray-1);
+}
+
+/* ---- Status badge (icon + text, never color-alone) ---- */
+.cwt-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	align-self: flex-start;
+	font-size: var(--sl-text-xs, 0.78rem);
+	font-weight: 600;
+	padding: 0.28rem 0.7rem;
+	border-radius: 999px;
+	border: 1px solid var(--tone, var(--sl-color-gray-3));
+	color: var(--tone, var(--sl-color-gray-1));
+	background: color-mix(in srgb, var(--tone, var(--sl-color-gray-3)) 14%, var(--cwt-panel));
+}
+.cwt-badge[data-tone='good'] {
+	--tone: var(--sl-color-green-high);
+}
+.cwt-badge[data-tone='danger'] {
+	--tone: var(--sl-color-red-high);
+}
+.cwt-badge[data-tone='warn'] {
+	--tone: var(--sl-color-orange-high);
+}
+.cwt-badge[data-tone='model'] {
+	--tone: var(--sl-color-purple-high, #a78bfa);
+}
+
+/* ---- Terminal-style evidence ---- */
+.cwt-term {
+	border: 1px solid var(--cwt-border);
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--sl-color-black, #000) 30%, var(--sl-color-gray-6));
+	overflow: hidden;
+}
+.cwt-term__bar {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.4rem 0.7rem;
+	border-bottom: 1px solid var(--cwt-border);
+	background: color-mix(in srgb, var(--sl-color-black, #000) 20%, var(--sl-color-gray-6));
+}
+.cwt-term__dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--sl-color-gray-4, #888);
+}
+.cwt-term__label {
+	margin-left: 0.4rem;
+	font-size: var(--sl-text-xs, 0.72rem);
+	color: var(--sl-color-gray-3);
+	font-family: var(--sl-font-mono);
+}
+.cwt-term__body {
+	margin: 0;
+	padding: 0.8rem 0.9rem;
+	font-family: var(--sl-font-mono);
+	font-size: var(--sl-text-sm, 0.85rem);
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: var(--sl-color-gray-1);
+}
+@media (prefers-reduced-motion: no-preference) {
+	.cwt-term__body[data-anim='1'] {
+		animation: cwt-fade 0.28s ease;
+	}
+}
+@keyframes cwt-fade {
+	from {
+		opacity: 0.25;
+		transform: translateY(3px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ---- Toggle (before/after) ---- */
+.cwt-toggle {
+	display: inline-flex;
+	border: 1px solid var(--cwt-border);
+	border-radius: 999px;
+	overflow: hidden;
+	align-self: flex-start;
+}
+.cwt-toggle button {
+	appearance: none;
+	border: 0;
+	background: transparent;
+	color: var(--sl-color-gray-2);
+	font: inherit;
+	font-size: var(--sl-text-sm, 0.85rem);
+	padding: 0.35rem 0.9rem;
+	cursor: pointer;
+}
+.cwt-toggle button[aria-pressed='true'] {
+	background: var(--cwt-accent);
+	color: var(--sl-color-text-invert, #fff);
+	font-weight: 600;
+}
+.cwt-toggle button:focus-visible {
+	outline: 2px solid var(--cwt-accent);
+	outline-offset: -2px;
+}
+
+.cwt-note {
+	margin: 0;
+	font-size: var(--sl-text-sm, 0.86rem);
+	color: var(--sl-color-gray-2);
+	border-top: 1px dashed var(--cwt-border);
+	padding-top: 0.6rem;
+}
+
+/* ---- Controls ---- */
+.cwt-controls {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.cwt-btn {
+	appearance: none;
+	border: 1px solid var(--cwt-border);
+	background: var(--cwt-panel);
+	color: var(--sl-color-gray-1);
+	font: inherit;
+	font-size: var(--sl-text-sm, 0.88rem);
+	padding: 0.4rem 0.9rem;
+	border-radius: 8px;
+	cursor: pointer;
+}
+.cwt-btn:hover:not(:disabled) {
+	border-color: var(--cwt-accent);
+}
+.cwt-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.cwt-btn:focus-visible {
+	outline: 2px solid var(--cwt-accent);
+	outline-offset: 2px;
+}
+.cwt-btn--primary {
+	background: var(--cwt-accent);
+	color: var(--sl-color-text-invert, #fff);
+	border-color: var(--cwt-accent);
+	font-weight: 600;
+}
+.cwt-spacer {
+	flex: 1;
+}
+.cwt-status {
+	font-size: var(--sl-text-sm, 0.85rem);
+	color: var(--sl-color-gray-2);
+}
+
+@media (max-width: 640px) {
+	.cwt-node {
+		min-width: 64px;
+	}
+	.cwt-node__label {
+		font-size: 0.6rem;
+	}
+}
+
+.cwt-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
