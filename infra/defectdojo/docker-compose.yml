@@ -96,6 +96,10 @@ x-dd-common-env: &dd-common-env
   DD_DEBUG: "False"
   DD_ALLOWED_HOSTS: "${DD_ALLOWED_HOSTS:-localhost,127.0.0.1}"
   DD_SITE_URL: "${DD_SITE_URL:-http://localhost:8080}"
+  # Django 4 requires trusted origins for cross-origin HTTPS POST (e.g. login)
+  # when reached through a reverse proxy / Cloudflare Tunnel hostname. Empty by
+  # default so the loopback-only deployment is unaffected.
+  DD_CSRF_TRUSTED_ORIGINS: "${DD_CSRF_TRUSTED_ORIGINS:-}"
   DD_CELERY_BROKER_URL: "redis://redis:6379/0"
 
 x-dd-django-image: &dd-django-image
