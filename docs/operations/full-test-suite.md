@@ -36,7 +36,7 @@ Verified pass counts with those extras installed:
 |---|---|
 | `tests/test_gateway_guardrails.py` | 61 |
 | `tests/test_week1_artifact_normalizer.py` | 16 |
-| `tests/test_week3_aggregate_analysis.py` | 15 |
+| `tests/test_week3_aggregate_analysis.py` | 16 |
 | `tests/test_charter_contracts.py` | 12 |
 | `tests/test_charter_proposal.py` | 11 |
 | `tests/test_attack_surface_baseline.py` | 11 |
