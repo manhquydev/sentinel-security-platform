@@ -75,3 +75,24 @@ This exemption covers read/reference access only. It does not change what may
 be committed: `infra/.env` stays git-ignored, and its contents must never be
 pasted into a commit, tracked file, code comment, or chat/log output. Use
 `infra/.env.example` as the template for documenting required keys.
+
+## Current State (memory · updated 2026-08-20)
+
+Charter meets every minimum-to-pass and exceeds; slim grader 338 passed, full
+overlay 140 passed, PII 10/10 FP 0. Live in production and independently
+red-teamed. Details/how-to (do not duplicate here):
+
+- Deployment status: [`docs/deployment.md`](docs/deployment.md) (Cloudflare
+  Worker docs site + GCP VM `sentinel-charter` full Charter topology).
+- Use/test the live deployment: [`docs/operations/live-deployment-guide.md`](docs/operations/live-deployment-guide.md).
+- Completion evidence: [`docs/reports/sentinel-completion-selfassessment.md`](docs/reports/sentinel-completion-selfassessment.md).
+- Latest journal: [`docs/journal/2026-08-20-production-deploy-and-hardening.md`](docs/journal/2026-08-20-production-deploy-and-hardening.md).
+
+Live surfaces: docs `https://vinsoc.manhquy.io.vn` (+ `.id.vn`); gated app
+`https://app.vinsoc.manhquy.io.vn` (Cloudflare Access → DefectDojo, 5 real
+findings). Security: app ports loopback-only + no public firewall opening; SSH
+IAP-only; VM has **no service account** (Vertex via ADC file) + a
+`sentinel-metadata-guard` blocking container→metadata. **The GCP VM bills while
+running** (`infra/gcp/deploy.sh teardown` to stop). Open follow-up: a
+`live_run:true` FP/FN scorecard is blocked by a model↔enrichment-schema mismatch
+(fix by choosing a schema-honoring model — never by weakening the validator).

@@ -35,10 +35,13 @@ Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
 - [Mục lục báo cáo](reports/index.md) — Tuần 1–6
 - [Tuần 1](reports/week-01.md) · [Tuần 2](reports/week-02.md) · [Tuần 3](reports/week-03.md) · [Tuần 4](reports/week-04.md) · [Tuần 5](reports/week-05.md) · [Tuần 6](reports/week-06.md)
 - [Sample artifacts Tuần 3](reports/artifacts/README.md)  
-- Site Starlight: [website/](../website/README.md) · https://vinsoc.manhquy.id.vn · [`/llms.txt`](https://vinsoc.manhquy.id.vn/llms.txt)  
+- Site Starlight: [website/](../website/README.md) · https://vinsoc.manhquy.io.vn · https://vinsoc.manhquy.id.vn · [`/llms.txt`](https://vinsoc.manhquy.io.vn/llms.txt)  
+- App live (DefectDojo, sau Cloudflare Access): https://app.vinsoc.manhquy.io.vn — xem [hướng dẫn dùng](operations/live-deployment-guide.md)  
 
 ### Vận hành
 
+- [**Hướng dẫn dùng & test bản deploy production**](operations/live-deployment-guide.md) — bắt đầu ở đây nếu mở `app.vinsoc` mà chưa rõ cách dùng  
+- [Trạng thái deploy (Worker + GCP VM)](deployment.md)  
 - [Runbook nghiệm thu live Charter](operations/sentinel-live-acceptance-runbook.md)  
 - [Workbench demo](operations/sentinel-workbench-demo.md)  
 - [Scanner viability (B0)](operations/workbench-scanner-viability.md)  
