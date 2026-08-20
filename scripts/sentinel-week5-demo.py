@@ -40,7 +40,7 @@ def _json_bytes(payload: dict[str, Any], status: int = 200) -> tuple[int, bytes]
 def handle_ipi(data: dict[str, Any]) -> tuple[int, dict[str, Any]]:
     text = data.get("text")
     fixture = data.get("fixture")
-    if fixture in {"goal", "secrets"}:
+    if type(fixture) is str and fixture in {"goal", "secrets"}:
         path = FIXTURE_DIR / f"charter-response-ipi-{fixture}.json"
         text = json.loads(path.read_text(encoding="utf-8"))["response"]
     if type(text) is not str:
@@ -88,7 +88,7 @@ def handle_hitl_preview(data: dict[str, Any]) -> tuple[int, dict[str, Any]]:
 def handle_hitl_decide(data: dict[str, Any]) -> tuple[int, dict[str, Any]]:
     case_id = data.get("case_id")
     decision = data.get("decision")
-    if type(case_id) is not str or decision not in {"approve", "reject"}:
+    if type(case_id) is not str or type(decision) is not str or decision not in {"approve", "reject"}:
         return 400, {"error": "case_id and decision approve|reject required"}
     try:
         safe_request_case(case_id)
@@ -175,10 +175,20 @@ def main() -> int:
     if args.bind not in {"127.0.0.1", "0.0.0.0"}:
         print("FATAL: bind must be 127.0.0.1 (host) or 0.0.0.0 (container)", file=sys.stderr)
         return 2
+    if args.port < 1 or args.port > 65535:
+        print("FATAL: port must be 1-65535", file=sys.stderr)
+        return 2
     DemoHandler.listen_bind = args.bind
     DemoHandler.listen_port = args.port
-    server = ThreadingHTTPServer((args.bind, args.port), DemoHandler)
-    print(f"week5-demo listening on http://{args.bind}:{args.port} (facade, not executor)", flush=True)
+    try:
+        server = ThreadingHTTPServer((args.bind, args.port), DemoHandler)
+    except (OSError, OverflowError) as exc:
+        print(
+            f"FATAL: cannot bind http://{args.bind}:{args.port} ({exc}). "
+            "Stop the Docker facade or the other process on this port.",
+            file=sys.stderr,
+        )
+        return 2
     try:
         server.serve_forever()
     except KeyboardInterrupt:

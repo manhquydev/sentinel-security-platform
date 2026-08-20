@@ -13,7 +13,7 @@ PYTHONPATH=. python3 scripts/sentinel-week5-demo.py
 # with Docker (publish stays 127.0.0.1)
 docker compose -f infra/week5-demo/docker-compose.yml up --build -d --wait
 bash scripts/week5-demo-curl.sh
-bash tests/week5-demo-facade-test.sh
+PYTHON=.venv/bin/python bash tests/week5-demo-facade-test.sh
 ```
 
 Postman from **this laptop** into that URL. Do not bind `0.0.0.0` on the host.
