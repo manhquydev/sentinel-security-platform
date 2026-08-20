@@ -1,0 +1,81 @@
+---
+/**
+ * Embed a self-hosted asciinema recording of a REAL run.
+ * Bundle vendored at /asciinema/*; cast files at /casts/*. Loaded once, lazily.
+ */
+interface Props {
+	src: string;
+	title: string;
+}
+const { src, title } = Astro.props;
+const id = 'cast-' + src.replace(/[^a-z0-9]/gi, '-');
+---
+
+<link rel="stylesheet" href="/asciinema/asciinema-player.css" />
+<figure class="cwt-cast not-content">
+	<figcaption class="cwt-cast__cap">
+		<span class="cwt-cast__live" aria-hidden="true">● REC</span>
+		{title}
+	</figcaption>
+	<div id={id} class="cwt-cast__player"></div>
+</figure>
+
+<script define:vars={{ src, id }}>
+	(function () {
+		function create() {
+			const el = document.getElementById(id);
+			if (el && window.AsciinemaPlayer) {
+				window.AsciinemaPlayer.create(src, el, {
+					theme: 'asciinema',
+					idleTimeLimit: 2,
+					fit: 'width',
+					terminalFontSize: '14px',
+					poster: 'npt:0:02',
+					controls: true,
+				});
+			}
+		}
+		if (window.AsciinemaPlayer) {
+			create();
+			return;
+		}
+		document.addEventListener('asciinema-ready', create, { once: true });
+		if (!window.__asciinemaLoading) {
+			window.__asciinemaLoading = true;
+			const s = document.createElement('script');
+			s.src = '/asciinema/asciinema-player.min.js';
+			s.onload = function () {
+				document.dispatchEvent(new Event('asciinema-ready'));
+			};
+			document.head.appendChild(s);
+		}
+	})();
+</script>
+
+<style>
+	.cwt-cast {
+		margin: 0;
+		border: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
+		border-radius: 12px;
+		overflow: hidden;
+		background: var(--sl-color-gray-6);
+	}
+	.cwt-cast__cap {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.9rem;
+		font-size: var(--sl-text-sm, 0.88rem);
+		font-weight: 600;
+		color: var(--sl-color-white);
+		border-bottom: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
+	}
+	.cwt-cast__live {
+		color: var(--sl-color-red-high);
+		font-size: 0.7rem;
+		letter-spacing: 0.06em;
+	}
+	.cwt-cast__player {
+		min-height: 220px;
+	}
+</style>

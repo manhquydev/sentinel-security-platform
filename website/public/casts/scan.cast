@@ -1,0 +1,6 @@
+{"version": 2, "width": 80, "height": 24, "timestamp": 1787220509, "idle_time_limit": 2.0, "env": {"SHELL": "/bin/bash", "TERM": null}}
+[0.007425, "o", "# Sentinel: scan -> redact -> import vao DefectDojo (real Juice Shop)\r\n\r\n"]
+[5.457475, "o", "run-trivy: wrote /opt/sentinel/vinsoc/scanners/out/trivy.json (635891 bytes)\r\n"]
+[7.103296, "o", "import-report: Trivy Scan -> test=1 dedup_complete=True close_old=true (HTTP 201)\r\n"]
+[7.137675, "o", "gate: 4 == 4 via statistics.delta (closed 0)\r\n"]
+[7.144434, "o", "scan-and-import: 1 source(s) landed, 0 failed\r\n"]
