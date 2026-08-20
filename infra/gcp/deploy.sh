@@ -161,7 +161,7 @@ cmd_sync() {
   # shellcheck disable=SC2086
   "${GC[@]}" compute scp --recurse --zone "$ZONE" $ssh_flag \
     --compress \
-    "$REPO_ROOT"/{agent,scanners,rag,infra,scripts,evaluation,attack-surface,adapters,requirements.txt,pytest.ini,README.md,AGENTS.md} \
+    "$REPO_ROOT"/{agent,scanners,rag,infra,scripts,evaluation,attack-surface,adapters,tests,requirements.txt,requirements-full.txt,pytest.ini,README.md,AGENTS.md} \
     "$VM_NAME":"$REMOTE_REPO_DIR"/ \
     || die "scp failed"
   ok "repo synced to $REMOTE_REPO_DIR"
