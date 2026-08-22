@@ -161,6 +161,7 @@ docs/*-kich-ban-trinh-bay.md
 docs/personal/
 docs/operations/sentinel-charter-demo-runbook.md
 website/src/components/demo/AccessGuide.astro
+website/src/components/demo/.access-password
 
 # Starlight docs site build + deps
 website/dist/

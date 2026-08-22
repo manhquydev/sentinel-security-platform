@@ -2,12 +2,13 @@
 import DemoShell from '../../components/demo/DemoShell.astro';
 import CharterWalkthrough from '../../components/demo/CharterWalkthrough.astro';
 import CharterCast from '../../components/demo/CharterCast.astro';
+import AccessLogin from '../../components/demo/AccessLogin.astro';
 ---
 
 <DemoShell
 	title="Demo: đi hết bảy bước, rồi xem lỗ hổng"
 	description="Đi hết luồng trên trang này. DefectDojo chỉ hiện lỗ hổng đã quét — không phải giao diện Sentinel."
-	honesty="Bảy bước dưới đây là demo đủ luồng, bằng chứng từ lần chạy trên máy. DefectDojo là phần mềm OWASP. Mật khẩu admin không in trên trang này."
+	honesty="Bảy bước dưới đây là demo đủ luồng, bằng chứng từ lần chạy trên máy. DefectDojo là phần mềm OWASP."
 	reportHref="/reports/week-06/"
 	reportLabel="← Báo cáo Tuần 6"
 >
@@ -23,15 +24,7 @@ import CharterCast from '../../components/demo/CharterCast.astro';
 	</p>
 	<CharterWalkthrough />
 
-	<h2>Vào xem lỗ hổng đã quét</h2>
-	<p class="demo-lead">
-		Mở <a href="https://app.vinsoc.manhquy.io.vn/">app.vinsoc.manhquy.io.vn</a>.
-		Cloudflare: email <code>vinsoc@manhquy.id.vn</code>, lấy OTP tại
-		<a href="https://app.manhquy.id.vn/inbox-viewer?email=vinsoc%40manhquy.id.vn">hộp thư lab</a>.
-		DefectDojo: tài khoản <code>admin</code>. Mật khẩu là
-		<code>DD_ADMIN_PASSWORD</code> trong <code>infra/.env</code> trên máy
-		operator — xem Tuần 6. Rồi Products → <code>juice-shop-harness</code>.
-	</p>
+	<AccessLogin />
 
 	<h2>Bản ghi màn hình thật</h2>
 	<p class="demo-lead">

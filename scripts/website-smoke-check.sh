@@ -210,6 +210,37 @@ for published in /reports/week-06/ /reports/week-06/markdown/ /raw/reports/week-
     fail "$published not public (status=$published_code)"
   fi
 done
+
+if curl -sS "$BASE/raw/reports/week-06.md" | grep -q 'sentinel-charter-demo-runbook'; then
+  fail "week-06 still links the personal 15-minute runbook"
+else
+  pass "week-06 does not link the personal runbook"
+fi
+if curl -sS "$BASE/raw/reports/week-06.md" | grep -q 'Prompt injection bị chặn'; then
+  pass "week-06 demo section lists the seven scenes"
+else
+  fail "week-06 demo section missing the seven scenes"
+fi
+if curl -sS "$BASE/demo/charter/" | grep -q 'data-access-login'; then
+  pass "/demo/charter/ has Access copy UI"
+else
+  fail "/demo/charter/ missing Access copy UI"
+fi
+if curl -sS "$BASE/demo/charter/" | grep -q 'vinsoc@manhquy.id.vn'; then
+  pass "/demo/charter/ shows Access email"
+else
+  fail "/demo/charter/ missing Access email"
+fi
+if curl -sS "$BASE/demo/charter/" | grep -q 'DD_ADMIN_PASSWORD trong infra/.env'; then
+  fail "/demo/charter/ still treats infra/.env as a public password"
+else
+  pass "/demo/charter/ does not point testers at gitignored infra/.env"
+fi
+if curl -sS "$BASE/demo/charter/" | grep -q 'data-copy="admin"'; then
+  pass "/demo/charter/ has copy for DefectDojo admin"
+else
+  fail "/demo/charter/ missing admin copy button"
+fi
 if curl -sS "$BASE/" -o "$TMPDIR/home.html" && grep -q 'TTS Nguyễn Mạnh Quý' "$TMPDIR/home.html"; then
   pass "home footer/credit TTS"
 else

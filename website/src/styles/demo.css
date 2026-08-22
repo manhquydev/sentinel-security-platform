@@ -486,3 +486,17 @@
 		transition: none;
 	}
 }
+
+/* Demo pages sit in Starlight's 45rem reading column. That column is too
+   narrow for the seven-step rail and the two Access cards — they wrap, clip,
+   and look broken. Fill the pane beside the sidebar on desktop. */
+@media (min-width: 50rem) {
+	html:has(.demo-surface) {
+		--sl-content-width: min(80rem, calc(100vw - var(--sl-sidebar-width, 18rem) - 3rem));
+	}
+	html:has(.demo-surface) .content-panel .sl-container,
+	html:has(.demo-surface) .sl-markdown-content {
+		max-width: 100%;
+		width: 100%;
+	}
+}

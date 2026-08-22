@@ -230,6 +230,10 @@ hero:
       link: /reports/
       icon: right-arrow
       variant: primary
+    - text: Mở demo
+      link: /demo/charter/
+      icon: rocket
+      variant: secondary
     - text: llms.txt
       link: /llms.txt
       icon: document
@@ -257,7 +261,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
     IPI, HITL và che dữ liệu có nhãn. [tuần 5](/reports/week-05/).
   </Card>
   <Card title="Tuần 6" icon="rocket">
-    Tích hợp, đánh giá và demo. [tuần 6](/reports/week-06/).
+    Tích hợp, đánh giá và [demo bảy bước](/demo/charter/). [báo cáo](/reports/week-06/).
   </Card>
 </CardGrid>
 

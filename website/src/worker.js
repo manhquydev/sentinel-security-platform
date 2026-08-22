@@ -28,25 +28,10 @@ function textContentType(pathname) {
 	return null;
 }
 
-function isUnpublishedWeek6(pathname) {
-	const path = pathname.toLowerCase().replace(/\/+$/, "") || "/";
-	return path === "/reports/week-06" || path.startsWith("/reports/week-06/") || path === "/raw/reports/week-06.md";
-}
-
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 		const path = url.pathname.toLowerCase();
-		// Temporary: week-6 report is not due yet. Drop this guard when publishing.
-		if (isUnpublishedWeek6(url.pathname)) {
-			return new Response(null, {
-				status: 302,
-				headers: {
-					Location: new URL("/reports/", url).toString(),
-					"Cache-Control": "no-store",
-				},
-			});
-		}
 		const response = await env.ASSETS.fetch(request);
 		const headers = new Headers(response.headers);
 

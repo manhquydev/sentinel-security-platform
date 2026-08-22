@@ -1,0 +1,261 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+
+const EMAIL = 'vinsoc@manhquy.id.vn';
+const OTP_URL = 'https://app.manhquy.id.vn/inbox-viewer?email=vinsoc%40manhquy.id.vn';
+const APP_URL = 'https://app.vinsoc.manhquy.io.vn/';
+const USER = 'admin';
+
+function labPassword() {
+	const here = path.join(process.cwd(), 'src/components/demo');
+	const rawFile = path.join(here, '.access-password');
+	if (fs.existsSync(rawFile)) {
+		const value = fs.readFileSync(rawFile, 'utf8').trim();
+		if (value) return value;
+	}
+	const guide = path.join(here, 'AccessGuide.astro');
+	if (fs.existsSync(guide)) {
+		const match = fs.readFileSync(guide, 'utf8').match(/const PASS = '([^']+)'/);
+		if (match?.[1]) return match[1];
+	}
+	return '';
+}
+
+const PASS = labPassword();
+---
+
+<section class="gate not-content" data-access-login aria-labelledby="gate-title">
+	<h2 id="gate-title">Vào xem lỗ hổng đã quét</h2>
+	<p class="gate-lead">
+		Hai lần đăng nhập, lần lượt. Tài khoản lab — mentor cứ dùng. Bấm <strong>Copy</strong> rồi dán.
+		<code>infra/.env</code> không có trên GitHub.
+	</p>
+
+	<ol class="gate-steps">
+		<li class="gate-card">
+			<p class="gate-kicker">Lần 1</p>
+			<h3>Cổng Cloudflare</h3>
+			<p>Mở DefectDojo → nhập email → bấm gửi mã → lấy OTP ở hộp thư lab.</p>
+			<div class="gate-row">
+				<span class="gate-label">Email</span>
+				<code class="gate-val">{EMAIL}</code>
+				<button type="button" class="gate-copy" data-copy={EMAIL}>Copy</button>
+			</div>
+			<a class="gate-link" href={OTP_URL} target="_blank" rel="noopener">Mở hộp thư lấy mã OTP ↗</a>
+		</li>
+		<li class="gate-card">
+			<p class="gate-kicker">Lần 2</p>
+			<h3>DefectDojo</h3>
+			<p>Sau khi xong mã OTP, đăng nhập phần mềm quản lý lỗ hổng (OWASP).</p>
+			<div class="gate-row">
+				<span class="gate-label">Tài khoản</span>
+				<code class="gate-val">{USER}</code>
+				<button type="button" class="gate-copy" data-copy={USER}>Copy</button>
+			</div>
+			{
+				PASS ? (
+					<div class="gate-row">
+						<span class="gate-label">Mật khẩu</span>
+						<code class="gate-val">{PASS}</code>
+						<button type="button" class="gate-copy" data-copy={PASS}>
+							Copy
+						</button>
+					</div>
+				) : (
+					<p>Mật khẩu lab không nằm trong GitHub. Người hướng dẫn đọc khi demo.</p>
+				)
+			}
+		</li>
+	</ol>
+
+	<p class="gate-cta">
+		<a class="gate-btn" href={APP_URL} target="_blank" rel="noopener">Mở DefectDojo</a>
+		<span class="gate-hint">Vào Products → juice-shop-harness. Có 5 lỗ hổng lab (4 Trivy, 1 Nuclei).</span>
+	</p>
+	<p class="sr" data-gate-live aria-live="polite"></p>
+</section>
+
+<script>
+	document.querySelectorAll('[data-access-login]').forEach((root) => {
+		if (!(root instanceof HTMLElement) || root.dataset.bound === '1') return;
+		root.dataset.bound = '1';
+		const live = root.querySelector('[data-gate-live]');
+		root.addEventListener('click', async (ev) => {
+			const btn = ev.target instanceof Element ? ev.target.closest('[data-copy]') : null;
+			if (!(btn instanceof HTMLButtonElement)) return;
+			const text = btn.dataset.copy ?? '';
+			try {
+				await navigator.clipboard.writeText(text);
+			} catch {
+				const ta = document.createElement('textarea');
+				ta.value = text;
+				document.body.appendChild(ta);
+				ta.select();
+				document.execCommand('copy');
+				ta.remove();
+			}
+			const old = btn.textContent;
+			btn.textContent = 'Đã copy';
+			btn.dataset.copied = 'true';
+			if (live) live.textContent = 'Đã copy';
+			window.setTimeout(() => {
+				btn.textContent = old;
+				delete btn.dataset.copied;
+			}, 1600);
+		});
+	});
+</script>
+
+<style>
+	.gate {
+		margin: 2.75rem 0 2rem;
+		padding: 1.25rem 1.25rem 1.5rem;
+		border: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
+		border-radius: 12px;
+		background: var(--sl-color-gray-6);
+		max-width: none;
+	}
+	.gate h2 {
+		margin: 0 0 0.5rem;
+		font-size: 1.35rem;
+	}
+	.gate-lead {
+		margin: 0 0 1.25rem;
+		max-width: 68ch;
+		color: var(--sl-color-gray-2);
+	}
+	.gate-steps {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: 1fr;
+	}
+	@media (min-width: 56rem) {
+		.gate-steps {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+	.gate-card {
+		margin: 0;
+		padding: 1rem 1.1rem 1.15rem;
+		border: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
+		border-radius: 10px;
+		background: color-mix(in srgb, var(--sl-color-black, #000) 18%, var(--sl-color-gray-6));
+		min-width: 0;
+	}
+	.gate-kicker {
+		margin: 0 0 0.2rem;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--sl-color-text-accent);
+	}
+	.gate-card h3 {
+		margin: 0 0 0.4rem;
+		font-size: 1.05rem;
+	}
+	.gate-card p {
+		margin: 0 0 0.85rem;
+		color: var(--sl-color-gray-2);
+		font-size: 0.92rem;
+	}
+	.gate-row {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		flex-wrap: wrap;
+		padding: 0.45rem 0.7rem;
+		margin: 0 0 0.5rem;
+		border: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
+		border-radius: 8px;
+		min-width: 0;
+	}
+	.gate-label {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-3);
+		min-width: 5.5rem;
+		flex: 0 0 auto;
+	}
+	.gate-val {
+		flex: 1 1 8rem;
+		min-width: 0;
+		font-size: 0.88rem;
+		white-space: nowrap;
+		overflow-x: auto;
+		color: var(--sl-color-white);
+	}
+	.gate-copy {
+		appearance: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		height: 2.5rem;
+		padding: 0 0.75rem;
+		border: 1px solid var(--sl-color-text-accent);
+		background: color-mix(in srgb, var(--sl-color-text-accent) 16%, transparent);
+		color: var(--sl-color-white);
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 700;
+		line-height: 1;
+		border-radius: 7px;
+		cursor: pointer;
+	}
+	.gate-copy:hover {
+		filter: brightness(1.08);
+	}
+	.gate-copy[data-copied] {
+		background: color-mix(in srgb, var(--sl-color-green-high) 28%, transparent);
+		border-color: var(--sl-color-green-high);
+	}
+	.gate-copy:focus-visible {
+		outline: 2px solid var(--sl-color-text-accent);
+		outline-offset: 2px;
+	}
+	.gate-link {
+		display: inline-block;
+		margin-top: 0.25rem;
+		color: var(--sl-color-text-accent);
+		font-weight: 600;
+		font-size: 0.92rem;
+	}
+	.gate-cta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.85rem 1.1rem;
+		margin: 1.25rem 0 0;
+	}
+	.gate-btn {
+		display: inline-block;
+		padding: 0.65rem 1.15rem;
+		border-radius: 8px;
+		background: var(--sl-color-text-accent);
+		color: var(--sl-color-text-invert, #fff);
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.gate-btn:hover {
+		filter: brightness(1.08);
+	}
+	.gate-hint {
+		color: var(--sl-color-gray-2);
+		font-size: 0.88rem;
+		max-width: 42ch;
+	}
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+</style>

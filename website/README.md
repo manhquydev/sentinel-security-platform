@@ -5,7 +5,7 @@ Nội dung soạn trong monorepo tại `docs/reports/`, rồi sync vào Starligh
 
 **Production:** https://vinsoc.manhquy.id.vn 
 **Allowlist sync:** `docs/reports/{index,week-01,week-02,week-03,week-04,week-05,week-06}.md`
-**Hiện chưa publish:** `week-06` (`SITE_UNPUBLISHED` trong `scripts/website-sync-docs.py`) vì chưa tới hạn nộp.
+**Publish:** đủ tuần 1–6 (`SITE_UNPUBLISHED` trong `scripts/website-sync-docs.py` đang trống).
 (Product/as-built **không** publish lên site, tránh link monorepo 404.)
 
 ## Lệnh
