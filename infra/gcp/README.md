@@ -89,7 +89,8 @@ bash infra/gcp/deploy.sh tunnel
 #   https://127.0.0.1:18443 Kong TLS proxy
 ```
 
-Run a live demo with `docs/operations/sentinel-charter-demo-runbook.md`.
+Live operator path: `docs/operations/sentinel-live-acceptance-runbook.md`.
+The 15-minute spoken crib is local-only (not in git).
 
 ## Vertex AI credential on the VM
 

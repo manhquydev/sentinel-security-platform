@@ -12,7 +12,7 @@
 | Nhật ký (thời gian, số request, cảnh báo, lần duyệt, lỗi) | `scripts/sentinel-manifest.py` |
 | 5 trường hợp + đáp án | `evaluation/charter-eval/cases.json`, `gold.json` |
 | Bảng điểm mẫu | `evaluation/charter-eval/charter-evaluation.json` |
-| Hướng dẫn demo | `docs/operations/sentinel-charter-demo-runbook.md` · trang `/demo/charter/` |
+| Hướng dẫn chạy lại (nộp) | README · trang `/demo/charter/` · `scripts/sentinel-demo.sh` |
 | Mô tả sản phẩm 1–2 trang | `docs/product/sentinel-charter-brief.md` |
 | Docker Compose | `scripts/sentinel-charter-up.sh` |
 
@@ -73,8 +73,9 @@ chạy lần lượt). Bằng chứng lấy từ lần chạy trên máy. Hai b�
 1. Quét bằng Trivy rồi đưa 4 lỗ hổng vào DefectDojo (khoảng 7 giây).
 2. Chạy bài kiểm tra trên máy: 102 đạt, che dữ liệu 10/10.
 
-DefectDojo chỉ hiện bước quét. Phân tích / duyệt / cổng vẫn là lệnh trên máy —
-xem `docs/operations/sentinel-charter-demo-runbook.md`.
+DefectDojo chỉ hiện bước quét. Phân tích / duyệt / cổng vẫn là lệnh trên máy
+(README + `scripts/sentinel-demo.sh`). Kịch bản nói 15 phút để em tự luyện,
+không nộp.
 
 ## 5. Site tài liệu và DefectDojo
 
@@ -91,10 +92,10 @@ Sentinel quét Juice Shop (lab, không ra internet), che secret, rồi đổ k�
 vào DefectDojo. Hiện bảng đó có **5** lỗ hổng lab (4 Trivy, 1 Nuclei). Số **36**
 là file tổng hợp tuần 1 trong repo — khác chỗ.
 
-Cách vào: trang [`/demo/charter/`](/demo/charter/) có nút copy email Access
-và hộp thư OTP. DefectDojo dùng tài khoản `admin`; mật khẩu là khóa
-`DD_ADMIN_PASSWORD` trong `infra/.env` trên máy operator — không in ra báo
-cáo. Rồi vào Products → `juice-shop-harness`.
+Cách vào: trang [`/demo/charter/`](/demo/charter/) ghi email Access và hộp thư
+OTP. DefectDojo dùng tài khoản `admin`; mật khẩu là khóa `DD_ADMIN_PASSWORD`
+trong `infra/.env` trên máy operator — không in ra báo cáo. Rồi vào Products
+→ `juice-shop-harness`.
 
 ## 6. Chạy lại
 
@@ -117,9 +118,8 @@ PYTHON=.venv/bin/python bash tests/week5-demo-facade-test.sh
 SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile charter --run-id demo
 ```
 
-Talk track 10–15 phút: `docs/operations/sentinel-charter-demo-runbook.md`.
-Demo đầy đủ (approve rồi gửi Kong) cần điều kiện trong
-`docs/operations/sentinel-live-acceptance-runbook.md` và chỉ chạy trên lab
-loopback.
+Lệnh trên là cửa nộp. Kịch bản nói 15 phút em giữ trên máy, không đưa vào
+git. Demo đủ Kong / duyệt cần
+`docs/operations/sentinel-live-acceptance-runbook.md`, chỉ lab loopback.
 
 Không in `infra/.env`, API key, hay dữ liệu người thật.

@@ -132,11 +132,14 @@ SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile cha
 `run` / `resume` cần credential provider + material Kong / approval trên máy operator.  
 Runbook: [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md)
 
-Demo mentor 10–15 phút gồm bảy cảnh (quét, báo cáo, đề xuất, duyệt, cổng, chặn độc, che dữ liệu) theo [`sentinel-charter-demo-runbook.md`](docs/operations/sentinel-charter-demo-runbook.md).
-Link [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md) phía trên vẫn là đường operator-gated đầy đủ (Kong / approve / send).
-`scripts/sentinel-demo.sh` mặc định `rag/.venv/bin/python`; venv grader ở đây là `.venv` nên đặt `SENTINEL_PYTHON=.venv/bin/python`.
-Walkthrough trên site tài liệu không phải lần chạy CLI live.
-Bảy cảnh là talk track demo trên máy operator, không thay thế preflight và credential ở trên.
+Cửa nộp: khối mentor/grader phía trên, lệnh `run` này, và trang `/demo/charter/`
+(kể bảy bước + hai bản ghi). Kịch bản nói 15 phút là tài liệu cá nhân trên máy
+operator, không nằm trong git.
+Link [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md) là
+đường operator-gated (Kong / approve / send).
+`scripts/sentinel-demo.sh` mặc định `rag/.venv/bin/python`; venv grader ở đây là
+`.venv` nên đặt `SENTINEL_PYTHON=.venv/bin/python`.
+Walkthrough trên site không phải lần chạy CLI live.
 
 ### Workbench (riêng)
 

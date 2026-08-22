@@ -158,6 +158,9 @@ docs/Project_Sentinel_VinUni_x_VinSOC_12-week.md
 docs/Project_Sentinel_6-week.md
 docs/*_NguyenManhQuy_*.md
 docs/*-kich-ban-trinh-bay.md
+docs/personal/
+docs/operations/sentinel-charter-demo-runbook.md
+website/src/components/demo/AccessGuide.astro
 
 # Starlight docs site build + deps
 website/dist/

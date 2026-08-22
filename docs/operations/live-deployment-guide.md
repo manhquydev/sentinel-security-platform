@@ -103,7 +103,8 @@ Kỳ vọng: **102 passed**, PII **recall 10/10 FP 0/10 PASS**, facade **19 pass
 
 ## 4. Demo luồng end-to-end (quét → agent → HITL → gateway → guardrail)
 
-Kịch bản trình diễn 10–15 phút, 7 cảnh, lệnh đã verify: [`sentinel-charter-demo-runbook.md`](sentinel-charter-demo-runbook.md).
+Cửa nộp: README (test/eval + `sentinel-demo.sh`) và trang `/demo/charter/`.
+Kịch bản nói 15 phút là tài liệu cá nhân trên máy operator, không nằm trong git.
 
 Luồng đầy đủ (live) là operator-gated (cần `infra/.env` + Vertex ADC + Kong) — mô tả trong [`sentinel-live-acceptance-runbook.md`](sentinel-live-acceptance-runbook.md).
 
