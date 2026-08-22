@@ -1,28 +1,56 @@
 ---
 import DemoShell from '../../components/demo/DemoShell.astro';
-import PipelineFlow from '../../components/demo/PipelineFlow.svelte';
+import CharterWalkthrough from '../../components/demo/CharterWalkthrough.astro';
 import CharterCast from '../../components/demo/CharterCast.astro';
 ---
 
 <DemoShell
-	title="Demo end-to-end: Charter"
-	description="Pipeline bảo mật có AI: quét → agent → HITL → gateway → guard. Sơ đồ tương tác + phiên chạy thật (asciinema)."
+	title="Demo: đi hết bảy bước, rồi xem lỗ hổng"
+	description="Đi hết luồng trên trang này. DefectDojo chỉ hiện lỗ hổng đã quét — không phải giao diện Sentinel."
+	honesty="Bảy bước dưới đây là demo đủ luồng, bằng chứng từ lần chạy trên máy. DefectDojo là phần mềm OWASP. Mật khẩu admin không in trên trang này."
 	reportHref="/reports/week-06/"
 	reportLabel="← Báo cáo Tuần 6"
 >
 	<p class="demo-lead">
-		Vòng đời sự cố Sentinel: <strong>Quét → Agent phân tích → Đề xuất → HITL → Kong gateway →
-		Guard (IPI/PII)</strong>. Bấm từng node để xem bằng chứng thật, rồi cuộn xuống xem
-		<strong>phiên terminal chạy thật</strong> (copy được text).
+		Sentinel chạy trên máy. Trang này cho đi hết bảy bước. Kết quả quét xem trong
+		<strong>DefectDojo</strong> (phần mềm sẵn có của OWASP).
 	</p>
 
-	<h2>Sơ đồ pipeline (bấm node)</h2>
-	<PipelineFlow client:only="svelte" />
-
-	<h2>Chạy thật (asciinema — copy được text, tua được)</h2>
+	<h2>Đi hết bảy bước</h2>
 	<p class="demo-lead">
-		Ghi từ VM production. Không secret trong bản ghi.
+		Bấm <strong>Trước</strong> / <strong>Sau</strong>, hoặc <strong>Chạy hết</strong>. Ở bước Duyệt /
+		Chặn độc / Che dữ liệu, bấm hai phía để thấy trước và sau.
 	</p>
-	<CharterCast src="/casts/scan.cast" title="Quét → redact → import finding vào DefectDojo" />
-	<CharterCast src="/casts/grader.cast" title="Grader ritual: 102 passed · PII recall 10/10 FP 0" />
+	<CharterWalkthrough />
+
+	<h2>Vào xem lỗ hổng đã quét</h2>
+	<p class="demo-lead">
+		Mở <a href="https://app.vinsoc.manhquy.io.vn/">app.vinsoc.manhquy.io.vn</a>.
+		Cloudflare: email <code>vinsoc@manhquy.id.vn</code>, lấy OTP tại
+		<a href="https://app.manhquy.id.vn/inbox-viewer?email=vinsoc%40manhquy.id.vn">hộp thư lab</a>.
+		DefectDojo: tài khoản <code>admin</code>. Mật khẩu là
+		<code>DD_ADMIN_PASSWORD</code> trong <code>infra/.env</code> trên máy
+		operator — xem Tuần 6. Rồi Products → <code>juice-shop-harness</code>.
+	</p>
+
+	<h2>Bản ghi màn hình thật</h2>
+	<p class="demo-lead">
+		Hai bản ghi từ máy ảo. Bản 1 là bước quét (cùng việc DefectDojo đang hiện). Bản 2 là bài kiểm
+		tra trên máy — không lên DefectDojo.
+	</p>
+
+	<CharterCast src="/casts/scan.cast" title="Bản 1 · Quét rồi đưa vào DefectDojo (chỉ Trivy)" />
+	<p class="demo-after">Khoảng 7 giây: 4 lỗ hổng Trivy vào DefectDojo. Không có bước phân tích hay duyệt.</p>
+
+	<CharterCast src="/casts/grader.cast" title="Bản 2 · Bài kiểm tra trên máy: 102 đạt · che dữ liệu 10/10" />
+	<p class="demo-after">Chuỗi chấm xanh = từng bài đạt. Không phải bảy bước, không đưa gì lên DefectDojo.</p>
 </DemoShell>
+
+<style>
+	.demo-after {
+		margin: 0.6rem 0 1.4rem;
+		max-width: 68ch;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm, 0.9rem);
+	}
+</style>
