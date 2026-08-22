@@ -67,11 +67,28 @@ In lại bảng điểm mẫu:
 
 ## 4. Demo
 
-Trang [`/demo/charter/`](/demo/charter/) đi hết bảy bước (bấm từng bước hoặc
-chạy lần lượt). Bằng chứng lấy từ lần chạy trên máy. Hai bản ghi màn hình:
+Đề cần thể hiện bảy cảnh. Trang [`/demo/charter/`](/demo/charter/) đi hết
+cả bảy (bấm từng bước hoặc chạy lần lượt):
+
+| # | Cảnh đề | Trên trang demo |
+|---|---|---|
+| 1 | Một lần chạy công cụ quét | Bước Quét + bản ghi Trivy |
+| 2 | Agent tạo báo cáo | Bước Phân tích |
+| 3 | Agent đề xuất request | Bước Đề xuất |
+| 4 | Approve hoặc Reject | Bước Duyệt (bấm hai phía) |
+| 5 | Request qua API Gateway | Bước Cổng |
+| 6 | Prompt injection bị chặn | Bước Chặn độc (bấm hai phía) |
+| 7 | Dữ liệu nhạy cảm bị che | Bước Che dữ liệu (bấm hai phía) |
+
+Bằng chứng lấy từ lần chạy trên máy. Hai bản ghi màn hình:
 
 1. Quét bằng Trivy rồi đưa 4 lỗ hổng vào DefectDojo (khoảng 7 giây).
 2. Chạy bài kiểm tra trên máy: 102 đạt, che dữ liệu 10/10.
+
+Cách vào DefectDojo cũng nằm trên trang demo: nút copy email Access, tài
+khoản `admin`, và mật khẩu lab. `infra/.env` không có trên GitHub nên
+không lấy mật khẩu từ repo. Rồi Products → `juice-shop-harness`. Hiện
+bảng đó có **5** lỗ hổng lab (4 Trivy, 1 Nuclei).
 
 DefectDojo chỉ hiện bước quét. Phân tích / duyệt / cổng vẫn là lệnh trên máy
 (README + `scripts/sentinel-demo.sh`). Kịch bản nói 15 phút để em tự luyện,
@@ -92,10 +109,9 @@ Sentinel quét Juice Shop (lab, không ra internet), che secret, rồi đổ k�
 vào DefectDojo. Hiện bảng đó có **5** lỗ hổng lab (4 Trivy, 1 Nuclei). Số **36**
 là file tổng hợp tuần 1 trong repo — khác chỗ.
 
-Cách vào: trang [`/demo/charter/`](/demo/charter/) ghi email Access và hộp thư
-OTP. DefectDojo dùng tài khoản `admin`; mật khẩu là khóa `DD_ADMIN_PASSWORD`
-trong `infra/.env` trên máy operator — không in ra báo cáo. Rồi vào Products
-→ `juice-shop-harness`.
+Cách vào: trang [`/demo/charter/`](/demo/charter/) có nút copy email Access,
+tài khoản `admin`, và mật khẩu lab. `infra/.env` không có trên GitHub.
+Rồi vào Products → `juice-shop-harness`.
 
 ## 6. Chạy lại
 

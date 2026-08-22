@@ -31,7 +31,7 @@ Có **hai lần đăng nhập**, lần lượt:
 
 ### Lần 1 — Cloudflare Access (cổng)
 
-Tài khoản lab (trang `/demo/charter/` có nút copy email Access, không phải mật khẩu Django):
+Tài khoản lab (trang `/demo/charter/` có nút copy email, tài khoản, mật khẩu):
 
 1. Mở `https://app.vinsoc.manhquy.io.vn`.
 2. Nhập email `vinsoc@manhquy.id.vn`.
@@ -45,13 +45,9 @@ Tài khoản lab (trang `/demo/charter/` có nút copy email Access, không ph�
 Sau cổng, trang login DefectDojo (không phải mã OTP vừa rồi):
 
 - **Username:** `admin`
-- **Password:** KHÔNG phải mã OTP của Access. Nó là giá trị đặt sẵn trong file bí mật
-  `infra/.env` (khóa `DD_ADMIN_PASSWORD`). Mật khẩu không được in ra chat/docs; **bạn
-  tự xem trên máy của mình** bằng cách chạy trong terminal (thư mục gốc repo):
-  ```bash
-  grep '^DD_ADMIN_PASSWORD=' infra/.env
-  ```
-  Dòng in ra dạng `DD_ADMIN_PASSWORD=<đây-là-mật-khẩu>` — phần sau dấu `=` chính là mật khẩu, dán vào ô Password.
+- **Password:** KHÔNG phải mã OTP của Access. Copy từ trang
+  [`/demo/charter/`](https://vinsoc.manhquy.io.vn/demo/charter/).
+  `infra/.env` không có trên GitHub nên không lấy mật khẩu từ repo.
 
 - **Nếu muốn đổi sang mật khẩu bạn tự chọn** (đăng nhập cho dễ nhớ), đổi trực tiếp trên VM:
   ```bash

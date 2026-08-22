@@ -20,8 +20,10 @@ Gói nộp 2026-07-31. Code gộp: `agent/normalize_week1_artifacts.py`.
 1. Gộp Nuclei / Trivy / Semgrep tuần 1 thành aggregate có provenance.
 2. Corpus OWASP + ví dụ SQLi/XSS, search offline.
 
-Vẫn chỉ đọc file `.san.*`, không đưa raw vào gói bàn giao. Adapter tuần 2 không
-đi qua normalizer Charter lớn; chỉ ba file baseline tuần 1.
+Adapter tuần 2 đọc bản `.san.*` **khi chúng có trên máy** (thư mục
+`scanners/out/` gitignored, không nằm trong repo). Không đưa raw vào gói bàn
+giao. Sản phẩm nộp đã commit là `artifacts/week1.aggregate.jsonl` + manifest.
+Adapter không đi qua normalizer Charter lớn; chỉ ba file baseline tuần 1.
 
 ## 2. Luồng
 
@@ -64,8 +66,8 @@ Tổng **36** bản ghi schema `week1-submission/v1`. Mỗi dòng có `finding_i
 }
 ```
 
-Digest input khớp `scanners/out` như báo cáo tuần 1. SHA-256 file aggregate
-(submission-era):
+Digest input (khi chạy lại trên máy có `scanners/out/*.san.*`) khớp các bản
+san local. SHA-256 file aggregate đã commit:
 `d7717e70088762525cfcc1708bd60d83bc0564da3828f0cf7a83b3a464f77094`.
 
 ## 4. Kho tri thức
@@ -95,8 +97,8 @@ liệu, không phải entrypoint monorepo hiện tại.
 | Thành phần | Path |
 |---|---|
 | Adapter + schema | `agent/normalize_week1_artifacts.py`, `agent/pii.py` |
-| Input san | `scanners/out/*.san.*` |
-| Aggregate (gói nộp) | `artifacts/week1.aggregate.*` |
+| Input san (local, gitignored) | `scanners/out/*.san.*` — không có trên clone sạch |
+| Aggregate (gói nộp, đã commit) | `artifacts/week1.aggregate.*` |
 | Knowledge | `rag/` |
 | Tests | `tests/` (aggregate / week2 / week3) |
 

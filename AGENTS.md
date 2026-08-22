@@ -79,8 +79,11 @@ pasted into a commit, tracked file, code comment, or chat/log output. Use
 ## Current State (memory · updated 2026-08-20)
 
 Charter meets every minimum-to-pass and exceeds; slim grader 338 passed, full
-overlay 140 passed, PII 10/10 FP 0. Live in production and independently
-red-teamed. Details/how-to (do not duplicate here):
+overlay 140 passed, PII 10/10 FP 0. Live surfaces are up: public docs site
+and Access-gated DefectDojo. A 2026-08-20 review checked the public doors
+(app ports not on the internet, IAP-only SSH, no VM service account). That
+is an exposure review, not a live 9-step AI quality score. Details/how-to
+(do not duplicate here):
 
 - Deployment status: [`docs/deployment.md`](docs/deployment.md) (Cloudflare
   Worker docs site + GCP VM `sentinel-charter` full Charter topology).
