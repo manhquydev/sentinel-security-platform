@@ -1,3 +1,13 @@
+---
+title: "Tuần 6: Tích hợp, đánh giá và demo, nguồn Markdown"
+description: "Nguồn Markdown đầy đủ, đọc / sao chép"
+---
+
+Trang HTML: [Tuần 6: Tích hợp, đánh giá và demo](/reports/week-06/) · [Tải raw](/raw/reports/week-06.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
+
+Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/reports/week-06.md`), không qua bước render HTML.
+
+````markdown
 # Project Sentinel: Báo cáo Tuần 6
 
 ## 1. Việc em đã làm
@@ -123,3 +133,4 @@ Demo đầy đủ (approve rồi gửi Kong) cần điều kiện trong
 loopback.
 
 Không in `infra/.env`, API key, hay dữ liệu người thật.
+````

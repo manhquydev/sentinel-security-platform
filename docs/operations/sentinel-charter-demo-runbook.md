@@ -71,7 +71,7 @@ SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile cha
 ```
 
 Expected: stages include `scan-redact-import` then `analysis-report` then `proposal`.
-Exit **76** when `SENTINEL_CHARTER_APPROVAL_FILE` / `SENTINEL_CHARTER_PUBLIC_KEY` are unset — that is the HITL pause, not a crash. Artifacts land under `${SENTINEL_RUNS_DIR:-.sentinel-runs}/demo/` (`normalized.jsonl`, `report.jsonl`, `request-spec.json`, `manifest.json`).
+When `SENTINEL_CHARTER_APPROVAL_FILE` / `SENTINEL_CHARTER_PUBLIC_KEY` are unset, process exit of `sentinel-demo.sh run`/`resume` is **75** — that is the HITL pause, not a crash. **76** is only the internal approval-stage return; it is remapped to 75. Artifacts land under `${SENTINEL_RUNS_DIR:-.sentinel-runs}/demo/` (`normalized.jsonl`, `report.jsonl`, `request-spec.json`, `manifest.json`).
 
 **Offline / no topology** (still a real scanner command; no Juice Shop required):
 

@@ -27,18 +27,23 @@ Vì sao dùng DefectDojo thay vì tự viết UI: đúng phạm vi đồ án (sp
 
 ## 1. Vào `app.vinsoc.manhquy.io.vn` (bạn đang kẹt ở đây)
 
-Có **2 lớp đăng nhập nối tiếp**:
+Có **hai lần đăng nhập**, lần lượt:
 
-### Lớp 1 — Cloudflare Access (cổng)
+### Lần 1 — Cloudflare Access (cổng)
+
+Tài khoản lab (trang `/demo/charter/` có nút copy email Access, không phải mật khẩu Django):
+
 1. Mở `https://app.vinsoc.manhquy.io.vn`.
-2. Cloudflare hiện màn hình đăng nhập, nhập **email được cấp phép**:
-   - `manhquydev@gmail.com`, `manhq.id@gmail.com`, hoặc `vinsoc@manhquy.id.vn`
-3. Chọn **"Send me a code"** → Cloudflare gửi **mã một lần (OTP)** vào email đó.
-4. Mở email, copy mã, dán vào → Access cho qua.
-   - Muốn thêm email khác được vào? Cloudflare **Zero Trust → Access → Applications → "Sentinel App" → Policies** → thêm email.
+2. Nhập email `vinsoc@manhquy.id.vn`.
+3. Bấm gửi mã (OTP).
+4. Lấy mã tại hộp thư lab:
+   `https://app.manhquy.id.vn/inbox-viewer?email=vinsoc%40manhquy.id.vn`
+5. Dán mã → cổng cho qua.
 
-### Lớp 2 — Đăng nhập DefectDojo (ứng dụng)
-Sau Access, bạn thấy trang login DefectDojo:
+### Lần 2 — DefectDojo (xem lỗ hổng)
+
+Sau cổng, trang login DefectDojo (không phải mã OTP vừa rồi):
+
 - **Username:** `admin`
 - **Password:** KHÔNG phải mã OTP của Access. Nó là giá trị đặt sẵn trong file bí mật
   `infra/.env` (khóa `DD_ADMIN_PASSWORD`). Mật khẩu không được in ra chat/docs; **bạn

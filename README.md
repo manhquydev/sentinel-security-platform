@@ -126,11 +126,17 @@ Cần Docker, `jq`, image pin public.
 ```bash
 bash scripts/sentinel-live-preflight.sh
 bash scripts/sentinel-charter-up.sh          # bật topology; không phải 1 lần chạy Charter
-bash scripts/sentinel-demo.sh run --profile charter --run-id demo
+SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile charter --run-id demo
 ```
 
 `run` / `resume` cần credential provider + material Kong / approval trên máy operator.  
 Runbook: [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md)
+
+Demo mentor 10–15 phút gồm bảy cảnh (quét, báo cáo, đề xuất, duyệt, cổng, chặn độc, che dữ liệu) theo [`sentinel-charter-demo-runbook.md`](docs/operations/sentinel-charter-demo-runbook.md).
+Link [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md) phía trên vẫn là đường operator-gated đầy đủ (Kong / approve / send).
+`scripts/sentinel-demo.sh` mặc định `rag/.venv/bin/python`; venv grader ở đây là `.venv` nên đặt `SENTINEL_PYTHON=.venv/bin/python`.
+Walkthrough trên site tài liệu không phải lần chạy CLI live.
+Bảy cảnh là talk track demo trên máy operator, không thay thế preflight và credential ở trên.
 
 ### Workbench (riêng)
 

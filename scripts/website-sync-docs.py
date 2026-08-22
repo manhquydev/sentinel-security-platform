@@ -24,12 +24,11 @@ REPORTS = [
     ("week-03", "Tuần 3: Agent phân tích bảo mật", "Báo cáo Tuần 3: agent phân tích bám bằng chứng (JSONL)"),
     ("week-04", "Tuần 4: API Gateway và request an toàn", "Báo cáo Tuần 4: Kong, Python tool, allowlist, live 2026-08-14"),
     ("week-05", "Tuần 5: IPI, HITL và che dữ liệu", "Báo cáo Tuần 5: guard dữ liệu không tin cậy, duyệt request, PII"),
-    ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: luồng Charter, CE-01..05 và đóng gói Compose"),
+    ("week-06", "Tuần 6: Tích hợp, đánh giá và demo", "Báo cáo Tuần 6: ghép luồng, đánh giá, demo và đóng gói"),
 ]
 
-# Temporarily omit from https://vinsoc.manhquy.id.vn until the week-6 due date.
-# Keep the slug in REPORTS (repo file still exists). Empty this set to publish.
-SITE_UNPUBLISHED = frozenset({"week-06"})
+# Empty: all six week reports are published. Re-add a slug here to hold one back.
+SITE_UNPUBLISHED = frozenset()
 
 WEEKLY = [r for r in REPORTS if r[0] != "index"]
 PUBLISHED = [r for r in REPORTS if r[0] not in SITE_UNPUBLISHED]
@@ -176,7 +175,7 @@ def write_llms_txt() -> None:
         "# Project Sentinel: Báo cáo tuần",
         "",
         "> Đồ án 6 tuần (VINSOC × VINUNI). TTS Nguyễn Mạnh Quý. "
-        "Tiến độ hiện tại: tuần 1–5 / 6. Tuần 6 chưa tới hạn nộp.",
+        "Tiến độ hiện tại: tuần 1–6 / 6.",
         "",
         f"Site: {SITE_URL}",
         f"Repo: https://github.com/manhquydev/sentinel-security-platform",
@@ -206,6 +205,7 @@ def write_llms_txt() -> None:
             "## Demo",
             "",
             f"- [Hub demo]({SITE_URL}/demo/)",
+            f"- [Demo Charter]({SITE_URL}/demo/charter/)",
             f"- [Demo tuần 3]({SITE_URL}/demo/week-03/)",
             "",
         ]
@@ -224,7 +224,7 @@ description: Báo cáo tuần đồ án Project Sentinel (TTS Nguyễn Mạnh Qu
 template: splash
 hero:
   title: Project Sentinel
-  tagline: Báo cáo tuần 1–5 / 6 của đồ án bảo mật AI (VINSOC × VINUNI). Tuần 6 chưa tới hạn nộp.
+  tagline: Báo cáo tuần 1–6 / 6 của đồ án bảo mật AI (VINSOC × VINUNI).
   actions:
     - text: Xem báo cáo tuần
       link: /reports/
@@ -255,6 +255,9 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
   </Card>
   <Card title="Tuần 5" icon="seti:shield">
     IPI, HITL và che dữ liệu có nhãn. [tuần 5](/reports/week-05/).
+  </Card>
+  <Card title="Tuần 6" icon="rocket">
+    Tích hợp, đánh giá và demo. [tuần 6](/reports/week-06/).
   </Card>
 </CardGrid>
 

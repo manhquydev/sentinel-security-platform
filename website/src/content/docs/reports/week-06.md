@@ -1,4 +1,9 @@
-# Project Sentinel: Báo cáo Tuần 6
+---
+title: "Tuần 6: Tích hợp, đánh giá và demo"
+description: "Báo cáo Tuần 6: ghép luồng, đánh giá, demo và đóng gói"
+---
+
+> **Xem nguồn:** [Markdown](/reports/week-06/markdown/) · [Raw `.md`](/raw/reports/week-06.md) · [llms.txt](https://vinsoc.manhquy.id.vn/llms.txt)
 
 ## 1. Việc em đã làm
 

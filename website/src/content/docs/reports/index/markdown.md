@@ -22,8 +22,9 @@ Nên đọc theo thứ tự. Mỗi tuần ghi việc đã làm, sơ đồ, số 
 | 3 | [Agent phân tích bảo mật](/reports/week-03/) | [xem MD](/reports/week-03/markdown/) | [raw](/raw/reports/week-03.md) |
 | 4 | [API Gateway và request an toàn](/reports/week-04/) | [xem MD](/reports/week-04/markdown/) | [raw](/raw/reports/week-04.md) |
 | 5 | [IPI, HITL và che dữ liệu](/reports/week-05/) | [xem MD](/reports/week-05/markdown/) | [raw](/raw/reports/week-05.md) |
+| 6 | [Tích hợp, đánh giá và demo](/reports/week-06/) | [xem MD](/reports/week-06/markdown/) | [raw](/raw/reports/week-06.md) |
 
-Hiện publish tuần 1–5. Tuần 6 chưa tới hạn nộp nên chưa đưa lên site.
+Hiện có đủ sáu báo cáo tuần.
 
 Máy đọc mục lục: [`/llms.txt`](/llms.txt).
 
