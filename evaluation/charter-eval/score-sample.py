@@ -104,12 +104,22 @@ def main() -> int:
             "report_sha256": _sha256(SAMPLE_REPORT),
             "request": None,
         },
-        "limitations": list(gold["limitations"]) + [
+        "limitations": [
+            "NOT A GRADE / NOT LIVE ACCEPTANCE: confusion counts are a "
+            "sample-dry-run of committed week-3 artifacts against reviewer-owned "
+            "gold IDs that do not match those artifacts. Official live scorer was "
+            "not run. Do not read this table as AI quality.",
+        ] + list(gold["limitations"]) + [
             "This file is a sample / dry-run scorecard, not a live Charter acceptance result.",
             "A live scored run is operator-gated: complete scripts/sentinel-demo.sh then "
             "evaluation/charter-eval/result-report.py evaluate --run-dir RUN.",
         ],
         "live_run": False,
+        "mentor_summary": (
+            "This file is a sample-dry-run (live_run=false), not a live AI quality "
+            "or Charter acceptance score. Gold IDs do not match the committed week-3 "
+            "sample; official result-report.py evaluate was not run."
+        ),
         "mode": "sample-dry-run",
         "official_evaluator": "evaluation/charter-eval/result-report.py",
         "official_evaluator_status": "not-run-operator-gated",
@@ -124,6 +134,7 @@ def main() -> int:
         "schema_version": "charter-eval-sample-dry-run/v1",
     }
     OUTPUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print("SAMPLE-DRY-RUN: written JSON is not live Charter acceptance.", file=sys.stderr)
     print(json.dumps({"confusion": counts, "output": str(OUTPUT.relative_to(ROOT))}, sort_keys=True))
     return 0
 

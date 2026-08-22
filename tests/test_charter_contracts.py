@@ -57,6 +57,9 @@ class CharterContractsTest(unittest.TestCase):
             self.assertEqual(set(record), {"schema_version", "finding_id", "name", "severity", "location",
                                            "scanner_evidence", "explanation", "remediation", "confidence",
                                            "source_ids", "knowledge_provenance"})
+            self.assertIn("Công cụ", record["explanation"])
+            self.assertIn(record["name"], record["explanation"])
+            self.assertNotIn("The scanner reported", record["explanation"])
 
     def test_empty_and_malformed_input_make_no_model_call_or_artifact(self):
         with tempfile.TemporaryDirectory() as directory:

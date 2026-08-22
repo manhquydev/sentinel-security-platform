@@ -87,12 +87,14 @@
     "request": null
   },
   "limitations": [
+    "NOT A GRADE / NOT LIVE ACCEPTANCE: confusion counts are a sample-dry-run of committed week-3 artifacts against reviewer-owned gold IDs that do not match those artifacts. Official live scorer was not run. Do not read this table as AI quality.",
     "This five-case reviewer-owned set is bound to the approved local Charter Nuclei template result for the recorded reviewer version; it is not a claim of broad vulnerability coverage.",
     "A change to the reviewed Charter template, normalized finding identity, or allowed request outcome requires a new reviewed cases/gold version before it can be used for acceptance.",
     "This file is a sample / dry-run scorecard, not a live Charter acceptance result.",
     "A live scored run is operator-gated: complete scripts/sentinel-demo.sh then evaluation/charter-eval/result-report.py evaluate --run-dir RUN."
   ],
   "live_run": false,
+  "mentor_summary": "This file is a sample-dry-run (live_run=false), not a live AI quality or Charter acceptance score. Gold IDs do not match the committed week-3 sample; official result-report.py evaluate was not run.",
   "mode": "sample-dry-run",
   "official_evaluator": "evaluation/charter-eval/result-report.py",
   "official_evaluator_status": "not-run-operator-gated",

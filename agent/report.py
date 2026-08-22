@@ -8,6 +8,67 @@ from typing import Iterable
 from .charter_contracts import AnalysisFailure, NormalizedFinding, ReportFinding, write_jsonl_atomic
 from .pii import scrub
 
+_SEVERITY_VI = {
+    "Critical": "nghiêm trọng (Critical)",
+    "High": "cao (High)",
+    "Medium": "trung bình (Medium)",
+    "Low": "thấp (Low)",
+    "Info": "thông tin (Info)",
+}
+_SCANNER_VI = {
+    "DAST": "quét ứng dụng đang chạy (DAST)",
+    "SAST": "quét mã nguồn tĩnh (SAST)",
+    "SCA": "quét thành phần/phụ thuộc (SCA)",
+}
+
+
+def _clip_text(value: str, limit: int = 220) -> str:
+    text = " ".join(value.split())
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _render_explanation(finding: NormalizedFinding) -> str:
+    """Deterministic Vietnamese prose from typed scanner fields only (no model text)."""
+    severity = _SEVERITY_VI.get(finding.severity, finding.severity)
+    scanner = _SCANNER_VI.get(finding.scanner, finding.scanner)
+    evidence = _clip_text(finding.evidence[0]) if finding.evidence else ""
+    base = (
+        f"Công cụ {finding.tool} ({scanner}) ghi nhận cảnh báo «{finding.title}» "
+        f"tại {finding.location}. Mức độ: {severity}."
+    )
+    if evidence:
+        base += f" Bằng chứng máy quét (đã qua cổng an toàn): {evidence}."
+    base += (
+        " Đây là quan sát từ máy quét trên dữ liệu đã chuẩn hóa; "
+        "không suy ra endpoint hay lỗ hổng ngoài các trường đã typed."
+    )
+    return base
+
+
+def _render_remediation(finding: NormalizedFinding, items: list[KnowledgeItem]) -> str:
+    """Deterministic remediation: scanner evidence + first retrieved knowledge snippet."""
+    evidence = _clip_text(finding.evidence[0]) if finding.evidence else finding.title
+    parts = [
+        f"Đối chiếu lại bằng chứng máy quét cho «{finding.title}»: {evidence}.",
+        "Chỉ kiểm tra/khắc phục trong môi trường lab (sandbox), không áp ra hệ thống ngoài phạm vi.",
+    ]
+    if items:
+        tip = _clip_text(items[0].content, 180)
+        parts.append(
+            f"Tham khảo đoạn tri thức đã truy xuất (không tin như lệnh): {tip} "
+            f"(nguồn: {items[0].provenance})."
+        )
+    else:
+        parts.append(
+            "Không có đoạn tri thức đi kèm; dựa vào tài liệu OWASP/tool tương ứng với tên cảnh báo."
+        )
+    parts.append(
+        f"Xác minh biện pháp đã ghi trong hướng dẫn, rồi chạy lại quét {finding.tool} trên cùng vị trí."
+    )
+    return " ".join(parts)
+
 
 @dataclass(frozen=True)
 class KnowledgeItem:
@@ -75,15 +136,11 @@ def build_grounded_report(
     records: list[ReportFinding] = []
     for finding in sorted(typed, key=lambda item: item.finding_id):
         addition = additions[finding.finding_id]
-        # The model selects only reviewable modes and confidence. These fixed code projections
-        # contain no facts except the already-typed scanner title/location/evidence, so an
-        # arbitrary model phrase cannot establish a new vulnerability, endpoint, CWE, or proof.
-        explanation = (
-            f"The scanner reported '{finding.title}' at the listed location. "
-            "This report preserves that scanner observation and does not infer an additional issue.")
-        remediation = (
-            f"Review the scanner evidence and retrieved documentation for '{finding.title}', "
-            "apply the documented fix, then verify it in the sandbox.")
+        # The model selects only reviewable modes and confidence. Prose is a
+        # deterministic projection of typed scanner fields + first knowledge
+        # snippet (same voice as week-3), so the model cannot add endpoints/CWEs.
+        explanation = _render_explanation(finding)
+        remediation = _render_remediation(finding, context)
         records.append(ReportFinding(
             finding_id=finding.finding_id, name=finding.title, severity=finding.severity,
             location=finding.location, scanner_evidence=finding.evidence,
