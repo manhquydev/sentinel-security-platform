@@ -39,3 +39,13 @@ repeating. Entries are never edited to look better in hindsight.
   — the charter's DB-dump surface didn't exist, so Week-9 built a simulated one and scrubbed it at
   capture; the plan's sink inventory was two-thirds wrong until the code was read; measurement over
   an absent corpus is the same lie as no measurement.
+- [2026-07-26 — The night the lab audited itself](2026-07-26-the-night-the-lab-audited-itself.md)
+  — turning the research protocol on our own work; a withdrawn AUC claim that
+  the code never heard, and the cost of treating prose as a patch.
+- [2026-08-20 — Charter goes to production, and the lab audits its own cloud](2026-08-20-production-deploy-and-hardening.md)
+  — local completion to a gated GCP DefectDojo; the honest live-scorecard
+  refusal; metadata-guard after a red-team found the default compute SA.
+- [2026-08-24 — Handover verify, then cloneable docs instead of a hidden talk track](2026-08-24-handover-verify-and-cloneable-docs.md)
+  — cross-audit caught a gitignored demo runbook and a fake week-1→week-3
+  chain; closable path was tracked install/demo plus a deterministic week-1
+  report.

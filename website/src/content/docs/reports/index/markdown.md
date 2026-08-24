@@ -26,6 +26,11 @@ Nên đọc theo thứ tự. Mỗi tuần ghi việc đã làm, sơ đồ, số 
 
 Hiện có đủ sáu báo cáo tuần.
 
+Checklist bàn giao cuối (file trong repo, không host trên Worker):
+`docs/reports/san-pham-ban-giao-cuoi-cung.md`.  
+Đối chiếu chi tiết: `docs/reports/handover-acceptance-checklist.md`.  
+Báo cáo kết quả: `docs/reports/handover-results.md`.
+
 Máy đọc mục lục: [`/llms.txt`](/llms.txt).
 
 Chỉ tin đường dẫn và digest ghi trong từng báo cáo. Site không host file quét thô

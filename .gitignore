@@ -168,6 +168,9 @@ website/dist/
 website/node_modules/
 website/.astro/
 
+# Generated NotebookLM flat export (regenerate: bash scripts/export-notebooklm.sh)
+notebooklm/
+
 # local tooling / generated artifacts
 .playwright-mcp/
 outputs/

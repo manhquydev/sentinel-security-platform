@@ -11,6 +11,8 @@ evidence claims. Its CMC inventory is not Charter evidence.
 
 Đọc thêm (tiếng Việt, cửa vào monorepo): root [`README.md`](../../README.md),
 bản đồ [`docs/README.md`](../README.md), báo cáo tuần [`docs/reports/`](../reports/index.md).
+Cài đặt / demo clone-and-run: [`install.md`](../operations/install.md),
+[`charter-demo.md`](../operations/charter-demo.md).
 
 ## Problem — Vấn đề cần giải quyết
 
@@ -56,6 +58,8 @@ report preserves scanner facts rather than inferring new ones.
   come only from the fixed SAFE_REQUEST catalog; finding locations never become
   path, query, or body. This closes the week3→proposal schema split only—it is
   not free-form request invention and is not Workbench or CMC evidence.
+  How the agent runs and how a finding is proven on the report:
+  [charter-agent-evidence.md](charter-agent-evidence.md).
 - Gateway: Kong fronts the app; identities use short-TTL OAuth2 plus fail-closed
   ACL. The charter executor additionally presents a dedicated API key on two
   exact `/sentinel-charter/...` routes; the key is removed before OAuth denial,

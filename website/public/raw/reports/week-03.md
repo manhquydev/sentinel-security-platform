@@ -5,6 +5,9 @@
 Tuần này em làm agent đọc aggregate tuần 1–2, gộp cảnh báo trùng, rồi in JSONL.
 Giải thích và hướng xử lý bằng tiếng Việt.
 
+Luồng evidence-bound đầy đủ (live + tuần 3, cách “chứng minh” finding):
+[charter-agent-evidence.md](../product/charter-agent-evidence.md).
+
 ## 1. Việc em đã làm
 
 | Việc | Chỗ trong repo |

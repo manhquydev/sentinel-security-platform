@@ -6,7 +6,9 @@ evidence.
 **Authority:** `docs/product/sentinel-charter-brief.md`,
 `docs/sentinel-six-week-as-built-architecture.md`.  
 **Verified:** 2026-08-20, from this repository, slim `.venv` plus optional-dep
-overlay. No live Kong / Vertex run today.
+overlay. No live Kong / Vertex run that day. Docs doors updated 2026-08-24
+(`install.md`, `charter-demo.md`, week-1 aggregate report); test counts below
+are still the 2026-08-20 run.
 
 ## 1. Verdict
 
@@ -15,8 +17,8 @@ scanners (Semgrep / Nuclei / Trivy) with redaction, a typed Week-1/Week-2
 normalizer, a provenance-bound analysis agent that publishes JSONL without
 inventing endpoints, a fixed-catalog Python executor behind Kong ACL + a
 dedicated API key, Ed25519 HITL that refuses to send on reject, IPI quarantine
-plus labeled PII redaction with Pass/Fail tests, and a README + 10–15 minute
-demo spine. Remaining gaps are operator-gated live runs (`infra/.env`, Vertex
+plus labeled PII redaction with Pass/Fail tests, and a README + tracked
+7-scene demo (`docs/operations/charter-demo.md`). Remaining gaps are operator-gated live runs (`infra/.env`, Vertex
 ADC, Kong) or optional-dependency suites already green when those packages are
 installed — not missing Charter behavior. Workbench stays out of this grade.
 
@@ -28,7 +30,7 @@ installed — not missing Charter behavior. Workbench stays out of this grade.
 | **(2) Chất lượng AI Agent — 20%** Evidence-bound analysis, structured output, limited hallucination, proposals match data | **Meets (offline contracts).** Model may enrich wording only; facts and request paths are code-owned. Live FP/FN quality is **ungated**: only a dry-run scorecard is committed (`evaluation/charter-eval/charter-evaluation.json`, `live_run: false`); a live `result-report.py` run needs the operator stack. | Analysis: `agent/week3_analysis.py` (groups duplicates, severity, deterministic VI prose + optional enrichment), `agent/recon.py`, system prompt `agent/prompts/charter-system-prompt.md`. Knowledge: `rag/retrieve.py`, `rag/charter-corpus-manifest.json`, `rag/charter-examples/`. Structured JSONL: `Week3ReportFinding` / `propose_report_jsonl`. No invented endpoints: `tests/test_charter_contracts.py` (`test_model_invention_rejects_all_publication`, empty/malformed makes no model call). Proposals only from `SAFE_REQUEST_CASES` in `agent/charter_requests.py` via `agent/charter_proposal.py` — finding locations never become path/query/body (`tests/test_charter_proposal.py`). |
 | **(3) An toàn hệ thống — 20%** Allowlist, HITL, IPI protection, PII redaction | **Meets.** Load-bearing controls are isolation + catalog + HITL + gateway; the IPI regex is a measured extra, not the guarantee. | Allowlist: `scanners/target-allowlist.sh`, Kong ACL in `infra/kong/kong.declarative.yml.tmpl` / `infra/kong/README.md` (fail-closed groups; Charter paths `/sentinel-charter/rest/products/search` and `/sentinel-charter/rest/basket`). HITL: `agent/charter_approval.py` (Ed25519 approve/reject/revoke), `scripts/sentinel-charter-approve.py`; reject never mints or sends (`tests/test_charter_requests.py`). IPI: `agent/charter_response_guard.py` + fixtures `tests/fixtures/charter-response-ipi-goal.json`, `tests/fixtures/charter-response-ipi-secrets.json`; untrusted data labeling `docs/decisions/0006-the-gateway-labels-provenance-it-does-not-detect-injection.md`. PII: `agent/pii.py`, `evaluation/pii-redaction/measure.py`, `tests/test_week5_labeled_redaction.py`. |
 | **(4) Chất lượng mã nguồn — 15%** Clear structure, README, tests, no secrets in source | **Meets.** Slim grader is the published contract; optional deps are documented, not hidden. | Layout: `scanners/`, `agent/`, `rag/`, `infra/kong/`, `scripts/`, `evaluation/`. README ritual: root `README.md`. Tests: `pytest.ini` (slim default), `docs/operations/full-test-suite.md` (overlay). Secrets: `infra/.env` gitignored; template `infra/.env.example`; pins only in `scanners/image-pins.env`. Kong template uses `${PLACEHOLDER}`s; rendered config is gitignored. Raw scan output stays out of git (`scanners/out/` is gitignored; see §4). |
-| **(5) Tài liệu và trình bày — 15%** Architecture, product value, limits, stable demo | **Meets.** | Architecture: `docs/sentinel-six-week-as-built-architecture.md`. Product 1–2 pages: `docs/product/sentinel-charter-brief.md`. Limits + next: brief §Limitations / §Next steps, this file §4–5. Week reports: `docs/reports/week-01.md` … `week-06.md`, index `docs/reports/index.md`. Demo 10–15 min: `docs/operations/sentinel-charter-demo-runbook.md`, facade `scripts/sentinel-week5-demo.py` + `infra/week5-demo/`. Live runbook: `docs/operations/sentinel-live-acceptance-runbook.md`. Site: `website/`, https://vinsoc.manhquy.io.vn and https://vinsoc.manhquy.id.vn (same Worker); gated live app at https://app.vinsoc.manhquy.io.vn (Cloudflare Access + Tunnel → DefectDojo). |
+| **(5) Tài liệu và trình bày — 15%** Architecture, product value, limits, stable demo | **Meets.** | Architecture: `docs/sentinel-six-week-as-built-architecture.md`. Product 1–2 pages: `docs/product/sentinel-charter-brief.md`. Limits + next: brief §Limitations / §Next steps, this file §4–5. Week reports: `docs/reports/week-01.md` … `week-06.md`, index `docs/reports/index.md`. Cloneable demo: `docs/operations/install.md` + `docs/operations/charter-demo.md` (tracked; personal 15-min talk track stays gitignored). Facade: `scripts/sentinel-week5-demo.py` + `infra/week5-demo/`. Live runbook: `docs/operations/sentinel-live-acceptance-runbook.md`. Site: `website/`, https://vinsoc.manhquy.io.vn and https://vinsoc.manhquy.id.vn (same Worker); gated live app at https://app.vinsoc.manhquy.io.vn (Cloudflare Access + Tunnel → DefectDojo). |
 
 ### Minimum-bar checklist (Yêu cầu tối thiểu để đạt)
 
@@ -43,7 +45,7 @@ installed — not missing Charter behavior. Workbench stays out of this grade.
 | Manual approval step | `agent/charter_approval.py`, `scripts/sentinel-charter-approve.py` | Met |
 | Prompt-injection tests | `agent/charter_response_guard.py`, `tests/test_charter_contracts.py`, IPI fixtures | Met |
 | Sensitive-data redaction | `agent/pii.py`, `evaluation/pii-redaction/` | Met |
-| README and final demo | `README.md`, `scripts/sentinel-demo.sh`, demo runbook | Met |
+| README and final demo | `README.md`, `docs/operations/install.md`, `docs/operations/charter-demo.md`, `scripts/sentinel-demo.sh` | Met |
 
 Advanced items named as optional in the spec (Multi-Agent, MCP/A2A, GraphRAG,
 vLLM, LLM-as-a-Judge) are correctly **not** claimed as Charter completion.

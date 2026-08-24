@@ -13,7 +13,7 @@ Không dùng artifact Workbench làm bằng chứng nghiệm thu Charter; không
 
 | Product | Authority | Điểm vào live / local |
 |---|---|---|
-| **Charter** | [Charter brief](product/sentinel-charter-brief.md), [as-built](sentinel-six-week-as-built-architecture.md) | `scripts/sentinel-live-preflight.sh` → `scripts/sentinel-charter-up.sh` → `scripts/sentinel-demo.sh` · [runbook live](operations/sentinel-live-acceptance-runbook.md) |
+| **Charter** | [Charter brief](product/sentinel-charter-brief.md), [as-built](sentinel-six-week-as-built-architecture.md) | [Cài đặt](operations/install.md) · [demo 7 cảnh](operations/charter-demo.md) · live: `scripts/sentinel-live-preflight.sh base` → `scripts/sentinel-charter-up.sh` → `scripts/sentinel-demo.sh` · [runbook live](operations/sentinel-live-acceptance-runbook.md) |
 | **Workbench** | [Workbench brief](product/sentinel-security-research-workbench.md) | `scripts/workbench-up.sh`, preflight scanner, corpus acquire/inventory · [demo](operations/sentinel-workbench-demo.md), [viability](operations/workbench-scanner-viability.md) |
 
 Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
@@ -26,6 +26,7 @@ Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
 
 - [README gốc](../README.md) — giới thiệu, luồng, quick start  
 - [Charter brief](product/sentinel-charter-brief.md) — hợp đồng sản phẩm công bố  
+- [Agent Charter: chạy và chứng minh finding](product/charter-agent-evidence.md) — evidence-bound, không exploit  
 - [Kiến trúc as-built sáu tuần](sentinel-six-week-as-built-architecture.md) — luồng, tin cậy, giới hạn bằng chứng  
 - [decisions/](decisions/) — quyết định bền  
 - Charter assignment đầy đủ 6 tuần: local-only (`Project_Sentinel_6-week.md`, gitignore) — **không** nằm trên map public  
@@ -35,12 +36,17 @@ Pin scanner: [`scanners/image-pins.env`](../scanners/image-pins.env).
 - [Mục lục báo cáo](reports/index.md) — Tuần 1–6
 - [Tuần 1](reports/week-01.md) · [Tuần 2](reports/week-02.md) · [Tuần 3](reports/week-03.md) · [Tuần 4](reports/week-04.md) · [Tuần 5](reports/week-05.md) · [Tuần 6](reports/week-06.md)
 - [Sample artifacts Tuần 3](reports/artifacts/README.md)  
+- [Sản phẩm bàn giao cuối cùng](reports/san-pham-ban-giao-cuoi-cung.md) — checklist nộp (mã / tài liệu / kết quả / demo / brief / tiêu chí)  
+- [Đối chiếu chi tiết](reports/handover-acceptance-checklist.md) — nhật ký verify, path dài  
+- [Báo cáo kết quả bàn giao](reports/handover-results.md) — finding, agent đúng/sai, FP/FN, cải tiến
 - Site Starlight: [website/](../website/README.md) · https://vinsoc.manhquy.io.vn · https://vinsoc.manhquy.id.vn · [`/llms.txt`](https://vinsoc.manhquy.io.vn/llms.txt)  
 - App live (DefectDojo, sau Cloudflare Access): https://app.vinsoc.manhquy.io.vn — xem [hướng dẫn dùng](operations/live-deployment-guide.md)  
 
 ### Vận hành
 
 - [**Hướng dẫn dùng & test bản deploy production**](operations/live-deployment-guide.md) — bắt đầu ở đây nếu mở `app.vinsoc` mà chưa rõ cách dùng  
+- [Hướng dẫn cài đặt](operations/install.md) — grader / facade / topology  
+- [Hướng dẫn chạy demo 7 cảnh](operations/charter-demo.md) — clone-and-run, không phải kịch bản nói  
 - [Trạng thái deploy (Worker + GCP VM)](deployment.md)  
 - [Runbook nghiệm thu live Charter](operations/sentinel-live-acceptance-runbook.md)  
 - [Workbench demo](operations/sentinel-workbench-demo.md)  
@@ -89,6 +95,16 @@ Truth thực thi: code, tests, CI, runtime. Docs chỉ trỏ và giữ WHY.
 Material tương thích / lịch sử Harness nằm ngoài cài đặt mặc định — xem repo [repository-harness](https://github.com/hoangnb24/repository-harness) khi làm CLI/control-plane tùy chọn.
 
 ---
+
+## NotebookLM (học, thư mục phẳng)
+
+Cây `docs/` giữ phân mục (product / decisions / plans / …) vì website, link tương đối, và agent phụ thuộc vào đó. Bản sao **một thư mục, không thư mục con** nằm ở `notebooklm/` (local, gitignore):
+
+```bash
+bash scripts/export-notebooklm.sh
+```
+
+Trong `notebooklm/`: chọn 10 file `00-pack-*.md` để import hết trên gói miễn phí (50 nguồn), hoặc chọn từng file `.md`. Xem `notebooklm/00-HUONG-DAN-IMPORT.md`.
 
 ## Cập nhật docs
 

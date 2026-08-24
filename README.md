@@ -86,6 +86,11 @@ Repo có **hai product**; không trộn bằng chứng.
 
 ---
 
+Cài đặt theo tầng (grader / facade / live): [`docs/operations/install.md`](docs/operations/install.md).  
+Demo bảy cảnh (clone-and-run): [`docs/operations/charter-demo.md`](docs/operations/charter-demo.md).  
+Checklist bàn giao: [`docs/reports/san-pham-ban-giao-cuoi-cung.md`](docs/reports/san-pham-ban-giao-cuoi-cung.md).  
+Báo cáo kết quả bàn giao: [`docs/reports/handover-results.md`](docs/reports/handover-results.md).
+
 ## Chạy nhanh
 
 ### Mentor / grader (chạy lại test & eval Tuần 5–6)
@@ -121,22 +126,41 @@ Cần Docker, `jq`, image pin public.
 )
 ```
 
+### Demo bảy cảnh (facade, không `infra/.env`)
+
+```bash
+docker compose -f infra/week5-demo/docker-compose.yml up --build -d --wait
+bash scripts/week5-demo-curl.sh
+PYTHONPATH=. .venv/bin/python scripts/analyze-week1-aggregate.py
+```
+
+Hướng dẫn từng cảnh (quét, báo cáo, đề xuất, duyệt, Kong, IPI, PII):
+[`docs/operations/charter-demo.md`](docs/operations/charter-demo.md).
+Cảnh Kong **không** có đường offline — thiếu key thì dừng ở Approve/Reject trên facade.
+
+### Quét đã commit → báo cáo cuối (offline)
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/analyze-week1-aggregate.py
+```
+
+Ghi `docs/reports/artifacts/week1-aggregate-report.jsonl` từ
+`artifacts/week1.aggregate.jsonl`. Không gọi LiteLLM. Không phải điểm AI live.
+
 ### Charter (live, operator)
 
 ```bash
-bash scripts/sentinel-live-preflight.sh
+bash scripts/sentinel-live-preflight.sh base
 bash scripts/sentinel-charter-up.sh          # bật topology; không phải 1 lần chạy Charter
 SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile charter --run-id demo
 ```
 
 `run` / `resume` cần credential provider + material Kong / approval trên máy operator.  
-Runbook: [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md)
+Thiếu `base` hoặc `dispatch RUN_ID` thì preflight exit 2.  
+Runbook live: [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md).
 
-Cửa nộp: khối mentor/grader phía trên, lệnh `run` này, và trang `/demo/charter/`
-(kể bảy bước + hai bản ghi). Kịch bản nói 15 phút là tài liệu cá nhân trên máy
-operator, không nằm trong git.
-Link [live acceptance](docs/operations/sentinel-live-acceptance-runbook.md) là
-đường operator-gated (Kong / approve / send).
+Cửa nộp: khối mentor/grader, khối facade bảy cảnh, lệnh `run` này, và trang `/demo/charter/`.
+Kịch bản nói 15 phút (đồng hồ trình bày) vẫn là tài liệu cá nhân, gitignore.
 `scripts/sentinel-demo.sh` mặc định `rag/.venv/bin/python`; venv grader ở đây là
 `.venv` nên đặt `SENTINEL_PYTHON=.venv/bin/python`.
 Walkthrough trên site không phải lần chạy CLI live.

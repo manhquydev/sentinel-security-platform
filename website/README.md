@@ -63,10 +63,11 @@ Sinh bởi `scripts/website-sync-docs.py`.
 | URL | Nội dung |
 |-----|----------|
 | `/demo/` | Hub demo mentor |
+| `/demo/charter/` | Walkthrough Charter (7 cảnh trên site; CLI nằm trong repo) |
 | `/demo/week-03/` | Interactive Week 3 pipeline (sample JSONL) |
 | `/demo/week-03/*.jsonl` | Fixtures (không wipe bởi sync) |
 
-**Production:** https://vinsoc.manhquy.id.vn/demo/week-03/
+**Production:** https://vinsoc.manhquy.id.vn/demo/charter/ · https://vinsoc.manhquy.id.vn/demo/week-03/
 
 Demo Tuần 3 gồm: map **4→3** (aggregate → findings), badge code/prose/model, digests thu gọn, fail-closed CLI shape, honesty banner, pin `meta.sha256`.
 

@@ -53,7 +53,8 @@ what they found. Coordinated as a lead over parallel omp workers (herdr), with
 ## State after this session
 
 Charter meets every minimum-to-pass and exceeds; live on GCP with a gated,
-populated DefectDojo; independently red-teamed; secrets never in git. Standing
+populated DefectDojo; public doors reviewed 2026-08-20 (not a live AI-quality
+score); secrets never in git. Standing
 follow-ups: a live `live_run:true` scorecard needs a model that honors the closed
 enrichment schema (model↔contract fork, not a validator weakening); the VM bills
 until teardown; the maintainer must rotate the Cloudflare/R2 credentials shared

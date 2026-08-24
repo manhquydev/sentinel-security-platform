@@ -17,10 +17,12 @@ and process overhead.
 - `docs/plans/completed/`: completed execution history worth retaining.
 - Project code, tests, CI, and runtime signals: executable and observable truth.
 - `scripts/`: executable operators. Charter live path:
-  `sentinel-live-preflight.sh`, `sentinel-charter-up.sh`, `sentinel-demo.sh`.
-  Workbench: `workbench-up.sh`, `workbench-scanner-preflight.sh`,
-  `workbench-corpus-acquire.py`, `workbench-corpus-inventory.py`. See
-  `scripts/README.md` for lake/scan orchestration detail.
+  `sentinel-live-preflight.sh base`, `sentinel-charter-up.sh`, `sentinel-demo.sh`.
+  Cloneable operator docs: `docs/operations/install.md`,
+  `docs/operations/charter-demo.md`. Workbench: `workbench-up.sh`,
+  `workbench-scanner-preflight.sh`, `workbench-corpus-acquire.py`,
+  `workbench-corpus-inventory.py`. See `scripts/README.md` for lake/scan
+  orchestration detail.
 - `scanners/image-pins.env`: committed `@sha256` image pins (no secrets).
 
 Use `docs/README.md` for the map; prefer targeted search.

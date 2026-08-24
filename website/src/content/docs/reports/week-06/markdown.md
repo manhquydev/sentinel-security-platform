@@ -22,7 +22,7 @@ Nội dung dưới đây là **toàn bộ file Markdown** trong monorepo (`docs/
 | Nhật ký (thời gian, số request, cảnh báo, lần duyệt, lỗi) | `scripts/sentinel-manifest.py` |
 | 5 trường hợp + đáp án | `evaluation/charter-eval/cases.json`, `gold.json` |
 | Bảng điểm mẫu | `evaluation/charter-eval/charter-evaluation.json` |
-| Hướng dẫn chạy lại (nộp) | README · trang `/demo/charter/` · `scripts/sentinel-demo.sh` |
+| Hướng dẫn chạy lại (nộp) | README · `docs/operations/install.md` · `docs/operations/charter-demo.md` · trang `/demo/charter/` · `scripts/sentinel-demo.sh` |
 | Mô tả sản phẩm 1–2 trang | `docs/product/sentinel-charter-brief.md` |
 | Docker Compose | `scripts/sentinel-charter-up.sh` |
 
@@ -101,8 +101,8 @@ không lấy mật khẩu từ repo. Rồi Products → `juice-shop-harness`. Hi
 bảng đó có **5** lỗ hổng lab (4 Trivy, 1 Nuclei).
 
 DefectDojo chỉ hiện bước quét. Phân tích / duyệt / cổng vẫn là lệnh trên máy
-(README + `scripts/sentinel-demo.sh`). Kịch bản nói 15 phút để em tự luyện,
-không nộp.
+(README + `docs/operations/charter-demo.md` + `scripts/sentinel-demo.sh`).
+Kịch bản nói 15 phút vẫn local / gitignore.
 
 ## 5. Site tài liệu và DefectDojo
 
@@ -140,13 +140,18 @@ PYTHON=.venv/bin/python bash tests/week5-demo-facade-test.sh
 
 ### Demo
 
+Cửa nộp clone-and-run (file trong repo, không host trên Worker):
+`docs/operations/install.md` (ba tầng) và `docs/operations/charter-demo.md`
+(7 cảnh). Facade không cần `infra/.env`. Cảnh Kong **không** có đường offline.
+
+Controller live (cần credential máy operator):
+
 ```bash
 SENTINEL_PYTHON=.venv/bin/python bash scripts/sentinel-demo.sh run --profile charter --run-id demo
 ```
 
-Lệnh trên là cửa nộp. Kịch bản nói 15 phút em giữ trên máy, không đưa vào
-git. Demo đủ Kong / duyệt cần
-`docs/operations/sentinel-live-acceptance-runbook.md`, chỉ lab loopback.
+Demo đủ Kong / duyệt: `docs/operations/sentinel-live-acceptance-runbook.md`,
+chỉ lab loopback. Kịch bản nói 15 phút vẫn local / gitignore.
 
 Không in `infra/.env`, API key, hay dữ liệu người thật.
 ````

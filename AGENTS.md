@@ -76,20 +76,25 @@ be committed: `infra/.env` stays git-ignored, and its contents must never be
 pasted into a commit, tracked file, code comment, or chat/log output. Use
 `infra/.env.example` as the template for documenting required keys.
 
-## Current State (memory · updated 2026-08-20)
+## Current State (memory · updated 2026-08-24)
 
 Charter meets every minimum-to-pass and exceeds; slim grader 338 passed, full
-overlay 140 passed, PII 10/10 FP 0. Live surfaces are up: public docs site
-and Access-gated DefectDojo. A 2026-08-20 review checked the public doors
-(app ports not on the internet, IAP-only SSH, no VM service account). That
-is an exposure review, not a live 9-step AI quality score. Details/how-to
-(do not duplicate here):
+overlay 140 passed, PII 10/10 FP 0. Cloneable handover doors (2026-08-24):
+tracked install, 7-scene demo, and week-1 aggregate→report. Live surfaces are
+up: public docs site and Access-gated DefectDojo. A 2026-08-20 review checked
+the public doors (app ports not on the internet, IAP-only SSH, no VM service
+account). That is an exposure review, not a live 9-step AI quality score.
+Details/how-to (do not duplicate here):
 
+- Cloneable install: [`docs/operations/install.md`](docs/operations/install.md).
+- Cloneable 7-scene demo: [`docs/operations/charter-demo.md`](docs/operations/charter-demo.md).
+- Handover tick-file: [`docs/reports/handover-acceptance-checklist.md`](docs/reports/handover-acceptance-checklist.md).
+- Handover results: [`docs/reports/handover-results.md`](docs/reports/handover-results.md).
 - Deployment status: [`docs/deployment.md`](docs/deployment.md) (Cloudflare
   Worker docs site + GCP VM `sentinel-charter` full Charter topology).
 - Use/test the live deployment: [`docs/operations/live-deployment-guide.md`](docs/operations/live-deployment-guide.md).
 - Completion evidence: [`docs/reports/sentinel-completion-selfassessment.md`](docs/reports/sentinel-completion-selfassessment.md).
-- Latest journal: [`docs/journal/2026-08-20-production-deploy-and-hardening.md`](docs/journal/2026-08-20-production-deploy-and-hardening.md).
+- Latest journal: [`docs/journal/2026-08-24-handover-verify-and-cloneable-docs.md`](docs/journal/2026-08-24-handover-verify-and-cloneable-docs.md).
 
 Live surfaces: docs `https://vinsoc.manhquy.io.vn` (+ `.id.vn`); gated app
 `https://app.vinsoc.manhquy.io.vn` (Cloudflare Access → DefectDojo, 5 real

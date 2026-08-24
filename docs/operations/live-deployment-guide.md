@@ -99,8 +99,9 @@ Kỳ vọng: **102 passed**, PII **recall 10/10 FP 0/10 PASS**, facade **19 pass
 
 ## 4. Demo luồng end-to-end (quét → agent → HITL → gateway → guardrail)
 
-Cửa nộp: README (test/eval + `sentinel-demo.sh`) và trang `/demo/charter/`.
-Kịch bản nói 15 phút là tài liệu cá nhân trên máy operator, không nằm trong git.
+Cửa nộp clone-and-run: [`install.md`](install.md) (ba tầng) và
+[`charter-demo.md`](charter-demo.md) (7 cảnh). Facade không cần `infra/.env`.
+Kịch bản nói 15 phút vẫn local / gitignore.
 
 Luồng đầy đủ (live) là operator-gated (cần `infra/.env` + Vertex ADC + Kong) — mô tả trong [`sentinel-live-acceptance-runbook.md`](sentinel-live-acceptance-runbook.md).
 

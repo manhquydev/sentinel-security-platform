@@ -15,3 +15,17 @@ python3 scripts/generate-week3-sample-artifacts.py
 ```
 
 Lab samples only, not live Juice Shop output.
+
+## Week-1 aggregate → report (handover)
+
+Offline deterministic report from the committed 36-finding aggregate.
+Not a live LiteLLM score.
+
+| File | Role |
+|------|------|
+| `week1-aggregate-report.jsonl` | `week3-analysis/v1` rows from `artifacts/week1.aggregate.jsonl` |
+| `week1-aggregate-report.manifest.json` | Input/output digests, `live_run: false` |
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/analyze-week1-aggregate.py
+```

@@ -49,7 +49,9 @@ flowchart LR
   từ ứng dụng là dữ liệu, không phải chỉ dẫn cho model. Điểm vào của model được
   sở hữu bởi [`agent/recon.py`](../agent/recon.py) và đường compatibility Week 3
   bởi [`agent/week3_analysis.py`](../agent/week3_analysis.py); các contract kiểm
-  tra của chúng là nơi xác định hành vi chi tiết.
+  tra của chúng là nơi xác định hành vi chi tiết. Cách agent chạy và cách một
+  finding được chứng minh trên report:
+  [`docs/product/charter-agent-evidence.md`](product/charter-agent-evidence.md).
 - **Biên model:** system prompt là nội dung do operator kiểm soát; findings và
   tri thức được gắn provenance trước khi gọi LiteLLM. Báo cáo chỉ được xuất bản
   qua các contract của đường Charter, thay vì coi văn bản model là sự thật độc
@@ -76,6 +78,7 @@ flowchart LR
 | Gửi request qua gateway | [`agent/charter_requests.py`](../agent/charter_requests.py), [Kong](../infra/kong/README.md), [`scripts/sentinel-charter-executor.py`](../scripts/sentinel-charter-executor.py) |
 | Guardrails và redaction response | [`agent/charter_response_guard.py`](../agent/charter_response_guard.py), [`agent/pii.py`](../agent/pii.py) |
 | Điều phối, manifest và đánh giá | [`scripts/sentinel-demo.sh`](../scripts/sentinel-demo.sh), [`scripts/sentinel-manifest.py`](../scripts/sentinel-manifest.py), [`evaluation/charter-eval/`](../evaluation/charter-eval/) |
+| Cài đặt và demo clone-and-run | [`docs/operations/install.md`](operations/install.md), [`docs/operations/charter-demo.md`](operations/charter-demo.md) |
 
 ## Phạm vi và trạng thái bằng chứng
 
