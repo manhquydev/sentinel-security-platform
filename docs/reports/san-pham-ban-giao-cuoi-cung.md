@@ -1,19 +1,12 @@
 # Sản phẩm bàn giao cuối cùng
 
-Project Sentinel — product **Charter**. Workbench không tính.
-
-Bấm **tên file** ở cột Chỗ để mở đúng chỗ (Preview / IDE).
+Project Sentinel — product **Charter**.
 
 | | Nghĩa |
 |---|---|
 | `[x]` | Có trong repo, đúng hạng mục |
 | `[~]` | Có một phần, hoặc còn phụ thuộc máy operator |
 | `[ ]` | Thiếu |
-
-**Tóm tắt:** đủ hạng mục đề bài trên worktree. Không có `[ ]`. Live Kong và điểm AI `live_run: true` vẫn cần máy operator — không giả.
-
-Cửa nộp: [`README.md`](../../README.md) · [`docs/operations/install.md`](../operations/install.md) · [`docs/operations/charter-demo.md`](../operations/charter-demo.md).  
-Một số cửa còn chưa commit ([`install.md`](../operations/install.md), [`charter-demo.md`](../operations/charter-demo.md), [`handover-results.md`](handover-results.md), [`analyze-week1-aggregate.py`](../../scripts/analyze-week1-aggregate.py), [`week1-aggregate-report.jsonl`](artifacts/week1-aggregate-report.jsonl)) — clone `origin/main` chưa nhận chúng.
 
 ---
 
