@@ -1,48 +1,42 @@
 ---
-// Interactive Charter end-to-end demo: 7 scenes, "security ops console" UI.
-// Guided walkthrough over real sanitized evidence (not a live system).
 import '../../styles/charter-demo.css';
 ---
 
-<section class="cwt" data-charter-demo aria-label="Demo Charter end-to-end">
-	<p class="cwt-honesty">
-		<span aria-hidden="true">🔒</span>
-		Hướng dẫn tương tác trên bằng chứng thật đã sanitize — không phải hệ thống live.
-	</p>
+<section class="cwt" data-charter-demo aria-label="Bảy bước của luồng">
+	<p class="cwt-honesty">Đi hết bảy bước. Bằng chứng từ lần chạy trên máy, đã che mật khẩu. DefectDojo chỉ hiện bước quét.</p>
 
 	<div class="cwt-progress" aria-hidden="true">
 		<div class="cwt-progress__fill" data-charter-progress></div>
 	</div>
 
-	<div class="cwt-rail" data-charter-rail aria-label="7 cảnh pipeline Charter"></div>
+	<div class="cwt-rail" data-charter-rail aria-label="Bảy bước"></div>
 
-	<div data-charter-scene aria-live="off">
-		<p class="cwt-note">Đang tải cảnh…</p>
-	</div>
-
-	<div class="cwt-controls">
-		<button type="button" class="cwt-btn" data-charter-prev>← Trước</button>
-		<button type="button" class="cwt-btn cwt-btn--primary" data-charter-next>Sau →</button>
-		<button type="button" class="cwt-btn" data-charter-play>▶ Chạy tự động</button>
-		<span class="cwt-spacer"></span>
-		<span class="cwt-status" data-charter-status></span>
+	<div class="cwt-stage">
+		<div data-charter-scene aria-live="off">
+			<p class="cwt-note">Đang tải…</p>
+		</div>
+		<div class="cwt-controls">
+			<div class="cwt-cmd" role="group" aria-label="Điều khiển bảy bước">
+				<button type="button" class="cwt-btn" data-charter-prev>Trước</button>
+				<button type="button" class="cwt-btn" data-charter-next>Sau</button>
+				<button type="button" class="cwt-btn" data-charter-play>Chạy hết</button>
+			</div>
+			<span class="cwt-status" data-charter-status></span>
+		</div>
 	</div>
 
 	<div class="cwt-sr" data-charter-live aria-live="polite"></div>
 
 	<noscript>
-		<div class="w3-noscript">
-			<p>Bật JavaScript để xem demo tương tác. Bảy cảnh (bằng chứng đã sanitize):</p>
-			<ol>
-				<li>Quét (Scanner) — Nuclei/Trivy quét Juice Shop (loopback); secret redact trước khi lưu.</li>
-				<li>Agent phân tích (JSONL) — report bám bằng chứng; model chỉ thêm confidence.</li>
-				<li>Đề xuất request — 1 case an toàn từ catalog cố định.</li>
-				<li>HITL — Approve gửi; Reject fail-closed (action_sent=false, không gửi).</li>
-				<li>Qua Kong gateway — chỉ digest, không raw body vào LLM.</li>
-				<li>Response guard — IPI bị quarantine (objective-change).</li>
-				<li>Che PII — email/thẻ → [redacted:pii:…] trước LLM/log.</li>
-			</ol>
-		</div>
+		<ol>
+			<li>Quét — máy quét Juice Shop, đưa vào DefectDojo.</li>
+			<li>Phân tích — viết báo cáo, AI chỉ chọn mức tin cậy.</li>
+			<li>Đề xuất — lấy request từ danh sách có sẵn.</li>
+			<li>Duyệt — đồng ý mới gửi, từ chối thì không gửi.</li>
+			<li>Cổng — đi qua Kong, không đưa nguyên phản hồi vào AI.</li>
+			<li>Chặn độc — câu đổi mục tiêu bị giữ lại.</li>
+			<li>Che dữ liệu — email / thẻ thành nhãn đã che.</li>
+		</ol>
 	</noscript>
 </section>
 

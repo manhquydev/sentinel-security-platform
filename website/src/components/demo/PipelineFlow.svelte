@@ -1,136 +1,194 @@
 <script>
-	import { SvelteFlow, Background, BackgroundVariant } from '@xyflow/svelte';
+	import {
+		SvelteFlow,
+		Background,
+		BackgroundVariant,
+		Controls,
+	} from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
+	import StageNode from './StageNode.svelte';
 
 	const STAGES = [
 		{
-			label: '1 · Quét',
+			short: 'Quét',
 			stage: 'var(--sl-color-text-accent)',
-			badge: 'DAST · Medium',
+			badge: 'Máy quét · lab',
 			tone: 'neutral',
-			ev: 'nuclei · DAST\nMissing Security Header\npath:/rest/products · template-id=header',
+			ev: 'Máy quét Juice Shop trong lab, không ra internet.\nChe mật khẩu rồi đưa kết quả vào DefectDojo.\nBản ghi thật chỉ có bước này (4 lỗ hổng Trivy).',
 		},
 		{
-			label: '2 · Agent',
+			short: 'Phân tích',
 			stage: 'var(--sl-color-purple-high, #a78bfa)',
-			badge: 'model: chỉ confidence',
+			badge: 'Bám dữ liệu máy quét',
 			tone: 'model',
-			ev: 'report.jsonl (week3-analysis/v1)\nconfidence = medium  ← model\nexplanation/remediation = code-rendered\nknowledge: OWASP secure-headers',
+			ev: 'AI chỉ chọn mức tin cậy.\nCâu giải thích do chương trình viết từ dữ liệu máy quét.\nChưa có bản ghi bước này.',
 		},
 		{
-			label: '3 · Đề xuất',
+			short: 'Đề xuất',
 			stage: 'var(--sl-color-text-accent)',
-			badge: 'catalog cố định',
+			badge: 'Danh sách có sẵn',
 			tone: 'neutral',
-			ev: 'get-baseline (predeclared)\nGET …/rest/products/search?q=apple\nfinding.location ≠ path/query/body',
+			ev: 'Request lấy từ danh sách đã chuẩn bị.\nKhông tự bịa đường dẫn từ tên lỗ hổng.\nChưa có bản ghi bước này.',
 		},
 		{
-			label: '4 · HITL',
+			short: 'Duyệt',
 			stage: 'var(--sl-color-orange-high)',
-			badge: 'cần phê duyệt',
+			badge: 'Người phải bấm',
 			tone: 'warn',
-			ev: 'Approve → gửi (action_sent=true)\nReject → fail-closed:\n  action_sent=false, request_count=0\n  (không mint, không gửi)',
+			ev: 'Đồng ý thì mới gửi.\nTừ chối thì không gửi gì.\nChưa có bản ghi bước này.',
 		},
 		{
-			label: '5 · Kong',
+			short: 'Cổng',
 			stage: 'var(--sl-color-green-high)',
-			badge: 'chỉ digest',
+			badge: 'Kong',
 			tone: 'neutral',
-			ev: 'Kong TLS 127.0.0.1:18443\nACL + OAuth2 + API-key (Kong strip)\nchỉ digest → KHÔNG raw body vào LLM',
+			ev: 'Đi qua cổng: có khóa và danh sách cho phép.\nKhông đưa nguyên nội dung phản hồi vào AI.\nChưa có bản ghi bước này.',
 		},
 		{
-			label: '6 · Guard IPI',
+			short: 'Chặn độc',
 			stage: 'var(--sl-color-red-high)',
-			badge: 'QUARANTINED',
+			badge: 'Giữ lại chỉ dẫn lạ',
 			tone: 'good',
-			ev: 'response = untrusted data\n"Ignore the prior objective…"\n→ [quarantined: objective-change]\n→ agent không đổi mục tiêu',
+			ev: 'Nội dung từ app không được tin.\nCâu “đổi mục tiêu” bị giữ lại, agent không đổi việc.\nChưa có bản ghi bước này.',
 		},
 		{
-			label: '7 · Che PII',
+			short: 'Che dữ liệu',
 			stage: 'var(--sl-color-red-high)',
-			badge: 'REDACTED',
+			badge: 'Che trước khi lưu',
 			tone: 'good',
-			ev: 'email=alice@example.test pan=4532…\n→ email=[redacted:pii:email]\n→ pan=[redacted:pii:card]\n(che trước LLM/log)',
+			ev: 'Email / token / mật khẩu thành nhãn [đã che].\nBài kiểm tra trên máy: 10/10 — không lên DefectDojo.',
 		},
 	];
 
-	function nodeStyle(stage) {
-		return (
-			'border:1px solid var(--sl-color-hairline,#ccc);' +
-			'border-left:4px solid ' +
-			stage +
-			';border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;min-width:104px;text-align:center;'
-		);
-	}
+	const nodeTypes = { stage: StageNode };
 
-	let nodes = $state.raw(
-		STAGES.map((s, i) => ({
+	function buildNodes(active) {
+		return STAGES.map((s, i) => ({
 			id: String(i),
-			position: { x: i * 168, y: 0 },
-			data: { label: s.label },
+			type: 'stage',
+			position: { x: i * 220, y: 48 },
+			data: {
+				step: String(i + 1),
+				label: s.short,
+				color: s.stage,
+				tone: s.tone,
+				selected: i === active,
+			},
 			sourcePosition: 'right',
 			targetPosition: 'left',
 			draggable: false,
-			style: nodeStyle(s.stage),
-		})),
-	);
-	let edges = $state.raw(
-		STAGES.slice(1).map((_, i) => ({
+			deletable: false,
+		}));
+	}
+
+	function buildEdges(active, motion) {
+		return STAGES.slice(1).map((_, i) => ({
 			id: 'e' + i,
 			source: String(i),
 			target: String(i + 1),
-			animated: true,
-		})),
-	);
+			animated: motion && i === Math.max(0, active - 1),
+			style: i < active ? 'stroke-width:2.4' : 'stroke-width:1.4;opacity:0.55',
+		}));
+	}
 
 	let sel = $state(0);
+	let playing = $state(false);
+	let motion = $state(true);
 	let colorMode = $state('dark');
+	let nodes = $state.raw(buildNodes(0));
+	let edges = $state.raw(buildEdges(0, true));
+
 	$effect(() => {
 		const t = document.documentElement.dataset.theme;
 		colorMode = t === 'light' ? 'light' : 'dark';
+		motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	});
 
-	function pick(i) {
+	function apply(i) {
 		sel = i;
+		nodes = buildNodes(i);
+		edges = buildEdges(i, motion);
 	}
+
+	function pick(i) {
+		playing = false;
+		apply(i);
+	}
+
+	$effect(() => {
+		if (!playing || !motion) return;
+		const t = setInterval(() => apply((sel + 1) % STAGES.length), 2200);
+		return () => clearInterval(t);
+	});
 </script>
 
 <div class="pf not-content">
+	<p class="pf-hint">
+		Kéo nền để xem. Lăn chuột để phóng to. Nút góc phải để <kbd>thu vừa lại</kbd>.
+	</p>
 	<div class="pf-canvas">
 		<SvelteFlow
 			bind:nodes
 			bind:edges
+			{nodeTypes}
 			{colorMode}
 			fitView
+			fitViewOptions={{ padding: 0.28, maxZoom: 1.05 }}
+			minZoom={0.4}
+			maxZoom={1.8}
 			nodesDraggable={false}
 			nodesConnectable={false}
-			zoomOnScroll={false}
+			elementsSelectable={true}
+			deleteKey={null}
+			zoomOnDoubleClick={false}
+			zoomOnScroll={true}
+			zoomOnPinch={true}
+			panOnDrag={true}
 			panOnScroll={false}
-			panOnDrag={false}
 			preventScrolling={false}
 			onnodeclick={(e) => pick(Number(e.node.id))}
 		>
-			<Background variant={BackgroundVariant.Dots} gap={16} />
+			<Background variant={BackgroundVariant.Dots} gap={18} />
+			<Controls
+				showLock={false}
+				showZoom={true}
+				showFitView={true}
+				position="bottom-right"
+				aria-label="Phóng, thu, vừa khung"
+			/>
 		</SvelteFlow>
 	</div>
 
-	<div class="pf-tabs" role="tablist" aria-label="Chọn giai đoạn">
-		{#each STAGES as s, i}
-			<button
-				type="button"
-				role="tab"
-				aria-selected={sel === i}
-				class="pf-tab"
-				class:active={sel === i}
-				style={`--stage:${s.stage}`}
-				onclick={() => pick(i)}
-			>
-				{s.label}
-			</button>
-		{/each}
+	<div class="pf-bar">
+		<button type="button" class="pf-play" onclick={() => (playing = !playing)}>
+			{playing ? 'Dừng' : 'Chạy thử'}
+		</button>
+		<div class="pf-tabs" role="tablist" aria-label="Chọn giai đoạn">
+			{#each STAGES as s, i}
+				<button
+					type="button"
+					role="tab"
+					aria-selected={sel === i}
+					aria-controls="pf-panel"
+					id={`pf-tab-${i}`}
+					class="pf-tab"
+					class:active={sel === i}
+					style={`--stage:${s.stage}`}
+					onclick={() => pick(i)}
+				>
+					{i + 1} · {s.short}
+				</button>
+			{/each}
+		</div>
 	</div>
 
-	<div class="pf-panel" style={`--stage:${STAGES[sel].stage}`}>
+	<div
+		class="pf-panel"
+		id="pf-panel"
+		role="tabpanel"
+		aria-labelledby={`pf-tab-${sel}`}
+		style={`--stage:${STAGES[sel].stage}`}
+	>
 		<span class="pf-badge" data-tone={STAGES[sel].tone}>{STAGES[sel].badge}</span>
 		<pre class="pf-ev">{STAGES[sel].ev}</pre>
 	</div>
@@ -140,19 +198,50 @@
 	.pf {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
+		gap: 0.7rem;
+	}
+	.pf-hint {
+		margin: 0;
+		font-size: 0.85rem;
+		color: var(--sl-color-gray-2);
+	}
+	.pf-hint kbd {
+		font-size: 0.78rem;
+		padding: 0.05rem 0.35rem;
+		border: 1px solid var(--sl-color-hairline, #555);
+		border-radius: 4px;
 	}
 	.pf-canvas {
-		height: 200px;
+		height: min(48vh, 460px);
+		min-height: 340px;
 		border: 1px solid var(--sl-color-hairline, var(--sl-color-gray-5));
-		border-radius: 12px;
+		border-radius: 14px;
 		overflow: hidden;
 		background: var(--sl-color-gray-6);
+	}
+	.pf-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+		align-items: center;
+	}
+	.pf-play {
+		appearance: none;
+		border: 1px solid var(--sl-color-text-accent);
+		background: color-mix(in srgb, var(--sl-color-text-accent) 16%, var(--sl-color-gray-6));
+		color: var(--sl-color-white);
+		font: inherit;
+		font-size: 0.85rem;
+		font-weight: 700;
+		padding: 0.4rem 0.8rem;
+		border-radius: 8px;
+		cursor: pointer;
 	}
 	.pf-tabs {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem;
+		flex: 1;
 	}
 	.pf-tab {
 		appearance: none;
@@ -161,8 +250,8 @@
 		background: var(--sl-color-gray-6);
 		color: var(--sl-color-gray-2);
 		font: inherit;
-		font-size: 0.72rem;
-		padding: 0.25rem 0.55rem;
+		font-size: 0.85rem;
+		padding: 0.4rem 0.75rem;
 		border-radius: 7px;
 		cursor: pointer;
 	}
@@ -176,11 +265,11 @@
 		border-left: 4px solid var(--stage);
 		border-radius: 10px;
 		background: var(--sl-color-gray-6);
-		padding: 0.7rem 0.9rem;
+		padding: 0.85rem 1rem;
 	}
 	.pf-badge {
 		display: inline-block;
-		font-size: 0.72rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 		padding: 0.22rem 0.6rem;
 		border-radius: 999px;
@@ -200,10 +289,21 @@
 	}
 	.pf-ev {
 		margin: 0;
-		font-family: var(--sl-font-mono);
-		font-size: 0.82rem;
-		line-height: 1.5;
+		font-family: var(--sl-font, inherit);
+		font-size: 0.92rem;
+		line-height: 1.55;
 		white-space: pre-wrap;
 		color: var(--sl-color-gray-1);
+	}
+	.pf-canvas :global(.svelte-flow__controls) {
+		border: 1px solid var(--sl-color-hairline, #555);
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: none;
+	}
+	.pf-canvas :global(.svelte-flow__controls-button) {
+		width: 28px;
+		height: 28px;
+		border-bottom-color: var(--sl-color-hairline, #555);
 	}
 </style>
