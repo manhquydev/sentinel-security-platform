@@ -95,9 +95,3 @@ Hướng dẫn: [`docs/operations/charter-demo.md`](../operations/charter-demo.m
 | [~] | Thành viên khác chạy lại demo từ README | [`README.md`](../../README.md) · [`docs/operations/install.md`](../operations/install.md) · [`docs/operations/charter-demo.md`](../operations/charter-demo.md) — đủ trên worktree; `[x]` sau khi commit các cửa trên |
 
 ---
-
-## Ngoài clone (không chặn bàn giao)
-
-- Một lần live [`scripts/sentinel-demo.sh`](../../scripts/sentinel-demo.sh) + [`evaluation/charter-eval/result-report.py`](../../evaluation/charter-eval/result-report.py) với model honors schema. Không nới validator.
-- Cảnh Kong cần key trên máy operator — [demo §5](../operations/charter-demo.md#5-request-đi-qua-api-gateway).
-- Kịch bản nói 15 phút giữ local.
