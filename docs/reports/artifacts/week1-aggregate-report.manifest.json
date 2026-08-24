@@ -1,0 +1,12 @@
+{
+  "schema_version": "week1-aggregate-report/v1",
+  "mode": "offline-deterministic",
+  "live_run": false,
+  "input_aggregate": "artifacts/week1.aggregate.jsonl",
+  "input_manifest": "artifacts/week1.aggregate.manifest.json",
+  "input_aggregate_sha256": "d7717e70088762525cfcc1708bd60d83bc0564da3828f0cf7a83b3a464f77094",
+  "report": "docs/reports/artifacts/week1-aggregate-report.jsonl",
+  "report_sha256": "42d711ba8ebf8c61fa72e77c77d4544999c49745a489ab53bfd125880d2f2d5d",
+  "report_rows": 36,
+  "note": "Prose is code-owned from typed Week-1 fields; model stub only supplies confidence. Not a live LiteLLM score."
+}
